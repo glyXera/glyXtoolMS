@@ -1,16 +1,50 @@
 import pyopenms
 
+class Peak:
+    
+    def __init__(self,mass,intensity):
+        self.mass = mass
+        self.intent = intensity
+
+class Spectrum:
+
+    def __init__(self,spectrumId):
+        self.spectrumId = = spectrumId
+        self.precursorMass = 0
+        self.spectrumIntensity = 0
+        self.rt = 0.0
+        self.charge = 0
+        self.peaks = []
+        self.totalIntensity = 0
+        self.nr = -1
+        
+
+    def addPeak(self,mass,intensity):
+        p = Peak(mass,intensity)
+        self.total += p.intent
+        self.peaks.append(p)
+
 def main(options):
     print "parsing glycan parameters:"
-    sugars = options.glycanlist.split(" ")
+    glycans = options.glycanlist.split(" ")
 
     print "loading experiment"
     exp = pyopenms.MSExperiment()
     outExp = pyopenms.MSExperiment()
     fh = pyopenms.FileHandler()
     fh.loadExperiment(options.infile,exp)
+    print "loading finnished"          
 
-    print "loading finnished"
+    # score each spectrum
+    for spec in exp:
+        if spec.getMSLevel() != 2:
+            continue
+        # create spectrum
+        s = Spectrum(spec.getNativeId())
+        for peak in spec:
+            s.addPeak(peak.getMZ(),peak.getIntensity())
+                    
+            
 
 
 def handle_args():
