@@ -1,5 +1,5 @@
 from nose.tools import *
-import reporter
+from glyxsuite import reporter
 
 def setup():
     print "SETUP!"

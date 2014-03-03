@@ -4,12 +4,12 @@ class Peak:
     
     def __init__(self,mass,intensity):
         self.mass = mass
-        self.intent = intensity
+        self.intensity = intensity
 
 class Spectrum:
 
     def __init__(self,spectrumId):
-        self.spectrumId = = spectrumId
+        self.spectrumId = spectrumId
         self.precursorMass = 0
         self.spectrumIntensity = 0
         self.rt = 0.0
@@ -44,8 +44,6 @@ def main(options):
         for peak in spec:
             s.addPeak(peak.getMZ(),peak.getIntensity())
                     
-            
-
 
 def handle_args():
     import argparse
