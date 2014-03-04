@@ -1,7 +1,7 @@
 import pyopenms
 
 
-class IonMassSeriesCalculator:
+class IonSeriesCalculator:
 
     def __init__(self):
         self.masses = {}
@@ -21,11 +21,11 @@ class IonMassSeriesCalculator:
         self.masses[name] = mass
 
 
-    def calcSeries(self,glycan):
+    def calcSeries(self,glycan,precursorMass, precursorCharge, nrNeutrallosses,maxChargeOxoniumIon):
         
         series = {}
         glycanMass = self.masses[glycan]
-        series["OxoniumIon"] = Ion(glycan+":OxoniumIon",glycanMasss-self.masses["H2O"]+self.masses["H+"])
+        series["OxoniumIon"] = Ion(glycan+":OxoniumIon",glycanMass-self.masses["H2O"]+self.masses["H+"])
         series["Fragment1"] = Ion(glycan+":Fragment1:",series["OxoniumIon"].mass-self.masses["H2O"],series["OxoniumIon"])
         series["Fragment2"] = Ion(glycan+":Fragment2:",series["OxoniumIon"].mass-2*self.masses["H2O"],series["Fragment1"])
         series["Fragment3"] = Ion(glycan+":Fragment3:",series["OxoniumIon"].mass-2*self.masses["H2O"]-self.masses["CH2O"],series["Fragment2"])
@@ -35,11 +35,11 @@ class IonMassSeriesCalculator:
         
         # multiple neutral losses
         for nr in range(1,nrNeutrallosses+1):
-            series["Neutralloss"+str(nr)] = Ion(name+":Neutralloss"+str(nr),precursorMass-(sugarMass-self.masses["H2O"])/float(precursorCharge),series["OxoniumIon"])
+            series["Neutralloss"+str(nr)] = Ion(glycan+":Neutralloss"+str(nr),precursorMass-(glycanMass-self.masses["H2O"])/float(precursorCharge),series["OxoniumIon"])
 
         for oxCharge in range(1,maxChargeOxoniumIon+1):
             if precursorCharge > oxCharge:
-                series["OxoniumLoss"+str(oxCharge)] = Ion(name+":OxoniumLoss"+str(oxCharge),(precursorMass*precursorCharge-oxCharge*series["OxoniumIon"].mass)/float((precursorCharge-oxCharge)),series["OxoniumIon"])
+                series["OxoniumLoss"+str(oxCharge)] = Ion(glycan+":OxoniumLoss"+str(oxCharge),(precursorMass*precursorCharge-oxCharge*series["OxoniumIon"].mass)/float((precursorCharge-oxCharge)),series["OxoniumIon"])
         return series
 
 
