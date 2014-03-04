@@ -1,6 +1,8 @@
 from nose.tools import *
 from glyxsuite.scoring.glyxScore import *
 
+
+
 def setup():
     print "SETUP!"
 
@@ -10,7 +12,7 @@ def teardown():
 def test_class_Peak():
     p = Peak(100,123.5)
     
-def test_class_Ion():
+"""def test_class_Ion():
 
     s = Spectrum("spectrum")
 
@@ -29,7 +31,7 @@ def test_class_Ion():
 
     i1.calcScore()
     i2.calcScore()
-
+"""
 
 
 def test_class_IonSeriesCalculator():
@@ -44,10 +46,11 @@ def test_class_IonSeriesCalculator():
     assert fragment5.mass == 232.08155
     assert fragment5.parent == series["Fragment4"]
 
-    
+ 
+
 def test_class_Spectrum():
     # create spectrum
-    s = Spectrum("spectrum")
+    s = Spectrum("spectrum",1000,3,4,4)
     # add some peaks
     s.addPeak(100,50)
     s.addPeak(300,60)
@@ -60,6 +63,16 @@ def test_class_Spectrum():
     s.addPeak(292.1,400) # NeuAC:Oxoniumion
     s.addPeak(274.1,.100) # NeuAc:Fragment1
     s.addPeak(1353.9,.200) # NeuAc:OxoniumLoss1: Precursormass 1000, Charge 3
+
+    s.makeRanking()
+    s.normIntensity()
+    
+    seriesCalc = IonSeriesCalculator()
+    seriesCalc._appendMassList("foo",1230)
+    
+    scoreNeuAc = s.findGlycanScore(seriesCalc,"NeuAc", 0.2,0)
+    scoreHex = s.findGlycanScore(seriesCalc,"Hex",0.2,0)
+    return s.calcTotalScore()
 
 
 

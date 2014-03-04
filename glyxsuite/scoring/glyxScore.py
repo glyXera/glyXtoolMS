@@ -1,4 +1,6 @@
 import pyopenms
+import math
+
 
 
 class IonSeriesCalculator:
@@ -79,15 +81,36 @@ class Peak:
         self.ionname = None
         self.rank = 0
 
+class Score:
+
+    def __init__(self,glycan):
+        self.glycan = glycan
+        self.ions = {}
+        self.score = 0
+
+    def addIon(self,ion):
+        self.ions[ion.name] = ion
+
+    def calcScores(self):
+        self.score = 0
+        for name in self.ions:
+            self.score += self.ions[name].calcScore()
+
+
 class Spectrum:
 
-    def __init__(self,spectrumId):
+    def __init__(self,spectrumId, precursorMass, precursorCharge, nrNeutrallosses, maxChargeOxoniumIon):
         self.spectrumId = spectrumId
+        self.precursorCharge = precursorCharge
+        self.precursorMass = precursorMass
+        self.nrNeutrallosses = nrNeutrallosses
+        self.maxChargeOxoniumIon = maxChargeOxoniumIon
         self.spectrumIntensity = 0
         self.rt = 0.0
         self.charge = 0
         self.peaks = []
         self.totalIntensity = 0
+        self.glycanScores = {}
         self.nr = -1
         
 
@@ -108,14 +131,38 @@ class Spectrum:
             p = pair[1]
             p.rank = i+1
 
-    def findGlycanScore(self,glycanseries,precursorMass, precursorCharge,massDelta,intensityThreshold=0):
+    def findGlycanScore(self,seriesCalculator,glycan,massDelta,intensityThreshold=0):
+        glycanSeries = seriesCalculator.calcSeries(glycan,self.precursorMass,self.precursorCharge, self.nrNeutrallosses, self.maxChargeOxoniumIon)
+        score = Score(glycan)
         for ionname in glycanSeries:
             ion = glycanSeries[ionname]
             massTh = ion.mass
             for peak in self.peaks:
-                if peak.intensity >= intensityThreshold and peak.mass >= massTh-massDelta and peak.mass <= massTh+delta:
+                if peak.intensity >= intensityThreshold and peak.mass >= massTh-massDelta and peak.mass <= massTh+massDelta:
                     ion.addPeak(peak)
                     peak.ionname = ion.name
+            if ion.counts > 0:
+                score.addIon(ion)
+        score.calcScores()
+        if score.score > 0:
+            self.glycanScores[glycan] = score
+        return score
+
+
+    def calcTotalScore(self):
+        inverseScore = 0
+        for glycan in self.glycanScores:
+            score = self.glycanScores[glycan]
+            if score.score > 0:
+                inverseScore += 1/float(-math.log(score.score)/math.log(10))
+        if inverseScore != 0:
+            self.logScore = 1/inverseScore
+        else:
+            self.logScore = 0
+        return self.logScore
+
+                
+    
 
 def main(options):
     print "parsing glycan parameters:"
