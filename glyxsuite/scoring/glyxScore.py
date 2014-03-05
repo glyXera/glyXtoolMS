@@ -1,7 +1,7 @@
 import pyopenms
 import math
 import sys
-
+from lxml import etree as ET
 
 
 class IonSeriesCalculator:
@@ -152,16 +152,28 @@ class Spectrum:
 
 
     def calcTotalScore(self):
-        inverseScore = 0
+        maxi = 0
         for glycan in self.glycanScores:
             score = self.glycanScores[glycan]
-            if score.score > 0:
-                inverseScore += 1/float(-math.log(score.score)/math.log(10))
-        if inverseScore != 0:
-            self.logScore = 1/float(inverseScore)
-        else:
-            self.logScore = 0
+            if score.score > maxi:
+                maxi = score.score
+        self.logScore = 0
+        if maxi > 0:
+            self.logScore = -math.log(maxi)/math.log(10)
         return self.logScore
+
+    def makeXMLOutput(self,xmlSpectra):
+        xmlSpectrum = ET.SubElement(xmlSpectra,"spectrum")
+        xmlSpectrumNativeId = ET.SubElement(xmlSpectrum,"nativeId")
+        xmlSpectrumNativeId.text = str(self.spectrumId)
+        xmlPrecursor = ET.SubElement(xmlSpectrum,"precursor")
+        xmlPrecursorMass = ET.SubElement(xmlPrecursor,"mass")
+        xmlPrecursorMass.text = str(self.precursorMass)
+        xmlPrecursorCharge = ET.SubElement(xmlPrecursor,"charge")
+        xmlPrecursorCharge.text = str(self.precursorCharge)
+        xmlTotalScore = ET.SubElement(xmlSpectrum,"logScore")
+        xmlTotalScore.text = str(self.logScore)                
+        
 
                 
     
@@ -176,8 +188,6 @@ def main(options):
     fh.loadExperiment(options.infile,exp)
     print "loading finnished"          
 
-    # Open outfile
-    f = file(options.outfile,"w")
     # Initialize IonSeriesCalculator
     seriesCalc = IonSeriesCalculator()
     # check validity of each glycan
@@ -185,6 +195,10 @@ def main(options):
         if not seriesCalc.hasGlycan(glycan):
             print "Cannot find glycan in SeriesCalculator, Aborting!"
             return
+
+    # initialize output xml file
+    xmlRoot = ET.Element("glyxXML")
+    xmlSpectra = ET.SubElement(xmlRoot,"spectra")
 
     # score each spectrum
     for spec in exp:
@@ -205,10 +219,13 @@ def main(options):
                 s.findGlycanScore(seriesCalc, glycan, float(options.tol), float(options.ionthreshold))
 
             logScore = s.calcTotalScore()
-            f.write(s.spectrumId+"\t"+str(s.precursorCharge)+"\t"+str(logScore)+"\n")
-            
+            s.makeXMLOutput(xmlSpectra)
 
-    # close outfile
+            
+    print "writing outputfile"
+    xmlTree = ET.ElementTree(xmlRoot)
+    f = file(options.outfile,"w")
+    f.write(ET.tostring(xmlTree,pretty_print=True))
     f.close()
                     
 
