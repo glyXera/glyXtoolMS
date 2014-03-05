@@ -1,5 +1,6 @@
 import pyopenms
 import math
+import sys
 
 
 
@@ -21,6 +22,11 @@ class IonSeriesCalculator:
 
     def _appendMassList(self,name,mass):
         self.masses[name] = mass
+
+    def hasGlycan(self,glycan):
+        if glycan in self.masses:
+            return True
+        return False
 
 
     def calcSeries(self,glycan,precursorMass, precursorCharge, nrNeutrallosses,maxChargeOxoniumIon):
@@ -175,14 +181,26 @@ def main(options):
     fh.loadExperiment(options.infile,exp)
     print "loading finnished"          
 
+    # Initialize IonSeriesCalculator
+    seriesCalc = IonSeriesCalculator()
+    # check validity of each glycan
+    for glycan in glycans:
+        if not seriesCalc.hasGlycan(glycan):
+            print "Cannot find glycan in SeriesCalculator, Aborting!"
+            return
+
     # score each spectrum
     for spec in exp:
         if spec.getMSLevel() != 2:
             continue
         # create spectrum
-        s = Spectrum(spec.getNativeId())
+        precursor = spec.getPrecursors()[0]
+        s = Spectrum(spec.getNativeId(),precursor.getMZ(),precursor.getCharge(),4,4)
         for peak in spec:
             s.addPeak(peak.getMZ(),peak.getIntensity())
+        for glycan in glycans:
+            s.findGlycanScore(seriesCalc, glycan, options.tol, options.ionthreshold)
+        logScore = s.calcTotalScore()
                     
 
 def handle_args():
@@ -190,7 +208,11 @@ def handle_args():
     usage = "\nGlycopeptide Scoringtool for lowresolution MS/MS spectra"
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--in", dest="infile",help="File input")
+    parser.add_argument("--out", dest="outfile",help="File output")
     parser.add_argument("--glycans", dest="glycanlist",help="Possible glycans as list")
+    parser.add_argument("--tol", dest="tol",help="Mass tolerance in th")
+    parser.add_argument("--ionthreshold", dest="ionthreshold",help="Threshold for reporter ions")
+
     args = parser.parse_args(sys.argv[1:])
     return args
 
