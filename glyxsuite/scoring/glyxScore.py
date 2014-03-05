@@ -112,14 +112,10 @@ class Spectrum:
         self.nrNeutrallosses = nrNeutrallosses
         self.maxChargeOxoniumIon = maxChargeOxoniumIon
         self.spectrumIntensity = 0
-        self.rt = 0.0
-        self.charge = 0
         self.peaks = []
         self.totalIntensity = 0
         self.glycanScores = {}
-        self.nr = -1
         
-
     def addPeak(self,mass,intensity):
         p = Peak(mass,intensity)
         self.spectrumIntensity += intensity
@@ -162,7 +158,7 @@ class Spectrum:
             if score.score > 0:
                 inverseScore += 1/float(-math.log(score.score)/math.log(10))
         if inverseScore != 0:
-            self.logScore = 1/inverseScore
+            self.logScore = 1/float(inverseScore)
         else:
             self.logScore = 0
         return self.logScore
@@ -176,11 +172,12 @@ def main(options):
 
     print "loading experiment"
     exp = pyopenms.MSExperiment()
-    outExp = pyopenms.MSExperiment()
     fh = pyopenms.FileHandler()
     fh.loadExperiment(options.infile,exp)
     print "loading finnished"          
 
+    # Open outfile
+    f = file(options.outfile,"w")
     # Initialize IonSeriesCalculator
     seriesCalc = IonSeriesCalculator()
     # check validity of each glycan
@@ -195,12 +192,24 @@ def main(options):
             continue
         # create spectrum
         precursor = spec.getPrecursors()[0]
-        s = Spectrum(spec.getNativeId(),precursor.getMZ(),precursor.getCharge(),4,4)
-        for peak in spec:
-            s.addPeak(peak.getMZ(),peak.getIntensity())
-        for glycan in glycans:
-            s.findGlycanScore(seriesCalc, glycan, options.tol, options.ionthreshold)
-        logScore = s.calcTotalScore()
+    
+        s = Spectrum(spec.getNativeID(),precursor.getMZ(),precursor.getCharge(),4,4)
+        logScore = 0
+        if s.precursorCharge > 1:
+            for peak in spec:
+                s.addPeak(peak.getMZ(),peak.getIntensity())
+            # make Ranking
+            s.makeRanking()
+            s.normIntensity()
+            for glycan in glycans:
+                s.findGlycanScore(seriesCalc, glycan, float(options.tol), float(options.ionthreshold))
+
+            logScore = s.calcTotalScore()
+            f.write(s.spectrumId+"\t"+str(s.precursorCharge)+"\t"+str(logScore)+"\n")
+            
+
+    # close outfile
+    f.close()
                     
 
 def handle_args():
@@ -212,7 +221,9 @@ def handle_args():
     parser.add_argument("--glycans", dest="glycanlist",help="Possible glycans as list")
     parser.add_argument("--tol", dest="tol",help="Mass tolerance in th")
     parser.add_argument("--ionthreshold", dest="ionthreshold",help="Threshold for reporter ions")
-
+    parser.add_argument("--nrNeutralloss", dest="nrNeutralloss",help="Possible nr of Neutrallosses (default: 1)")
+    parser.add_argument("--chargeOxIon", dest="chargeOxIon",help="maximum charge of oxonium ions (default: 4)")
+    parser.add_argument("--scorethreshold", dest="scorethreshold",help="Score threshold for identifying glycopeptide spectra")
     args = parser.parse_args(sys.argv[1:])
     return args
 
