@@ -1,13 +1,19 @@
 from nose.tools import *
 from glyxsuite.scoring.glyxScore import *
-
-
+import os
+import shutil
 
 def setup():
     print "SETUP!"
+    if os.path.exists("tempTest/"):
+        shutil.rmtree("tempTest")
+    os.mkdir("tempTest/")
+    
 
 def teardown():
     print "TEAR DOWN!"
+    if os.path.exists("tempTest/"):
+        shutil.rmtree("tempTest")
 
 def test_class_Peak():
     p = Peak(100,123.5)
@@ -77,3 +83,26 @@ def test_class_Spectrum():
 
 
 
+def test_glyxScore_withRealData():
+    # initialize Options
+    infile = "/data/msExample.mzML"
+    outfile = "tempTest/out.xml"
+    glycans = "NeuAc Hex HexNAc"
+    tol = "0.5"
+    ionthreshold = "0"
+    nrNeutralloss = "4"
+    chargeOxIon = "4"
+    scorethreshold = "2.5"
+    
+    argv = ["--in",infile]
+    argv += ["--out",outfile]
+    argv += ["--glycans",glycans]
+    argv += ["--tol",tol]
+    argv += ["--ionthreshold",ionthreshold]
+    argv += ["--nrNeutralloss",nrNeutralloss]
+    argv += ["--chargeOxIon",chargeOxIon]
+    argv += ["--scorethreshold",scorethreshold]
+    
+    options = handle_args(argv)
+    
+    assert options.tol == "0.5"

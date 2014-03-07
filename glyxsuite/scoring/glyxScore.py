@@ -2,6 +2,7 @@ import pyopenms
 import math
 import sys
 from lxml import etree as ET
+import datetime
 
 
 class IonSeriesCalculator:
@@ -66,7 +67,7 @@ class Ion:
         self.inverseRank += 1/float(peak.rank)
         self.peaks.append(peak)
 
-    def calcScore(self):
+    def calcIonScore(self):
         self.score = self.counts*self.inverseRank
         parent = self.parent
         while parent:
@@ -100,7 +101,7 @@ class Score:
     def calcScores(self):
         self.score = 0
         for name in self.ions:
-            self.score += self.ions[name].calcScore()
+            self.score += self.ions[name].calcIonScore()
 
 
 class Spectrum:
@@ -152,14 +153,14 @@ class Spectrum:
 
 
     def calcTotalScore(self):
-        maxi = 0
+        maxScore = 0
         for glycan in self.glycanScores:
-            score = self.glycanScores[glycan]
-            if score.score > maxi:
-                maxi = score.score
+            glycanScore = self.glycanScores[glycan]
+            if glycanScore.score > maxScore:
+                maxScore = glycanScore.score
         self.logScore = 0
-        if maxi > 0:
-            self.logScore = -math.log(maxi)/math.log(10)
+        if maxScore > 0:
+            self.logScore = -math.log(maxScore)/math.log(10)
         return self.logScore
 
     def makeXMLOutput(self,xmlSpectra):
@@ -174,9 +175,6 @@ class Spectrum:
         xmlTotalScore = ET.SubElement(xmlSpectrum,"logScore")
         xmlTotalScore.text = str(self.logScore)                
         
-
-                
-    
 
 def main(options):
     print "parsing glycan parameters:"
@@ -198,25 +196,48 @@ def main(options):
 
     # initialize output xml file
     xmlRoot = ET.Element("glyxXML")
+    xmlParameters = ET.SubElement(xmlRoot,"parameters")
     xmlSpectra = ET.SubElement(xmlRoot,"spectra")
+
+    # write search parameters
+    xmlParametersDate = ET.SubElement(xmlParameters,"timestamp")
+    xmlParametersDate.text = str(datetime.datetime.today())
+
+    xmlParametersGlycans = ET.SubElement(xmlParameters,"glycans")
+    for glycan in glycans:
+        xmlParametersGlycan = ET.SubElement(xmlParametersGlycans,"glycan")
+        xmlParametersGlycan.text = glycan
+    xmlParametersTol = ET.SubElement(xmlParameters,"tolerance")
+    xmlParametersTol.text = str(options.tol)
+
+    xmlParametersIonthreshold = ET.SubElement(xmlParameters,"ionthreshold")
+    xmlParametersIonthreshold.text = str(options.ionthreshold)
+
+    xmlParametersNeutral = ET.SubElement(xmlParameters,"nrNeutrallosses")
+    xmlParametersNeutral.text = str(options.nrNeutralloss)
+
+    xmlParametersOxionCharge = ET.SubElement(xmlParameters,"maxOxoniumionCharge")
+    xmlParametersOxionCharge.text = str(options.chargeOxIon)
+
+    xmlParametersScorethreshold = ET.SubElement(xmlParameters,"scorethreshold")
+    xmlParametersScorethreshold.text = str(options.scorethreshold)
 
     # score each spectrum
     for spec in exp:
         if spec.getMSLevel() != 2:
             continue
         # create spectrum
-        precursor = spec.getPrecursors()[0]
-    
-        s = Spectrum(spec.getNativeID(),precursor.getMZ(),precursor.getCharge(),4,4)
-        logScore = 0
-        if s.precursorCharge > 1:
-            for peak in spec:
-                s.addPeak(peak.getMZ(),peak.getIntensity())
-            # make Ranking
-            s.makeRanking()
-            s.normIntensity()
-            for glycan in glycans:
-                s.findGlycanScore(seriesCalc, glycan, float(options.tol), float(options.ionthreshold))
+        for precursor in spec.getPrecursors(): # Multiple precurors will make native spectrum id nonunique!
+            s = Spectrum(spec.getNativeID(),precursor.getMZ(),precursor.getCharge(),int(options.nrNeutralloss),int(options.chargeOxIon))
+            logScore = 0
+            if s.precursorCharge > 1:
+                for peak in spec:
+                    s.addPeak(peak.getMZ(),peak.getIntensity())
+                # make Ranking
+                s.makeRanking()
+                s.normIntensity()
+                for glycan in glycans:
+                    s.findGlycanScore(seriesCalc, glycan, float(options.tol), float(options.ionthreshold))
 
             logScore = s.calcTotalScore()
             s.makeXMLOutput(xmlSpectra)
@@ -229,7 +250,7 @@ def main(options):
     f.close()
                     
 
-def handle_args():
+def handle_args(argv=None):
     import argparse
     usage = "\nGlycopeptide Scoringtool for lowresolution MS/MS spectra"
     parser = argparse.ArgumentParser(description=usage)
@@ -241,7 +262,10 @@ def handle_args():
     parser.add_argument("--nrNeutralloss", dest="nrNeutralloss",help="Possible nr of Neutrallosses (default: 1)")
     parser.add_argument("--chargeOxIon", dest="chargeOxIon",help="maximum charge of oxonium ions (default: 4)")
     parser.add_argument("--scorethreshold", dest="scorethreshold",help="Score threshold for identifying glycopeptide spectra")
-    args = parser.parse_args(sys.argv[1:])
+    if not argv:
+        args = parser.parse_args(sys.argv[1:])
+    else:
+        args = parser.parse_args(argv)
     return args
 
 if __name__ == "__main__":
