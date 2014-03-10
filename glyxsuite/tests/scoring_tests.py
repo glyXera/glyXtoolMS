@@ -13,7 +13,7 @@ def setup():
 def teardown():
     print "TEAR DOWN!"
     if os.path.exists("tempTest/"):
-        shutil.rmtree("tempTest")
+        shutil.rmtree("tempTest/")
 
 def test_class_Peak():
     p = Peak(100,123.5)
@@ -85,7 +85,7 @@ def test_class_Spectrum():
 
 def test_glyxScore_withRealData():
     # initialize Options
-    infile = "/data/msExample.mzML"
+    infile = "data/msExample.mzML"
     outfile = "tempTest/out.xml"
     glycans = "NeuAc Hex HexNAc"
     tol = "0.5"
@@ -105,4 +105,25 @@ def test_glyxScore_withRealData():
     
     options = handle_args(argv)
     
-    assert options.tol == "0.5"
+    assert options.tol == 0.5
+
+    main(options)
+    assert os.path.exists(outfile)
+    
+    # check existence of xml tags
+    from lxml import etree as ET
+    f = file(outfile,"r")
+    root = ET.fromstring(f.read())
+    f.close()
+    
+    
+    assert root.find("parameters") != None
+    assert root.find("spectra") != None
+    spectra = root.find("spectra").findall("spectrum")
+    assert len(spectra) == 5
+
+    s = spectra[0]
+
+    assert s.find("nativeId") != None
+    assert s.find("precursor") != None
+    assert s.find("logScore") != None

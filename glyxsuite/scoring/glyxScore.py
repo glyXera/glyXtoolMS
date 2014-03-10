@@ -257,11 +257,11 @@ def handle_args(argv=None):
     parser.add_argument("--in", dest="infile",help="File input")
     parser.add_argument("--out", dest="outfile",help="File output")
     parser.add_argument("--glycans", dest="glycanlist",help="Possible glycans as list")
-    parser.add_argument("--tol", dest="tol",help="Mass tolerance in th")
-    parser.add_argument("--ionthreshold", dest="ionthreshold",help="Threshold for reporter ions")
-    parser.add_argument("--nrNeutralloss", dest="nrNeutralloss",help="Possible nr of Neutrallosses (default: 1)")
-    parser.add_argument("--chargeOxIon", dest="chargeOxIon",help="maximum charge of oxonium ions (default: 4)")
-    parser.add_argument("--scorethreshold", dest="scorethreshold",help="Score threshold for identifying glycopeptide spectra")
+    parser.add_argument("--tol", dest="tol",help="Mass tolerance in th",type=float)
+    parser.add_argument("--ionthreshold", dest="ionthreshold",help="Threshold for reporter ions", type=int)
+    parser.add_argument("--nrNeutralloss", dest="nrNeutralloss",help="Possible nr of Neutrallosses (default: 1)",type=int)
+    parser.add_argument("--chargeOxIon", dest="chargeOxIon",help="maximum charge of oxonium ions (default: 4)",type=int)
+    parser.add_argument("--scorethreshold", dest="scorethreshold",help="Score threshold for identifying glycopeptide spectra",type=float)
     if not argv:
         args = parser.parse_args(sys.argv[1:])
     else:
