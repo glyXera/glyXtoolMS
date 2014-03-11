@@ -116,6 +116,7 @@ class Spectrum:
         self.peaks = []
         self.totalIntensity = 0
         self.glycanScores = {}
+        self.logScore = 10
         
     def addPeak(self,mass,intensity):
         p = Peak(mass,intensity)
@@ -158,7 +159,7 @@ class Spectrum:
             glycanScore = self.glycanScores[glycan]
             if glycanScore.score > maxScore:
                 maxScore = glycanScore.score
-        self.logScore = 0
+        self.logScore = 10
         if maxScore > 0:
             self.logScore = -math.log(maxScore)/math.log(10)
         return self.logScore
@@ -229,7 +230,7 @@ def main(options):
         # create spectrum
         for precursor in spec.getPrecursors(): # Multiple precurors will make native spectrum id nonunique!
             s = Spectrum(spec.getNativeID(),precursor.getMZ(),precursor.getCharge(),int(options.nrNeutralloss),int(options.chargeOxIon))
-            logScore = 0
+            logScore = 10
             if s.precursorCharge > 1:
                 for peak in spec:
                     s.addPeak(peak.getMZ(),peak.getIntensity())
@@ -240,6 +241,7 @@ def main(options):
                     s.findGlycanScore(seriesCalc, glycan, float(options.tol), float(options.ionthreshold))
 
             logScore = s.calcTotalScore()
+            s.logScore = logScore
             s.makeXMLOutput(xmlSpectra)
 
             
