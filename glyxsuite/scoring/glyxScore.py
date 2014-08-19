@@ -106,8 +106,9 @@ class Score:
 
 class Spectrum:
 
-    def __init__(self,spectrumId, precursorMass, precursorCharge, nrNeutrallosses, maxChargeOxoniumIon):
+    def __init__(self,spectrumId,spectrumRT, precursorMass, precursorCharge, nrNeutrallosses, maxChargeOxoniumIon):
         self.spectrumId = spectrumId
+        self.spectrumRT = spectrumRT
         self.precursorCharge = precursorCharge
         self.precursorMass = precursorMass
         self.nrNeutrallosses = nrNeutrallosses
@@ -168,13 +169,34 @@ class Spectrum:
         xmlSpectrum = ET.SubElement(xmlSpectra,"spectrum")
         xmlSpectrumNativeId = ET.SubElement(xmlSpectrum,"nativeId")
         xmlSpectrumNativeId.text = str(self.spectrumId)
+        xmlSpectrumRT = ET.SubElement(xmlSpectrum,"rt")
+        xmlSpectrumRT.text = str(self.spectrumRT)
         xmlPrecursor = ET.SubElement(xmlSpectrum,"precursor")
         xmlPrecursorMass = ET.SubElement(xmlPrecursor,"mass")
         xmlPrecursorMass.text = str(self.precursorMass)
         xmlPrecursorCharge = ET.SubElement(xmlPrecursor,"charge")
         xmlPrecursorCharge.text = str(self.precursorCharge)
         xmlTotalScore = ET.SubElement(xmlSpectrum,"logScore")
-        xmlTotalScore.text = str(self.logScore)                
+        xmlTotalScore.text = str(self.logScore)
+
+        xmlScoreList = ET.SubElement(xmlSpectrum,"scores")        
+        for glycan in self.glycanScores:
+            glycanScore = self.glycanScores[glycan]
+            if glycanScore.score == 0:
+                continue
+            xmlScore = ET.SubElement(xmlScoreList,"score")
+            xmlGlycanName = ET.SubElement(xmlScore,"glycan")
+            xmlGlycanName.text = glycan
+            xmlIons = ET.SubElement(xmlScore,"ions")
+            for ionname in glycanScore.ions:
+                ion = glycanScore.ions[ionname]
+                xmlIon = ET.SubElement(xmlIons,"ion")
+                xmlIonName = ET.SubElement(xmlIon,"name")
+                xmlIonName.text = ionname
+                xmlIonMass = ET.SubElement(xmlIon,"mass")
+                xmlIonMass.text = str(ion.mass)
+                
+            
         
 
 def main(options):
@@ -229,7 +251,7 @@ def main(options):
             continue
         # create spectrum
         for precursor in spec.getPrecursors(): # Multiple precurors will make native spectrum id nonunique!
-            s = Spectrum(spec.getNativeID(),precursor.getMZ(),precursor.getCharge(),int(options.nrNeutralloss),int(options.chargeOxIon))
+            s = Spectrum(spec.getNativeID(),spec.getRT(),precursor.getMZ(),precursor.getCharge(),int(options.nrNeutralloss),int(options.chargeOxIon))
             logScore = 10
             if s.precursorCharge > 1:
                 for peak in spec:
