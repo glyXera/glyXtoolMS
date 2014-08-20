@@ -118,10 +118,15 @@ class Spectrum:
         self.totalIntensity = 0
         self.glycanScores = {}
         self.logScore = 10
+        #self.highestPeakIntensity = 0
         
     def addPeak(self,mass,intensity):
         p = Peak(mass,intensity)
         self.spectrumIntensity += intensity
+        #if intensity > self.highestPeakIntensity:
+        #    self.highestPeakIntensity = intensity
+        #else:
+        #    pass
         self.peaks.append(p)
         return p
 
@@ -171,6 +176,9 @@ class Spectrum:
         xmlSpectrumNativeId.text = str(self.spectrumId)
         xmlSpectrumRT = ET.SubElement(xmlSpectrum,"rt")
         xmlSpectrumRT.text = str(self.spectrumRT)
+        xmlSpectrumIonCount = ET.SubElement(xmlSpectrum,"ionCount")
+        xmlSpectrumIonCount.text = str(self.spectrumIntensity)
+
         xmlPrecursor = ET.SubElement(xmlSpectrum,"precursor")
         xmlPrecursorMass = ET.SubElement(xmlPrecursor,"mass")
         xmlPrecursorMass.text = str(self.precursorMass)
@@ -246,6 +254,8 @@ def main(options):
     xmlParametersScorethreshold.text = str(options.scorethreshold)
 
     # score each spectrum
+    lowQualtiySpectra = 0
+    skippedSingleCharged = 0
     for spec in exp:
         if spec.getMSLevel() != 2:
             continue
@@ -256,17 +266,25 @@ def main(options):
             if s.precursorCharge > 1:
                 for peak in spec:
                     s.addPeak(peak.getMZ(),peak.getIntensity())
-                # make Ranking
-                s.makeRanking()
-                s.normIntensity()
-                for glycan in glycans:
-                    s.findGlycanScore(seriesCalc, glycan, float(options.tol), float(options.ionthreshold))
+                # check ionthreshold
+                if s.totalIntensity >= float(options.ionthreshold):
+                    # make Ranking
+                    s.makeRanking()
+                    s.normIntensity()
+                    for glycan in glycans:
+                        #s.findGlycanScore(seriesCalc, glycan, float(options.tol), float(options.ionthreshold))
+                        s.findGlycanScore(seriesCalc, glycan, float(options.tol), 0)
+                else:
+                    lowQualtiySpectra += 1
+            else:
+                skippedSingleCharged += 1
 
             logScore = s.calcTotalScore()
             s.logScore = logScore
             s.makeXMLOutput(xmlSpectra)
 
-            
+    print "skipped "+str(lowQualtiySpectra)+" low quality spectra"
+    print "skipped "+str(skippedSingleCharged)+" singly charged spectra"
     print "writing outputfile"
     xmlTree = ET.ElementTree(xmlRoot)
     f = file(options.outfile,"w")
