@@ -34,27 +34,28 @@ class IonSeriesCalculator:
         
         series = {}
         glycanMass = self.masses[glycan]
-        series["OxoniumIon"] = Ion(glycan+":OxoniumIon",glycanMass-self.masses["H2O"]+self.masses["H+"])
-        series["Fragment1"] = Ion(glycan+":Fragment1:",series["OxoniumIon"].mass-self.masses["H2O"],series["OxoniumIon"])
-        series["Fragment2"] = Ion(glycan+":Fragment2:",series["OxoniumIon"].mass-2*self.masses["H2O"],series["Fragment1"])
-        series["Fragment3"] = Ion(glycan+":Fragment3:",series["OxoniumIon"].mass-2*self.masses["H2O"]-self.masses["CH2O"],series["Fragment2"])
-        series["Fragment4"] = Ion(glycan+":Fragment4:",series["OxoniumIon"].mass-self.masses["CH2O"],series["OxoniumIon"])
-        series["Fragment5"] = Ion(glycan+":Fragment5:",series["OxoniumIon"].mass-2*self.masses["CH2O"],series["Fragment4"])
-        series["Fragment6"] = Ion(glycan+":Fragment6:",series["OxoniumIon"].mass-2*self.masses["CH2O"]-self.masses["H2O"],series["Fragment5"])
+        series["OxoniumIon"] = Ion(glycan+":OxoniumIon",glycanMass-self.masses["H2O"]+self.masses["H+"],1.0)
+        series["Fragment1"] = Ion(glycan+":Fragment1:",series["OxoniumIon"].mass-self.masses["H2O"],1.0,series["OxoniumIon"])
+        #series["Fragment2"] = Ion(glycan+":Fragment2:",series["OxoniumIon"].mass-2*self.masses["H2O"],series["Fragment1"])
+        #series["Fragment3"] = Ion(glycan+":Fragment3:",series["OxoniumIon"].mass-2*self.masses["H2O"]-self.masses["CH2O"],series["Fragment2"])
+        #series["Fragment4"] = Ion(glycan+":Fragment4:",series["OxoniumIon"].mass-self.masses["CH2O"],series["OxoniumIon"])
+        #series["Fragment5"] = Ion(glycan+":Fragment5:",series["OxoniumIon"].mass-2*self.masses["CH2O"],series["Fragment4"])
+        #series["Fragment6"] = Ion(glycan+":Fragment6:",series["OxoniumIon"].mass-2*self.masses["CH2O"]-self.masses["H2O"],series["Fragment5"])
         
         # multiple neutral losses
         for nr in range(1,nrNeutrallosses+1):
-            series["Neutralloss"+str(nr)] = Ion(glycan+":Neutralloss"+str(nr),precursorMass-(glycanMass-self.masses["H2O"])/float(precursorCharge),series["OxoniumIon"])
+            series["Neutralloss"+str(nr)] = Ion(glycan+":Neutralloss"+str(nr),precursorMass-nr*(glycanMass-self.masses["H2O"])/float(precursorCharge),float(precursorCharge),series["OxoniumIon"])
 
         for oxCharge in range(1,maxChargeOxoniumIon+1):
             if precursorCharge > oxCharge:
-                series["OxoniumLoss"+str(oxCharge)] = Ion(glycan+":OxoniumLoss"+str(oxCharge),(precursorMass*precursorCharge-oxCharge*series["OxoniumIon"].mass)/float((precursorCharge-oxCharge)),series["OxoniumIon"])
+                series["OxoniumLoss"+str(oxCharge)] = Ion(glycan+":OxoniumLoss"+str(oxCharge),(precursorMass*precursorCharge-oxCharge*series["OxoniumIon"].mass)/float((precursorCharge-oxCharge)),float(oxCharge),series["OxoniumIon"])
         return series
 
 
 class Ion:
-    def __init__(self,name,mass,parent=None):
+    def __init__(self,name,mass,charge,parent=None):
         self.name = name
+        self.charge = charge
         self.mass = mass
         self.counts = 0
         self.parent = parent
@@ -157,7 +158,22 @@ class Spectrum:
         if score.score > 0:
             self.glycanScores[glycan] = score
         return score
-
+    
+    def reevaluateScores(self,massDelta):
+        count = 0
+        masses = {"Hex":162.052,"HexNAc":203.079,"Fuc":146.058, "NeuAc":291.095}
+        for glycan in self.glycanScores:
+            score = self.glycanScores[glycan]
+            for ionname in score.ions:
+                ion = score.ions[ionname]
+                for peak in self.peaks:
+                    for newGlycan in masses:
+                        distance = masses[newGlycan]/float(ion.charge)
+                        if abs(abs(ion.mass-distance)-peak.mass) < massDelta:
+                            count += 1
+        return count
+                            #print "found one",ion.mass, peak.mass,distance
+    
 
     def calcTotalScore(self):
         maxScore = 0
@@ -168,6 +184,8 @@ class Spectrum:
         self.logScore = 10
         if maxScore > 0:
             self.logScore = -math.log(maxScore)/math.log(10)
+        if self.logScore < 2.5:
+            self.logScore -= self.reevaluateScores(0.1)/4.0
         return self.logScore
 
     def makeXMLOutput(self,xmlSpectra):
@@ -253,11 +271,14 @@ def main(options):
     xmlParametersScorethreshold = ET.SubElement(xmlParameters,"scorethreshold")
     xmlParametersScorethreshold.text = str(options.scorethreshold)
 
+
     # score each spectrum
     lowQualtiySpectra = 0
     skippedSingleCharged = 0
     for spec in exp:
         if spec.getMSLevel() != 2:
+            continue
+        if spec.size() == 0:
             continue
         # create spectrum
         for precursor in spec.getPrecursors(): # Multiple precurors will make native spectrum id nonunique!
@@ -267,7 +288,7 @@ def main(options):
                 for peak in spec:
                     s.addPeak(peak.getMZ(),peak.getIntensity())
                 # check ionthreshold
-                if s.totalIntensity >= float(options.ionthreshold):
+                if s.spectrumIntensity/float(spec.size()) >= float(options.ionthreshold):
                     # make Ranking
                     s.makeRanking()
                     s.normIntensity()
