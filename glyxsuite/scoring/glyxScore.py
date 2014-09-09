@@ -172,7 +172,8 @@ class Spectrum:
                         if abs(abs(ion.mass-distance)-peak.mass) < massDelta:
                             count += 1
         return count
-                            #print "found one",ion.mass, peak.mass,distance
+    
+
     
 
     def calcTotalScore(self):
@@ -184,8 +185,10 @@ class Spectrum:
         self.logScore = 10
         if maxScore > 0:
             self.logScore = -math.log(maxScore)/math.log(10)
-        if self.logScore < 2.5:
-            self.logScore -= self.reevaluateScores(0.1)/4.0
+        if self.reevaluateScores(0.2) == 0:
+            self.logScore += 0.1 
+        #if self.logScore < 3:
+        #    self.logScore -= self.reevaluateScores(0.3)/10.0
         return self.logScore
 
     def makeXMLOutput(self,xmlSpectra):
