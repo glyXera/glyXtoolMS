@@ -1,12 +1,14 @@
-from matplotlib import pyplot as plt
 class Histogram:
     
     def __init__(self,binwidth):
-        print "version 1.0"
+        from matplotlib import pyplot as plt
         self.bins = {}
         self.colors = {}
         self.binwidth = float(binwidth)
         self.maxValue = 0
+
+    def __version__(self):
+        return "0.0.1"
 
     def addSeries(self,series,label="",color="black"):
         if not label in self.bins:
@@ -62,9 +64,27 @@ class Histogram:
             else:
                 plt.bar(left,height,width=self.binwidth,bottom=bottom,label=label,color=self.colors[label]) 
 
-"""
-h = Histogram(0.2)
-h.addSeries([1,2,3],label="label1",color=color)
-h.plot(axis=plt,order=["label1"])
-plt.show()
-"""
+
+# --------------------------- Helper functions ------------------------------------ 
+
+def openDialog():
+    import Tkinter, tkFileDialog
+    root = Tkinter.Tk()
+    root.withdraw()
+
+    file_path = tkFileDialog.askopenfilename()
+    root.destroy()
+    return file_path
+
+
+def openOpenMSExperiment(path):
+    if not path.endswith(".mzML"):
+        raise Exception("not a .mzML file")
+    import pyopenms
+    print "loading experiment"
+    exp = pyopenms.MSExperiment()
+    fh = pyopenms.FileHandler()
+    fh.loadExperiment(path,exp)
+    print "loading finnished"
+    return exp
+
