@@ -1,5 +1,5 @@
 from nose.tools import *
-from glyxsuite.scoring.glyxScore import *
+from glyxsuite.scoring import *
 import os
 import shutil
 

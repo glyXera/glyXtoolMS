@@ -3,3 +3,4 @@ import reporter
 import scoring
 import tests
 import lib
+import deconvolution
