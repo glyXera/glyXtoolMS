@@ -6,6 +6,10 @@ import datetime
 def main(options):
     print "parsing glycan parameters:"
     glycans = options.glycanlist.split(" ")
+    if options.glycanlistOpt != "None":
+        glycans  += options.glycanlistOpt.split(",")
+    glycans = list(set(glycans))
+    print "glycanlist: ",glycans
 
     exp = glyxsuite.lib.openOpenMSExperiment(options.infile)
     """print "loading experiment"
@@ -16,11 +20,16 @@ def main(options):
 
     # Initialize IonSeriesCalculator
     seriesCalc = glyxsuite.scoring.IonSeriesCalculator()
-    # check validity of each glycan
+    """# check validity of each glycan
     for glycan in glycans:
         if not seriesCalc.hasGlycan(glycan):
             print "Cannot find glycan in SeriesCalculator, Aborting!"
             return
+"""
+    # add glycans to IonSeriesCalculator
+    print "searchign for glycans:"
+    for glycan in glycans:
+        print glycan, seriesCalc.addGlycan(glycan)
 
     # initialize output xml file
     xmlRoot = ET.Element("glyxXML")
@@ -67,7 +76,8 @@ def main(options):
                 for peak in spec:
                     s.addPeak(peak.getMZ(),peak.getIntensity())
                 # check ionthreshold
-                if s.spectrumIntensity/float(spec.size()) >= float(options.ionthreshold):
+                #if s.spectrumIntensity/float(spec.size()) >= float(options.ionthreshold):
+                if s.highestPeakIntensity > float(options.ionthreshold):
                     # make Ranking
                     s.makeRanking()
                     s.normIntensity()
@@ -99,6 +109,7 @@ def handle_args(argv=None):
     parser.add_argument("--in", dest="infile",help="File input")
     parser.add_argument("--out", dest="outfile",help="File output")
     parser.add_argument("--glycans", dest="glycanlist",help="Possible glycans as list")
+    parser.add_argument("--glycansOpt", dest="glycanlistOpt",help="Possible glycans as commaseparated strings")
     parser.add_argument("--tol", dest="tol",help="Mass tolerance in th",type=float)
     parser.add_argument("--ionthreshold", dest="ionthreshold",help="Threshold for reporter ions", type=int)
     parser.add_argument("--nrNeutralloss", dest="nrNeutralloss",help="Possible nr of Neutrallosses (default: 1)",type=int)

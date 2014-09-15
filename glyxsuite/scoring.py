@@ -1,6 +1,7 @@
 import pyopenms
 import math
 from lxml import etree as ET
+import re
 
 
 
@@ -23,6 +24,21 @@ class IonSeriesCalculator:
     def _appendMassList(self,name,mass):
         self.masses[name] = mass
 
+    def addGlycan(self,name):
+        if name in self.masses:
+            return self.masses[name]
+
+        mass = -self.masses["H2O"]
+        for sub  in re.findall("[A-z]+\d+",name):
+            glycanName = re.search("[A-z]+",sub).group()
+            amount = int(re.search("\d+",sub).group())
+            if not glycanName in self.masses:
+                raise Exception("SugarName "+glycanName+"is not defined!")
+            mass += self.masses[glycanName]
+        self.masses[name] = mass
+        return mass
+
+            
     def hasGlycan(self,glycan):
         if glycan in self.masses:
             return True
@@ -42,12 +58,14 @@ class IonSeriesCalculator:
         #series["Fragment6"] = Ion(glycan+":Fragment6:",series["OxoniumIon"].mass-2*self.masses["CH2O"]-self.masses["H2O"],series["Fragment5"])
         
         # multiple neutral losses
+        """
         for nr in range(1,nrNeutrallosses+1):
             series["Neutralloss"+str(nr)] = Ion(glycan+":Neutralloss"+str(nr),precursorMass-nr*(glycanMass-self.masses["H2O"])/float(precursorCharge),float(precursorCharge),series["OxoniumIon"])
 
         for oxCharge in range(1,maxChargeOxoniumIon+1):
             if precursorCharge > oxCharge:
                 series["OxoniumLoss"+str(oxCharge)] = Ion(glycan+":OxoniumLoss"+str(oxCharge),(precursorMass*precursorCharge-oxCharge*series["OxoniumIon"].mass)/float((precursorCharge-oxCharge)),float(oxCharge),series["OxoniumIon"])
+                """
         return series
 
 
@@ -114,19 +132,19 @@ class SpectrumGlyxScore:
         self.nrNeutrallosses = nrNeutrallosses
         self.maxChargeOxoniumIon = maxChargeOxoniumIon
         self.spectrumIntensity = 0
+        self.highestPeakIntensity = 0
         self.peaks = []
         self.totalIntensity = 0
         self.glycanScores = {}
         self.logScore = 10
-        #self.highestPeakIntensity = 0
         
     def addPeak(self,mass,intensity):
         p = Peak(mass,intensity)
         self.spectrumIntensity += intensity
-        #if intensity > self.highestPeakIntensity:
-        #    self.highestPeakIntensity = intensity
-        #else:
-        #    pass
+        if intensity > self.highestPeakIntensity:
+            self.highestPeakIntensity = intensity
+        else:
+            pass
         self.peaks.append(p)
         return p
 

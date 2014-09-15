@@ -130,6 +130,8 @@ class ProteinDigest:
         self._mod["carboxylation"] = 58.005479
         self._mod["oxidation"] = 15.884915
 
+        self._breakpoints = []
+
 
     def setCarbamidation(self,boolean):
         if boolean == True:
@@ -172,29 +174,34 @@ class ProteinDigest:
             masses.append(Peptide(sequence,mass,N_carbamidation,N_carboxylation,0))
         return masses
 
+    def newDigest(self):
+        self._breakpoints = []
         
-    def tryptic_digest(self,sequence,maxMissedCleavage):
-        
-        breakpoints = []
+    def add_tryptic_digest(self,sequence):
         i = 0
         while i < len(sequence):
             if sequence[i] == "R" or sequence[i] == "K":
                 if not (i+1 < len(sequence) and sequence[i+1] == "P"):
                     breakpoints.append(i)
             i += 1
-            
+           
+    def digest(self,sequence,maxMissedCleavage):
+        # clean up breakpoints
+        self._breakpoints = list(set(self._breakpoints))
+        self._breakpoints.sort()
+
         peptides = []
         start = -1
         i = 0
-        while i < len(breakpoints):
+        while i < len(self._breakpoints):
             for m in range(0,maxMissedCleavage+1):
-                if i+m >= len(breakpoints):
+                if i+m >= len(self._breakpoints):
                     break
-                stop = breakpoints[i+m]
+                stop = self._breakpoints[i+m]
                 sub = sequence[start+1:stop+1]
                 #digests.append((sub,self.calcPeptideMass(sub),m))
                 peptides.append(sub)
-            start = breakpoints[i]
+            start = self._breakpoints[i]
             i += 1
         
         return peptides
@@ -214,7 +221,9 @@ class ProteinDigest:
 
     def findGlycopeptides(self,sequence,maxMissedCleavage, glycosylationType=None):
         # a) make digest
-        peptides = self.tryptic_digest(sequence,maxMissedCleavage)
+        self.newDigest()
+        self.add_tryptic_digest(sequence)
+        peptides = self.digest(sequence,maxMissedCleavage)
         glycopeptides = []
         # b) search peptides with possible glycosylation site
         for peptide in peptides:
