@@ -270,8 +270,15 @@ class SpectrumGlyxScore:
                 xmlIon = ET.SubElement(xmlIons,"ion")
                 xmlIonName = ET.SubElement(xmlIon,"name")
                 xmlIonName.text = ionname
+                # get highest peak
+                highest = ion.peaks[0]
+                for peak in ion.peaks:
+                    if peak.intensity > highest.intensity:
+                        highest = peak
                 xmlIonMass = ET.SubElement(xmlIon,"mass")
-                xmlIonMass.text = str(ion.mass)
+                xmlIonMass.text = str(highest.mass)
+                xmlIonIntensity = ET.SubElement(xmlIon,"intensity")
+                xmlIonIntensity.text = str(highest.intensity)
                 
             
         
