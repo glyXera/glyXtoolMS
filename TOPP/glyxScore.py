@@ -27,7 +27,7 @@ def main(options):
             return
 """
     # add glycans to IonSeriesCalculator
-    print "searchign for glycans:"
+    print "adding glycans:"
     for glycan in glycans:
         print glycan, seriesCalc.addGlycan(glycan)
 

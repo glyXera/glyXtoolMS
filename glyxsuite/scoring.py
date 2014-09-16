@@ -9,25 +9,53 @@ class IonSeriesCalculator:
 
     def __init__(self):
         self.masses = {}
-        self.masses["H+"] = 1.00727
-        self.masses["H2O"] = 18.01056
-        self.masses["CH2O"] = 30.01056
-        self.masses["Hex"] = 180.06336
-        self.masses["HexNAc"] = 221.08996
-        self.masses["Fuc"] = 164.06846
-        self.masses["NeuAc"] = 309.10596
-        self.masses["NeuGc"] = 325.10086
-        self.masses["HexHexNAc"] = 383.14276
-        self.masses["HexNAcHexNeuAc"] = self.masses["HexNAc"]+self.masses["Hex"]+self.masses["NeuAc"]-self.masses["H2O"]
-        self.masses["HexNeuAc"] = self.masses["Hex"]+self.masses["NeuAc"]-self.masses["H2O"]
+        self.masses["h+"] = 1.00727
+        self.masses["h2o"] = 18.01056
+        self.masses["ch2o"] = 30.01056
+        self.masses["hex"] = 180.06336
+        self.masses["hexnac"] = 221.08996
+        self.masses["fuc"] = 164.06846
+        self.masses["neuac"] = 309.10596
+        self.masses["neugc"] = 325.10086
+        
+        #self.masses["HexHexNAc"] = 383.14276
+        #self.masses["HexNAcHexNeuAc"] = self.masses["HexNAc"]+self.masses["Hex"]+self.masses["NeuAc"]-self.masses["H2O"]
+        #self.masses["HexNeuAc"] = self.masses["Hex"]+self.masses["NeuAc"]-self.masses["H2O"]
 
+        self.glycans = {}
+        
     def _appendMassList(self,name,mass):
         self.masses[name] = mass
 
     def addGlycan(self,name):
-        if name in self.masses:
-            return self.masses[name]
+        if name in self.glycans:
+            return self.glycans[name]
 
+
+        symbols = re.findall("(\+|\-)?[A-z\d\w]+",name)
+        sugars = re.findall("[A-z\d\w]+",name)
+        if len(symbols) != len(sugars):
+            raise Exception("Error in parsing glycan name!")
+        
+        mass = 0
+        for i in range(0,len(symbols)):
+            prefix = symbols[i]
+            sugar = sugars[i].lower()
+            if not sugar in self.masses:
+                raise Exception("SugarName "+sugars[i]+" is not defined!")
+            if prefix == "":
+                mass += self.masses[sugar]
+            elif prefix == "+":
+                mass += self.masses[sugar]-self.masses["h2o"]
+            elif prefix == "-":
+                mass -= self.masses[sugar]
+            else:
+                raise Exception("Error: Unknown prefix in glycan name parsing, only + or - allowed!")
+        self.glycans[name] = mass
+        return mass
+                           
+                       
+    """
         mass = -self.masses["H2O"]
         for sub  in re.findall("[A-z]+\d+",name):
             glycanName = re.search("[A-z]+",sub).group()
@@ -36,7 +64,7 @@ class IonSeriesCalculator:
                 raise Exception("SugarName "+glycanName+"is not defined!")
             mass += self.masses[glycanName]
         self.masses[name] = mass
-        return mass
+        return mass"""
 
             
     def hasGlycan(self,glycan):
@@ -48,9 +76,12 @@ class IonSeriesCalculator:
     def calcSeries(self,glycan,precursorMass, precursorCharge, nrNeutrallosses,maxChargeOxoniumIon):
         
         series = {}
-        glycanMass = self.masses[glycan]
-        series["OxoniumIon"] = Ion(glycan+":OxoniumIon",glycanMass-self.masses["H2O"]+self.masses["H+"],1.0)
-        series["Fragment1"] = Ion(glycan+":Fragment1:",series["OxoniumIon"].mass-self.masses["H2O"],1.0,series["OxoniumIon"])
+        glycanMass = self.glycans[glycan]
+        ion = Ion(glycan,glycanMass-self.masses["h2o"]+self.masses["h+"],1.0)
+        series[ion.mass] = ion
+
+        #series["OxoniumIon"] = Ion(glycan+":OxoniumIon",glycanMass-self.masses["H2O"]+self.masses["H+"],1.0)
+        #series["Fragment1"] = Ion(glycan+":Fragment1:",series["OxoniumIon"].mass-self.masses["H2O"],1.0,series["OxoniumIon"])
         #series["Fragment2"] = Ion(glycan+":Fragment2:",series["OxoniumIon"].mass-2*self.masses["H2O"],series["Fragment1"])
         #series["Fragment3"] = Ion(glycan+":Fragment3:",series["OxoniumIon"].mass-2*self.masses["H2O"]-self.masses["CH2O"],series["Fragment2"])
         #series["Fragment4"] = Ion(glycan+":Fragment4:",series["OxoniumIon"].mass-self.masses["CH2O"],series["OxoniumIon"])
