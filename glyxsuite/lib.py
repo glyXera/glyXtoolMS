@@ -182,7 +182,7 @@ class ProteinDigest:
         while i < len(sequence):
             if sequence[i] == "R" or sequence[i] == "K":
                 if not (i+1 < len(sequence) and sequence[i+1] == "P"):
-                    breakpoints.append(i)
+                    self._breakpoints.append(i)
             i += 1
            
     def digest(self,sequence,maxMissedCleavage):
