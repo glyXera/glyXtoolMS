@@ -78,7 +78,7 @@ class IonSeriesCalculator:
         series = {}
         glycanMass = self.glycans[glycan]
         ion = Ion(glycan,glycanMass-self.masses["h2o"]+self.masses["h+"],1.0)
-        series[ion.mass] = ion
+        series["OxoniumIon"] = ion
 
         #series["OxoniumIon"] = Ion(glycan+":OxoniumIon",glycanMass-self.masses["H2O"]+self.masses["H+"],1.0)
         #series["Fragment1"] = Ion(glycan+":Fragment1:",series["OxoniumIon"].mass-self.masses["H2O"],1.0,series["OxoniumIon"])
@@ -89,14 +89,14 @@ class IonSeriesCalculator:
         #series["Fragment6"] = Ion(glycan+":Fragment6:",series["OxoniumIon"].mass-2*self.masses["CH2O"]-self.masses["H2O"],series["Fragment5"])
         
         # multiple neutral losses
-        """
+        
         for nr in range(1,nrNeutrallosses+1):
-            series["Neutralloss"+str(nr)] = Ion(glycan+":Neutralloss"+str(nr),precursorMass-nr*(glycanMass-self.masses["H2O"])/float(precursorCharge),float(precursorCharge),series["OxoniumIon"])
+            series["Neutralloss"+str(nr)] = Ion(glycan+":Neutralloss"+str(nr),precursorMass-nr*(glycanMass-self.masses["h2o"])/float(precursorCharge),float(precursorCharge),series["OxoniumIon"])
 
         for oxCharge in range(1,maxChargeOxoniumIon+1):
             if precursorCharge > oxCharge:
                 series["OxoniumLoss"+str(oxCharge)] = Ion(glycan+":OxoniumLoss"+str(oxCharge),(precursorMass*precursorCharge-oxCharge*series["OxoniumIon"].mass)/float((precursorCharge-oxCharge)),float(oxCharge),series["OxoniumIon"])
-                """
+                
         return series
 
 
