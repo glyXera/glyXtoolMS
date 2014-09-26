@@ -113,7 +113,8 @@ class Peptide:
         self.N_carboxylation = N_carboxylation
         self.N_oxidation = N_oxidation
         self.GlycosylationSiteN = False
-        self.GlycosylationSiteO = False        
+        self.GlycosylationSiteO = False
+
                 
 
 class ProteinDigest:
@@ -131,6 +132,7 @@ class ProteinDigest:
         self._mod["oxidation"] = 15.884915
 
         self._breakpoints = []
+        self._sequence = ""
 
 
     def setCarbamidation(self,boolean):
@@ -155,7 +157,7 @@ class ProteinDigest:
         mass = self._aminoAcids.calcPeptideMass(sequence)
         # count Nr of Cysteine
         c = sequence.count("C")
-        # add carbamidation
+        # add carbamidation (Iodacteamide treatment)
         N_carbamidation = 0
         N_carboxylation = 0
         if self._carbamidation:
@@ -174,18 +176,41 @@ class ProteinDigest:
             masses.append(Peptide(sequence,mass,N_carbamidation,N_carboxylation,0))
         return masses
 
-    def newDigest(self):
+    def newDigest(self,sequence):
+        self._sequence = sequence
         self._breakpoints = []
+
+    def _checkSequenceSet(self):
+        if self._sequence == "":
+            raise Exception("Sequence not set, please use 'newDigest(sequence)' to initialize!")
         
-    def add_tryptic_digest(self,sequence):
+    def add_tryptic_digest(self):
+        # cleaves C-terminal side of K or R, except if P is C-term to K or R
+        self._checkSequenceSet()
         i = 0
-        while i < len(sequence):
-            if sequence[i] == "R" or sequence[i] == "K":
-                if not (i+1 < len(sequence) and sequence[i+1] == "P"):
+        while i < len(self._sequence):
+            if self._sequence[i] == "R" or self._sequence[i] == "K":
+                if not (i+1 < len(self._sequence) and self._sequence[i+1] == "P"):
                     self._breakpoints.append(i)
             i += 1
+
+
+    def add_AspN_digest(self):
+        # cleaves N-terminal side of D
+        self._checkSequenceSet()
+        i = 1
+        while i < len(self._sequence):
+            if self._sequence[i] == "D":
+                self._breakpoints.append(i-1)
+            i += 1
            
-    def digest(self,sequence,maxMissedCleavage):
+    def digest(self,maxMissedCleavage):
+        # check if breakpoints exists
+        #if len(self._breakpoints) == 0:
+        #    raise Exception("No digest added! Please use 'add_tryptic_digest()' or similar beforehand!")
+        # Add  end
+        #self._breakpoints.append(0)
+        self._breakpoints.append(len(self._sequence)-1)
         # clean up breakpoints
         self._breakpoints = list(set(self._breakpoints))
         self._breakpoints.sort()
@@ -198,7 +223,7 @@ class ProteinDigest:
                 if i+m >= len(self._breakpoints):
                     break
                 stop = self._breakpoints[i+m]
-                sub = sequence[start+1:stop+1]
+                sub = self._sequence[start+1:stop+1]
                 #digests.append((sub,self.calcPeptideMass(sub),m))
                 peptides.append(sub)
             start = self._breakpoints[i]
@@ -221,9 +246,9 @@ class ProteinDigest:
 
     def findGlycopeptides(self,sequence,maxMissedCleavage, glycosylationType=None):
         # a) make digest
-        self.newDigest()
-        self.add_tryptic_digest(sequence)
-        peptides = self.digest(sequence,maxMissedCleavage)
+        #self.newDigest()
+        #self.add_tryptic_digest(sequence)
+        peptides = self.digest(maxMissedCleavage)
         glycopeptides = []
         # b) search peptides with possible glycosylation site
         for peptide in peptides:
@@ -257,15 +282,15 @@ class GlycanMass:
 
 # --------------------------- Helper functions ------------------------------------ 
 
-def openDialog():
+def openDialog(path = "."):
     import Tkinter, tkFileDialog
     root = Tkinter.Tk()
     root.withdraw()
 
-    file_path = tkFileDialog.askopenfilename()
+    file_path = tkFileDialog.askopenfilename(initialdir=path)
     root.destroy()
     return file_path
-
+  
 
 def openOpenMSExperiment(path):
     if not path.endswith(".mzML"):
