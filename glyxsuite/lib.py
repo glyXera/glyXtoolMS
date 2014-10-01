@@ -106,14 +106,18 @@ class AminoAcids:
 
 class Peptide:
     
-    def __init__(self,sequence,mass,N_carbamidation, N_carboxylation,N_oxidation):
+    def __init__(self,sequence,mass,N_carbamidation=0, N_carboxylation=0,N_acrylamide=0,N_oxidation=0):
         self.sequence = sequence
         self.mass = mass
         self.N_carbamidation = N_carbamidation
         self.N_carboxylation = N_carboxylation
+        self.N_acrylamide = N_acrylamide
         self.N_oxidation = N_oxidation
         self.GlycosylationSiteN = False
         self.GlycosylationSiteO = False
+
+    def toString(self):
+        return self.sequence+" CAM:"+str(self.N_carbamidation)+" CM:"+str(self.N_carboxylation)+" PAM:"+str(self.N_acrylamide)+" MSO:"+str(self.N_oxidation)
 
                 
 
@@ -124,12 +128,14 @@ class ProteinDigest:
         self._aminoAcids = AminoAcids()
         self._carbamidation = False
         self._carboxylation = False
-        self._oxidation = False                             
+        self._oxidation = False
+        self._acrylamideAdducts = False
 
         self._mod = {}
-        self._mod["carbamidation"] = 57.021464 
-        self._mod["carboxylation"] = 58.005479
-        self._mod["oxidation"] = 15.884915
+        self._mod["carbamidation"] = 57.021464 # Cys_CAM Idoacetamide treatment
+        self._mod["carboxylation"] = 58.005479 # Cys_CM, Iodoacetic acid treatment
+        self._mod["acrylamideAdduct"] = 71.03712 # Cys_PAM Acrylamide Adduct
+        self._mod["oxidation"] = 15.884915 # MSO
 
         self._breakpoints = []
         self._sequence = ""
@@ -142,24 +148,59 @@ class ProteinDigest:
         else:
             self._carbamidation = False
 
-    def setCarboxylation(self,boolean):
+    def setCarboxylation(self,boolean): # Iodoacetic acid
         if boolean == True:
             self._carboxylation = True
             self._carbamidation = False
         else:
             self._carboxylation = False
 
+    def setAcrylamideAdducts(self,boolean):
+        self._acrylamideAdducts = boolean
+            
     def setOxidation(self,boolean):
         self._oxidation = boolean
 
     def calcPeptideMasses(self,sequence):
         
-        mass = self._aminoAcids.calcPeptideMass(sequence)
+        peptideMass = self._aminoAcids.calcPeptideMass(sequence)
         # count Nr of Cysteine
         c = sequence.count("C")
+        # count Nr of Methionine
+        m = sequence.count("M")
+
+        N_Cys_CAM = 0
+        N_Cys_CM = 0
+        N_Cys_PAM = 0
+        N_MSO = m
+        if self._carbamidation:
+            N_Cys_CAM = c
+        elif self._carboxylation:
+            N_Cys_CM = c
+        if self._acrylamideAdducts:
+            N_Cys_PAM = c
+        
+        # make permutations
+        masses = []
+        for cys_CAM in range(0,N_Cys_CAM+1):
+            for cys_CM in range(0,N_Cys_CM+1):
+                for cys_PAM in range(0,N_Cys_PAM+1):
+                    # check nr of modified cysteine
+                    if cys_CAM+cys_CM+cys_PAM > c:
+                        continue
+                    for MSO in range(0,N_MSO+1):
+                        mass = peptideMass + cys_CAM*self._mod["carbamidation"]
+                        mass += cys_CM*self._mod["carboxylation"]
+                        mass += cys_PAM*self._mod["acrylamideAdduct"]
+                        mass += MSO*self._mod["oxidation"]
+                        masses.append(Peptide(sequence,mass,cys_CAM,cys_CM,cys_PAM,MSO))
+        
+
+        """
         # add carbamidation (Iodacteamide treatment)
         N_carbamidation = 0
         N_carboxylation = 0
+        N_
         if self._carbamidation:
             mass += c*self._mod["carbamidation"]
             N_carbamidation = c
@@ -174,6 +215,7 @@ class ProteinDigest:
                 masses.append(Peptide(sequence,mass+m*self._mod["oxidation"],N_carbamidation,N_carboxylation,m))
         else:
             masses.append(Peptide(sequence,mass,N_carbamidation,N_carboxylation,0))
+        """
         return masses
 
     def newDigest(self,sequence):
