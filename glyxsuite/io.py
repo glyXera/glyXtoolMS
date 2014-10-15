@@ -119,18 +119,124 @@ class GlyxXMLParameters:
     def getGlycans(self):
         return self._glycans
 
+class GlyxXMLFeature:
+    
+    def __init__(self):
+        self._id = 0
+        self._mz = 0.0
+        self._rt = 0.0
+        self._intensity = 0.0
+        self._charge = 0
+        self._minRT = 0.0
+        self._maxRT = 0.0
+        self._minMZ = 0.0
+        self._maxMZ = 0.0
+        self._spectraIds = []
+        
+    def setId(self,id):
+        self._id = id
+    
+    def getId(self):
+        return self._id
+        
+    def setMZ(self,mz):
+        self._mz = mz
+        
+    def getMZ(self):
+        return self._mz
+        
+    def setIntensity(self,intensity):
+        self._intensity = intensity
+        
+    def getIntensity(self):
+        return self._intensity        
+
+    def setRT(self,rt):
+        self._rt = rt
+        
+    def getRT(self):
+        return self._rt
+        
+    def setCharge(self,charge):
+        self._charge = charge
+    
+    def getCharge(self):
+        return self._charge
+
+    def setBoundingBox(self,minRT,maxRT,minMZ,maxMZ):
+        self._minRT = minRT
+        self._maxRT = maxRT
+        self._minMZ = minMZ
+        self._maxMZ = maxMZ
+        
+    def getBoundingBox(self):
+        return self._minRT,self._maxRT,self._minMZ,self._maxMZ
+ 
+    def addSpectrumId(self,spectrumId):
+        self._spectraIds.append(spectrumId)
+               
+    def getSpectraIds(self):
+        return self._spectraIds
+
+
 class GlyxXMLFile:
     # Input/Output file of glyxXML file
     def __init__(self):
         self.parameters = GlyxXMLParameters()
         self.spectra = []
+        self.features = []
 
+    def _parseParameters(self,xmlParameters):
+        timestamp = xmlParameters.find("./timestamp").text
+        tolerance = float(xmlParameters.find("./tolerance").text)
+        ionThreshold = int(xmlParameters.find("./ionthreshold").text)
+        nrNeutrallosses = int(xmlParameters.find("./nrNeutrallosses").text)
+        maxOxoniumCharge = int(xmlParameters.find("./maxOxoniumionCharge").text)
+        scoreThreshold = float(xmlParameters.find("./scorethreshold").text)
+        glycans = []
+        for glycanElement in xmlParameters.findall("./glycans/glycan"):
+            glycans.append(glycanElement.text)
+            
+        parameters = GlyxXMLParameters()
+        parameters.setTimestamp(timestamp)
+        parameters.setMassTolerance(tolerance)
+        parameters.setIonThreshold(ionThreshold)
+        parameters.setNrNeutrallosses(nrNeutrallosses)
+        parameters.setMaxOxoniumCharge(maxOxoniumCharge)
+        parameters.setScoreThreshold(scoreThreshold)
+        parameters.setGlycanList(glycans)
+        
+        return parameters
+        
+    def _parseSpectra(self,xmlSpectra):
+        spectra = []
+        for s in xmlSpectra:
+            spectrum = GlyxXMLSpectrum()
+            nativeId = s.find("./nativeId").text
+            spectrum.setNativeId(nativeId)
+            ionCount = float(s.find("./ionCount").text)
+            spectrum.setIonCount(ionCount)
+            logScore = float(s.find("./logScore").text)
+            spectrum.setLogScore(logScore)
+            rt = float(s.find("./rt").text)
+            spectrum.setRT(rt)
+            precursor_mass= float(s.find("./precursor/mass").text)
+            precursor_charge= int(s.find("./precursor/charge").text)
+            spectrum.setPrecursor(precursor_mass,precursor_charge)
+            for score in s.findall("./scores/score"):
+                glycan = score.find("./glycan").text
+                for ion in score.findall("./ions/ion"):
+                    ionName = ion.find("./name").text
+                    ionMass = float(ion.find("./mass").text)
+                    ionIntensity = float(ion.find("./intensity").text)
+                    spectrum.addIon(glycan,ionName,ionMass,ionIntensity)
 
-    def writeToFile(self,path):
-        xmlRoot = ET.Element("glyxXML")
-        xmlParameters = ET.SubElement(xmlRoot,"parameters")
-        xmlSpectra = ET.SubElement(xmlRoot,"spectra")
+            spectra.append(spectrum)
+        return spectra
+        
 
+     
+    def _writeParameters(self,xmlParameters):
         # write search parameters
         xmlParametersDate = ET.SubElement(xmlParameters,"timestamp")
         xmlParametersDate.text = str(self.parameters.getTimestamp())
@@ -154,8 +260,8 @@ class GlyxXMLFile:
 
         xmlParametersScorethreshold = ET.SubElement(xmlParameters,"scorethreshold")
         xmlParametersScorethreshold.text = str(self.parameters.getScoreThreshold())
-
-        # write spectra
+        
+    def _writeSpectra(self,xmlSpectra):
         for spectrum in self.spectra:
             xmlSpectrum = ET.SubElement(xmlSpectra,"spectrum")
             xmlSpectrumNativeId = ET.SubElement(xmlSpectrum,"nativeId")
@@ -188,7 +294,80 @@ class GlyxXMLFile:
                     xmlIonMass.text = str(ions[glycan][ionName]["mass"])
                     xmlIonIntensity = ET.SubElement(xmlIon,"intensity")
                     xmlIonIntensity.text = str(ions[glycan][ionName]["intensity"])
-   
+                    
+    def _writeFeatures(self,xmlFeatures):
+        for feature in self.features:
+            xmlFeature = ET.SubElement(xmlFeatures,"feature")
+            
+            xmlFeatureId = ET.SubElement(xmlFeature,"id")
+            xmlFeatureId.text = str(feature.getId())
+            
+            xmlFeatureRT = ET.SubElement(xmlFeature,"rt")
+            xmlFeatureRT.text = str(feature.getRT())
+            
+            xmlFeatureMZ = ET.SubElement(xmlFeature,"mz")
+            xmlFeatureMZ.text = str(feature.getMZ())
+            
+            xmlFeatureIntensity = ET.SubElement(xmlFeature,"intensity")
+            xmlFeatureIntensity.text = str(feature.getIntensity())
+            
+            xmlFeatureCharge = ET.SubElement(xmlFeature,"charge")
+            xmlFeatureCharge.text = str(feature.getCharge())
+            
+            minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
+            
+            xmlFeatureMinRT = ET.SubElement(xmlFeature,"minRT")
+            xmlFeatureMinRT.text = str(minRT)               
+            
+            xmlFeatureMaxRT = ET.SubElement(xmlFeature,"maxRT")
+            xmlFeatureMaxRT.text = str(maxRT)
+            
+            xmlFeatureMinMZ = ET.SubElement(xmlFeature,"minMZ")
+            xmlFeatureMinMZ.text = str(minMZ)               
+            
+            xmlFeatureMaxMZ = ET.SubElement(xmlFeature,"maxMZ")
+            xmlFeatureMaxMZ.text = str(maxMZ)
+            
+            xmlFeatureSpectraIds = ET.SubElement(xmlFeature,"spectraIds")
+            
+            for spectrumId in feature.getSpectraIds():
+                xmlFeatureSpectraId = ET.SubElement(xmlFeatureSpectraIds,"id")
+                xmlFeatureSpectraId.text = str(spectrumId)
+                
+                
+    def _parseFeatures(self,xmlFeatures):
+        features = []
+        for xmlFeature in xmlFeatures:
+            feature = GlyxXMLFeature()
+            feature.setId(int(xmlFeature.find("./id").text))
+            feature.setRT(float(xmlFeature.find("./rt").text))
+            feature.setMZ(float(xmlFeature.find("./mz").text))
+            feature.setIntensity(float(xmlFeature.find("./intensity").text))
+            feature.setCharge(int(xmlFeature.find("./charge").text))
+            
+            minRT = float(xmlFeature.find("./minRT").text)
+            maxRT = float(xmlFeature.find("./maxRT").text)
+            minMZ = float(xmlFeature.find("./minMZ").text)
+            maxMZ = float(xmlFeature.find("./maxMZ").text)
+            
+            feature.setBoundingBox(minRT,maxRT,minMZ,maxMZ)
+            for spectrumId in xmlFeature.findall("./spectraIds/id"):
+                feature.addSpectrumId(spectrumId.text)
+            features.append(feature)
+            
+        return features
+       
+    def writeToFile(self,path):
+        xmlRoot = ET.Element("glyxXML")
+        xmlParameters = ET.SubElement(xmlRoot,"parameters")
+        xmlSpectra = ET.SubElement(xmlRoot,"spectra")
+        xmlFeatures = ET.SubElement(xmlRoot,"features")
+        # write parameters
+        self._writeParameters(xmlParameters)
+        # write spectra
+        self._writeSpectra(xmlSpectra)
+        # write features
+        self._writeFeatures(xmlFeatures)
         # writing to file
         xmlTree = ET.ElementTree(xmlRoot)
         f = file(path,"w")
@@ -200,55 +379,16 @@ class GlyxXMLFile:
         f = file(path,"r")
         root = ET.fromstring(f.read())
         f.close()
-
         # read parameters 
-        p = root.find(".//parameters")
-        timestamp = p.find("./timestamp").text
-        tolerance = float(p.find("./tolerance").text)
-        ionThreshold = int(p.find("./ionthreshold").text)
-        nrNeutrallosses = int(p.find("./nrNeutrallosses").text)
-        maxOxoniumCharge = int(p.find("./maxOxoniumionCharge").text)
-        scoreThreshold = float(p.find("./scorethreshold").text)
-        glycans = []
-        for glycanElement in p.findall("./glycans/glycan"):
-            glycans.append(glycanElement.text)
-            
-        parameters = GlyxXMLParameters()
-        parameters.setTimestamp(timestamp)
-        parameters.setMassTolerance(tolerance)
-        parameters.setIonThreshold(ionThreshold)
-        parameters.setNrNeutrallosses(nrNeutrallosses)
-        parameters.setMaxOxoniumCharge(maxOxoniumCharge)
-        parameters.setScoreThreshold(scoreThreshold)
-        parameters.setGlycanList(glycans)
-
-        spectra = []
-        for s in root.findall("./spectra/spectrum"):
-            spectrum = GlyxXMLSpectrum()
-            
-            nativeId = s.find("./nativeId").text
-            spectrum.setNativeId(nativeId)
-            ionCount = float(s.find("./ionCount").text)
-            spectrum.setIonCount(ionCount)
-            logScore = float(s.find("./logScore").text)
-            spectrum.setLogScore(logScore)
-            rt = float(s.find("./rt").text)
-            spectrum.setRT(rt)
-            precursor_mass= float(s.find("./precursor/mass").text)
-            precursor_charge= int(s.find("./precursor/charge").text)
-            spectrum.setPrecursor(precursor_mass,precursor_charge)
-            for score in s.findall("./scores/score"):
-                glycan = score.find("./glycan").text
-                for ion in score.findall("./ions/ion"):
-                    ionName = ion.find("./name").text
-                    ionMass = float(ion.find("./mass").text)
-                    ionIntensity = float(ion.find("./intensity").text)
-                    spectrum.addIon(glycan,ionName,ionMass,ionIntensity)
-
-            spectra.append(spectrum)
+        parameters = self._parseParameters(root.find(".//parameters"))
+        # parse spectra
+        spectra = self._parseSpectra(root.findall("./spectra/spectrum"))
+        # parse features
+        features = self._parseFeatures(root.findall("./features/feature"))
         # assign data to object
         self.parameters = parameters
         self.spectra = spectra
+        self.features = features
 
     def setParameters(self,parameters):
         self.parameters = parameters
@@ -258,6 +398,9 @@ class GlyxXMLFile:
     
     def addSpectrum(self,glyxXMLSpectrum):
         self.spectra.append(glyxXMLSpectrum)
+        
+    def addFeature(self,glyxXMLFeature):
+        self.features.append(glyxXMLFeature)
 
 
     
