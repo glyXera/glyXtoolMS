@@ -1,0 +1,48 @@
+<ttd>
+	<tool status="external">
+		<category>GlyxBox</category>
+		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
+		<type>GlycoeptideDigest</type>
+		// description of the wrapper
+		<external>
+      <text>
+        <onstartup>Startig GlyxBox - GlycoeptideDigest</onstartup>
+        <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
+        <onfinish>glyxFeatureExtractor sucessfull</onfinish>
+      </text>    
+		  // currently disregarded by TOPPAS, but might become useful
+		  <e_category>PeptideDigestor</e_category>
+		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
+		  <cloptions> "%1"/GlycopeptideDigest.py --inFasta "%2" --out "%3" --enzymes "%4" --cystTreatment "%5" --modifications "%6" --glycosylation "%7" --missedCleavageSites "%8"</cloptions>
+		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
+		  <path>/afs/mpi-magdeburg.mpg.de/data/bpt/personnel_folders/MarkusPioch/software/Envs/glyxbox/bin/python</path>
+      // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
+      // and thus starting the tool from somewhere else might actually lead to trouble
+      // use only real paths here (no placeholders like %TMP)
+      <workingdirectory>.</workingdirectory>
+		  // these mappings connect input parameters (from the 'ini_param' section below) and the command line options of your tool
+		  // any INI parameter can be referenced using %%'param_name', e.g. %%in
+		  // additionally you can use %TMP and %BASENAME[X] to get the current temp directory to store data, or the basename of X
+		  <mappings>
+			<mapping id="1" cl="%%scriptpath" />
+			<mapping id="2" cl="%%inFasta" />
+			<mapping id="3" cl="%%out" />
+			<mapping id="4" cl="%%enzymes" />
+            <mapping id="5" cl="%%cystTreatment" />
+            <mapping id="6" cl="%%modifications" />
+            <mapping id="7" cl="%%glycosylation" />
+            <mapping id="8" cl="%%missedCleavageSites" />                                               			
+		  </mappings>
+		  <ini_param>
+			<ITEM name="scriptpath" value="." type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
+			<ITEM name="inFasta" value="" type="string" tags="input file" restrictions="*.fasta" description="File input Proteinsequences, only .fasta allowed"/>
+			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.glycopep" description="File output peptide sequence file .glycopep"/>
+            <ITEMLIST name="enzymes" value="[]" type="string" restrictions="Trypsin,AspN" description="Digestion enzymes"/>
+            <ITEM name="cystTreatment" value="None" type="string" restrictions="None,Iodacetic acid,Iodoacetamide" description="Cystein treatment (C)"/>
+            <ITEMLIST name="modifications" value="[]" type="string" restrictions="Oxidation(M),AcrylamideAdduct(C)" description="variable modifications"/>
+            <ITEMLIST name="glycosylation" value="[]" type="string" restrictions="N-Glycosylation,O-Glycosylation" description="glycosylation"/>
+            <ITEM name="missedCleavageSites" value="0" type="int" description="maximum missed cleavage sites"/>
+		  </ini_param>
+		</external>
+	</tool>
+</ttd>

@@ -1,7 +1,7 @@
 import re    
 from matplotlib import pyplot as plt
-
-
+from itertools import product 
+import copy
 
 class Histogram:
     
@@ -106,16 +106,18 @@ class AminoAcids:
 
 class Peptide:
     
-    def __init__(self,sequence,mass,N_carbamidation=0, N_carboxylation=0,N_acrylamide=0,N_oxidation=0):
-        self.sequence = sequence
+    def __init__(self,peptideSequence = "",mass = 0.0, start=-1, end = -1, N_carbamidation=0,N_carboxylation=0,N_acrylamide=0,N_oxidation=0,glycosylationSites=[]):
+        self.sequence = peptideSequence
+        self.start = start
+        self.end = end
         self.mass = mass
         self.N_carbamidation = N_carbamidation
         self.N_carboxylation = N_carboxylation
         self.N_acrylamide = N_acrylamide
         self.N_oxidation = N_oxidation
-        self.GlycosylationSiteN = False
-        self.GlycosylationSiteO = False
-
+        self.glycosylationSites = list(glycosylationSites) # make copy of this list, otherwise leads to weird behaviour where the object pointer occurs in several peptides
+        
+    
     def toString(self):
         return self.sequence+" CAM:"+str(self.N_carbamidation)+" CM:"+str(self.N_carboxylation)+" PAM:"+str(self.N_acrylamide)+" MSO:"+str(self.N_oxidation)
 
@@ -138,7 +140,7 @@ class ProteinDigest:
         self._mod["oxidation"] = 15.884915 # MSO
 
         self._breakpoints = []
-        self._sequence = ""
+        self._proteinSequence = ""
 
 
     def setCarbamidation(self,boolean):
@@ -161,9 +163,26 @@ class ProteinDigest:
     def setOxidation(self,boolean):
         self._oxidation = boolean
 
-    def calcPeptideMasses(self,sequence):
+    def calcPeptideMasses(self,peptide):
+
+        
+        try:
+            sequence = peptide.sequence
+        except AttributeError:
+            raise Exception("missing attribute 'sequence'! (String)")
+
+        try:
+            start = peptide.start
+        except AttributeError:
+            raise Exception("missing attribute 'start'! (Integer)")
+            
+        try:
+            end = peptide.end
+        except AttributeError:
+            raise Exception("missing attribute 'end'! (Integer)")
         
         peptideMass = self._aminoAcids.calcPeptideMass(sequence)
+        
         # count Nr of Cysteine
         c = sequence.count("C")
         # count Nr of Methionine
@@ -172,16 +191,37 @@ class ProteinDigest:
         N_Cys_CAM = 0
         N_Cys_CM = 0
         N_Cys_PAM = 0
-        N_MSO = m
-        if self._carbamidation:
+        N_MSO = 0
+        if self._carbamidation == True:
             N_Cys_CAM = c
-        elif self._carboxylation:
+        elif self._carboxylation == True:
             N_Cys_CM = c
-        if self._acrylamideAdducts:
+        if self._acrylamideAdducts == True:
             N_Cys_PAM = c
-        
+        if self._oxidation == True:
+            N_MSO = m
         # make permutations
         masses = []
+        for cys_CAM,cys_CM,cys_PAM,MSO in product(range(0,N_Cys_CAM+1),
+                                                   range(0,N_Cys_CM+1),
+                                                   range(0,N_Cys_PAM+1),
+                                                   range(0,N_MSO+1)):
+            if cys_CAM+cys_CM+cys_PAM > c:
+                continue 
+            mass = peptideMass + cys_CAM*self._mod["carbamidation"]
+            mass += cys_CM*self._mod["carboxylation"]
+            mass += cys_PAM*self._mod["acrylamideAdduct"]
+            mass += MSO*self._mod["oxidation"]
+            
+            newPeptide = copy.deepcopy(peptide)
+            newPeptide.mass = mass
+            newPeptide.N_carbamidation = cys_CAM
+            newPeptide.N_carboxylation=cys_CM
+            newPeptide.N_acrylamide=cys_PAM
+            newPeptide.N_oxidation=MSO
+            
+            masses.append(newPeptide)
+        """masses = []
         for cys_CAM in range(0,N_Cys_CAM+1):
             for cys_CM in range(0,N_Cys_CM+1):
                 for cys_PAM in range(0,N_Cys_PAM+1):
@@ -193,46 +233,31 @@ class ProteinDigest:
                         mass += cys_CM*self._mod["carboxylation"]
                         mass += cys_PAM*self._mod["acrylamideAdduct"]
                         mass += MSO*self._mod["oxidation"]
-                        masses.append(Peptide(sequence,mass,cys_CAM,cys_CM,cys_PAM,MSO))
-        
-
-        """
-        # add carbamidation (Iodacteamide treatment)
-        N_carbamidation = 0
-        N_carboxylation = 0
-        N_
-        if self._carbamidation:
-            mass += c*self._mod["carbamidation"]
-            N_carbamidation = c
-            
-        elif self._carboxylation:
-            mass += c*self._mod["carboxylation"]
-            N_carboxylation = c
-        masses = []
-        # add Oxidation:
-        if self._oxidation:
-            for m in range(0,sequence.count("M")+1):
-                masses.append(Peptide(sequence,mass+m*self._mod["oxidation"],N_carbamidation,N_carboxylation,m))
-        else:
-            masses.append(Peptide(sequence,mass,N_carbamidation,N_carboxylation,0))
-        """
+                        masses.append(Peptide(peptideSequence=sequence, mass=mass,
+                                              start=start,end=end,
+                                              N_carbamidation=cys_CAM,
+                                              N_carboxylation=cys_CM,
+                                              N_acrylamide=cys_PAM,
+                                              N_oxidation=MSO)
+                                        )"""
+                        
         return masses
 
-    def newDigest(self,sequence):
-        self._sequence = sequence
+    def newDigest(self,proteinSequence):
+        self._proteinSequence = proteinSequence
         self._breakpoints = []
 
     def _checkSequenceSet(self):
-        if self._sequence == "":
+        if self._proteinSequence == "":
             raise Exception("Sequence not set, please use 'newDigest(sequence)' to initialize!")
         
     def add_tryptic_digest(self):
         # cleaves C-terminal side of K or R, except if P is C-term to K or R
         self._checkSequenceSet()
         i = 0
-        while i < len(self._sequence):
-            if self._sequence[i] == "R" or self._sequence[i] == "K":
-                if not (i+1 < len(self._sequence) and self._sequence[i+1] == "P"):
+        while i < len(self._proteinSequence):
+            if self._proteinSequence[i] == "R" or self._proteinSequence[i] == "K":
+                if not (i+1 < len(self._proteinSequence) and self._proteinSequence[i+1] == "P"):
                     self._breakpoints.append(i)
             i += 1
 
@@ -241,8 +266,8 @@ class ProteinDigest:
         # cleaves N-terminal side of D
         self._checkSequenceSet()
         i = 1
-        while i < len(self._sequence):
-            if self._sequence[i] == "D":
+        while i < len(self._proteinSequence):
+            if self._proteinSequence[i] == "D":
                 self._breakpoints.append(i-1)
             i += 1
            
@@ -252,7 +277,7 @@ class ProteinDigest:
         #    raise Exception("No digest added! Please use 'add_tryptic_digest()' or similar beforehand!")
         # Add  end
         #self._breakpoints.append(0)
-        self._breakpoints.append(len(self._sequence)-1)
+        self._breakpoints.append(len(self._proteinSequence)-1)
         # clean up breakpoints
         self._breakpoints = list(set(self._breakpoints))
         self._breakpoints.sort()
@@ -265,17 +290,20 @@ class ProteinDigest:
                 if i+m >= len(self._breakpoints):
                     break
                 stop = self._breakpoints[i+m]
-                sub = self._sequence[start+1:stop+1]
-                #digests.append((sub,self.calcPeptideMass(sub),m))
-                peptides.append(sub)
+                peptideSequence = self._proteinSequence[start+1:stop+1]
+                peptide = Peptide(peptideSequence=peptideSequence,start=start+1, end=stop+1) # stop+1?
+                peptides.append(peptide)
             start = self._breakpoints[i]
             i += 1
         
         return peptides
 
-    def countGlycosylationsites(self,sequence,glycosylationType=None):
+    def _getGlycosylationsites(self,NGlycosylation, OGlycosylation):
+        return
+        """
         # a) N-Glycan: N-X(not P)-S/T
         # b) O-Glycan: S/T
+        if NGlycosylation
         N = len(re.findall("N[^P](S|T)",sequence))
         O = len(re.findall("(S|T)",sequence))
         if not glycosylationType:
@@ -284,30 +312,45 @@ class ProteinDigest:
             return N
         else:
             return O
-        #return {"N":len(re.findall("N[^P](S|T)",sequence)),"O":len(re.findall("(S|T)",sequence))}
+        #return {"N":len(re.findall("N[^P](S|T)",sequence)),"O":len(re.findall("(S|T)",sequence))}"""
 
-    def findGlycopeptides(self,sequence,maxMissedCleavage, glycosylationType=None):
-        # a) make digest
-        #self.newDigest()
-        #self.add_tryptic_digest(sequence)
+    def findGlycopeptides(self,maxMissedCleavage, NGlycosylation = False, OGlycosylation = False):
+
+        # make digest
         peptides = self.digest(maxMissedCleavage)
+        
+        # generate list of glycosylationsites
+        sites = []
+        if NGlycosylation == True:
+            for match in re.finditer("N[^P](S|T)",self._proteinSequence):
+                sites.append((match.start(),"N"))
+        if OGlycosylation == True:
+            for match in re.finditer("(S|T)",self._proteinSequence):
+                sites.append((match.start(),"O"))
+            
+        sites.sort()
+        
         glycopeptides = []
         # b) search peptides with possible glycosylation site
         for peptide in peptides:
-            if self.countGlycosylationsites(peptide,glycosylationType) > 0:
+            glycopeptide = False
+            for site,typ in sites:
+                if peptide.start <= site and site <= peptide.end:
+                    peptide.glycosylationSites.append((site,typ))
+                    glycopeptide = True
+            if glycopeptide == True:
                 glycopeptides += self.calcPeptideMasses(peptide)
         return glycopeptides
-        
-                    
+  
 # ------------------------- Glycan calculations -------------------------------------
 class GlycanMass:
 
     def __init__(self):
         self.glycan = {}
-        self.glycan["DHEX"] = 146.058
-        self.glycan["HEX"] = 162.052
-        self.glycan["HEXNAC"] = 203.079
-        self.glycan["NEUAC"] = 291.095
+        self.glycan["DHEX"] = 146.0579
+        self.glycan["HEX"] =  162.0528
+        self.glycan["HEXNAC"] =  203.0794
+        self.glycan["NEUAC"] = 291.0954
 
     def getMass(self,name):
         return self.glycan[name]
