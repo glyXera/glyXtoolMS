@@ -5,3 +5,4 @@ import tests
 import lib
 import deconvolution
 import io
+import masses

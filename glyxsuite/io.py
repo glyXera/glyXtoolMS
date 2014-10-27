@@ -405,7 +405,55 @@ class GlyxXMLFile:
 
     
     
+class XMLPeptide:
+    
+    def __init__(self):
+        self.proteinID = ""
+        self.sequence = ""
+        self.start = -1
+        self.end = -1
+        self.mass = 0.0
+        self.modifications = []
+        self.glycosylationSites = []
+            
+
+class XMLPeptideParameters:
+    
+    def __init__(self):
+        self.proteins = []
+        self.data = []
+        self.digestionEnzymes = []
+        self.NGlycosylation = False
+        self.OGlycosylation = False
+        self.modifications = []
         
-
-
-
+        
+class XMLPeptideFile:
+    
+    def __init__(self):
+        self.peptides = []
+        #self.proteins = [] #?
+        self.parameters = None
+        
+        
+    
+    
+    def writeToFile(self,path):
+        xmlRoot = ET.Element("xmlPeptides")
+        xmlParameters = ET.SubElement(xmlRoot,"parameters")
+        xmlSpectra = ET.SubElement(xmlRoot,"peptides")
+        xmlFeatures = ET.SubElement(xmlRoot,"features")
+        # write parameters
+        self._writeParameters(xmlParameters)
+        # write spectra
+        self._writeSpectra(xmlSpectra)
+        # write features
+        self._writeFeatures(xmlFeatures)
+        # writing to file
+        xmlTree = ET.ElementTree(xmlRoot)
+        f = file(path,"w")
+        f.write(ET.tostring(xmlTree,pretty_print=True))
+        f.close()
+        
+    def loadFromFile(self,path):
+        return
