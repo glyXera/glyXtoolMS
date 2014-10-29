@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from itertools import product 
 import copy
 from glyxsuite import masses as glyxmass
+from glyxsuite.io import XMLPeptide
 
 class Histogram:
     
@@ -104,7 +105,7 @@ class Protein:
             raise
             
     def getPeptide(self,start,end):
-        peptide = Peptide()
+        peptide = XMLPeptide()
         peptide.sequence = self.sequence[start:end]
         peptide.start = start
         peptide.end = end
@@ -114,8 +115,8 @@ class Protein:
         return peptide
         
         
-
-class Peptide:
+"""
+class Peptide(XMLPeptide):
     
     def __init__(self):
         self.sequence = ""
@@ -143,6 +144,7 @@ class Peptide:
             mass += glyxmass.PROTEINMODIFICATION[mod]
         self.mass = mass
             
+"""            
             
 class ProteinDigest:
 
@@ -235,8 +237,10 @@ class ProteinDigest:
             newPeptide.modifications += [("Cys_CM","C",-1)]*cys_CM
             newPeptide.modifications += [("Cys_PAM","C",-1)]*cys_PAM
             newPeptide.modifications += [("MSO","M",-1)]*MSO
-            
-            newPeptide.calcPeptideMass()
+            # calc peptide mass
+            newPeptide.mass = glyxmass.calcPeptideMass(newPeptide.sequence)
+            for mod,amino,pos in newPeptide.modifications:
+                newPeptide.mass += glyxmass.PROTEINMODIFICATION[mod]          
             masses.append(newPeptide)
                         
         return masses
@@ -313,6 +317,59 @@ class ProteinDigest:
             if glycopeptide == True:
                 glycopeptides += self.calcPeptideMasses(peptide)
         return glycopeptides
+
+# --------------------------------------- Glycan -----------------------
+class Glycan:
+
+    def __init__(self,composition):
+        self.composition = composition
+        self.sugar = {'DHEX': 0, 'HEX': 0, 'HEXNAC': 0, 'NEUAC': 0}
+        self.mass = 0
+        self._splitComposition(composition)
+
+
+    def _splitComposition(self,composition):
+        self.mass = 0
+        for comp in re.findall("[A-z]+\d+",composition):
+            unit = re.search("[A-z]+",comp).group()
+            amount = int(re.search("\d+",comp).group())
+            self.sugar[unit] = amount
+            self.mass += glyxmass.GLYCAN[unit]*amount
+            
+    def getComposition(self,typ="N"):
+        comp = self.sugar.copy()
+        if typ == "N" and self.checkNCore() == "core":
+            comp["HEX"] -= 3
+            comp["HEXNAC"] -= 2
+            composition = "(GlcNAc)2 (Man)3 + "
+        else:
+            composition = ""    
+
+        for sugar in ["DHEX","HEX","HEXNAC","NEUAC"]:
+            if comp[sugar] > 0:
+                composition += sugar+str(comp[sugar])
+        return composition
+        
+        
+    def checkNCore(self): # ouput: "None", "sub","core"
+        # Core: 2 HexNac + 3 Hex
+        # Subcore:
+        # 2 / 3
+        # 2/2   
+        # 2/1
+        #2/0
+        # 1/0
+        hexnac = self.sugar["HEXNAC"]
+        hexose = self.sugar["HEX"]
+        if hexnac >= 2 and hexose >= 3:
+            return "core"
+        if hexnac >= 2:
+            return "sub"
+        if hexnac == 1 and hexose == 0:
+            return "sub"
+        return "none"
+        
+
 
 
 # --------------------------- Helper functions ------------------------------------ 

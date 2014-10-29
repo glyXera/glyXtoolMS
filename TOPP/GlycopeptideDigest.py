@@ -34,6 +34,8 @@ def main(options):
     fh = pyopenms.FASTAFile()
     fastaData = []
     fh.load(pyopenms.String(options.infile),fastaData)
+    
+
 
     print "setting digest parameters"
     proteinDigest = glyxsuite.lib.ProteinDigest()
@@ -75,7 +77,9 @@ def main(options):
     print "make digests"
     peptides = []
     for fastaEntry in fastaData:
-        proteinDigest.newDigest(fastaEntry.sequence)
+        protein = glyxsuite.lib.Protein()
+        protein.loadFromFasta(fastaEntry.identifier,fastaEntry.description,fastaEntry.sequence)
+        proteinDigest.newDigest(protein)
         # call digest functions
         for digestFunc in digests:
             digestFunc()
@@ -88,15 +92,13 @@ def main(options):
     
     print "found ",len(peptides), " peptides"
     
-    for p in peptides:
-        print p.toString()
-    
-    print "done"
-    
-    f = file(options.outfile,"w")
-    f.write("foo")
-    f.close()
+    print "writing to file"
+    outf = glyxsuite.io.XMLPeptideFile()
+    outf.peptides = peptides
+    print options.outfile
+    outf.writeToFile(options.outfile)
 
+    print "done"
     return
 
 import sys

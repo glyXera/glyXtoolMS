@@ -415,6 +415,18 @@ class XMLPeptide:
         self.mass = 0.0
         self.modifications = []
         self.glycosylationSites = []
+        
+    def toString(self):
+        s = self.sequence
+        modi = {}
+        for mod,amino,pos in self.modifications:
+            if not mod in modi:
+                modi[mod] = []
+            modi[mod].append(pos)
+        for mod in modi:
+            modi[mod].sort()
+            s += " " + mod + "("+", ".join(map(str,modi[mod]))+")"
+        return s
             
 
 class XMLPeptideParameters:
@@ -432,28 +444,107 @@ class XMLPeptideFile:
     
     def __init__(self):
         self.peptides = []
-        #self.proteins = [] #?
-        self.parameters = None
+        self.parameters = XMLPeptideParameters()
         
         
-    
+    def _writeParameters(self,xml):
+        return
+        
+    def _writePeptides(self,xmlPeptides):
+
+        for peptide in self.peptides:
+            xmlPeptide = ET.SubElement(xmlPeptides,"peptide")
+            
+            xmlSequence = ET.SubElement(xmlPeptide,"sequence")
+            xmlSequence.text = peptide.sequence
+            
+            xmlProteinId = ET.SubElement(xmlPeptide,"proteinId")
+            xmlProteinId.text = peptide.proteinID
+            
+            xmlStart = ET.SubElement(xmlPeptide,"start")
+            xmlStart.text = str(peptide.start)
+            
+            xmlEnd = ET.SubElement(xmlPeptide,"end")
+            xmlEnd.text = str(peptide.end)
+            
+            xmlMass = ET.SubElement(xmlPeptide,"mass")
+            xmlMass.text = str(peptide.mass)
+            
+            xmlModifications = ET.SubElement(xmlPeptide,"modifications")
+            for mod,amino,pos in peptide.modifications:
+                xmlMod = ET.SubElement(xmlModifications,"modification")
+                
+                xmlModName = ET.SubElement(xmlMod,"name")
+                xmlModName.text = mod
+                
+                xmlModAmino = ET.SubElement(xmlMod,"aminoacid")
+                xmlModAmino.text = amino
+                
+                xmlModPos = ET.SubElement(xmlMod,"position")
+                xmlModPos.text = str(pos)
+            
+            xmlSites = ET.SubElement(xmlPeptide,"glycosylationsites")
+            for pos,typ in peptide.glycosylationSites:
+                xmlSite = ET.SubElement(xmlSites,"glycosylationsite")
+                xmlSitePos = ET.SubElement(xmlSite,"position")
+                xmlSitePos.text = str(pos)
+                xmlSiteTyp = ET.SubElement(xmlSite,"type")
+                xmlSiteTyp.text = typ
+        return 
+                
+    def _parsePeptides(self,xmlPeptides):
+        peptides = []
+        for xmlPeptide in xmlPeptides:
+            peptide = XMLPeptide()
+            peptide.proteinID = xmlPeptide.find("./proteinId").text
+            peptide.sequence = xmlPeptide.find("./sequence").text
+            peptide.start = int(xmlPeptide.find("./start").text)
+            peptide.end = int(xmlPeptide.find("./end").text)
+            peptide.mass = float(xmlPeptide.find("./mass").text)
+            
+
+            for xmlMod in xmlPeptide.findall("./modifications/modification"):
+                name = xmlMod.find("./name").text
+                amino = xmlMod.find("./aminoacid").text
+                pos = int(xmlMod.find("./position").text)
+                peptide.modifications.append((name,amino,pos))
+ 
+            for xmlSite in xmlPeptide.findall("./glycosylationsites/glycosylationsite"):
+                typ = xmlSite.find("./type").text
+                pos = int(xmlSite.find("./position").text)
+                peptide.glycosylationSites.append((pos,typ))
+            peptides.append(peptide)
+        
+        return peptides
+        
+    def _parseParameters(self,xmlParameters):
+        parameters = XMLPeptideParameters()
+        return parameters
     
     def writeToFile(self,path):
         xmlRoot = ET.Element("xmlPeptides")
         xmlParameters = ET.SubElement(xmlRoot,"parameters")
-        xmlSpectra = ET.SubElement(xmlRoot,"peptides")
-        xmlFeatures = ET.SubElement(xmlRoot,"features")
+        xmlPeptides = ET.SubElement(xmlRoot,"peptides")
         # write parameters
         self._writeParameters(xmlParameters)
-        # write spectra
-        self._writeSpectra(xmlSpectra)
-        # write features
-        self._writeFeatures(xmlFeatures)
+        # write peptide
+        self._writePeptides(xmlPeptides)
         # writing to file
         xmlTree = ET.ElementTree(xmlRoot)
         f = file(path,"w")
         f.write(ET.tostring(xmlTree,pretty_print=True))
         f.close()
+        return
         
     def loadFromFile(self,path):
+        f = file(path,"r")
+        root = ET.fromstring(f.read())
+        f.close()
+        # read parameters 
+        parameters = self._parseParameters(root.find(".//parameters"))
+        # parse spectra
+        peptides = self._parsePeptides(root.findall("./peptides/peptide"))
+        # assign data to object
+        self.parameters = parameters
+        self.peptides = peptides
         return
