@@ -6,3 +6,4 @@ import lib
 import deconvolution
 import io
 import masses
+from gui import *
