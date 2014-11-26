@@ -40,10 +40,9 @@ class SpectrumView(ttk.Frame):
         self.master = master
         self.model = model
         self.action = None
+        self.zoomHistory = []
         
         # add canvas
-        # (left, top, right, bottom)
-        # (minMZ,maxInt,maxMZ,minInt)
         self.spectrumMaxMZ = -1
         self.spectrumMaxInt = -1
         
@@ -51,29 +50,36 @@ class SpectrumView(ttk.Frame):
         self.viewXMax = -1
         self.viewYMin = 0
         self.viewYMax = -1
-        self.dimensionScrollregion = (0,0,600,300) # Pixel dimensions of the spectrum
        
         self.slopeX = 1
         self.slopeY = 1
         
-        self.height = 300
-        self.width = 600
-        self.border = 50
+        self.height = 400
+        self.width = 800
 
-        self.spectrum = Canvas(self, width=600, height=300) # check screen resolution
-        #self.spectrum = Canvas(self, width=600, height=300, scrollregion=(0, 0, 600, 300),xscrollcommand=xscrollbar.set,
-        #        yscrollcommand=yscrollbar.set) # check screen resolution                
+        self.borderLeft = 100
+        self.borderRight = 50
+        self.borderTop = 50
+        self.borderBottom = 50
+
+        self.spectrum = Canvas(self, width=self.width, height=self.height) # check screen resolution          
         self.spectrum.grid(row=0, column=0, sticky=N+S+E+W)
         
         b1 = Button(self, text="save",command=self.save)
         b1.grid(row=2, column=0, sticky=N+S)
         
         b2 = Button(self, text="load",command=self.read)
-        b2.grid(row=2, column=1, sticky=N+S)
+        b2.grid(row=3, column=0, sticky=N+S)
         
+
         self.coord = StringVar()
         l = Label( self,textvariable=self.coord)
-        l.grid(row=3, column=0, sticky=N+S)
+        l.grid(row=4, column=0, sticky=N+S)
+        
+        self.keepZoom = IntVar()
+        c = Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
+        c.grid(row=5, column=0, sticky=N+S)
+                
                 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -87,10 +93,12 @@ class SpectrumView(ttk.Frame):
         #self.model.root.bind("<Control-Shift-KeyPress-H>", lambda event: self.hi("KEY"))
         self.model.root.bind("<Control-Button-1>", self.eventStartZoom)
         self.model.root.bind("<ButtonRelease>", self.eventButtonRelease)
+        self.model.root.bind("<BackSpace>", self.zoomBack)
+        
         
         
         # link function
-        self.model.funcPaintSpectrum = self.makeSpectrum
+        self.model.funcPaintSpectrum = self.initSpectrum
         
     def scrollX(self,event,args):
         self.xscrollbar.set(event,args)
@@ -148,24 +156,24 @@ class SpectrumView(ttk.Frame):
             self.viewYMax = self.spectrumMaxInt*1.1
         
         # calc slopes
-        self.slopeMZ = (self.width-2*self.border)/float(self.viewXMax-self.viewXMin)
-        self.slopeInt = (self.height-2*self.border)/float(self.viewYMax-self.viewYMin)
+        self.slopeMZ = (self.width-self.borderLeft-self.borderRight)/float(self.viewXMax-self.viewXMin)
+        self.slopeInt = (self.height-self.borderTop-self.borderBottom)/float(self.viewYMax-self.viewYMin)
 
     def convert_MZ_to_X(self,MZ):
-        return self.border+self.slopeMZ*(MZ-self.viewXMin)
+        return self.borderLeft+self.slopeMZ*(MZ-self.viewXMin)
 
     def convert_Int_to_Y(self,Int):
-        return self.height-self.border-self.slopeInt*(Int-self.viewYMin)
+        return self.height-self.borderBottom-self.slopeInt*(Int-self.viewYMin)
 
     def convert_X_to_MZ(self,X):
         if self.model.spec == None:
             return X
-        return (X-self.border)/self.slopeMZ+self.viewXMin
+        return (X-self.borderLeft)/self.slopeMZ+self.viewXMin
 
     def convert_Y_to_Int(self,Y):
         if self.model.spec == None:
             return Y
-        return (self.height-self.border-Y)/self.slopeInt+self.viewYMin
+        return (self.height-self.borderBottom-Y)/self.slopeInt+self.viewYMin
 
     def initSpectrum(self,spec):
         print "init spectrum"
@@ -173,11 +181,17 @@ class SpectrumView(ttk.Frame):
             return
         self.model.spec = spec
         self.setSpectrumRange(spec)
-        
+        if self.keepZoom.get() == 0:
+            self.viewXMin = 0
+            self.viewXMax = -1
+            self.viewYMin = 0
+            self.viewYMax = -1
+        self.zoomHistory = []
         self.makeSpectrum()
         
         
     def makeSpectrum(self):
+        self.zoomHistory.append((self.viewXMin,self.viewXMax,self.viewYMin,self.viewYMax))
         
         self.calcScales() 
         self.spectrum.delete(ALL)
@@ -209,7 +223,7 @@ class SpectrumView(ttk.Frame):
                                     
         # search scale X
         start,end,diff,exp = findScale(self.viewXMin,self.viewXMax,5.0)
-        print  "diff",diff,exp
+
         while start < end:
             if start > self.viewXMin and start < self.viewXMax:
                 x = self.convert_MZ_to_X(start)
@@ -232,8 +246,6 @@ class SpectrumView(ttk.Frame):
             
 
     def zoom(self,x1,y1,x2,y2):
-        print "zoom",x1,y1,x2,y2
-        print"slope",self.slopeMZ,self.slopeInt
         if self.model.spec == None:
             return
         xa = self.convert_X_to_MZ(x1)
@@ -263,11 +275,21 @@ class SpectrumView(ttk.Frame):
             self.viewYMax = self.spectrumMaxInt*1.1
         if self.viewYMin < 0:
             self.viewYMin = 0
-         
-        print "setX", self.viewXMin, self.viewXMax
-        print "setY", self.viewYMin, self.viewYMax
+        
+
+        
         self.makeSpectrum()
 
+    def zoomBack(self,event):
+        if len(self.zoomHistory) == 0:
+            print "no history"
+            return
+        a,b,c,d = self.zoomHistory.pop(-1)
+        if (a,b,c,d) == (self.viewXMin,self.viewXMax,self.viewYMin,self.viewYMax):
+            self.zoomBack(event)
+            return
+        self.viewXMin,self.viewXMax,self.viewYMin,self.viewYMax = a,b,c,d
+        self.makeSpectrum()
         
     def save(self):
         f = file("out.txt","w")
@@ -285,18 +307,18 @@ class SpectrumView(ttk.Frame):
         f.close()
                 
         print "loaded"
-        print len(spec)
-        self.viewXMin = 0
-        self.viewXMax = -1
-        self.viewYMin = 0
-        self.viewYMax = -1        
+        print len(spec)      
         self.initSpectrum(spec)
 
 def shortNr(nr,exp):
     # shorten nr if precision is necessary
     if exp <= 0:
         return round (nr,int(-exp+1))
-    return round(nr,0)
+    if exp > 4:
+        e = int(math.floor(math.log(nr)/math.log(10)))
+        b = round(nr/float(10**e),4)
+        return str(b)+"E"+str(e)
+    return int(nr)
                 
 def findScale(start,end,NrScales):
     diff = abs(end-start)/NrScales
