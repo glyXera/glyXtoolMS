@@ -3,6 +3,9 @@ import ttk
 from Tkinter import * 
 import pyopenms
 import tkFileDialog
+import AddChromatogram
+import tkMessageBox
+import DataModel
         
 class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
     
@@ -53,10 +56,15 @@ class FileViewMZML(ttk.Frame):
         
         tree.heading("one", text="coulmn A")
         tree.heading("two", text="column B")
-        for i in range(0,20):
-            tree.insert("" , "end",text="Line "+str(i), values=(str(i)+"A","1b"))
+        #for i in range(0,20):
+        #    tree.insert("" , "end",text="Line "+str(i), values=(str(i)+"A","1b"))
         tree.grid(row=1,column=0,sticky=(N, W, E, S))
 
+        # create chromatograms button
+        chombutton = Button(self, text="Add Chromatogram",command=self.openChromatogramChooser)
+        chombutton.grid(row=2,column=0,sticky=(N, W, E, S))
+
+        
         
     def openMzMLFile(self):
 
@@ -83,3 +91,71 @@ class FileViewMZML(ttk.Frame):
                 key = spec.getNativeID()
                 self.model.spectra[key] = spec
         return
+        
+    def openChromatogramChooser(self):
+        if self.model.exp == None:
+            return
+        top = AddChromatogram.AddChromatogram(self,self.model)
+        
+    def addChromatogram(self,options):
+        name = options["name"]
+        if name == "":
+            tkMessageBox.showinfo(title="Warning", 
+                message="Chromatogram name is empty")
+            return
+        if name in self.model.chromatograms:
+            tkMessageBox.showinfo(title="Warning", 
+                message="A chromatogram with this name exists already!")
+            return
+        
+        rangeLow,rangeHigh = options["range"]
+        if rangeLow == "":
+            tkMessageBox.showinfo(title="Warning", 
+                message="Lower mass range is empty")
+            return
+        if rangeHigh == "":
+            tkMessageBox.showinfo(title="Warning", 
+                message="Higher mass range is empty")
+            return
+            
+        mslevel = options["mslevel"]
+        
+        try:
+            rangeLow = float(rangeLow)
+        except ValueError:
+            tkMessageBox.showinfo(title="Warning", 
+                message="Could not convert lower mass range to number!")
+            return
+            
+        try:
+            rangeHigh = float(rangeHigh)
+        except ValueError:
+            tkMessageBox.showinfo(title="Warning", 
+                message="Could not convert higher mass range to number!")
+            return
+        
+        # rotate range if necessary          
+        if rangeLow > rangeHigh:
+            rangeHigh,rangeLow = rangeLow,rangeHigh
+            
+        x = []
+        y = []
+        for spec in self.model.exp:
+            if spec.getMSLevel() != mslevel:
+                continue
+            x.append(spec.getRT())
+            y.append(spec.intensityInRange(rangeLow,rangeHigh))
+            
+        c = DataModel.Chromatogram()
+        c.name = name
+        c.rangeLow = rangeLow
+        c.rangeHigh = rangeHigh
+        c.color = options["color"]
+        c.rt = x
+        c.intensity = y
+        c.plot = True
+        self.model.chromatograms[name] = c
+        self.model.funcPaintChromatograms()
+
+        
+        

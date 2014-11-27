@@ -6,6 +6,7 @@ import pyopenms
 import FileViewMZML
 import FileViewAnalysis
 import SpectrumView
+import DataModel
 
 """
 Viewer for analysis file
@@ -15,44 +16,14 @@ c) scored features
 d) Histogram
 """
 
-    
-
-       
-class DataModel:
-    
-    def __init__(self):
-        self.workingdir = "/afs/mpi-magdeburg.mpg.de/home/pioch/Data/Projekte/GlyxBox/glycoMod/"
-        self.mzMLFilename = ""
-        self.fileMzMLFile = None
-        self.exp = None
-        self.analyis = None
-        self.test = None
-        self.debug = None
-        self.combination = {}
-        self.spectra = {}
-        self.treeIds = {}
-        self.spec = None
-        self.root = None
-        
-        
-        self.funcPaintSpectrum = None
-        
-        
-    def combineDatasets(self):
-        if self.exp == None or self.analysis == None:
-            return False
-        
-        # connect MS2 spectra
-        self.combination = {}
-        #for spec in exp:
-            
+           
         
 class App(Frame):
     def __init__(self, master):
         self.master = master
         menubar = Menu(self.master)
         self.master.config(menu=menubar)
-        self.model = DataModel()
+        self.model = DataModel.DataModel()
         
         self.model.root = master
         
