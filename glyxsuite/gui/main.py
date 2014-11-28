@@ -7,6 +7,7 @@ import FileViewMZML
 import FileViewAnalysis
 import SpectrumView
 import DataModel
+import ChromatogramView
 
 """
 Viewer for analysis file
@@ -68,9 +69,12 @@ class App(Frame):
         frameR = ttk.Labelframe(master,text="Annotation")
         #frameR.config(bg="blue")
         frameR.grid(row=0,column=1,rowspan=2,sticky=(N, W, E, S))
+
+        chromFrame = ChromatogramView.ChromatogramView(frameR,self.model)
+        chromFrame.grid(row=0,column=0,sticky=(N, W, E, S))
         
         msmsFrame = SpectrumView.SpectrumView(frameR,self.model)
-        msmsFrame.pack()
+        msmsFrame.grid(row=1,column=0,sticky=(N, W, E, S))
         
         """
         frameUL.config(bg="grey")

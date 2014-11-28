@@ -16,7 +16,7 @@ class DataModel:
         self.chromatograms = {}
         
         self.funcPaintSpectrum = None
-        
+        self.funcPaintChromatograms = None
         
     def combineDatasets(self):
         if self.exp == None or self.analysis == None:
