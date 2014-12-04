@@ -48,21 +48,34 @@ class FileViewMZML(ttk.Frame):
         b = Button(self, text="Open mzML file",command=self.openMzMLFile)
         b.grid(row=0,column=0,sticky=(N, W, E, S))
         
-        tree = ttk.Treeview(self)
+        self.tree = ttk.Treeview(self)
         
-        tree["columns"]=("one","two")
-        tree.column("one", width=100 )
-        tree.column("two", width=100)
+        #tree["columns"]=("one","two")
+        #tree.column("one", width=100 )
+        #tree.column("two", width=100)
         
-        tree.heading("one", text="coulmn A")
-        tree.heading("two", text="column B")
+        #tree.heading("one", text="coulmn A")
+        #tree.heading("two", text="column B")
         #for i in range(0,20):
         #    tree.insert("" , "end",text="Line "+str(i), values=(str(i)+"A","1b"))
-        tree.grid(row=1,column=0,sticky=(N, W, E, S))
+        self.treehookChrom = self.tree.insert("" , "end",text="Chromatograms")
+        self.tree.grid(row=1,column=0,sticky=(N, W, E, S))
 
+        columns = ("Name","Plot","Color")
+        self.tree["columns"] = columns
+        for col in columns:
+            self.tree.column(col,width=100)
+            self.tree.heading(col, text=col)       
         # create chromatograms button
         chombutton = Button(self, text="Add Chromatogram",command=self.openChromatogramChooser)
         chombutton.grid(row=2,column=0,sticky=(N, W, E, S))
+        
+        
+        b1 = Button(self, text="save",command=self.save)
+        b1.grid(row=3, column=0, sticky=N+S)
+        
+        b2 = Button(self, text="load",command=self.read)
+        b2.grid(row=3, column=1, sticky=N+S)
 
         
         
@@ -145,7 +158,7 @@ class FileViewMZML(ttk.Frame):
                 continue
             x.append(spec.getRT())
             y.append(spec.intensityInRange(rangeLow,rangeHigh))
-            
+        print "chrom",len(x),len(y),mslevel
         c = DataModel.Chromatogram()
         c.name = name
         c.rangeLow = rangeLow
@@ -154,8 +167,47 @@ class FileViewMZML(ttk.Frame):
         c.rt = x
         c.intensity = y
         c.plot = True
+        c.msLevel = mslevel
+        
         self.model.chromatograms[name] = c
         self.model.funcPaintChromatograms()
+        # add chromatogram to treeview
+        #tree.insert("" , "end",text="Line "+str(i), values=(str(i)+"A","1b"))
+        itemSpectra = self.tree.insert(self.treehookChrom, "end",text=c.name)
+        
+        
+    def save(self):
+        f = file("chromopt.txt","w")
+        for name in self.model.chromatograms:
+            chrom = self.model.chromatograms[name]
+            f.write("name:"+chrom.name+"\n")
+            f.write("color:"+str(chrom.color)+"\n")
+            f.write("range:"+str(chrom.rangeLow)+","+str(chrom.rangeHigh)+"\n")
+            f.write("mslevel:"+str(chrom.msLevel)+"\n")            
+        f.close()
+        print "saved"
 
-        
-        
+
+    def read(self):
+        f = file("chromopt.txt","r")
+        chroms = {}
+        options = {}
+
+        for line in f:
+            key,content = line[:-1].split(":")
+            if key == "name":
+                options = {}
+                options["name"] = content
+                chroms[content] = options
+            if key == "color":
+                options["color"] = content
+            if key == "range":
+                low,high = map(float,content.split(","))
+                options["range"] = (low,high)
+            if key == "mslevel":
+                options["mslevel"] = int(content)
+        f.close()
+        for name in chroms:
+            print chroms[name]
+            self.addChromatogram(chroms[name])
+        print "loaded", len(chroms), " chromatograms"

@@ -33,8 +33,33 @@ class ChromatogramView(FramePlot.FramePlot):
 
         # link function
         self.model.funcPaintChromatograms = self.initChromatogram
+        
+        # Events
+        self.canvas.bind("<Left>", self.sayHi)
+        self.canvas.bind("<Right>", self.sayHi)
+        self.canvas.bind("<Button-1>", self.setSpectrumPointer)
+        
+        self.spectrumPointer = None
+        
 
-
+    def setSpectrumPointer(self,event):
+        if self.model.exp == None:
+            return
+        if self.allowZoom == False:
+            return
+        rt = self.convXtoA(event.x)
+        nearest = None
+        diff = 0
+        for spec in self.model.exp:
+            if spec.getMSLevel() != 1: # fix, needs Level from chromatogram
+                continue
+            diffNew = abs(spec.getRT()-rt)
+            if nearest == None or diffNew < diff:
+                nearest = spec
+                diff = diffNew
+        print nearest
+        
+        
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1

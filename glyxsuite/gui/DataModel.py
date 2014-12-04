@@ -38,4 +38,5 @@ class Chromatogram:
         self.plot = False
         self.rt = []
         self.intensity = []
+        self.msLevel = 0
                 

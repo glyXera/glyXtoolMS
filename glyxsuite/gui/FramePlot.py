@@ -64,8 +64,11 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<Control-Button-1>", self.eventStartZoom)
         self.canvas.bind("<ButtonRelease>", self.eventButtonRelease)
         self.canvas.bind("<BackSpace>", self.zoomBack)
-        self.canvas.bind("<Left>", self.keyLeft)
-        self.canvas.bind("<Right>", self.keyRight)
+        self.canvas.bind("<Control-Left>", self.keyLeft)
+        self.canvas.bind("<Control-Right>", self.keyRight)
+
+    def sayHi(self,event):
+        print "hi"
 
     def keyLeft(self,event):
         if self.allowZoom == False:
@@ -133,8 +136,16 @@ class FramePlot(ttk.Frame):
             self.viewYMax = self.bMax
         
         # calc slopes
-        self.slopeA = (self.width-self.borderLeft-self.borderRight)/float(self.viewXMax-self.viewXMin)
-        self.slopeB = (self.height-self.borderTop-self.borderBottom)/float(self.viewYMax-self.viewYMin)
+        baseX = float(self.viewXMax-self.viewXMin)
+        if baseX == 0.0:
+            baseY = 1.0
+            self.viewXMax = self.viewXMin+1
+        baseY = float(self.viewYMax-self.viewYMin)
+        if baseY == 0.0:
+            baseY = 1.0
+            self.viewYMax = self.viewYMin+1
+        self.slopeA = (self.width-self.borderLeft-self.borderRight)/baseX
+        self.slopeB = (self.height-self.borderTop-self.borderBottom)/baseY
 
     def convAtoX(self,A):
         return self.borderLeft+self.slopeA*(A-self.viewXMin)
