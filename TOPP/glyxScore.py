@@ -70,7 +70,12 @@ def main(options):
             continue
         # create spectrum
         for precursor in spec.getPrecursors(): # Multiple precurors will make native spectrum id nonunique!
-            s = glyxsuite.scoring.SpectrumGlyxScore(spec.getNativeID(),spec.getRT(),precursor.getMZ(),precursor.getCharge(),int(options.nrNeutralloss),int(options.chargeOxIon))
+            s = glyxsuite.scoring.SpectrumGlyxScore(spec.getNativeID(),
+                                                    spec.getRT(),
+                                                    precursor.getMZ(),
+                                                    precursor.getCharge(),
+                                                    int(options.nrNeutralloss),
+                                                    int(options.chargeOxIon))
             logScore = 10
             if s.precursorCharge > 1:
                 for peak in spec:

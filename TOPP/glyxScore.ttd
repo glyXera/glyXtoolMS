@@ -39,7 +39,7 @@
 			<ITEM name="scriptpath" value="." type="string" description="input script path, this should pointto share/OpenMS/SCRIPTS of your OpenMS installation"/>
 			<ITEM name="in" value="" type="string" tags="input file" restrictions="*.mzML" />
 			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.xml" />
-			<ITEMLIST name="glycans" value="[]" type="string" restrictions="Hex,HexNAc,Fuc,NeuAc,NeuGc,HexHexNAc,HexNAcHexNeuAc"/>
+			<ITEMLIST name="glycans" value="[]" type="string" restrictions="Hex1,HexNAc1,NeuAc1,Fuc1,HexNac1Hex1,HexNac1Hex1Fuc1,HexNAc1Hex2,HexNAc1Hex2Fuc1,HexNAc1Hex1NeuAc1,HexNAc1Hex2NeuAc1"/>
 			<ITEM name="glycansOpt" value="" type="string" tags="optional glycans"/>
 			<ITEM name="tol" value="0.5" type="float" description="Mass tolerance in Da"/>
 			<ITEM name="ionthreshold" value="0" type="int" description="Threshold for reporter ion intensity to be counted for score"/>

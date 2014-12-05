@@ -21,19 +21,36 @@ class IonSeriesCalculator:
         #self.masses["HexHexNAc"] = 383.14276
         #self.masses["HexNAcHexNeuAc"] = self.masses["HexNAc"]+self.masses["Hex"]+self.masses["NeuAc"]-self.masses["H2O"]
         #self.masses["HexNeuAc"] = self.masses["Hex"]+self.masses["NeuAc"]-self.masses["H2O"]
-
+        
         self.glycans = {}
         
     def _appendMassList(self,name,mass):
         self.masses[name] = mass
 
     def addGlycan(self,name):
+        # Current glycan structure: Hex1HexNAc1, Hex2HexNac1
+
         if name in self.glycans:
             return self.glycans[name]
 
-
+        mass = 0
+        for part in re.findall("[A-z]+\d+",name):
+            start = re.search("\d+",part).start()
+            sugar = part[:start].lower()
+            amount = int(part[start:])
+            if not sugar in self.masses:
+                raise Exception("SugarName "+sugar+" is not defined!")
+            mass += self.masses[sugar]-self.masses["h2o"]
+        self.glycans[name] = mass
+        return mass
+        
+        """
         symbols = re.findall("(\+|\-)?[A-z\d\w]+",name)
+        print "symbols",symbols
+
         sugars = re.findall("[A-z\d\w]+",name)
+        print "sugars",sugars
+        
         if len(symbols) != len(sugars):
             raise Exception("Error in parsing glycan name!")
         
@@ -53,9 +70,9 @@ class IonSeriesCalculator:
                 raise Exception("Error: Unknown prefix in glycan name parsing, only + or - allowed!")
         self.glycans[name] = mass
         return mass
+        """
                            
-                       
-    """
+        """
         mass = -self.masses["H2O"]
         for sub  in re.findall("[A-z]+\d+",name):
             glycanName = re.search("[A-z]+",sub).group()
