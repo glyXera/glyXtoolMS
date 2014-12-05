@@ -41,6 +41,7 @@ class ChromatogramView(FramePlot.FramePlot):
         
         self.spectrumPointer = None
         
+        
 
     def setSpectrumPointer(self,event):
         if self.model.exp == None:
@@ -48,23 +49,32 @@ class ChromatogramView(FramePlot.FramePlot):
         if self.allowZoom == False:
             return
         rt = self.convXtoA(event.x)
+        
+        # get selected MSLevel
+        if self.model.selectedChromatogram == None:
+            return
+        msLevel = self.model.selectedChromatogram.msLevel
         nearest = None
-        diff = 0
+        diff = -1
         for spec in self.model.exp:
-            if spec.getMSLevel() != 1: # fix, needs Level from chromatogram
+            if spec.getMSLevel() != msLevel: # fix, needs Level from chromatogram
                 continue
             diffNew = abs(spec.getRT()-rt)
-            if nearest == None or diffNew < diff:
+            if diff == -1 or diffNew < diff:
                 nearest = spec
                 diff = diffNew
-        print nearest
+        print nearest,msLevel,nearest == None,diff 
+        if diff != -1:
+            print "do spectrum"
+            self.model.funcPaintSpectrum(nearest)
+        
         
         
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1
-        for name in self.model.chromatograms:
-            chrom = self.model.chromatograms[name]
+        for treeId in self.model.chromatograms:
+            chrom = self.model.chromatograms[treeId]
             if chrom.plot == False:
                 continue
             for rt in chrom.rt:
@@ -77,37 +87,38 @@ class ChromatogramView(FramePlot.FramePlot):
 
     def paintObject(self):
         self.allowZoom = False
-        for name in self.model.chromatograms:
-            chrom = self.model.chromatograms[name]
+        for treeId in self.model.chromatograms:
+            chrom = self.model.chromatograms[treeId]
             if chrom.plot == False:
                 continue
+            if chrom.selected == True:
+                linewidth = 2
+            else:
+                linewidth = 1
             if len(chrom.rt) != len(chrom.intensity):
                 raise Exception("Different length of chromatogram parameters!")
             xy = []
             for i in range(0,len(chrom.rt)):
                 rt = chrom.rt[i]
-                intens = chrom.intensity[i]
-                if name == "x2":
-                    intens += 100           
+                intens = chrom.intensity[i]       
                 xy.append(self.convAtoX(rt))
                 xy.append(self.convBtoY(intens))
             if len(xy) == 0:
                 continue
-            item = self.canvas.create_line(xy,fill=chrom.color)
-            #item = self.canvas.create_line(xy,fill="green")
+            item = self.canvas.create_line(xy,fill=chrom.color, width = linewidth)
             self.allowZoom = True
     
-    def initChromatogram(self):
+    def initChromatogram(self,keepZoom = False):
         print "init chromatogram"
-        self.initCanvas()
+        self.initCanvas(keepZoom = keepZoom)
 
     def identifier(self):
         return "ChromatogramView"
     
     def save(self):
         f = file("chromout.txt","w")
-        for name in self.model.chromatograms:
-            chrom = self.model.chromatograms[name]
+        for treeId in self.model.chromatograms:
+            chrom = self.model.chromatograms[treeId]
             f.write("name:"+chrom.name+"\n")
             f.write("rt:"+reduce(lambda x,y:str(x)+";"+str(y),chrom.rt)+"\n")
             f.write("int:"+reduce(lambda x,y:str(x)+";"+str(y),chrom.intensity)+"\n")

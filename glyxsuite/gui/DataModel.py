@@ -14,7 +14,7 @@ class DataModel:
         self.spec = None
         self.root = None
         self.chromatograms = {}
-        
+        self.selectedChromatogram = None
         self.funcPaintSpectrum = None
         self.funcPaintChromatograms = None
         
@@ -39,4 +39,5 @@ class Chromatogram:
         self.rt = []
         self.intensity = []
         self.msLevel = 0
+        self.selected = False
                 

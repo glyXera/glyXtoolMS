@@ -58,14 +58,17 @@ class FileViewMZML(ttk.Frame):
         #tree.heading("two", text="column B")
         #for i in range(0,20):
         #    tree.insert("" , "end",text="Line "+str(i), values=(str(i)+"A","1b"))
-        self.treehookChrom = self.tree.insert("" , "end",text="Chromatograms")
+        #self.treehookChrom = self.tree.insert("" , "end",text="Chromatograms")
         self.tree.grid(row=1,column=0,sticky=(N, W, E, S))
 
         columns = ("Name","Plot","Color")
         self.tree["columns"] = columns
         for col in columns:
             self.tree.column(col,width=100)
-            self.tree.heading(col, text=col)       
+            self.tree.heading(col, text=col)     
+            
+        self.tree.bind("<<TreeviewSelect>>", self.clickedChromatogram);            
+            
         # create chromatograms button
         chombutton = Button(self, text="Add Chromatogram",command=self.openChromatogramChooser)
         chombutton.grid(row=2,column=0,sticky=(N, W, E, S))
@@ -77,6 +80,24 @@ class FileViewMZML(ttk.Frame):
         b2 = Button(self, text="load",command=self.read)
         b2.grid(row=3, column=1, sticky=N+S)
 
+        
+    def clickedChromatogram(self,event):
+
+        item = self.tree.selection()[0]
+        
+        if not item in self.model.chromatograms:
+            return
+        # reset selection status
+        self.model.selectedChromatogram = None
+        for treeId in self.model.chromatograms:
+            chrom = self.model.chromatograms[treeId]
+            if treeId == item:
+                chrom.selected = True
+                self.model.selectedChromatogram = chrom
+            else:
+                chrom.selected = False
+        # repaint chromatogram
+        self.model.funcPaintChromatograms(keepZoom=True)
         
         
     def openMzMLFile(self):
@@ -169,16 +190,19 @@ class FileViewMZML(ttk.Frame):
         c.plot = True
         c.msLevel = mslevel
         
-        self.model.chromatograms[name] = c
+        itemSpectra = self.tree.insert("", "end",text=c.name)
+        self.model.chromatograms[itemSpectra] = c
         self.model.funcPaintChromatograms()
         # add chromatogram to treeview
         #tree.insert("" , "end",text="Line "+str(i), values=(str(i)+"A","1b"))
-        itemSpectra = self.tree.insert(self.treehookChrom, "end",text=c.name)
+        #self.tree.insert("" , "end",text="Chromatograms")
+        #itemSpectra = self.tree.insert(self.treehookChrom, "end",text=c.name)
+        
         
         
     def save(self):
         f = file("chromopt.txt","w")
-        for name in self.model.chromatograms:
+        for treeId in self.model.chromatograms:
             chrom = self.model.chromatograms[name]
             f.write("name:"+chrom.name+"\n")
             f.write("color:"+str(chrom.color)+"\n")
@@ -207,7 +231,7 @@ class FileViewMZML(ttk.Frame):
             if key == "mslevel":
                 options["mslevel"] = int(content)
         f.close()
-        for name in chroms:
-            print chroms[name]
-            self.addChromatogram(chroms[name])
+        for treeId in chroms:
+            print chroms[treeId]
+            self.addChromatogram(chroms[treeId])
         print "loaded", len(chroms), " chromatograms"

@@ -78,7 +78,7 @@ class FramePlot(ttk.Frame):
             add = self.viewXMin
         self.viewXMin = self.viewXMin-add
         self.viewXMax = self.viewXMax-add
-        self._paintCanvas()
+        self._paintCanvas(addToHistory=False)
         
     def keyRight(self,event):
         if self.allowZoom == False:
@@ -88,7 +88,7 @@ class FramePlot(ttk.Frame):
             add = self.aMax-self.viewXMax
         self.viewXMin = self.viewXMin+add
         self.viewXMax = self.viewXMax+add
-        self._paintCanvas()
+        self._paintCanvas(addToHistory=False)
 
     def identifier(self):
         return "Frameplot"
@@ -163,9 +163,9 @@ class FramePlot(ttk.Frame):
             return Y
         return (self.height-self.borderBottom-Y)/self.slopeB+self.viewYMin
 
-    def initCanvas(self):
+    def initCanvas(self,keepZoom = False):
         self.setMaxValues()
-        if self.keepZoom.get() == 0:
+        if self.keepZoom.get() == 0 and keepZoom == False:
             self.viewXMin = 0
             self.viewXMax = -1
             self.viewYMin = 0
@@ -173,8 +173,9 @@ class FramePlot(ttk.Frame):
         self.zoomHistory = []
         self._paintCanvas()
 
-    def _paintCanvas(self):
-        self.zoomHistory.append((self.viewXMin,self.viewXMax,self.viewYMin,self.viewYMax))
+    def _paintCanvas(self,addToHistory = True):
+        if addToHistory == True:
+            self.zoomHistory.append((self.viewXMin,self.viewXMax,self.viewYMin,self.viewYMax))
         
         self.calcScales() 
         self.canvas.delete(ALL)
