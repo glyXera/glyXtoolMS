@@ -33,7 +33,7 @@ class IonSeriesCalculator:
         if name in self.glycans:
             return self.glycans[name]
 
-        mass = 0
+        mass = self.masses["h2o"]
         for part in re.findall("[A-z]+\d+",name):
             start = re.search("\d+",part).start()
             sugar = part[:start].lower()
@@ -98,7 +98,7 @@ class IonSeriesCalculator:
         series["OxoniumIon"] = ion
 
         #series["OxoniumIon"] = Ion(glycan+":OxoniumIon",glycanMass-self.masses["H2O"]+self.masses["H+"],1.0)
-        #series["Fragment1"] = Ion(glycan+":Fragment1:",series["OxoniumIon"].mass-self.masses["H2O"],1.0,series["OxoniumIon"])
+        series["Fragment1"] = Ion(glycan+":Fragment1:",series["OxoniumIon"].mass-self.masses["h2o"],1.0,series["OxoniumIon"])
         #series["Fragment2"] = Ion(glycan+":Fragment2:",series["OxoniumIon"].mass-2*self.masses["H2O"],series["Fragment1"])
         #series["Fragment3"] = Ion(glycan+":Fragment3:",series["OxoniumIon"].mass-2*self.masses["H2O"]-self.masses["CH2O"],series["Fragment2"])
         #series["Fragment4"] = Ion(glycan+":Fragment4:",series["OxoniumIon"].mass-self.masses["CH2O"],series["OxoniumIon"])
@@ -208,7 +208,7 @@ class SpectrumGlyxScore:
             p.rank = i+1
 
     def findGlycanScore(self,seriesCalculator,glycan,massDelta,intensityThreshold=0):
-        glycanSeries = seriesCalculator.calcSeries(glycan,self.precursorMass,self.precursorCharge, self.nrNeutrallosses, self.maxChargeOxoniumIon)
+        glycanSeries = seriesCalculator.calcSeries(glycan,self.precursorMass,self.precursorCharge, self.nrNeutrallosses, self.maxChargeOxoniumIon)        
         score = Score(glycan)
         for ionname in glycanSeries:
             ion = glycanSeries[ionname]

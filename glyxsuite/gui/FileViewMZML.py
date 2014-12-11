@@ -6,6 +6,7 @@ import tkFileDialog
 import AddChromatogram
 import tkMessageBox
 import DataModel
+import os
         
 class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
     
@@ -20,7 +21,7 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
         if running:
             print "running"
         else:
-            print "stopped"
+            print "loading finished"
             self.model.exp = self.result
             self.master.updateMZMLView()
             
@@ -109,11 +110,15 @@ class FileViewMZML(ttk.Frame):
         options['initialdir'] = self.model.workingdir
         options['parent'] = self.master
         options['title'] = 'This is a title'
-        #path = tkFileDialog.askopenfilename(**options)
-        path = '/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/20140904_TNK_FET_TA_A8001_BA1_01_3142/20140904_TNK_FET_TA_A8001_BA1_01_3142_20140922.mzML'
-        #print path
+        path = tkFileDialog.askopenfilename(**options)
+        #path = '/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/20140904_TNK_FET_TA_A8001_BA1_01_3142/20140904_TNK_FET_TA_A8001_BA1_01_3142_20140922.mzML'
+        #path = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/20141204_FET_METHOD_DEV/hybrid/20141202_FETfasp02_HILIC_TNK_BB5_01_3745.mzML"
+        #path = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/20140904_TNK_FET_TA_A8001_BA1_01_3142/20140904_TNK_FET_TA_A8001_BA1_01_3142_20140922.mzML"
         if path != "":
+            # set workingdir
+            self.model.workingdir = os.path.split(path)[0]
             # load file in new thread
+            print "loading path", path
             t = ThreadedOpenMZML(path,self.model,self)
             t.start() 
 
@@ -174,11 +179,18 @@ class FileViewMZML(ttk.Frame):
             
         x = []
         y = []
+        print "debug",1
         for spec in self.model.exp:
             if spec.getMSLevel() != mslevel:
                 continue
             x.append(spec.getRT())
-            y.append(spec.intensityInRange(rangeLow,rangeHigh))
+            # get intensity in range
+            yi = 0
+            for peak in spec:
+                if rangeLow < peak.getMZ() and peak.getMZ() < rangeHigh:
+                    yi += peak.getIntensity()
+            y.append(yi)
+            #y.append(spec.intensityInRange(rangeLow,rangeHigh))
         print "chrom",len(x),len(y),mslevel
         c = DataModel.Chromatogram()
         c.name = name
@@ -203,7 +215,7 @@ class FileViewMZML(ttk.Frame):
     def save(self):
         f = file("chromopt.txt","w")
         for treeId in self.model.chromatograms:
-            chrom = self.model.chromatograms[name]
+            chrom = self.model.chromatograms[treeId]
             f.write("name:"+chrom.name+"\n")
             f.write("color:"+str(chrom.color)+"\n")
             f.write("range:"+str(chrom.rangeLow)+","+str(chrom.rangeHigh)+"\n")

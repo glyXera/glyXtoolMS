@@ -1,7 +1,7 @@
 class DataModel:
     
     def __init__(self):
-        self.workingdir = "/afs/mpi-magdeburg.mpg.de/home/pioch/Data/Projekte/GlyxBox/glycoMod/"
+        self.workingdir = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/20141202_FETinsol02_HILIC_TNK_BB3_01_3741/"
         self.mzMLFilename = ""
         self.fileMzMLFile = None
         self.exp = None
@@ -15,18 +15,8 @@ class DataModel:
         self.root = None
         self.chromatograms = {}
         self.selectedChromatogram = None
-        self.funcPaintSpectrum = None
+        self.funcPaintSpectrum = None # SpectrumView.initSpectrum(spec)
         self.funcPaintChromatograms = None
-        
-    def combineDatasets(self):
-        if self.exp == None or self.analysis == None:
-            return False
-        
-        # connect MS2 spectra
-        self.combination = {}
-        #for spec in exp: 
-        
-        
         
 class Chromatogram:
     

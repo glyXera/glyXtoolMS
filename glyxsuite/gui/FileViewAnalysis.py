@@ -3,6 +3,7 @@ import ttk
 from Tkinter import *
 import glyxsuite
 import tkFileDialog
+import os
         
 class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
     
@@ -130,6 +131,8 @@ class FileViewAnalysis(ttk.Frame):
         #path = '/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/20140904_TNK_FET_TA_A8001_BA1_01_3142/20140904_TNK_FET_TA_A8001_BA1_01_3142_20140922.mzML'
         print "path:",path
         if len(path) > 0:
+            # set new working dir
+            self.model.workingdir = os.path.split(path)[0]
             # load file in new thread
             self.t = ThreadedAnalysisFile(path,self.model,self)
             self.t.start()
@@ -142,6 +145,7 @@ class FileViewAnalysis(ttk.Frame):
         for s in self.model.analysis.spectra:
             key = s.getNativeId()
             spectra[key] = s
+        self.model.combination = spectra
         i = 0
         ids = {}
         

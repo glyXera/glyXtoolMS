@@ -59,6 +59,11 @@ class SpectrumView(FramePlot.FramePlot):
         
 
     def paintObject(self):
+        specId = self.model.spec.getNativeID()
+        if specId in self.model.combination:
+            print "id is there!"
+            
+            
         for peak in self.model.spec:
             mz = peak.getMZ()
             intens = peak.getIntensity()

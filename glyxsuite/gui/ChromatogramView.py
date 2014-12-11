@@ -86,6 +86,7 @@ class ChromatogramView(FramePlot.FramePlot):
 
 
     def paintObject(self):
+        print "paintObject"
         self.allowZoom = False
         for treeId in self.model.chromatograms:
             chrom = self.model.chromatograms[treeId]

@@ -66,6 +66,7 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<BackSpace>", self.zoomBack)
         self.canvas.bind("<Control-Left>", self.keyLeft)
         self.canvas.bind("<Control-Right>", self.keyRight)
+        self.canvas.bind("<Control-BackSpace>", self.resetZoom)
 
     def sayHi(self,event):
         print "hi"
@@ -170,7 +171,7 @@ class FramePlot(ttk.Frame):
             self.viewXMax = -1
             self.viewYMin = 0
             self.viewYMax = -1
-        self.zoomHistory = []
+            self.zoomHistory = []
         self._paintCanvas()
 
     def _paintCanvas(self,addToHistory = True):
@@ -230,6 +231,14 @@ class FramePlot(ttk.Frame):
                 self.canvas.create_line(x-4,y,x,y)
             start += diff
             
+    def resetZoom(self,event):
+        if self.allowZoom == False:
+            return       
+        self.viewXMin = 0
+        self.viewXMax = -1
+        self.viewYMin = 0
+        self.viewYMax = -1
+        self._paintCanvas()
 
     def zoom(self,x1,y1,x2,y2):
         if self.allowZoom == False:
