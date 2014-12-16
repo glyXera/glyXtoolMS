@@ -3,8 +3,8 @@ import ttk
 import tkFileDialog
 import time
 import pyopenms
-import FileViewMZML
-import FileViewAnalysis
+import AnalysisFrame
+import ToolFrame
 import SpectrumView
 import DataModel
 import ChromatogramView
@@ -52,14 +52,11 @@ class App(Frame):
         toolMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tool", menu=toolMenu) 
         
-        frameUL = ttk.Labelframe(master,text="Files")
-        # Add notebook for file selection
-        fileNotebook = ttk.Notebook(frameUL)
-        f1 = FileViewMZML.FileViewMZML(fileNotebook,self.model) # first page, which would get widgets gridded into it
-        f2 = FileViewAnalysis.FileViewAnalysis(fileNotebook,self.model) # second page
-        fileNotebook.add(f1, text='One')
-        fileNotebook.add(f2, text='Two')
-        fileNotebook.grid(row=0,column=0,sticky=(N, W, E, S))
+        frameUL = ttk.Labelframe(master,text="Analysis")
+        toolFrame = ToolFrame.ToolFrame(frameUL,self.model)
+        toolFrame.grid(row=0,column=0,sticky=(N, W, E, S))
+        analysisFrame = AnalysisFrame.AnalysisFrame(frameUL,self.model)
+        analysisFrame.grid(row=1,column=0,sticky=(N, W, E, S))
         #frameUL.config(bg="grey")
         frameUL.grid(row=0,column=0,sticky=(N, W, E, S))
         
