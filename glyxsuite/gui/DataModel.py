@@ -1,7 +1,7 @@
 class DataModel:
     
     def __init__(self):
-        self.workingdir = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/20141202_FETinsol02_HILIC_TNK_BB3_01_3741/"
+        self.workingdir = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID"
         self.mzMLFilename = ""
         self.fileMzMLFile = None
         self.exp = None
@@ -16,7 +16,8 @@ class DataModel:
         self.chromatograms = {}
         self.selectedChromatogram = None
         self.funcPaintSpectrum = None # SpectrumView.initSpectrum(spec)
-        self.funcPaintChromatograms = None
+        self.funcPaintChromatograms = None # ChromatogramView.initChromatogram()
+        self.funcPaintTwo2View = None # TwoDView.init()
         
 class Chromatogram:
     

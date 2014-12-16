@@ -60,12 +60,12 @@ class SpectrumView(FramePlot.FramePlot):
 
     def paintObject(self):
         specId = self.model.spec.getNativeID()
-        if specId in self.model.combination:
-            print "id is there!"
-            
-            
+        
+        pInt0 = self.convBtoY(self.viewYMin)
+
         for peak in self.model.spec:
             mz = peak.getMZ()
+            
             intens = peak.getIntensity()
             if mz < self.viewXMin or mz > self.viewXMax:
                 continue
@@ -75,9 +75,21 @@ class SpectrumView(FramePlot.FramePlot):
                 intens = self.viewYMax
             pMZ = self.convAtoX(mz)
             pInt = self.convBtoY(intens)
-            pInt0 = self.convBtoY(self.viewYMin)
             item = self.canvas.create_line(pMZ,pInt0,pMZ,pInt,tags=("peak",))
             self.allowZoom = True
+            
+            
+        if specId in self.model.combination:
+            analysisSpectrum = self.model.combination[specId]
+            # paint ions from logscore
+            ions = analysisSpectrum.getIons()
+            for sugar in ions:
+                for fragment in ions[sugar]:
+                    intensity = ions[sugar][fragment]["intensity"]
+                    mass = ions[sugar][fragment]["mass"]
+                    pMZ = self.convAtoX(mass)
+                    pInt = self.convBtoY(intensity)
+                    self.canvas.create_line(pMZ,pInt0,pMZ,pInt,tags=("score",),fill="red")            
     
     def initSpectrum(self,spec):
         print "init spectrum"

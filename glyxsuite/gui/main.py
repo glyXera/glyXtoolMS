@@ -8,6 +8,7 @@ import FileViewAnalysis
 import SpectrumView
 import DataModel
 import ChromatogramView
+import TwoDView
 
 """
 Viewer for analysis file
@@ -62,8 +63,9 @@ class App(Frame):
         #frameUL.config(bg="grey")
         frameUL.grid(row=0,column=0,sticky=(N, W, E, S))
         
-        frameLL = ttk.Labelframe(master,text="Status")
-        #frameLL.config(bg="yellow")
+        frameLL = ttk.Labelframe(master,text="2DView")
+        f3 = TwoDView.TwoDView(frameLL,self.model)
+        f3.grid(row=0,column=0,sticky=(N, W, E, S))
         frameLL.grid(row=1,column=0,sticky=(N, W, E, S))
         
         frameR = ttk.Labelframe(master,text="Annotation")

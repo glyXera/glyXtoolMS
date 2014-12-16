@@ -139,7 +139,7 @@ class FileViewAnalysis(ttk.Frame):
             
             
     def updateTreeView(self):
-        print "update treeview"
+        print "update treeview",len(self.model.analysis.spectra)
         # create dict of spectra
         spectra = {}
         for s in self.model.analysis.spectra:
@@ -177,5 +177,9 @@ class FileViewAnalysis(ttk.Frame):
                 ids[itemSpectra] = s
                 
         self.model.treeIds = ids
+        
+        # paint 2DView
+        self.model.funcPaintTwo2View()
+        
         return 
  

@@ -23,7 +23,7 @@ class ActionZoom:
 
 class FramePlot(ttk.Frame):
     
-    def __init__(self,master,model):
+    def __init__(self,master,model,height=300,width=800):
         ttk.Frame.__init__(self,master=master)
         self.model = model
         self.master = master
@@ -45,8 +45,8 @@ class FramePlot(ttk.Frame):
         self.slopeA = 1
         self.slopeB = 1
         
-        self.height = 300
-        self.width = 800
+        self.height = height
+        self.width = width
 
         self.borderLeft = 100
         self.borderRight = 50
@@ -247,7 +247,19 @@ class FramePlot(ttk.Frame):
             return
         xa = self.convXtoA(x1)
         xb = self.convXtoA(x2)
-        if x1 < x2:
+        # check if zoom is outside of canvas
+        def testBorder(x,xmin,xmax):
+            if x < xmin:
+                x = xmin
+            if x > xmax:
+                x = xmax
+            return x
+        xa = testBorder(xa,self.viewXMin,self.viewXMax)
+        xb = testBorder(xb,self.viewXMin,self.viewXMax)
+        if xa == xb:
+            return
+        
+        if xa < xb:
             self.viewXMin = xa
             self.viewXMax = xb
         else:
@@ -256,12 +268,18 @@ class FramePlot(ttk.Frame):
             
         ya = self.convYtoB(y1)
         yb = self.convYtoB(y2)
-        if y1 < y2:
-            self.viewYMin = yb
-            self.viewYMax = ya
-        else:
+        
+        ya = testBorder(ya,self.viewYMin,self.viewYMax)
+        yb = testBorder(yb,self.viewYMin,self.viewYMax)
+        if ya == yb:
+            return
+        
+        if ya < yb:
             self.viewYMin = ya
             self.viewYMax = yb
+        else:
+            self.viewYMin = yb
+            self.viewYMax = ya
 
         # check maximal parameters
         if self.viewXMax > self.aMax:
