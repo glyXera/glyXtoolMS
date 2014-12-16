@@ -89,3 +89,6 @@ class AnalysisFrame(ttk.Frame):
             
         else:
             print "unknown tag"
+
+
+    

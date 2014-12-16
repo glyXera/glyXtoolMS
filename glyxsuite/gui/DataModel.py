@@ -19,6 +19,25 @@ class DataModel:
         self.funcPaintChromatograms = None # ChromatogramView.initChromatogram()
         self.funcPaintTwo2View = None # TwoDView.init()
         
+        # model
+        # mzmlfile
+        #   analysis
+        #     feature
+        #       
+        
+class AnalysisSet:
+    
+    def __init__(self):
+        self.mzMLFile = None
+        self.analysis = {}
+        self.spectra = {}
+        
+class Analysis:
+    
+    def __init__(self):
+        self.analysisFile = None
+        self.
+        
 class Chromatogram:
     
     def __init__(self):
