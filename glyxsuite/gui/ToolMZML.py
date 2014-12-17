@@ -1,6 +1,6 @@
 import ttk 
 from Tkinter import * 
-
+import ThreadedIO
 
 class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
     

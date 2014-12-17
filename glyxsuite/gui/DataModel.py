@@ -19,11 +19,35 @@ class DataModel:
         self.funcPaintChromatograms = None # ChromatogramView.initChromatogram()
         self.funcPaintTwo2View = None # TwoDView.init()
         
+        self.tree = {}
+        self.allAnalysis = []
+        self.currentAnalysis = None
+        
+        
+        def addTreeItem(self,itemId,item):
+            self.tree[itemId] = item
+            
+        def deleteTreeItem(self,itemId):
+            if itemId in self.tree:
+                self.tree.pop(itemId)
+
+        
         # model
-        # mzmlfile
-        #   analysis
-        #     feature
-        #       
+        # Project
+        #  mzml file
+        #    chromatograms
+        #    spectra
+        #  analysisfile
+        #    parameters
+        #    spectra
+        #    features
+        #    identifications
+        # Results
+        #   protein
+        #     glycosite
+        #       glycopeptide
+        #        feature
+        #         spectrum
         
 class AnalysisSet:
     
@@ -36,7 +60,6 @@ class Analysis:
     
     def __init__(self):
         self.analysisFile = None
-        self.
         
 class Chromatogram:
     

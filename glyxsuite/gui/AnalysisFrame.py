@@ -7,6 +7,7 @@ import AddChromatogram
 import tkMessageBox
 import DataModel
 import os
+from random import random
 
 def treeview_sort_column(tv, col, reverse):    
     l = [(tv.set(k, col), k) for k in tv.get_children('')]
@@ -67,11 +68,11 @@ class AnalysisFrame(ttk.Frame):
         self.tree.tag_configure('oddSpectrum', background='SkyBlue')
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree);
         
-        
+        self.addElements()
         
     def clickedTree(self,event):
         item = self.tree.selection()[0]
-        print "clicked on ",item, 
+        print "clicked on ",item
         if not item in self.model.treeIds:
             return
         # get tag
@@ -89,6 +90,16 @@ class AnalysisFrame(ttk.Frame):
             
         else:
             print "unknown tag"
-
-
+            
+            
+    def addElements(self):
+        for i in range(0,10):
+            itemFeature = self.tree.insert("" , "end",values=(random(),),text="Feature "+str(i),tags=('feature'))
+        # add element at start
+        itemFeature = self.tree.insert("I001" , "end",values=(random(),),text="Feature "+str(i+1),tags=('feature'))
+        print "is",itemFeature
+        for x in range(0,6000):
+            self.tree.delete(itemFeature)
+            itemFeature = self.tree.insert("I001" , "end",values=(random(),),text="Feature "+str(i+1),tags=('feature'))
+        print "is new",itemFeature
     
