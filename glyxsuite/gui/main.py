@@ -57,25 +57,29 @@ class App(Frame):
         fileNotebook = ttk.Notebook(frameUL)
         f1 = FileViewMZML.FileViewMZML(fileNotebook,self.model) # first page, which would get widgets gridded into it
         f2 = FileViewAnalysis.FileViewAnalysis(fileNotebook,self.model) # second page
-        fileNotebook.add(f1, text='One')
-        fileNotebook.add(f2, text='Two')
+        fileNotebook.add(f1, text='mzmlFile')
+        fileNotebook.add(f2, text='Analysis')
         fileNotebook.grid(row=0,column=0,sticky=(N, W, E, S))
         #frameUL.config(bg="grey")
         frameUL.grid(row=0,column=0,sticky=(N, W, E, S))
         
-        frameLL = ttk.Labelframe(master,text="2DView")
+        frameLL = ttk.Labelframe(master,text="FeatureView")
         f3 = TwoDView.TwoDView(frameLL,self.model)
         f3.grid(row=0,column=0,sticky=(N, W, E, S))
         frameLL.grid(row=1,column=0,sticky=(N, W, E, S))
         
-        frameR = ttk.Labelframe(master,text="Annotation")
+        frameUR = ttk.Labelframe(master,text="Chromatogram")
         #frameR.config(bg="blue")
-        frameR.grid(row=0,column=1,rowspan=2,sticky=(N, W, E, S))
+        #frameR.grid(row=0,column=1,rowspan=2,sticky=(N, W, E, S))
+        frameUR.grid(row=0,column=1,rowspan=1,sticky=(N, W, E, S))
 
-        chromFrame = ChromatogramView.ChromatogramView(frameR,self.model)
+        chromFrame = ChromatogramView.ChromatogramView(frameUR,self.model)
         chromFrame.grid(row=0,column=0,sticky=(N, W, E, S))
         
-        msmsFrame = SpectrumView.SpectrumView(frameR,self.model)
+        frameLR = ttk.Labelframe(master,text="Spectrum")
+        frameLR.grid(row=1,column=1,rowspan=1,sticky=(N, W, E, S))
+        
+        msmsFrame = SpectrumView.SpectrumView(frameLR,self.model)
         msmsFrame.grid(row=1,column=0,sticky=(N, W, E, S))
         
         """
