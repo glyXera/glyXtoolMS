@@ -16,11 +16,5 @@ class ToolFrame(ttk.Frame):
         ttk.Frame.__init__(self,master=master)
         self.master = master
         self.model = model
-        
-        fileNotebook = ttk.Notebook(self)
-        f1 = ToolMZML.ToolMZML(fileNotebook,self.model)
-        f2 = ToolAnalysis.ToolAnalysis(fileNotebook,self.model)
-        fileNotebook.add(f1, text='mzMLFile')
-        fileNotebook.add(f2, text='Analysis')
-        fileNotebook.grid(row=0,column=0,sticky=(N, W, E, S))
+
 

@@ -9,6 +9,7 @@ import SpectrumView
 import DataModel
 import ChromatogramView
 import TwoDView
+import ProjectFrame
 
 """
 Viewer for analysis file
@@ -16,10 +17,27 @@ a) MS/MS spectra, annotation
 b) scored spectra
 c) scored features
 d) Histogram
+
+GUI:
+|---------------------------------------------------|
+|         Menubar                                   |
+|---------------------------------------------------|
+|   Project   |  tab structure, context dependend   |
+|   control   |                                     |
+|             |                                     |
+|-------------|                                     |
+| ProjectView |                                     |
+|             |                                     |
+|             |                                     |
+|             |                                     |
+|             |                                     |
+|             |                                     |
+|             |                                     |
+|             |                                     |
+|---------------------------------------------------|
 """
 
-           
-        
+
 class App(Frame):
     def __init__(self, master):
         self.master = master
@@ -52,50 +70,24 @@ class App(Frame):
         toolMenu = Menu(menubar, tearoff=0)
         menubar.add_cascade(label="Tool", menu=toolMenu) 
         
-        frameUL = ttk.Labelframe(master,text="Analysis")
-        toolFrame = ToolFrame.ToolFrame(frameUL,self.model)
-        toolFrame.grid(row=0,column=0,sticky=(N, W, E, S))
-        analysisFrame = AnalysisFrame.AnalysisFrame(frameUL,self.model)
-        analysisFrame.grid(row=1,column=0,sticky=(N, W, E, S))
-        #frameUL.config(bg="grey")
-        frameUL.grid(row=0,column=0,sticky=(N, W, E, S))
+        frameProject = ttk.Labelframe(master,text="Projects")
+        pojectFrame = ProjectFrame.ProjectFrame(frameProject,self.model)
+        #pojectFrame.pack()
+        pojectFrame.grid(row=0,column=0,sticky=(N, W, E, S))
+        frameProject.grid(row=0,column=0,sticky=(N, W, E, S))
         
-        frameLL = ttk.Labelframe(master,text="2DView")
-        f3 = TwoDView.TwoDView(frameLL,self.model)
-        f3.grid(row=0,column=0,sticky=(N, W, E, S))
-        frameLL.grid(row=1,column=0,sticky=(N, W, E, S))
+        notebook = ttk.Notebook(master)
+        f1 = TwoDView.TwoDView(notebook,self.model)
+        f2 = ChromatogramView.ChromatogramView(notebook,self.model)
+        notebook.add(f1, text='mzMLView')
+        notebook.add(f2, text='AnalysisView')
+        notebook.grid(row=0,column=1,sticky=(N, W, E, S))
         
-        frameR = ttk.Labelframe(master,text="Annotation")
-        #frameR.config(bg="blue")
-        frameR.grid(row=0,column=1,rowspan=2,sticky=(N, W, E, S))
-
-        chromFrame = ChromatogramView.ChromatogramView(frameR,self.model)
-        chromFrame.grid(row=0,column=0,sticky=(N, W, E, S))
-        
-        msmsFrame = SpectrumView.SpectrumView(frameR,self.model)
-        msmsFrame.grid(row=1,column=0,sticky=(N, W, E, S))
-        
-        """
-        frameUL.config(bg="grey")
-        frameUL.grid(row=0,column=0,sticky=(N, W, E, S))
-
-        frameUR = Frame(master)
-        frameUR.config(bg="yellow")
-        frameUR.grid(row=0,column=1,sticky=(N, W, E, S))
-        
-        frameLL = Frame(master)
-        frameLL.config(bg="yellow")
-        frameLL.grid(row=1,column=0,sticky=(N, W, E, S))
-
-        frameLR = Frame(master)
-        frameLR.config(bg="grey")
-        frameLR.grid(row=1,column=1,sticky=(N, W, E, S))
-        """
         # configure column and row behaviour
         self.master.columnconfigure(0, minsize=200,weight=0)
-        self.master.columnconfigure(1, minsize=200,weight=1)
+        self.master.columnconfigure(1, minsize=300,weight=1)
         self.master.rowconfigure(0, minsize=200,weight=1)
-        self.master.rowconfigure(1, minsize=200,weight=1)
+        #self.master.rowconfigure(1, minsize=200,weight=1)
         
 
 def run():
