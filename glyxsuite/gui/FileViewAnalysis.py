@@ -72,8 +72,8 @@ class FileViewAnalysis(ttk.Frame):
         scrollbar = Scrollbar(self)    
         self.tree = ttk.Treeview(self,yscrollcommand=scrollbar.set)
         
-        columns = ("RT","Score","Peptide","Glycan")
-        self.tree["columns"] =("RT","Score","Peptide","Glycan")
+        columns = ("RT","Score","Nr Hits","Peptide","Glycan","Mass")
+        self.tree["columns"] = columns
         
         for col in columns:
             self.tree.column(col,width=100)
@@ -146,9 +146,24 @@ class FileViewAnalysis(ttk.Frame):
             key = s.getNativeId()
             spectra[key] = s
         self.model.combination = spectra
+        
+        # create dict of features
+        features = {}
+        for feature in self.model.analysis.features:
+            key = feature.getId()
+            features[key] = feature
+            
+        # create dict of hits (with feature ids)
+        hits = {}
+        for hit in self.model.analysis.glycoModHits:
+            key = hit.featureID
+            if not key in hits:
+                hits[key] = []
+            hits[key].append(hit)
         i = 0
         ids = {}
-        
+
+        #f
         for feature in self.model.analysis.features:
             i += 1
             # get spectra
@@ -163,8 +178,23 @@ class FileViewAnalysis(ttk.Frame):
                 bgtag = "oddrowFeature"
             else:
                 bgtag = "evenrowFeature"
-            itemFeature = self.tree.insert("" , "end",text="Feature "+str(i), values=(round(feature.getRT(),0),round(minScore,2)),tags=('feature',bgtag))
+            hitCount = 0
+            monomass = ""
+            if feature.getId() in hits:
+                hitCount = len(hits[feature.getId()])
+                #("RT","Score","Nr Hits","Peptide","Glycan","Mass")
+                monomass = (feature.getMZ()-glyxsuite.masses.MASS["H+"])*feature.getCharge()
+                monomass = round(monomass,3)
+            itemFeature = self.tree.insert("" , "end",text="Feature "+str(i), values=(round(feature.getRT(),0),round(minScore,2),hitCount,"","",monomass),tags=('feature',bgtag))
             ids[itemFeature] = feature
+            # add hits
+            if feature.getId() in hits:
+                for hit in hits[feature.getId()]:
+                    #("RT","Score","Nr Hits","Peptide","Glycan","Mass")
+                    peptide = hit.peptide.sequence
+                    glycan = hit.glycan.composition
+                    itemHit = self.tree.insert(itemFeature , "end",text="hit",values=("","","",peptide,glycan),tags=('tag',))
+                    ids[itemHit] = hit
             e = 1
             for s in featureSpectra:
                 e *= -1
@@ -173,6 +203,7 @@ class FileViewAnalysis(ttk.Frame):
                     taglist.append("evenSpectrum")
                 else:
                     taglist.append("oddSpectrum")
+                    
                 itemSpectra = self.tree.insert(itemFeature , "end",text="Spectra ", values=(round(s.getRT(),0),round(s.getLogScore(),2)),tags=taglist)
                 ids[itemSpectra] = s
                 
