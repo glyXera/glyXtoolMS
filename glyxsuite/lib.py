@@ -311,7 +311,7 @@ class ProteinDigest:
         for peptide in peptides:
             glycopeptide = False
             for site,typ in sites:
-                if peptide.start <= site and site <= peptide.end:
+                if peptide.start <= site and site < peptide.end:
                     peptide.glycosylationSites.append((site,typ))
                     glycopeptide = True
             if glycopeptide == True:
