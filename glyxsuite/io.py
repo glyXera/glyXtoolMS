@@ -122,7 +122,7 @@ class GlyxXMLParameters:
 class GlyxXMLFeature:
     
     def __init__(self):
-        self._id = 0
+        self._id = ""
         self._mz = 0.0
         self._rt = 0.0
         self._intensity = 0.0
@@ -394,7 +394,7 @@ class GlyxXMLFile:
         features = []
         for xmlFeature in xmlFeatures:
             feature = GlyxXMLFeature()
-            feature.setId(int(xmlFeature.find("./id").text))
+            feature.setId(xmlFeature.find("./id").text)
             feature.setRT(float(xmlFeature.find("./rt").text))
             feature.setMZ(float(xmlFeature.find("./mz").text))
             feature.setIntensity(float(xmlFeature.find("./intensity").text))
@@ -549,11 +549,12 @@ class XMLPeptideParameters:
     
     def __init__(self):
         self.proteins = []
-        self.data = []
+        #self.data = []
         self.digestionEnzymes = []
         self.NGlycosylation = False
         self.OGlycosylation = False
         self.modifications = []
+        self.missedCleavages = 0
         
         
         
@@ -565,6 +566,26 @@ class XMLPeptideFile:
         
         
     def _writeParameters(self,xml):
+        parameters = self.parameters
+        xmlProteins = ET.SubElement(xml,"proteins")
+        for protein in parameters.proteins:
+            xmlProtein = ET.SubElement(xmlProteins,"proteinIdentifier")
+            xmlProtein.text = str(protein.identifier)
+        xmlEnzymes = ET.SubElement(xml,"enzymes")
+        xmlEnzymes.text = ",".join(parameters.digestionEnzymes)
+        glycosylations = []
+        if parameters.NGlycosylation == True:
+            glycosylations.append("N")
+        if parameters.OGlycosylation == True:
+             glycosylations.append("O")
+        xmlGlycosylations = ET.SubElement(xml,"glycosylations")
+        xmlGlycosylations.text = ",".join(glycosylations)
+        
+        xmlModifications = ET.SubElement(xml,"modifications")
+        xmlModifications.text = ",".join(parameters.modifications)
+        xmlmissedCleaveage = ET.SubElement(xml,"missedCleaveage")
+        xmlmissedCleaveage.text = str(parameters.missedCleavages)
+        
         return
         
     def _writePeptides(self,xmlPeptides):
