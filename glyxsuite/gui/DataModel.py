@@ -19,17 +19,9 @@ class DataModel:
         self.funcPaintChromatograms = None # ChromatogramView.initChromatogram()
         self.funcPaintTwo2View = None # TwoDView.init()
         
-        self.tree = {}
-        self.allAnalysis = []
-        self.currentAnalysis = None
+        self.projects= {}
+        self.currentProject = None
         
-        
-        def addTreeItem(self,itemId,item):
-            self.tree[itemId] = item
-            
-        def deleteTreeItem(self,itemId):
-            if itemId in self.tree:
-                self.tree.pop(itemId)
 
         
         # model
