@@ -33,7 +33,7 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
             print "running"
         else:
             print "loading finished"
-            self.project.exp =  self.result
+            self.project.mzMLContainer.exp =  self.result
             self.master.loadingFinished()
             
     def threadedAction(self):
@@ -52,7 +52,24 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
 class Project:
     
     def __init__(self,name):
+        self.name = name
+        self.mzMLContainer = None
+        self.analysisFiles = []
         self.exp = None
+        
+        
+class ContainerMZMLFile:
+    
+    def __init__(self,project,path):
+        self.exp = None
+        self.path = path
+        self.project = project
+        
+class ContainerAnalysisFile:
+    
+    def __init__(self,project,path):
+        self.path = path
+        self.project = project
 
 class ProjectFrame(ttk.Frame):
     
@@ -62,11 +79,23 @@ class ProjectFrame(ttk.Frame):
         self.model = model
         
         tools = ttk.Labelframe(self,text="Tools")
-        b1 = Tkinter.Button(tools, text="add Project",command=self.addProjectButton)
-        b1.grid(row=0,column=0)
+        self.b1 = Tkinter.Button(tools, text="add Project",command=self.clickedAddProject)
+        self.b1.grid(row=0,column=0)
         
-        b1 = Tkinter.Button(tools, text="delete Project",command=self.deleteProject)
-        b1.grid(row=0,column=1)
+        self.b2 = Tkinter.Button(tools, text="delete Project",command=self.deleteProject)
+        self.b2.grid(row=0,column=1)
+        self.b2.config(state=Tkinter.DISABLED)
+        
+        self.b3 = Tkinter.Button(tools, text="add Analysis",command=self.clickedAddAnalysis)
+        self.b3.grid(row=1,column=0)
+        self.b3.config(state=Tkinter.DISABLED)
+
+        #NORMAL, ACTIVE or DISABLED
+        
+        self.b4 = Tkinter.Button(tools, text="delete Analysis",command=self.deleteProject)
+        self.b4.grid(row=1,column=1)
+        self.b4.config(state=Tkinter.DISABLED)
+        
         
         tools.grid(row=0,column=0,sticky=('N','W','E','S'))
         
@@ -76,6 +105,9 @@ class ProjectFrame(ttk.Frame):
         self.projectTree["columns"] = columns
         
         self.projectsTreeIds = {}
+        
+        # debug
+        self.model.debug = self.projectTree
         
         for col in columns:
             self.projectTree.column(col,width=100)
@@ -90,11 +122,43 @@ class ProjectFrame(ttk.Frame):
         # Events
         self.projectTree.bind("<<TreeviewSelect>>", self.clickedTree)
     
-    def addProjectButton(self):
+    def clickedAddProject(self):
         AddProject(self,self.model)
+
         
+    def clickedAddAnalysis(self):
+        item,obj,typ = self.getSelectedItem()
+        if item == None:
+            return
+        # check if a project was selected
+        if self.model.currentProject == None:
+            return
+        
+        options = {}
+        options['defaultextension'] = '.xml'
+        options['filetypes'] = [('Analysis files', '.xml'),('all files', '.*')]
+        options['initialdir'] = self.model.workingdir
+        options['parent'] = self.master
+        options['title'] = 'This is a title'
+        path = tkFileDialog.askopenfilename(**options)
+        print path
+        if len(path) == 0:
+            return
+            
+        # get project itemId
+        while not "project" in self.projectTree.item(item,"tags"):
+            item = self.projectTree.parent(item)           
+        
+        itemAnalysis = self.projectTree.insert(item, "end",
+            text=os.path.basename(path),
+            values=(path,),tags = ("analysis",))
+        analysis = ContainerAnalysisFile(self.model.currentProject,path)
+        self.model.currentProject.analysisFiles.append(analysis)
+        # add analysis to idTree
+        self.projectsTreeIds[itemAnalysis] = analysis
+
     def addProject(self,name,path):
-        item = self.projectTree.insert("", "end",text=name)
+        item = self.projectTree.insert("", "end",text=name,tags = ("project",))
         project = Project(name)
         self.model.projects[name] = project
         self.projectsTreeIds[item] = project
@@ -104,23 +168,84 @@ class ProjectFrame(ttk.Frame):
         # load file in new thread
         print "loading path", path
         self.model.currentProject = project
-        t = ThreadedOpenMZML(path,self.model.currentProject,self)
-        t.start()
+        
+        itemMZML = self.projectTree.insert(item, "end",text="mzMLFile",
+            values=(os.path.basename(path),),tags = ("mzMLFile",))
+        
+        # add ContainerMZMLFile
+        mzMLContainer = ContainerMZMLFile(project,path)
+        project.mzMLContainer = mzMLContainer
+        self.projectsTreeIds[itemMZML] = mzMLContainer
+        #t = ThreadedOpenMZML(path,self.model.currentProject,self)
+        #t.start()
+        
+        # Aktivate delete button
+        if len(self.model.projects) > 0:
+            self.b2.config(state=Tkinter.NORMAL)
+        else:
+            self.b2.config(state=Tkinter.DISABLED)
+
+
+
         
         
     def deleteProject(self):
-        print "hi"
+        item,obj,typ = self.getSelectedItem()
+        if item == None:
+            return
+        print "to delete: ", item,obj
         
     def clickedTree(self,event):
-        item = self.projectTree.selection()[0]
-        print "clicked on ",item
-        if not item in self.projectsTreeIds:
+        item,obj,typ = self.getSelectedItem()
+        if item == None:
+            # deaktive all buttons, except addProject
+            self.b2.config(state=Tkinter.DISABLED)
+            self.b3.config(state=Tkinter.DISABLED)
+            self.b4.config(state=Tkinter.DISABLED)
             return
+        else:
+            self.b2.config(state=Tkinter.NORMAL)
+            self.b3.config(state=Tkinter.NORMAL)
+        # get project
+        if typ == "project":
+            self.model.currentProject = obj
+        elif typ == "mzMLFile":
+            self.model.currentProject = obj.project
+
+            
+            
+        # set button state
+        if typ == "analysis":
+            self.model.currentProject = obj.project
+            self.b4.config(state=Tkinter.NORMAL)
+        else:
+            self.b4.config(state=Tkinter.DISABLED)
+            
+        
+            
+        print "current project ",self.model.currentProject.name
 
     def loadingFinished(self):
         return
 
-
+    def getSelectedItem(self):
+        # returns ItemId,Object,ObjectType
+        selection = self.projectTree.selection()
+        if len(selection) == 0:
+            return (None,None,"")
+        item = selection[0]
+        if not item in self.projectsTreeIds:
+            return (None,None,"")
+        # get type of item
+        taglist = list(self.projectTree.item(item,"tags"))
+        if "project" in taglist:
+            return (item, self.projectsTreeIds[item],"project")
+        if "mzMLFile" in taglist:
+            return (item, self.projectsTreeIds[item],"mzMLFile")
+        if "analysis" in taglist:
+            return (item, self.projectsTreeIds[item],"analysis")    
+        return (item, self.projectsTreeIds[item],"")
+        
         
 class AddProject(Tkinter.Toplevel):
     
