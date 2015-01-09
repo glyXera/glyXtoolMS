@@ -71,6 +71,12 @@ class ContainerAnalysisFile:
         self.path = path
         self.project = project
 
+class DebugScrollbar(Tkinter.Scrollbar):
+    def set(self, *args):
+        print "SCROLLBAR SET", args
+        Tkinter.Scrollbar.set(self, *args)
+
+
 class ProjectFrame(ttk.Frame):
     
     def __init__(self,master,model):
@@ -99,28 +105,56 @@ class ProjectFrame(ttk.Frame):
         
         tools.grid(row=0,column=0,sticky=('N','W','E','S'))
         
-        scrollbar = Tkinter.Scrollbar(self)    
-        self.projectTree = ttk.Treeview(self,yscrollcommand=scrollbar.set)
+        #yscrollbar = Tkinter.Scrollbar(self,orient=Tkinter.VERTICAL)
+        yscrollbar = DebugScrollbar(self,orient=Tkinter.VERTICAL)
+        
+        xscrollbar = Tkinter.Scrollbar(self,orient=Tkinter.HORIZONTAL)
+        self.projectTree = ttk.Treeview(self,
+                            xscrollcommand=xscrollbar.set,
+                            yscrollcommand=yscrollbar.set)
+                            
+        self.projectTree.grid(row=1,column=0,sticky=('N','W','E','S'))
+        
+        xscrollbar.grid(row=2,column=0,sticky=('N','W','E','S'))
+        #xscrollbar.grid(row=2,column=0)
+        xscrollbar.config(command=self.projectTree.xview)
+        
+        yscrollbar.grid(row=1,column=1,sticky=('N','W','E','S'))
+        yscrollbar.config(command=self.projectTree.yview)
+        
+        
         columns = ("Filename",)
         self.projectTree["columns"] = columns
-        
         self.projectsTreeIds = {}
         
         # debug
         self.model.debug = self.projectTree
         
+        self.projectTree.heading("#0", text="Projects")
+        
         for col in columns:
-            self.projectTree.column(col,width=100)
-            self.projectTree.heading(col, text=col)
+            #self.projectTree.column(col,stretch= 0,minwidth=300,width=300)
+            self.projectTree.heading(col, text=col, anchor='w')
+            self.projectTree.column(col,width=300, stretch=0)
         
-        self.projectTree.grid(row=1,column=0,sticky=('N','W','E','S'))
         
-        self.rowconfigure(0, minsize=100,weight=0)
-        self.rowconfigure(1, minsize=200,weight=1)
-        self.columnconfigure(0,minsize=100,weight=1)
+        #tree.heading("size", text="File Size", anchor='w')
+        #tree.column("size", stretch=0, width=100)
+        
+        #self.rowconfigure(0, minsize=100,weight=0)
+        #self.rowconfigure(1, minsize=200,weight=1)
+        #self.columnconfigure(0,minsize=100,weight=1)
         
         # Events
         self.projectTree.bind("<<TreeviewSelect>>", self.clickedTree)
+        
+        # add test content into treeview
+        #for i in range(0,20):
+        #    item = self.projectTree.insert("", "end",text="test"+str(i),
+        #        values=("blahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblah"),tags = ("blah",))
+                
+        
+
     
     def clickedAddProject(self):
         AddProject(self,self.model)
@@ -190,6 +224,7 @@ class ProjectFrame(ttk.Frame):
         
         
     def deleteProject(self):
+       
         item,obj,typ = self.getSelectedItem()
         if item == None:
             return
