@@ -10,6 +10,8 @@ import DataModel
 import ChromatogramView
 import TwoDView
 import ProjectFrame
+import NotebookMzMLView
+import NotebookAnalysisView
 
 """
 Viewer for analysis file
@@ -77,8 +79,8 @@ class App(Frame):
         frameProject.grid(row=0,column=0,sticky=(N, W, E, S))
         
         notebook = ttk.Notebook(master)
-        f1 = TwoDView.TwoDView(notebook,self.model)
-        f2 = ChromatogramView.ChromatogramView(notebook,self.model)
+        f1 = NotebookMzMLView.NotebookMzMLView(notebook,self.model)
+        f2 = NotebookAnalysisView.NotebookAnalysisView(notebook,self.model)
         notebook.add(f1, text='mzMLView')
         notebook.add(f2, text='AnalysisView')
         notebook.grid(row=0,column=1,sticky=(N, W, E, S))

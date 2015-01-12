@@ -7,6 +7,7 @@ import tkMessageBox
 import DataModel
 import os
 import ThreadedIO
+import glyxsuite
 
 """
 |---------------|
@@ -21,11 +22,12 @@ import ThreadedIO
 """
 class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
     
-    def __init__(self,path,project,master):
+    def __init__(self,master,path,project):
         ThreadedIO.ThreadedIO.__init__(self)
         self.path = path
         self.project = project
         self.master = master
+        self.error = False
         
         
     def updateExternal(self,running=False):
@@ -33,9 +35,9 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
             print "running"
         else:
             print "loading finished"
-            self.project.mzMLContainer.exp =  self.result
-            self.master.loadingFinished()
-            
+            self.project.mzMLFile.exp =  self.result
+            self.master.loadedMzMLFile(self.error,self.project)
+
     def threadedAction(self):
         try:
             print "loading experiment"
@@ -46,36 +48,68 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
             print "loading finnished"
         except:
             self.running = False
+            self.error = True
+            tkMessageBox.showerror("File input error",
+                "Error while loading pyopenms file!")
             raise
         
+class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
+    
+    def __init__(self,master,path,analysis):
+        ThreadedIO.ThreadedIO.__init__(self)
+        self.path = path
+        self.analysis = analysis
+        self.master = master
+        self.error = False
+        
+        
+    def updateExternal(self,running=False):
+        if running:
+            print "running"
+        else:
+            print "stopped"
+            print "result",self.result
+            self.analysis.analysis = self.result
+            self.master.loadedAnalysisFile(self.error,self.analysis)
+            
+    def threadedAction(self):
+        try:
+            print "loading experiment"
+            glyMl = glyxsuite.io.GlyxXMLFile()
+            glyMl.readFromFile(self.path)
+            self.queue.put(glyMl)
+            print "loading finnished"
+        except:
+            tkMessageBox.showerror("File input error",
+                "Error while loading analysis file! Please check glyML version.")
+            self.running = False
+            raise        
 
 class Project:
     
-    def __init__(self,name):
+    def __init__(self,name,path):
         self.name = name
-        self.mzMLContainer = None
-        self.analysisFiles = []
-        self.exp = None
+        self.path = path
+        self.mzMLFile = None
+        self.analysisFiles = {}
         
-        
+      
 class ContainerMZMLFile:
     
     def __init__(self,project,path):
         self.exp = None
         self.path = path
         self.project = project
-        
+
+
 class ContainerAnalysisFile:
     
     def __init__(self,project,path):
         self.path = path
         self.project = project
-
-class DebugScrollbar(Tkinter.Scrollbar):
-    def set(self, *args):
-        print "SCROLLBAR SET", args
-        Tkinter.Scrollbar.set(self, *args)
-
+        self.name = os.path.basename(path)
+        self.analysis = None
+        self.projectItem = None
 
 class ProjectFrame(ttk.Frame):
     
@@ -98,33 +132,24 @@ class ProjectFrame(ttk.Frame):
 
         #NORMAL, ACTIVE or DISABLED
         
-        self.b4 = Tkinter.Button(tools, text="delete Analysis",command=self.deleteProject)
+        self.b4 = Tkinter.Button(tools, text="delete Analysis",command=self.deleteAnalysis)
         self.b4.grid(row=1,column=1)
         self.b4.config(state=Tkinter.DISABLED)
         
         
         tools.grid(row=0,column=0,sticky=('N','W','E','S'))
         
-        #yscrollbar = Tkinter.Scrollbar(self,orient=Tkinter.VERTICAL)
-        yscrollbar = DebugScrollbar(self,orient=Tkinter.VERTICAL)
+        yscrollbar = Tkinter.Scrollbar(self,orient=Tkinter.VERTICAL)
         
-        xscrollbar = Tkinter.Scrollbar(self,orient=Tkinter.HORIZONTAL)
         self.projectTree = ttk.Treeview(self,
-                            xscrollcommand=xscrollbar.set,
-                            yscrollcommand=yscrollbar.set)
+                                        yscrollcommand=yscrollbar.set)
                             
         self.projectTree.grid(row=1,column=0,sticky=('N','W','E','S'))
-        
-        xscrollbar.grid(row=2,column=0,sticky=('N','W','E','S'))
-        #xscrollbar.grid(row=2,column=0)
-        xscrollbar.config(command=self.projectTree.xview)
         
         yscrollbar.grid(row=1,column=1,sticky=('N','W','E','S'))
         yscrollbar.config(command=self.projectTree.yview)
         
         
-        columns = ("Filename",)
-        self.projectTree["columns"] = columns
         self.projectsTreeIds = {}
         
         # debug
@@ -132,14 +157,8 @@ class ProjectFrame(ttk.Frame):
         
         self.projectTree.heading("#0", text="Projects")
         
-        for col in columns:
-            #self.projectTree.column(col,stretch= 0,minwidth=300,width=300)
-            self.projectTree.heading(col, text=col, anchor='w')
-            self.projectTree.column(col,width=300, stretch=0)
-        
-        
         #tree.heading("size", text="File Size", anchor='w')
-        #tree.column("size", stretch=0, width=100)
+        self.projectTree.column("#0", stretch=0, width=500)
         
         #self.rowconfigure(0, minsize=100,weight=0)
         #self.rowconfigure(1, minsize=200,weight=1)
@@ -147,12 +166,6 @@ class ProjectFrame(ttk.Frame):
         
         # Events
         self.projectTree.bind("<<TreeviewSelect>>", self.clickedTree)
-        
-        # add test content into treeview
-        #for i in range(0,20):
-        #    item = self.projectTree.insert("", "end",text="test"+str(i),
-        #        values=("blahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblahblah"),tags = ("blah",))
-                
         
 
     
@@ -167,68 +180,102 @@ class ProjectFrame(ttk.Frame):
         # check if a project was selected
         if self.model.currentProject == None:
             return
+        project = self.model.currentProject
+        # get basedir
+        if project.mzMLFile == None:
+            return
+        workingdir = os.path.dirname(project.mzMLFile.path)
         
         options = {}
         options['defaultextension'] = '.xml'
         options['filetypes'] = [('Analysis files', '.xml'),('all files', '.*')]
-        options['initialdir'] = self.model.workingdir
+        options['initialdir'] = workingdir
         options['parent'] = self.master
         options['title'] = 'This is a title'
         path = tkFileDialog.askopenfilename(**options)
         print path
         if len(path) == 0:
             return
+
+        analysis = ContainerAnalysisFile(project,path)
+        if analysis.name in project.analysisFiles:
+            tkMessageBox.showinfo(title="Warning", 
+                message="Analysisfile with this name already exists!")
+            return
             
         # get project itemId
         while not "project" in self.projectTree.item(item,"tags"):
             item = self.projectTree.parent(item)           
         
-        itemAnalysis = self.projectTree.insert(item, "end",
-            text=os.path.basename(path),
-            values=(path,),tags = ("analysis",))
-        analysis = ContainerAnalysisFile(self.model.currentProject,path)
-        self.model.currentProject.analysisFiles.append(analysis)
-        # add analysis to idTree
-        self.projectsTreeIds[itemAnalysis] = analysis
+        analysis.projectItem = item
+        
+        t = ThreadedAnalysisFile(self,path,analysis)
+        t.start()
 
     def addProject(self,name,path):
-        item = self.projectTree.insert("", "end",text=name,tags = ("project",))
-        project = Project(name)
-        self.model.projects[name] = project
-        self.projectsTreeIds[item] = project
-        
-        # set workingdir
-        self.model.workingdir = os.path.split(path)[0]
-        # load file in new thread
         print "loading path", path
-        self.model.currentProject = project
+        project = Project(name,path)
         
-        itemMZML = self.projectTree.insert(item, "end",text="mzMLFile",
-            values=(os.path.basename(path),),tags = ("mzMLFile",))
-        
-        # add ContainerMZMLFile
         mzMLContainer = ContainerMZMLFile(project,path)
-        project.mzMLContainer = mzMLContainer
-        self.projectsTreeIds[itemMZML] = mzMLContainer
-        #t = ThreadedOpenMZML(path,self.model.currentProject,self)
-        #t.start()
+        project.mzMLFile = mzMLContainer
         
-        # Aktivate delete button
-        if len(self.model.projects) > 0:
-            self.b2.config(state=Tkinter.NORMAL)
-        else:
-            self.b2.config(state=Tkinter.DISABLED)
+        # load file in new thread
+        t = ThreadedOpenMZML(self,path,project)
+        t.start()        
 
-
-
-        
-        
     def deleteProject(self):
-       
         item,obj,typ = self.getSelectedItem()
         if item == None:
             return
-        print "to delete: ", item,obj
+        if not tkMessageBox.askyesno('Delete Project', 
+            'Do you want to delete this project?'):
+            return
+        # get project itemId
+        while not "project" in self.projectTree.item(item,"tags"):
+            item = self.projectTree.parent(item)
+            
+        project = self.model.currentProject
+        
+        # delete project from model
+        if project.name in self.model.projects:
+            self.model.projects.pop(project.name)
+            
+        # delete project from TreeviewID
+        if item in self.projectsTreeIds:
+            self.projectsTreeIds.pop(item)
+        
+        # delete project from Treeview
+        self.projectTree.delete(item)
+        print "delete project: ",item
+        
+        
+    def deleteAnalysis(self):
+        item,obj,typ = self.getSelectedItem()
+        if item == None:
+            return
+        if typ != "analysis":
+            return
+        # get analysis
+        if not item in self.projectsTreeIds:
+            return
+        if not tkMessageBox.askyesno('Delete Analysis', 
+            'Do you want to delete this analysis?'):
+            return
+            
+        analysis = self.projectsTreeIds[item]
+        project = self.model.currentProject
+        
+        # delete analysis from project
+        if analysis.name in project.analysisFiles:
+            project.analysisFiles.pop(analysis.name)
+        
+        # delete analysisId from Treeview-ID-tracker
+        if item in self.projectsTreeIds:
+            self.projectsTreeIds.pop(item)
+         
+        # delete analysis from Treeview
+        self.projectTree.delete(item)
+        print "deleted analysis: ", item,obj
         
     def clickedTree(self,event):
         item,obj,typ = self.getSelectedItem()
@@ -247,20 +294,53 @@ class ProjectFrame(ttk.Frame):
         elif typ == "mzMLFile":
             self.model.currentProject = obj.project
 
-            
-            
         # set button state
         if typ == "analysis":
             self.model.currentProject = obj.project
             self.b4.config(state=Tkinter.NORMAL)
         else:
             self.b4.config(state=Tkinter.DISABLED)
-            
-        
-            
+
         print "current project ",self.model.currentProject.name
 
-    def loadingFinished(self):
+    def loadedMzMLFile(self,error,project):
+        if error == True:
+            return
+
+        item = self.projectTree.insert("", "end",text=project.name,tags = ("project",))
+        self.model.projects[project.name] = project
+        self.projectsTreeIds[item] = project
+        
+        # set workingdir
+        self.model.workingdir = os.path.split(project.path)[0]
+        self.model.currentProject = project
+        
+        itemMZML = self.projectTree.insert(item, "end",
+                    text=os.path.basename(project.path),
+                    tags = ("mzMLFile",))
+        
+        # add ContainerMZMLFile
+
+        self.projectsTreeIds[itemMZML] = project.mzMLFile
+        
+        # Aktivate delete button
+        if len(self.model.projects) > 0:
+            self.b2.config(state=Tkinter.NORMAL)
+        else:
+            self.b2.config(state=Tkinter.DISABLED)
+        print "loaded mzml file"
+        
+    def loadedAnalysisFile(self,error,analysis):
+        if error == True:
+            return
+        itemAnalysis = self.projectTree.insert(analysis.projectItem, "end",
+            text=analysis.name,
+            tags = ("analysis",))
+
+        analysis.project.analysisFiles[analysis.name] = analysis
+        # add analysis to idTree
+        self.projectsTreeIds[itemAnalysis] = analysis
+        print "loaded analysis file"
         return
 
     def getSelectedItem(self):
