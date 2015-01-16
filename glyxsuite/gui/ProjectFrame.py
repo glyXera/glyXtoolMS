@@ -85,31 +85,8 @@ class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
             self.running = False
             raise        
 
-class Project:
-    
-    def __init__(self,name,path):
-        self.name = name
-        self.path = path
-        self.mzMLFile = None
-        self.analysisFiles = {}
+
         
-      
-class ContainerMZMLFile:
-    
-    def __init__(self,project,path):
-        self.exp = None
-        self.path = path
-        self.project = project
-
-
-class ContainerAnalysisFile:
-    
-    def __init__(self,project,path):
-        self.path = path
-        self.project = project
-        self.name = os.path.basename(path)
-        self.analysis = None
-        self.projectItem = None
 
 class ProjectFrame(ttk.Frame):
     
@@ -197,7 +174,7 @@ class ProjectFrame(ttk.Frame):
         if len(path) == 0:
             return
 
-        analysis = ContainerAnalysisFile(project,path)
+        analysis = DataModel.ContainerAnalysisFile(project,path)
         if analysis.name in project.analysisFiles:
             tkMessageBox.showinfo(title="Warning", 
                 message="Analysisfile with this name already exists!")
@@ -214,9 +191,9 @@ class ProjectFrame(ttk.Frame):
 
     def addProject(self,name,path):
         print "loading path", path
-        project = Project(name,path)
+        project = DataModel.Project(name,path)
         
-        mzMLContainer = ContainerMZMLFile(project,path)
+        mzMLContainer = DataModel.ContainerMZMLFile(project,path)
         project.mzMLFile = mzMLContainer
         
         # load file in new thread
@@ -296,9 +273,13 @@ class ProjectFrame(ttk.Frame):
 
         # set button state
         if typ == "analysis":
+            self.model.currentAnalysis = obj
             self.model.currentProject = obj.project
             self.b4.config(state=Tkinter.NORMAL)
+            self.model.funcUpdateNotebookScoring()
+            
         else:
+            self.model.currentAnalysis = None
             self.b4.config(state=Tkinter.DISABLED)
 
         print "current project ",self.model.currentProject.name
@@ -306,6 +287,9 @@ class ProjectFrame(ttk.Frame):
     def loadedMzMLFile(self,error,project):
         if error == True:
             return
+            
+        # reorganize data
+        project.mzMLFile.createIds()
 
         item = self.projectTree.insert("", "end",text=project.name,tags = ("project",))
         self.model.projects[project.name] = project
@@ -328,6 +312,7 @@ class ProjectFrame(ttk.Frame):
             self.b2.config(state=Tkinter.NORMAL)
         else:
             self.b2.config(state=Tkinter.DISABLED)
+
         print "loaded mzml file"
         
     def loadedAnalysisFile(self,error,analysis):
@@ -341,7 +326,30 @@ class ProjectFrame(ttk.Frame):
         # add analysis to idTree
         self.projectsTreeIds[itemAnalysis] = analysis
         print "loaded analysis file"
-        return
+        self.model.debug = analysis
+        
+        # update internal ids
+        analysis.createIds()
+        
+        # merge data
+        # insert all ms2 spectra
+        analysis.data = []
+        for spec in analysis.project.mzMLFile.exp:
+            if spec.getMSLevel() != 2:
+                continue
+            name = spec.getNativeID()
+            
+            # find correspondig analysis entry
+            if not name in analysis.spectraIds:
+                continue
+            spectrum = analysis.spectraIds[name]
+            #if spectrum.getLogScore() >= 2.5:
+            #    continue
+            analysis.data.append((spec,spectrum))
+        print "analysis dta size",len(analysis.data)
+        # update Notebooks
+        self.model.funcUpdateNotebookScoring()
+        
 
     def getSelectedItem(self):
         # returns ItemId,Object,ObjectType
