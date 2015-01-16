@@ -7,3 +7,4 @@ dist
 .directory
 TOPP/EXTERNAL
 bin/*.txt
+bin/guitests/*
