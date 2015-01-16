@@ -11,6 +11,7 @@ class GlyxXMLSpectrum:
         self._precursor_charge = 0
         self._logScore = 10
         self._ions = {}
+        self._isGlycopeptide = False
 
     def setNativeId(self,nativeId):
         self._nativeId = nativeId
@@ -30,6 +31,9 @@ class GlyxXMLSpectrum:
 
     def setLogScore(self,logScore):
         self._logScore = logScore
+        
+    def setIsGlycopeptide(self,boolean):
+        self._isGlycopeptide = boolean
 
     def addIon(self,glycan,ionName,mass,intensity):
         if not glycan in self._ions:
@@ -59,6 +63,11 @@ class GlyxXMLSpectrum:
 
     def getIons(self):
         return self._ions
+        
+    def getIsGlycopeptide(self):
+        return self._isGlycopeptide
+        
+    
 
 
 class GlyxXMLParameters:
@@ -201,6 +210,7 @@ class GlyxXMLFile:
         self.spectra = []
         self.features = []
         self.glycoModHits = []
+        self.version = "0.0.2"
 
     def _parseParameters(self,xmlParameters):
         timestamp = xmlParameters.find("./timestamp").text
@@ -228,6 +238,7 @@ class GlyxXMLFile:
         spectra = []
         for s in xmlSpectra:
             spectrum = GlyxXMLSpectrum()
+            # Version 0.0.1
             nativeId = s.find("./nativeId").text
             spectrum.setNativeId(nativeId)
             ionCount = float(s.find("./ionCount").text)
@@ -246,7 +257,9 @@ class GlyxXMLFile:
                     ionMass = float(ion.find("./mass").text)
                     ionIntensity = float(ion.find("./intensity").text)
                     spectrum.addIon(glycan,ionName,ionMass,ionIntensity)
-
+            # version 0.0.2
+            if self.version > "0.0.1":
+                spectrum.setIsGlycopeptide(bool(int(s.find("./isGlycopeptide").text)))
             spectra.append(spectrum)
         return spectra
         
@@ -294,7 +307,9 @@ class GlyxXMLFile:
             xmlPrecursorCharge.text = str(spectrum.getPrecursorCharge())
             xmlTotalScore = ET.SubElement(xmlSpectrum,"logScore")
             xmlTotalScore.text = str(spectrum.getLogScore())
-
+            if self.version > "0.0.1":
+                xmlIsGlyco = ET.SubElement(xmlSpectrum,"isGlycopeptide")
+                xmlIsGlyco.text = str(int(spectrum.getIsGlycopeptide()))
             xmlScoreList = ET.SubElement(xmlSpectrum,"scores")        
             ions = spectrum.getIons()
             for glycan in ions:
@@ -310,6 +325,8 @@ class GlyxXMLFile:
                     xmlIonMass.text = str(ions[glycan][ionName]["mass"])
                     xmlIonIntensity = ET.SubElement(xmlIon,"intensity")
                     xmlIonIntensity.text = str(ions[glycan][ionName]["intensity"])
+            
+                
                     
     def _writeFeatures(self,xmlFeatures):
         for feature in self.features:
@@ -414,10 +431,15 @@ class GlyxXMLFile:
        
     def writeToFile(self,path):
         xmlRoot = ET.Element("glyxXML")
+        # write version
+        xmlVersion = ET.SubElement(xmlRoot,"version")
+        xmlVersion.text = self.version
+        
         xmlParameters = ET.SubElement(xmlRoot,"parameters")
         xmlSpectra = ET.SubElement(xmlRoot,"spectra")
         xmlFeatures = ET.SubElement(xmlRoot,"features")
         xmlGlycomodHits = ET.SubElement(xmlRoot,"glycomod")
+        
         # write parameters
         self._writeParameters(xmlParameters)
         # write spectra
@@ -437,6 +459,12 @@ class GlyxXMLFile:
         f = file(path,"r")
         root = ET.fromstring(f.read())
         f.close()
+        # check version
+        version = root.find(".//version")
+        if version == None:
+            self.version = "0.0.1"
+        else:
+            self.version = version.text
         # read parameters 
         parameters = self._parseParameters(root.find(".//parameters"))
         # parse spectra
