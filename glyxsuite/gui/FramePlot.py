@@ -31,9 +31,10 @@ class FramePlot(ttk.Frame):
         self.zoomHistory = []
         self.allowZoom = False
         
+        self.NrXScales = 5.0
+        self.NrYScales = 5.0
+        
         # add canvas
-        self.aMax = -1
-        self.bMax = -1
         self.aMax = -1
         self.bMax = -1
         
@@ -210,7 +211,7 @@ class FramePlot(ttk.Frame):
                                     tags=("axis",),arrow="last")                            
                                     
         # search scale X
-        start,end,diff,exp = findScale(self.viewXMin,self.viewXMax,5.0)
+        start,end,diff,exp = findScale(self.viewXMin,self.viewXMax,self.NrXScales)
         while start < end:
             if start > self.viewXMin and start < self.viewXMax:
                 x = self.convAtoX(start)
@@ -221,7 +222,7 @@ class FramePlot(ttk.Frame):
             start += diff
 
         # search scale Y
-        start,end,diff,exp = findScale(self.viewYMin,self.viewYMax,5.0)
+        start,end,diff,exp = findScale(self.viewYMin,self.viewYMax,self.NrYScales)
         while start < end:
             if start > self.viewYMin and start < self.viewYMax:
                 x = self.convAtoX(self.viewXMin)

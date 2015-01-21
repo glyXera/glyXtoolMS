@@ -113,6 +113,9 @@ class ProjectFrame(ttk.Frame):
         self.b4.grid(row=1,column=1)
         self.b4.config(state=Tkinter.DISABLED)
         
+        self.b1 = Tkinter.Button(tools, text="load test",command=self.loadTest)
+        self.b1.grid(row=0,column=2)
+        
         
         tools.grid(row=0,column=0,sticky=('N','W','E','S'))
         
@@ -144,7 +147,10 @@ class ProjectFrame(ttk.Frame):
         # Events
         self.projectTree.bind("<<TreeviewSelect>>", self.clickedTree)
         
-
+    def loadTest(self):
+        name = "test"
+        path = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/testdata/20141202_FETinsol03_HILIC_TNK_BB4_01_3743.mzML"
+        self.addProject(name,path)
     
     def clickedAddProject(self):
         AddProject(self,self.model)
@@ -346,6 +352,12 @@ class ProjectFrame(ttk.Frame):
             #if spectrum.getLogScore() >= 2.5:
             #    continue
             analysis.data.append((spec,spectrum))
+            
+            
+        # create chromatogram
+        analysis.chromatogram = None
+        
+        
         print "analysis dta size",len(analysis.data)
         # update Notebooks
         self.model.funcUpdateNotebookScoring()

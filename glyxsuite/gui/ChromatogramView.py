@@ -7,11 +7,13 @@ import DataModel
         
 class ChromatogramView(FramePlot.FramePlot):
     
-    def __init__(self,master,model):
-        FramePlot.FramePlot.__init__(self,master,model)
+    def __init__(self,master,model,height=300,width=800):
+        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width)
         
         self.master = master
-
+        self.NrXScales = 3.0
+        self.rt = None
+        
         b1 = Button(self, text="save",command=self.save)
         b1.grid(row=2, column=0, sticky=N+S)
         
@@ -32,7 +34,7 @@ class ChromatogramView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcPaintChromatograms = self.initChromatogram
+        self.model.funcScoringChromatogram = self.initChromatogram
         
         # Events
         self.canvas.bind("<Left>", self.sayHi)
@@ -51,9 +53,9 @@ class ChromatogramView(FramePlot.FramePlot):
         rt = self.convXtoA(event.x)
         
         # get selected MSLevel
-        if self.model.selectedChromatogram == None:
+        if self.model.currentAnalysis.selectedChromatogram == None:
             return
-        msLevel = self.model.selectedChromatogram.msLevel
+        msLevel = self.model.currentAnalysis.selectedChromatogram.msLevel
         nearest = None
         diff = -1
         for spec in self.model.exp:
@@ -73,8 +75,8 @@ class ChromatogramView(FramePlot.FramePlot):
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1
-        for treeId in self.model.chromatograms:
-            chrom = self.model.chromatograms[treeId]
+        for treeId in self.model.currentAnalysis.chromatograms:
+            chrom = self.model.currentAnalysis.chromatograms[treeId]
             if chrom.plot == False:
                 continue
             for rt in chrom.rt:
@@ -86,10 +88,10 @@ class ChromatogramView(FramePlot.FramePlot):
 
 
     def paintObject(self):
-        print "paintObject"
         self.allowZoom = False
-        for treeId in self.model.chromatograms:
-            chrom = self.model.chromatograms[treeId]
+        for treeId in self.model.currentAnalysis.chromatograms:
+            chrom = self.model.currentAnalysis.chromatograms[treeId]
+            self.model.debug = chrom
             if chrom.plot == False:
                 continue
             if chrom.selected == True:
@@ -104,22 +106,36 @@ class ChromatogramView(FramePlot.FramePlot):
                 intens = chrom.intensity[i]       
                 xy.append(self.convAtoX(rt))
                 xy.append(self.convBtoY(intens))
+            print "len",len(xy)
             if len(xy) == 0:
                 continue
             item = self.canvas.create_line(xy,fill=chrom.color, width = linewidth)
+        if self.rt != None:
+            intZero = self.convBtoY(0)
+            intMax = self.convBtoY(self.viewYMax)
+            item1 = self.canvas.create_line(
+                self.convAtoX(self.rt),
+                intZero,
+                self.convAtoX(self.rt),
+                intMax,
+                fill='blue')
             self.allowZoom = True
     
-    def initChromatogram(self,keepZoom = False):
-        print "init chromatogram"
-        self.initCanvas(keepZoom = keepZoom)
+    def initChromatogram(self,low,high,rt):
+        self.viewXMin = low
+        self.viewXMax = high
+        self.viewYMin = 0
+        self.viewYMax = -1
+        self.rt = rt
+        self.initCanvas(keepZoom = True)
 
     def identifier(self):
         return "ChromatogramView"
     
     def save(self):
         f = file("chromout.txt","w")
-        for treeId in self.model.chromatograms:
-            chrom = self.model.chromatograms[treeId]
+        for treeId in self.model.currentAnalysis.chromatograms:
+            chrom = self.model.currentAnalysis.chromatograms[treeId]
             f.write("name:"+chrom.name+"\n")
             f.write("rt:"+reduce(lambda x,y:str(x)+";"+str(y),chrom.rt)+"\n")
             f.write("int:"+reduce(lambda x,y:str(x)+";"+str(y),chrom.intensity)+"\n")
@@ -159,7 +175,7 @@ class ChromatogramView(FramePlot.FramePlot):
         
                 
         f.close()
-        self.model.chromatograms = chroms
+        self.model.currentAnalysis.chromatograms = chroms
         self.initChromatogram()
         print "loaded", len(chroms), " chromatograms"
         

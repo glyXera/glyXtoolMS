@@ -1,5 +1,6 @@
 import ttk
 import Tkinter
+import DataModel
 
 def treeview_sort_column(tv, col, reverse):
     print "treeview",tv,col
@@ -84,11 +85,11 @@ class NotebookScoring(ttk.Frame):
         scrollbar = Tkinter.Scrollbar(self)    
         self.tree = ttk.Treeview(self,yscrollcommand=scrollbar.set)
             
-        columns = ("RT","Precursormass","Charge","Score","isGlycopeptide")
+        columns = ("RT","Mass","Charge","Score","Is Glyco")
         self.tree["columns"] = columns
-        
+        self.tree.column("#0",width=100)
         for col in columns:
-            self.tree.column(col,width=100)
+            self.tree.column(col,width=80)
             #self.tree.heading(col, text=col, command=lambda col=col: treeview_sort_column(self.tree, col, False))
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
             
@@ -205,6 +206,60 @@ class NotebookScoring(ttk.Frame):
         self.v4.set(spectrum.getPrecursorCharge())
         self.v5.set(spectrum.getLogScore())          
         self.v6.set(spectrum.getIsGlycopeptide())
+        
+        # make calculations
+        ms2,ms1 = self.model.currentProject.mzMLFile.experimentIds[spectrum.getNativeId()]
+        mz = spectrum.getPrecursorMass()
+        charge = spectrum.getPrecursorCharge()
+        p = ms2.getPrecursors()[0]
+        low = p.getIsolationWindowLowerOffset()
+        high = p.getIsolationWindowUpperOffset()
+        if low == 0:
+            low = 2
+        if high == 0:
+            high = 2
+        low = mz-low
+        high = mz+high
+        
+        rtLow = ms1.getRT()-20
+        rtHigh = ms1.getRT()+20
+        
+        # create chromatogram
+        c = DataModel.Chromatogram()
+        c.plot = True
+        c.name = "test"
+        c.rangeLow = mz-0.1
+        c.rangeHigh = mz+3/float(charge)+0.1
+        c.rt = []
+        c.intensity = []
+        c.msLevel = 1
+        c.selected = True
+        
+        for spec in self.model.currentProject.mzMLFile.exp:
+            if spec.getMSLevel() != c.msLevel:
+                continue
+            if spec.getRT() < rtLow or spec.getRT() > rtHigh:
+                continue
+            c.rt.append(spec.getRT())
+            # get intensity in range
+            yi = 0
+            for peak in spec:
+                if c.rangeLow  < peak.getMZ() and peak.getMZ() < c.rangeHigh:
+                    yi += peak.getIntensity()
+            c.intensity.append(yi)
+            
+        # set chromatogram within analysis
+        self.model.currentAnalysis.chromatograms[c.name] = c
+        self.model.currentAnalysis.selectedChromatogram = c
+        
+        # init spectrum view
+        self.model.funcScoringMSMSSpectrum(ms2)
+        
+        # init precursor spectrum view
+        self.model.funcScoringMSSpectrum(ms1,mz,charge,low,high)
+        
+        # init chromatogram view
+        self.model.funcScoringChromatogram(rtLow,rtHigh,ms2.getRT())
        
     def saveChanges(self):
         selection = self.tree.selection()
