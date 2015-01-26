@@ -90,7 +90,13 @@ class Project:
         self.path = path
         self.mzMLFile = None
         self.analysisFiles = {}
-        
+
+class LinkedSpectrum:
+    
+    def __init__(self,spec,prev=None,nex=None):
+        self.spec = spec
+        self.prev = prev
+        self.nex = nex        
       
 class ContainerMZMLFile:
     
@@ -99,18 +105,30 @@ class ContainerMZMLFile:
         self.path = path
         self.project = project
         self.experimentIds = {}
+        self.linked = {}
         
         
     def createIds(self):
         print "creating ids"
         self.experimentIds = {}
         ms1 = None
+        prev = None
+        nex = None
         for spec in self.exp:
             level = spec.getMSLevel()
+            nativeId = spec.getNativeID()
             if level == 1:
                 ms1 = spec
+                
+                l = LinkedSpectrum(spec)
+                l.prev = prev
+                if prev is not None:
+                    prev.nex = l
+                prev = l
+                self.linked[nativeId] = l
             if level == 2:
-                self.experimentIds[spec.getNativeID()] = (spec,ms1)
+                self.experimentIds[nativeId] = (spec,ms1)
+                
 
 class ContainerAnalysisFile:
     

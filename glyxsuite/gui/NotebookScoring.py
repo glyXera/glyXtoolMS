@@ -221,8 +221,8 @@ class NotebookScoring(ttk.Frame):
         low = mz-low
         high = mz+high
         
-        rtLow = ms1.getRT()-20
-        rtHigh = ms1.getRT()+20
+        rtLow = ms1.getRT()-100
+        rtHigh = ms1.getRT()+100
         
         # create chromatogram
         c = DataModel.Chromatogram()
@@ -235,6 +235,37 @@ class NotebookScoring(ttk.Frame):
         c.msLevel = 1
         c.selected = True
         
+        """
+        current = self.model.currentProject.mzMLFile.linked[ms1.getNativeID()]
+        # get left side
+        x = []
+        y = []
+        while current.prev != None:
+            current = current.prev
+            if current.spec.getRT() < rtLow:
+                break
+            x = [current.spec.getRT()] + x
+            yi = 0
+            for peak in current.spec:
+                if c.rangeLow  < peak.getMZ() and peak.getMZ() < c.rangeHigh:
+                    yi += peak.getIntensity()
+            y = [yi] + y
+            
+        current = self.model.currentProject.mzMLFile.linked[ms1.getNativeID()]
+        
+        while current != None:
+            if current.spec.getRT() > rtHigh:
+                break
+            x = x + [current.spec.getRT()]
+            yi = 0
+            for peak in current.spec:
+                if c.rangeLow  < peak.getMZ() and peak.getMZ() < c.rangeHigh:
+                    yi += peak.getIntensity()
+            y = y + [yi]
+            current = current.nex
+        c.rt = x
+        c.intensity = y
+        """
         for spec in self.model.currentProject.mzMLFile.exp:
             if spec.getMSLevel() != c.msLevel:
                 continue
@@ -247,7 +278,7 @@ class NotebookScoring(ttk.Frame):
                 if c.rangeLow  < peak.getMZ() and peak.getMZ() < c.rangeHigh:
                     yi += peak.getIntensity()
             c.intensity.append(yi)
-            
+        
         # set chromatogram within analysis
         self.model.currentAnalysis.chromatograms[c.name] = c
         self.model.currentAnalysis.selectedChromatogram = c

@@ -310,7 +310,6 @@ class ProjectFrame(ttk.Frame):
                     tags = ("mzMLFile",))
         
         # add ContainerMZMLFile
-
         self.projectsTreeIds[itemMZML] = project.mzMLFile
         
         # Aktivate delete button
