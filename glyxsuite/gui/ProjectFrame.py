@@ -283,10 +283,16 @@ class ProjectFrame(ttk.Frame):
             self.model.currentProject = obj.project
             self.b4.config(state=Tkinter.NORMAL)
             self.model.funcUpdateNotebookScoring()
+            self.model.funcUpdateNotebookIdentification()
+            self.model.funcUpdateNotebookFeature()
+            self.model.funcFeatureTwoDView()
             
         else:
             self.model.currentAnalysis = None
             self.b4.config(state=Tkinter.DISABLED)
+            self.model.funcUpdateNotebookScoring()
+            self.model.funcUpdateNotebookIdentification()
+            self.model.funcUpdateNotebookFeature()
 
         print "current project ",self.model.currentProject.name
 
@@ -357,10 +363,11 @@ class ProjectFrame(ttk.Frame):
         analysis.chromatogram = None
         
         
-        print "analysis dta size",len(analysis.data)
+        print "analysis data size",len(analysis.data)
         # update Notebooks
         self.model.funcUpdateNotebookScoring()
-        
+        self.model.funcUpdateNotebookIdentification()
+        self.model.funcUpdateNotebookFeature()
 
     def getSelectedItem(self):
         # returns ItemId,Object,ObjectType

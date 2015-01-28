@@ -86,8 +86,6 @@ class PrecursorView(FramePlot.FramePlot):
             item = self.canvas.create_line(xy,tags=("peak",))
         
         # plot precursor line
-        
-        print "foo",self.precursormass,self.viewYMax
         intZero = self.convBtoY(0)
         intMax = self.convBtoY(self.viewYMax)
         if self.precursormass != 0:

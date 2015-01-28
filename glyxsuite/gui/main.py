@@ -11,7 +11,10 @@ import ChromatogramView
 import TwoDView
 import ProjectFrame
 import NotebookScoring
+import NotebookFeature
+import NotebookIdentification
 import ExtensionScoring
+import ExtensionFeature
 
 """
 Viewer for analysis file
@@ -81,8 +84,8 @@ class App(Tkinter.Frame):
         self.notebook = ttk.Notebook(master)
         
         n1 = NotebookScoring.NotebookScoring(self.notebook,self.model)
-        n2 = Tkinter.Frame(self.notebook)
-        n3 = Tkinter.Frame(self.notebook)
+        n2 = NotebookFeature.NotebookFeature(self.notebook,self.model)
+        n3 = NotebookIdentification.NotebookIdentification(self.notebook,self.model)
         n4 = Tkinter.Frame(self.notebook)
 
         self.notebook.add(n1, text='1. Scoring')
@@ -103,7 +106,7 @@ class App(Tkinter.Frame):
         # Add extention frames
         self.e1 = ExtensionScoring.ExtensionScoring(master,self.model,'1. Scoring')
         self.e1.grid(row=0,column=1,rowspan=2,sticky="NWES")
-        self.e2 = ttk.Labelframe(master,text = '2. Features')
+        self.e2 = ExtensionFeature.ExtensionFeature(master,self.model,'2. Features')
         self.e2.grid(row=0,column=1,rowspan=2,sticky="NWES")
         self.e3 = ttk.Labelframe(master,text = '3. Identification')
         self.e3.grid(row=0,column=1,rowspan=2,sticky="NWES")

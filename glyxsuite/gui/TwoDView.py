@@ -7,8 +7,8 @@ import DataModel
         
 class TwoDView(FramePlot.FramePlot):
     
-    def __init__(self,master,model):
-        FramePlot.FramePlot.__init__(self,master,model,height=300,width=350)
+    def __init__(self,master,model,height=300,width=300):
+        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width)
         
         self.master = master
 
@@ -25,7 +25,7 @@ class TwoDView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcPaintTwo2View = self.init
+        self.model.funcFeatureTwoDView = self.init
         
         # Events
         #self.canvas.bind("<Left>", self.sayHi)
@@ -38,7 +38,7 @@ class TwoDView(FramePlot.FramePlot):
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1
-        for feature in self.model.analysis.features:
+        for feature in self.model.currentAnalysis.analysis.features:
             rt = feature.getRT()
             mz = feature.getMZ()
             if self.aMax < rt:
@@ -50,7 +50,11 @@ class TwoDView(FramePlot.FramePlot):
     def paintObject(self):
         print "paintObject"
         self.allowZoom = False
-        for feature in self.model.analysis.features:
+        
+        # calculate circle diameter
+        diam = int(min(self.slopeA,self.slopeB)*2)
+        print "diameter",diam
+        for feature in self.model.currentAnalysis.analysis.features:
             rt1,rt2,mz1,mz2 = feature.getBoundingBox()
             rt1 = self.convAtoX(rt1)
             rt2 = self.convAtoX(rt2)
@@ -66,8 +70,26 @@ class TwoDView(FramePlot.FramePlot):
             xy += [rt2,mz2]
             xy += [rt1,mz2]
             xy += [rt1,mz1]
-            item = self.canvas.create_line(xy,fill="black", width = linewidth)
+            if self.model.currentAnalysis.currentFeature == feature:
+                color = "red"
+                colorSpec = "green"
+            else:
+                color = "black"
+                colorSpec = "white"
+            item = self.canvas.create_line(xy,fill=color, width = linewidth)
+            
+            # plot msms spectra
+            for specId in feature.getSpectraIds():
+                spectrum = self.model.currentAnalysis.spectraIds[specId]
+                x = self.convAtoX(spectrum.getRT())
+                y = self.convBtoY(spectrum.getPrecursorMass())
+                item = self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill=colorSpec)
             self.allowZoom = True
+        # paint current selected feature borders
+        #feature = self.model.currentAnalysis.currentFeature
+        #if feature == None:
+        #    return
+        
     
     def init(self,keepZoom = False):
         print "init 2D View"

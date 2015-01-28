@@ -34,9 +34,14 @@ class DataModel:
         # NotebookScoring
         self.funcScoringChromatogram = None
         
-
+        #TwoDView
+        # ExtentionFeature
+        # NotebookFeature
+        self.funcFeatureTwoDView = None
         
         self.funcUpdateNotebookScoring = None
+        self.funcUpdateNotebookIdentification = None
+        self.funcUpdateNotebookFeature = None
         
 
         
@@ -139,18 +144,33 @@ class ContainerAnalysisFile:
         self.analysis = None
         self.projectItem = None
         self.spectraIds = {}
+        self.featureIds = {}
+        self.self.spectraInFeatures = {}
         self.data = {}
         self.sortedColumn = ""
         self.reverse = False
         self.chromatograms = {}
         self.selectedChromatogram = None
+        self.currentFeature = None
         
         
         
     def createIds(self):
         self.spectraIds = {}
+        self.spectraInFeatures = {}
         for spectrum in self.analysis.spectra:
             self.spectraIds[spectrum.getNativeId()] = spectrum
+            self.spectraInFeatures[spectrum.getNativeId()] = []
+        
+        # create featureIds
+        # create feature - spectra link
+        self.featureIds = {}
+        for feature in self.analysis.features:
+            self.featureIds[feature.getId()] = feature
+            for specId in feature.getSpectraIds():
+                self.spectraInFeatures[specId].append(feature.getId())
+
+        
         
             
     def addNewSpectrum(self,nativeID):

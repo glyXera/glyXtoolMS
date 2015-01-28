@@ -234,43 +234,40 @@ class NotebookScoring(ttk.Frame):
         c.intensity = []
         c.msLevel = 1
         c.selected = True
-        
-        """
-        current = self.model.currentProject.mzMLFile.linked[ms1.getNativeID()]
-        # get left side
-        x = []
-        y = []
-        while current.prev != None:
-            current = current.prev
-            if current.spec.getRT() < rtLow:
+        # get mz range to extract
+        for spec in self.model.currentProject.mzMLFile.exp:
+            if spec.getMSLevel() == 1:
                 break
-            x = [current.spec.getRT()] + x
-            yi = 0
-            for peak in current.spec:
-                if c.rangeLow  < peak.getMZ() and peak.getMZ() < c.rangeHigh:
-                    yi += peak.getIntensity()
-            y = [yi] + y
+        lowPeak = -1
+        highPeak = -1
+        i = 0 
+        for mass in spec.get_peaks()[:,0]:
+            if lowPeak == -1 and mass > c.rangeLow:
+                lowPeak = i
+            if highPeak == -1 and mass > c.rangeHigh:
+                highPeak = i
+                break
+            i += 1
             
-        current = self.model.currentProject.mzMLFile.linked[ms1.getNativeID()]
-        
-        while current != None:
-            if current.spec.getRT() > rtHigh:
+        for spec in self.model.currentProject.mzMLFile.exp:
+            if spec.getMSLevel() != c.msLevel:
+                continue
+            if spec.getRT() < rtLow:
+                continue
+            if spec.getRT() > rtHigh:
                 break
-            x = x + [current.spec.getRT()]
-            yi = 0
-            for peak in current.spec:
-                if c.rangeLow  < peak.getMZ() and peak.getMZ() < c.rangeHigh:
-                    yi += peak.getIntensity()
-            y = y + [yi]
-            current = current.nex
-        c.rt = x
-        c.intensity = y
+            c.rt.append(spec.getRT())
+            # get intensity in range
+            c.intensity.append(sum(spec.get_peaks()[lowPeak:highPeak,1]))
+            
         """
         for spec in self.model.currentProject.mzMLFile.exp:
             if spec.getMSLevel() != c.msLevel:
                 continue
-            if spec.getRT() < rtLow or spec.getRT() > rtHigh:
+            if spec.getRT() < rtLow:
                 continue
+            if spec.getRT() > rtHigh:
+                break
             c.rt.append(spec.getRT())
             # get intensity in range
             yi = 0
@@ -278,7 +275,7 @@ class NotebookScoring(ttk.Frame):
                 if c.rangeLow  < peak.getMZ() and peak.getMZ() < c.rangeHigh:
                     yi += peak.getIntensity()
             c.intensity.append(yi)
-        
+        """
         # set chromatogram within analysis
         self.model.currentAnalysis.chromatograms[c.name] = c
         self.model.currentAnalysis.selectedChromatogram = c
