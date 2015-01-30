@@ -4,68 +4,68 @@ from lxml import etree as ET
 class GlyxXMLSpectrum:
     
     def __init__(self):
-        self._nativeId = ""
-        self._rt = 0.0
-        self._ionCount = 0
-        self._precursor_mass = 0
-        self._precursor_charge = 0
-        self._logScore = 10
-        self._ions = {}
-        self._isGlycopeptide = False
+        self.nativeId = ""
+        self.rt = 0.0
+        self.ionCount = 0
+        self.precursorMass = 0
+        self.precursorCharge = 0
+        self.logScore = 10
+        self.ions = {}
+        self.isGlycopeptide = False
 
     def setNativeId(self,nativeId):
-        self._nativeId = nativeId
+        self.nativeId = nativeId
     
     def setRT(self,rt):
-        self._rt = rt
+        self.rt = rt
 
     def setIonCount(self,ionCount):
         if ionCount == 0:
-            self._ionCount = 0
+            self.ionCount = 0
         else:
-            self._ionCount = ionCount
+            self.ionCount = ionCount
 
     def setPrecursor(self,mass,charge):
-        self._precursor_mass = mass
-        self._precursor_charge = charge
+        self.precursorMass = mass
+        self.precursorCharge = charge
 
     def setLogScore(self,logScore):
-        self._logScore = logScore
+        self.logScore = logScore
         
     def setIsGlycopeptide(self,boolean):
-        self._isGlycopeptide = boolean
+        self.isGlycopeptide = boolean
 
     def addIon(self,glycan,ionName,mass,intensity):
         if not glycan in self._ions:
             self._ions[glycan] = {}
-        self._ions[glycan][ionName] = {}
-        self._ions[glycan][ionName]["mass"] = mass
-        self._ions[glycan][ionName]["intensity"] = intensity
+        self.ions[glycan][ionName] = {}
+        self.ions[glycan][ionName]["mass"] = mass
+        self.ions[glycan][ionName]["intensity"] = intensity
 
 
     def getNativeId(self):
-        return self._nativeId
+        return self.nativeId
 
     def getRT(self):
-        return self._rt
+        return self.rt
 
     def getIonCount(self):
-        return self._ionCount
+        return self.ionCount
 
     def getPrecursorMass(self):
-        return self._precursor_mass
+        return self.precursorMass
 
     def getPrecursorCharge(self):
-        return self._precursor_charge
+        return self.precursorCharge
 
     def getLogScore(self):
-        return self._logScore
+        return self.logScore
 
     def getIons(self):
-        return self._ions
+        return self.ions
         
     def getIsGlycopeptide(self):
-        return self._isGlycopeptide
+        return self.isGlycopeptide
         
     
 

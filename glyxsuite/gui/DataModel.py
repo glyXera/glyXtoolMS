@@ -1,6 +1,13 @@
 import glyxsuite
 import os
 
+# Extend Objects
+
+# a) Spectrum
+def foo(self):
+    print "bar"
+glyxsuite.io.GlyxXMLFile.blah = foo
+
 class DataModel:
     
     def __init__(self):
@@ -87,6 +94,58 @@ class Chromatogram:
         self.msLevel = 0
         self.selected = False
                 
+class ContainerSpectrum(object):
+    
+    def __init__(self,spectrum):
+        self._spectrum = spectrum
+        
+    @property
+    def nativeId(self):
+        return self._spectrum.nativeId
+
+    @nativeId.setter
+    def nativeId(self, value):
+        self._spectrum.nativeId = value
+
+    @property
+    def rt(self):
+        return self._spectrum.rt
+
+    @rt.setter
+    def rt(self, value):
+        self._spectrum.rt = value
+
+    @property
+    def precursorMass(self):
+        return self._spectrum.precursorMass
+
+    @precursorMass.setter
+    def precursorMass(self, value):
+        self._spectrum.precursorMass = value
+        
+    @property
+    def precursorCharge(self):
+        return self._spectrum.precursorCharge
+
+    @precursorCharge.setter
+    def precursorCharge(self, value):
+        self._spectrum.precursorCharge = value
+
+    @property
+    def logScore(self):
+        return self._spectrum.logScore
+
+    @logScore.setter
+    def logScore(self, value):
+        self._spectrum.logScore = value
+
+    @property
+    def isGlycopeptide(self):
+        return self._spectrum.isGlycopeptide
+
+    @isGlycopeptide.setter
+    def isGlycopeptide(self, value):
+        self._spectrum.isGlycopeptide = value
 
 class Project:
     
@@ -94,14 +153,7 @@ class Project:
         self.name = name
         self.path = path
         self.mzMLFile = None
-        self.analysisFiles = {}
-
-class LinkedSpectrum:
-    
-    def __init__(self,spec,prev=None,nex=None):
-        self.spec = spec
-        self.prev = prev
-        self.nex = nex        
+        self.analysisFiles = {}    
       
 class ContainerMZMLFile:
     
@@ -110,30 +162,19 @@ class ContainerMZMLFile:
         self.path = path
         self.project = project
         self.experimentIds = {}
-        self.linked = {}
         
         
     def createIds(self):
         print "creating ids"
         self.experimentIds = {}
         ms1 = None
-        prev = None
-        nex = None
         for spec in self.exp:
             level = spec.getMSLevel()
             nativeId = spec.getNativeID()
             if level == 1:
                 ms1 = spec
-                
-                l = LinkedSpectrum(spec)
-                l.prev = prev
-                if prev is not None:
-                    prev.nex = l
-                prev = l
-                self.linked[nativeId] = l
-            if level == 2:
-                self.experimentIds[nativeId] = (spec,ms1)
-                
+            elif level == 2:
+                self.experimentIds[nativeId] = (spec,ms1)           
 
 class ContainerAnalysisFile:
     
@@ -145,7 +186,7 @@ class ContainerAnalysisFile:
         self.projectItem = None
         self.spectraIds = {}
         self.featureIds = {}
-        self.self.spectraInFeatures = {}
+        self.spectraInFeatures = {}
         self.data = {}
         self.sortedColumn = ""
         self.reverse = False
@@ -159,8 +200,8 @@ class ContainerAnalysisFile:
         self.spectraIds = {}
         self.spectraInFeatures = {}
         for spectrum in self.analysis.spectra:
-            self.spectraIds[spectrum.getNativeId()] = spectrum
-            self.spectraInFeatures[spectrum.getNativeId()] = []
+            self.spectraIds[spectrum.nativeId] = ContainerSpectrum(spectrum)
+            self.spectraInFeatures[spectrum.nativeId] = []
         
         # create featureIds
         # create feature - spectra link
