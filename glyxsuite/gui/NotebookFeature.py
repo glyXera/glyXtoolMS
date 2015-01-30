@@ -107,8 +107,8 @@ class NotebookFeature(ttk.Frame):
             bestScore = 10.0
             for specId in feature.getSpectraIds():
                 spectrum = analysis.spectraIds[specId]
-                if spectrum.getLogScore() < bestScore:
-                    bestScore = spectrum.getLogScore()
+                if spectrum.logScore < bestScore:
+                    bestScore = spectrum.logScore
             item = self.tree.insert("" , "end",text=name,
                 values=(round(feature.getRT(),1),
                         round(feature.getMZ(),4),

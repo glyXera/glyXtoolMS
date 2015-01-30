@@ -354,8 +354,6 @@ class ProjectFrame(ttk.Frame):
             if not name in analysis.spectraIds:
                 continue
             spectrum = analysis.spectraIds[name]
-            #if spectrum.getLogScore() >= 2.5:
-            #    continue
             analysis.data.append((spec,spectrum))
             
             

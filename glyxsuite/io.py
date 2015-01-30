@@ -36,8 +36,8 @@ class GlyxXMLSpectrum:
         self.isGlycopeptide = boolean
 
     def addIon(self,glycan,ionName,mass,intensity):
-        if not glycan in self._ions:
-            self._ions[glycan] = {}
+        if not glycan in self.ions:
+            self.ions[glycan] = {}
         self.ions[glycan][ionName] = {}
         self.ions[glycan][ionName]["mass"] = mass
         self.ions[glycan][ionName]["intensity"] = intensity

@@ -81,9 +81,9 @@ class SpectrumView(FramePlot.FramePlot):
             
             
         if specId in self.model.currentAnalysis.spectraIds:
-            analysisSpectrum = self.model.currentAnalysis.spectraIds[specId]
+            spectrum = self.model.currentAnalysis.spectraIds[specId]
             # paint ions from logscore
-            ions = analysisSpectrum.getIons()
+            ions = spectrum.ions
             for sugar in ions:
                 for fragment in ions[sugar]:
                     intensity = ions[sugar][fragment]["intensity"]

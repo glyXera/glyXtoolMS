@@ -12,20 +12,8 @@ class DataModel:
     
     def __init__(self):
         self.workingdir = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID"
-        #self.mzMLFilename = ""
-        #self.fileMzMLFile = None
-        #self.exp = None
-        #self.analyis = None
-        #self.test = None
         self.debug = None
-        #self.combination = {}
-        #self.spectra = {}
-        #self.treeIds = {}
-        #self.spec = None
         self.root = None
-        #self.chromatograms = {}
-        #self.selectedChromatogram = None
-        
         self.projects= {}
         self.currentProject = None
         self.currentAnalysis = None
@@ -49,37 +37,6 @@ class DataModel:
         self.funcUpdateNotebookScoring = None
         self.funcUpdateNotebookIdentification = None
         self.funcUpdateNotebookFeature = None
-        
-
-        
-        # model
-        # Project
-        #  mzml file
-        #    chromatograms
-        #    spectra
-        #  analysisfile
-        #    parameters
-        #    spectra
-        #    features
-        #    identifications
-        # Results
-        #   protein
-        #     glycosite
-        #       glycopeptide
-        #        feature
-        #         spectrum
-        
-class AnalysisSet:
-    
-    def __init__(self):
-        self.mzMLFile = None
-        self.analysis = {}
-        self.spectra = {}
-        
-class Analysis:
-    
-    def __init__(self):
-        self.analysisFile = None
         
 class Chromatogram:
     
@@ -138,6 +95,10 @@ class ContainerSpectrum(object):
     @logScore.setter
     def logScore(self, value):
         self._spectrum.logScore = value
+
+    @property
+    def ions(self):
+        return self._spectrum.ions
 
     @property
     def isGlycopeptide(self):

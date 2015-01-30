@@ -80,14 +80,17 @@ class TwoDView(FramePlot.FramePlot):
             
         # plot msms spectra
         for specId in self.model.currentAnalysis.spectraInFeatures:
-            features = self.model.currentAnalysis.spectraInFeatures[specId] 
-            if self.model.currentAnalysis.currentFeature.getId() in features:
+            features = self.model.currentAnalysis.spectraInFeatures[specId]
+            currentFeature = self.model.currentAnalysis.currentFeature
+            if currentFeature is None:
+                color = "white"
+            elif currentFeature.getId() in features:
                 color = "green"
             else:
                 color = "white"
             spectrum = self.model.currentAnalysis.spectraIds[specId]
-            x = self.convAtoX(spectrum.getRT())
-            y = self.convBtoY(spectrum.getPrecursorMass())
+            x = self.convAtoX(spectrum.rt)
+            y = self.convBtoY(spectrum.precursorMass)
             item = self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill=color)
         self.allowZoom = True
         # paint current selected feature borders

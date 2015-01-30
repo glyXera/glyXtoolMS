@@ -187,15 +187,15 @@ class NotebookScoring(ttk.Frame):
             else:
                 tag = ("evenrowFeature",)
             isGlycopeptide = "no"
-            if spectrum.getIsGlycopeptide():
+            if spectrum.isGlycopeptide:
                 isGlycopeptide = "yes"
-            name = spectrum.getNativeId()
+            name = spectrum.nativeId
             
             itemSpectra = self.tree.insert("" , "end",text=name,
-                values=(round(spectrum.getRT(),1),
-                        round(spectrum.getPrecursorMass(),4),
-                        spectrum.getPrecursorCharge(),
-                        round(spectrum.getLogScore(),2),
+                values=(round(spectrum.rt,1),
+                        round(spectrum.precursorMass,4),
+                        spectrum.precursorCharge,
+                        round(spectrum.logScore,2),
                         isGlycopeptide),
                 tags = tag)
             self.treeIds[itemSpectra] = (spec,spectrum)
@@ -210,17 +210,17 @@ class NotebookScoring(ttk.Frame):
         spec,spectrum = self.treeIds[item]
 
         # set values of spectrum
-        self.v1.set(spectrum.getNativeId())
-        self.v2.set(spectrum.getRT())
-        self.v3.set(spectrum.getPrecursorMass())
-        self.v4.set(spectrum.getPrecursorCharge())
-        self.v5.set(spectrum.getLogScore())          
-        self.v6.set(spectrum.getIsGlycopeptide())
+        self.v1.set(spectrum.nativeId)
+        self.v2.set(spectrum.rt)
+        self.v3.set(spectrum.precursorMass)
+        self.v4.set(spectrum.precursorCharge)
+        self.v5.set(spectrum.logScore)          
+        self.v6.set(spectrum.isGlycopeptide)
         
         # make calculations
-        ms2,ms1 = self.model.currentProject.mzMLFile.experimentIds[spectrum.getNativeId()]
-        mz = spectrum.getPrecursorMass()
-        charge = spectrum.getPrecursorCharge()
+        ms2,ms1 = self.model.currentProject.mzMLFile.experimentIds[spectrum.nativeId]
+        mz = spectrum.precursorMass
+        charge = spectrum.precursorCharge
         p = ms2.getPrecursors()[0]
         low = p.getIsolationWindowLowerOffset()
         high = p.getIsolationWindowUpperOffset()
@@ -307,19 +307,20 @@ class NotebookScoring(ttk.Frame):
         item = selection[0]
         spec,spectrum = self.treeIds[item]
         
-        spectrum.setRT(float(self.v2.get()))
-        spectrum.setPrecursor(float(self.v3.get()),int(self.v4.get()))
-        spectrum.setLogScore(float(self.v5.get()))
-        spectrum.setIsGlycopeptide(bool(self.v6.get()))
+        spectrum.rt = float(self.v2.get())
+        spectrum.precursorMass = float(self.v3.get())
+        spectrum.precursorCharge = int(self.v4.get())
+        spectrum.logScore = float(self.v5.get())
+        spectrum.isGlycopeptide = bool(self.v6.get())
         
         # change values in table view
         isGlycopeptide = "no"
-        if spectrum.getIsGlycopeptide():
+        if spectrum.isGlycopeptide:
             isGlycopeptide = "yes"
-        self.tree.item(item, values=(round(spectrum.getRT(),1),
-                        round(spectrum.getPrecursorMass(),4),
-                        spectrum.getPrecursorCharge(),
-                        round(spectrum.getLogScore(),2),
+        self.tree.item(item, values=(round(spectrum.rt,1),
+                        round(spectrum.precursorMass,4),
+                        spectrum.precursorCharge,
+                        round(spectrum.logScore,2),
                         isGlycopeptide))
     
     def setGlycoIdentityByScore(self):
@@ -334,7 +335,7 @@ class NotebookScoring(ttk.Frame):
             return
         
         for spectrum in self.model.currentAnalysis.analysis.spectra:
-            spectrum.setIsGlycopeptide(spectrum.getLogScore() < value)
+            spectrum.isGlycopeptide = spectrum.logScore < value
         self.updateTree()
 
     def showHistogram(self):
