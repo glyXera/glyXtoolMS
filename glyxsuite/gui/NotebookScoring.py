@@ -1,6 +1,7 @@
 import ttk
 import Tkinter
 import DataModel
+import time
 
 def treeview_sort_column(tv, col, reverse):
     print "treeview",tv,col
@@ -80,6 +81,16 @@ class NotebookScoring(ttk.Frame):
         
         b1 = Tkinter.Button(frameSpectrum, text="save Changes",command=self.saveChanges)
         b1.grid(row=5,column=2)
+        
+        #self.v7 = Tkinter.StringVar()
+        #self.c7 = Tkinter.Entry(frameSpectrum, textvariable=self.v7)
+        #self.c7.grid(row=4,column=2,columnspan=2,sticky="NW")
+        
+        #b2 = Tkinter.Button(frameSpectrum, text="setGlyco",command=self.setGlycoIdentityByScore)
+        #b2.grid(row=5,column=3)
+        
+        b2 = Tkinter.Button(frameSpectrum, text="show Histogram",command=self.showHistogram)
+        b2.grid(row=4,column=2)
         
         # show treeview of mzML file MS/MS and MS   
         scrollbar = Tkinter.Scrollbar(self)    
@@ -191,7 +202,6 @@ class NotebookScoring(ttk.Frame):
             
             
     def clickedTree(self,event):
-        print "clicked tree"
         selection = self.tree.selection()
         if len(selection) == 0:
             print "is zero"
@@ -240,7 +250,8 @@ class NotebookScoring(ttk.Frame):
                 break
         lowPeak = -1
         highPeak = -1
-        i = 0 
+        i = 0
+        timeA = time.time()
         for mass in spec.get_peaks()[:,0]:
             if lowPeak == -1 and mass > c.rangeLow:
                 lowPeak = i
@@ -248,7 +259,7 @@ class NotebookScoring(ttk.Frame):
                 highPeak = i
                 break
             i += 1
-            
+        
         for spec in self.model.currentProject.mzMLFile.exp:
             if spec.getMSLevel() != c.msLevel:
                 continue
@@ -259,7 +270,7 @@ class NotebookScoring(ttk.Frame):
             c.rt.append(spec.getRT())
             # get intensity in range
             c.intensity.append(sum(spec.get_peaks()[lowPeak:highPeak,1]))
-            
+        print "time",time.time() -timeA
         """
         for spec in self.model.currentProject.mzMLFile.exp:
             if spec.getMSLevel() != c.msLevel:
@@ -310,3 +321,32 @@ class NotebookScoring(ttk.Frame):
                         spectrum.getPrecursorCharge(),
                         round(spectrum.getLogScore(),2),
                         isGlycopeptide))
+    
+    def setGlycoIdentityByScore(self):
+        if self.model.currentAnalysis == None:
+            return
+        if self.model.currentAnalysis.analysis == None:
+            return
+        try:
+             value = float(self.v7.get())
+        except:
+            print "conversion error"
+            return
+        
+        for spectrum in self.model.currentAnalysis.analysis.spectra:
+            spectrum.setIsGlycopeptide(spectrum.getLogScore() < value)
+        self.updateTree()
+
+    def showHistogram(self):
+        HistogramView(self,self.model)
+        return
+
+
+class HistogramView(Tkinter.Toplevel):
+    
+    def __init__(self,master,model):
+        Tkinter.Toplevel.__init__(self,master=master)
+        self.master = master
+        self.title("Score Histogram")
+        self.model = model
+        
