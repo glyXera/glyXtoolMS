@@ -23,13 +23,16 @@ class ActionZoom:
 
 class FramePlot(ttk.Frame):
     
-    def __init__(self,master,model,height=300,width=800):
+    def __init__(self,master,model,height=300,width=800,xTitle="",yTitle=""):
         ttk.Frame.__init__(self,master=master)
         self.model = model
         self.master = master
         self.action = None
         self.zoomHistory = []
         self.allowZoom = False
+        
+        self.xTitle = xTitle
+        self.yTitle = yTitle
         
         self.NrXScales = 5.0
         self.NrYScales = 5.0
@@ -54,7 +57,8 @@ class FramePlot(ttk.Frame):
         self.borderTop = 50
         self.borderBottom = 50
 
-        self.canvas = Canvas(self, width=self.width, height=self.height) # check screen resolution          
+        self.canvas = Canvas(self, width=self.width, height=self.height) # check screen resolution
+        self.canvas.config(bg="white")       
         self.canvas.grid(row=0, column=0, sticky=N+S+E+W)
         
         self.grid_rowconfigure(0, weight=1)
@@ -232,6 +236,18 @@ class FramePlot(ttk.Frame):
                     (x-5,y),text = shortNr(start,exp),anchor=E)
                 self.canvas.create_line(x-4,y,x,y)
             start += diff
+            
+        # write axis description
+        item = self.canvas.create_text(
+                    self.convAtoX((self.viewXMin+self.viewXMax)/2.0),
+                    self.height-self.borderBottom/3.0,
+                    text = self.xTitle)
+                    
+        item = self.canvas.create_text(
+                self.borderLeft,
+                self.borderTop/2.0,
+                text = self.yTitle)
+
             
     def resetZoom(self,event):
         if self.allowZoom == False:

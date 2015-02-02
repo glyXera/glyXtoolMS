@@ -329,19 +329,27 @@ class HistogramFrame(Tkinter.Toplevel):
         b2 = Tkinter.Button(self, text="set Score-Threshold",command=self.validateEntry)
         b2.grid(row=2,column=1,sticky="NW")
         
+        self.makeHistogram()
+    
+    def makeHistogram(self):
+        self.view.bins = {}
+        self.view.colors = {}
         # calculate series
-        series = []
-        #for spectrum in f.spectra:
+        seriesGlyco = []
+        seriesNon = []
         for ms1,spectrum in self.model.currentAnalysis.data:
-            if spectrum.logScore < 10:
-                series.append(spectrum.logScore)
-        self.view.addSeries(series)
-        self.view.initHistogram(analysisFile.parameters.getScoreThreshold())
+            if spectrum.logScore >= 10:
+                continue
+            if spectrum.isGlycopeptide == True:
+                seriesGlyco.append(spectrum.logScore)
+            else:
+                seriesNon.append(spectrum.logScore)
+        self.view.addSeries(seriesGlyco,label="glyco",color="green")
+        self.view.addSeries(seriesNon,label="noglyco",color="blue")
+        self.view.initHistogram(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())        
         
-        #view.initHistogram(f.parameters.getIonThreshold())
-        
+    
     def validateEntry(self):
-        
         try:
             newThreshold = float(self.v1.get())
             self.model.currentAnalysis.analysis.parameters.setScoreThreshold(newThreshold)
@@ -349,6 +357,7 @@ class HistogramFrame(Tkinter.Toplevel):
             for spectrum in self.model.currentAnalysis.analysis.spectra:
                 spectrum.isGlycopeptide = spectrum.logScore < newThreshold
             self.model.funcUpdateNotebookScoring()
+            self.makeHistogram()
         except ValueError:
             print "cannot convert"
             self.v1.set(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())

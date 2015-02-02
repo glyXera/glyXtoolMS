@@ -19,7 +19,7 @@ class PeakTMP:
 class SpectrumView(FramePlot.FramePlot):
     
     def __init__(self,master,model,height=300,width=800):
-        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width)
+        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width,xTitle="mz [Th]",yTitle="Intensity [counts]")
         
         self.master = master
         self.spec = None

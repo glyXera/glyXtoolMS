@@ -8,7 +8,7 @@ import glyxsuite
 class HistogramView(FramePlot.FramePlot,glyxsuite.lib.Histogram):
     
     def __init__(self,master,model,height=300,width=800):
-        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width)
+        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width,xTitle= "Glyco Score",yTitle="Counts")
         glyxsuite.lib.Histogram.__init__(self,0.2)
         
         self.master = master
@@ -64,7 +64,7 @@ class HistogramView(FramePlot.FramePlot,glyxsuite.lib.Histogram):
                         self.convBtoY(bottomStart[b]),
                         self.convAtoX(b*self.binwidth+self.binwidth),
                         self.convBtoY(self.bins[label][b]),
-                        fill='blue')
+                        fill=self.colors[label])
                 bottomStart[b] += self.bins[label][b]
 
         # plot logScore line
