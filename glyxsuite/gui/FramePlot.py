@@ -61,6 +61,7 @@ class FramePlot(ttk.Frame):
         self.grid_columnconfigure(0, weight=1)
         
         
+        self.canvas.bind("<Button-1>", self.eventTakeFokus)
         self.canvas.bind("<Motion>", self.eventMouseMotion)
         self.canvas.bind("<Control-Button-1>", self.eventStartZoom)
         self.canvas.bind("<ButtonRelease>", self.eventButtonRelease)
@@ -100,15 +101,19 @@ class FramePlot(ttk.Frame):
         
     def paintObject(self):
         raise Exception("Replace function!")
+    
+    def eventTakeFokus(self,event):
+        self.canvas.focus_set()
         
     def eventMouseMotion(self,event):
-        self.canvas.focus_set()
+        #self.canvas.focus_set()
         self.coord.set(self.identifier()+"/"+str(round(self.convXtoA(event.x),2))+"/"+str(round(self.convYtoB(event.y),0)))
         if self.action == None:
             return
         if not hasattr(self.action,"onMotion"):
             return
         self.action.onMotion(event)
+        
     
     def eventStartZoom(self,event):
         print "start zoom", self.identifier()
