@@ -81,21 +81,17 @@ class NotebookIdentification(ttk.Frame):
         self.tree.delete(*self.tree.get_children());
         self.treeIds = {}
         
-        print "update NotebookIdentification"
         project = self.model.currentProject
         
         if project == None:
-            print "no project"
             return
         
         if project.mzMLFile.exp == None:
-            print "no exp"
             return
         
         analysis = self.model.currentAnalysis
         
         if analysis == None:
-            print "no analysis"
             return
         
         # insert all glycomod hits

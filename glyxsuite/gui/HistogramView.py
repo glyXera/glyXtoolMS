@@ -46,8 +46,6 @@ class HistogramView(FramePlot.FramePlot,glyxsuite.lib.Histogram):
         for b in height:
             if self.bMax == -1 or height[b] > self.bMax:
                 self.bMax = height[b]
-                
-        print "maxValue",self.aMax,self.bMax
 
     def paintObject(self):
     

@@ -48,12 +48,10 @@ class TwoDView(FramePlot.FramePlot):
 
 
     def paintObject(self):
-        print "paintObject"
         self.allowZoom = False
         
         # calculate circle diameter
         diam = int(min(self.slopeA,self.slopeB)*2)
-        print "diameter",diam
         for feature in self.model.currentAnalysis.analysis.features:
             rt1,rt2,mz1,mz2 = feature.getBoundingBox()
             rt1 = self.convAtoX(rt1)
@@ -93,14 +91,8 @@ class TwoDView(FramePlot.FramePlot):
             y = self.convBtoY(spectrum.precursorMass)
             item = self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill=color)
         self.allowZoom = True
-        # paint current selected feature borders
-        #feature = self.model.currentAnalysis.currentFeature
-        #if feature == None:
-        #    return
-        
     
     def init(self,keepZoom = False):
-        print "init 2D View"
         self.initCanvas(keepZoom = keepZoom)
 
     def identifier(self):

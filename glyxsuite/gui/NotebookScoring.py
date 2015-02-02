@@ -5,7 +5,6 @@ import HistogramView
 import glyxsuite
 
 def treeview_sort_column(tv, col, reverse):
-    print "treeview",tv,col
     if col == "isGlycopeptide":
         l = [(tv.set(k, col), k) for k in tv.get_children('')]
     else:
@@ -160,22 +159,18 @@ class NotebookScoring(ttk.Frame):
         # clear tree
         self.tree.delete(*self.tree.get_children());
         self.treeIds = {}
-        
-        print "update NotebookScoring"
+
         project = self.model.currentProject
         
         if project == None:
-            print "no project"
             return
         
         if project.mzMLFile.exp == None:
-            print "no exp"
             return
         
         analysis = self.model.currentAnalysis
         
         if analysis == None:
-            print "no analysis"
             return
         
         # insert all ms2 spectra
@@ -205,7 +200,6 @@ class NotebookScoring(ttk.Frame):
     def clickedTree(self,event):
         selection = self.tree.selection()
         if len(selection) == 0:
-            print "is zero"
             return
         item = selection[0]
         spec,spectrum = self.treeIds[item]
@@ -301,21 +295,6 @@ class NotebookScoring(ttk.Frame):
                         spectrum.precursorCharge,
                         round(spectrum.logScore,2),
                         isGlycopeptide))
-    
-    def setGlycoIdentityByScore(self):
-        if self.model.currentAnalysis == None:
-            return
-        if self.model.currentAnalysis.analysis == None:
-            return
-        try:
-             value = float(self.v7.get())
-        except:
-            print "conversion error"
-            return
-        
-        for spectrum in self.model.currentAnalysis.analysis.spectra:
-            spectrum.isGlycopeptide = spectrum.logScore < value
-        self.updateTree()
 
     def showHistogram(self):
         if self.model.currentAnalysis == None:

@@ -1,12 +1,6 @@
 import glyxsuite
 import os
 
-# Extend Objects
-
-# a) Spectrum
-def foo(self):
-    print "bar"
-glyxsuite.io.GlyxXMLFile.blah = foo
 
 class DataModel:
     
@@ -127,7 +121,6 @@ class ContainerMZMLFile:
         
         
     def createIds(self):
-        print "creating ids"
         self.experimentIds = {}
         ms1 = None
         for spec in self.exp:

@@ -3,8 +3,6 @@ import ttk
 import tkFileDialog
 import time
 import pyopenms
-import AnalysisFrame
-import ToolFrame
 import SpectrumView
 import DataModel
 import ChromatogramView

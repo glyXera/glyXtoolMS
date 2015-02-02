@@ -77,21 +77,17 @@ class NotebookFeature(ttk.Frame):
         self.tree.delete(*self.tree.get_children());
         self.treeIds = {}
         
-        print "update NotebookFeature"
         project = self.model.currentProject
         
         if project == None:
-            print "no project"
             return
         
         if project.mzMLFile.exp == None:
-            print "no exp"
             return
         
         analysis = self.model.currentAnalysis
         
         if analysis == None:
-            print "no analysis"
             return
         
         # insert all ms2 spectra
@@ -120,10 +116,8 @@ class NotebookFeature(ttk.Frame):
             
             
     def clickedTree(self,event):
-        print "clicked tree"
         selection = self.tree.selection()
         if len(selection) == 0:
-            print "is zero"
             return
         item = selection[0]
         feature = self.treeIds[item]

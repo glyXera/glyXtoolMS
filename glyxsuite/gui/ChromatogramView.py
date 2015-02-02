@@ -4,7 +4,7 @@ import math
 import FramePlot
 import DataModel
 
-        
+
 class ChromatogramView(FramePlot.FramePlot):
     
     def __init__(self,master,model,height=300,width=800):
@@ -14,13 +14,6 @@ class ChromatogramView(FramePlot.FramePlot):
         self.NrXScales = 3.0
         self.rt = None
         
-        b1 = Button(self, text="save",command=self.save)
-        b1.grid(row=2, column=0, sticky=N+S)
-        
-        b2 = Button(self, text="load",command=self.read)
-        b2.grid(row=3, column=0, sticky=N+S)
-        
-
         self.coord = StringVar()
         l = Label( self,textvariable=self.coord)
         l.grid(row=4, column=0, sticky=N+S)
@@ -37,9 +30,9 @@ class ChromatogramView(FramePlot.FramePlot):
         self.model.funcScoringChromatogram = self.initChromatogram
         
         # Events
-        self.canvas.bind("<Left>", self.sayHi)
-        self.canvas.bind("<Right>", self.sayHi)
-        self.canvas.bind("<Button-1>", self.setSpectrumPointer)
+        #self.canvas.bind("<Left>", self.sayHi)
+        #self.canvas.bind("<Right>", self.sayHi)
+        #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
         
         self.spectrumPointer = None
         
@@ -65,9 +58,7 @@ class ChromatogramView(FramePlot.FramePlot):
             if diff == -1 or diffNew < diff:
                 nearest = spec
                 diff = diffNew
-        print nearest,msLevel,nearest == None,diff 
         if diff != -1:
-            print "do spectrum"
             self.model.funcPaintSpectrum(nearest)
         
         
@@ -106,7 +97,6 @@ class ChromatogramView(FramePlot.FramePlot):
                 intens = chrom.intensity[i]       
                 xy.append(self.convAtoX(rt))
                 xy.append(self.convBtoY(intens))
-            print "len",len(xy)
             if len(xy) == 0:
                 continue
             item = self.canvas.create_line(xy,fill=chrom.color, width = linewidth)
@@ -131,52 +121,5 @@ class ChromatogramView(FramePlot.FramePlot):
 
     def identifier(self):
         return "ChromatogramView"
-    
-    def save(self):
-        f = file("chromout.txt","w")
-        for treeId in self.model.currentAnalysis.chromatograms:
-            chrom = self.model.currentAnalysis.chromatograms[treeId]
-            f.write("name:"+chrom.name+"\n")
-            f.write("rt:"+reduce(lambda x,y:str(x)+";"+str(y),chrom.rt)+"\n")
-            f.write("int:"+reduce(lambda x,y:str(x)+";"+str(y),chrom.intensity)+"\n")
-            f.write("color:"+str(chrom.color)+"\n")
-            f.write("low:"+str(chrom.rangeLow)+"\n")
-            f.write("high:"+str(chrom.rangeHigh)+"\n")
-            f.write("plot:"+str(chrom.plot)+"\n")
-        f.close()
-        print "saved"
-        
-    def read(self):
-        f = file("chromout.txt","r")
-        chroms = {}
-        c = DataModel.Chromatogram()
-        for line in f:
-            key,content = line[:-1].split(":")
-            if key == "name":
-                c = DataModel.Chromatogram()
-                c.plot = True
-                c.name = content
-                chroms[content] = c
-            if key == "rt":
-                c.rt = map(float,content.split(";"))
-            if key == "int":
-                c.intensity = map(float,content.split(";"))
-            if key == "color":
-                c.color = content
-            if key == "low":
-                c.rangeLow = float(content)
-            if key == "high":
-                c.rangeHigh = float(content)
-            if key == "plot":
-                if content == "True":
-                    c.plot = True
-                else:
-                    c.plot = False
-        
-                
-        f.close()
-        self.model.currentAnalysis.chromatograms = chroms
-        self.initChromatogram()
-        print "loaded", len(chroms), " chromatograms"
         
     

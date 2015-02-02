@@ -70,9 +70,6 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<Control-Right>", self.keyRight)
         self.canvas.bind("<Control-BackSpace>", self.resetZoom)
 
-    def sayHi(self,event):
-        print "hi"
-
     def keyLeft(self,event):
         if self.allowZoom == False:
             return
@@ -116,7 +113,6 @@ class FramePlot(ttk.Frame):
         
     
     def eventStartZoom(self,event):
-        print "start zoom", self.identifier()
         # ToDo: Cancel previous action?
         self.action = ActionZoom(self,self.canvas,event.x,event.y)
         return

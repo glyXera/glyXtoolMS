@@ -26,13 +26,6 @@ class PrecursorView(FramePlot.FramePlot):
         self.charge = 0
         self.precursormass = 0.0
         self.NrXScales = 3.0
-        
-        b1 = Button(self, text="save",command=self.save)
-        b1.grid(row=2, column=0, sticky=N+S)
-        
-        b2 = Button(self, text="load",command=self.read)
-        b2.grid(row=3, column=0, sticky=N+S)
-        
 
         self.coord = StringVar()
         l = Label( self,textvariable=self.coord)
@@ -116,7 +109,6 @@ class PrecursorView(FramePlot.FramePlot):
         self.allowZoom = True
             
     def initSpectrum(self,spec,mass, charge,low,high):
-        print "init spectrum"
         if spec == None:
             self.charge = 0
             self.precursormass = 0.0
@@ -141,22 +133,3 @@ class PrecursorView(FramePlot.FramePlot):
         
     def identifier(self):
         return "SpectrumView"
-        
-    def save(self):
-        f = file("out.txt","w")
-        for peak in self.spec:
-            f.write(str(peak.getMZ())+"\t"+str(peak.getIntensity())+"\n")
-        f.close()
-        print "saved"
-        
-    def read(self):
-        f = file("out.txt","r")
-        spec = []
-        for line in f:
-            mass,intensity = line[:-1].split("\t")
-            spec.append(PeakTMP(float(mass),float(intensity)))
-        f.close()
-                
-        print "loaded"
-        print len(spec)      
-        self.initSpectrum(spec)

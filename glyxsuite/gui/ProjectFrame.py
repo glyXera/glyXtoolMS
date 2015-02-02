@@ -31,9 +31,7 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
         
         
     def updateExternal(self,running=False):
-        if running:
-            print "running"
-        else:
+        if not running:
             print "loading finished"
             self.project.mzMLFile.exp =  self.result
             self.master.loadedMzMLFile(self.error,self.project)
@@ -64,11 +62,8 @@ class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
         
         
     def updateExternal(self,running=False):
-        if running:
-            print "running"
-        else:
+        if not running:
             print "stopped"
-            print "result",self.result
             self.analysis.analysis = self.result
             self.master.loadedAnalysisFile(self.error,self.analysis)
             
@@ -229,7 +224,6 @@ class ProjectFrame(ttk.Frame):
         
         # delete project from Treeview
         self.projectTree.delete(item)
-        print "delete project: ",item
         
         
     def deleteAnalysis(self):
@@ -258,7 +252,6 @@ class ProjectFrame(ttk.Frame):
          
         # delete analysis from Treeview
         self.projectTree.delete(item)
-        print "deleted analysis: ", item,obj
         
     def clickedTree(self,event):
         item,obj,typ = self.getSelectedItem()
@@ -293,8 +286,6 @@ class ProjectFrame(ttk.Frame):
             self.model.funcUpdateNotebookScoring()
             self.model.funcUpdateNotebookIdentification()
             self.model.funcUpdateNotebookFeature()
-
-        print "current project ",self.model.currentProject.name
 
     def loadedMzMLFile(self,error,project):
         if error == True:
@@ -382,9 +373,6 @@ class ProjectFrame(ttk.Frame):
                     continue
                 spectrum.chromatogramSpectra.append(spec)
 
-        
-        
-        print "analysis data size",len(analysis.data)
         # update Notebooks
         self.model.funcUpdateNotebookScoring()
         self.model.funcUpdateNotebookIdentification()
