@@ -345,6 +345,7 @@ class ProjectFrame(ttk.Frame):
         # merge data
         # insert all ms2 spectra
         analysis.data = []
+        
         for spec in analysis.project.mzMLFile.exp:
             if spec.getMSLevel() != 2:
                 continue
@@ -354,11 +355,33 @@ class ProjectFrame(ttk.Frame):
             if not name in analysis.spectraIds:
                 continue
             spectrum = analysis.spectraIds[name]
-            analysis.data.append((spec,spectrum))
+            analysis.data.append((spec,spectrum)) # Use ??
             
             
         # create chromatogram
         analysis.chromatogram = None
+        # presort spectra for faster chromatogram creation
+        precursors = []
+        for ms2,spectrum in analysis.data:
+            rtLow = spectrum.rt-100
+            rtHigh = spectrum.rt+100
+            # reset spectra
+            spectrum.chromatogramSpectra = []
+            precursors.append((rtHigh,rtLow,spectrum))
+        precursors.sort(reverse=True)
+        
+        
+        for spec in analysis.project.mzMLFile.exp:
+            if spec.getMSLevel() != 1:
+                continue 
+            rt = spec.getRT()
+            for rtHigh,rtLow,spectrum in precursors:
+                if rtHigh < rt:
+                    break
+                if rtLow > rt:
+                    continue
+                spectrum.chromatogramSpectra.append(spec)
+
         
         
         print "analysis data size",len(analysis.data)

@@ -1,7 +1,8 @@
 import ttk
 import Tkinter
 import DataModel
-import time
+import HistogramView
+import glyxsuite
 
 def treeview_sort_column(tv, col, reverse):
     print "treeview",tv,col
@@ -231,8 +232,8 @@ class NotebookScoring(ttk.Frame):
         low = mz-low
         high = mz+high
         
-        rtLow = ms1.getRT()-100
-        rtHigh = ms1.getRT()+100
+        #rtLow = ms1.getRT()-100
+        #rtHigh = ms1.getRT()+100
         
         # create chromatogram
         c = DataModel.Chromatogram()
@@ -251,7 +252,6 @@ class NotebookScoring(ttk.Frame):
         lowPeak = -1
         highPeak = -1
         i = 0
-        timeA = time.time()
         for mass in spec.get_peaks()[:,0]:
             if lowPeak == -1 and mass > c.rangeLow:
                 lowPeak = i
@@ -259,34 +259,13 @@ class NotebookScoring(ttk.Frame):
                 highPeak = i
                 break
             i += 1
-        
-        for spec in self.model.currentProject.mzMLFile.exp:
-            if spec.getMSLevel() != c.msLevel:
-                continue
-            if spec.getRT() < rtLow:
-                continue
-            if spec.getRT() > rtHigh:
-                break
+        rtLow = spectrum.chromatogramSpectra[0].getRT()
+        rtHigh = spectrum.chromatogramSpectra[-1].getRT()
+        for spec in spectrum.chromatogramSpectra:
             c.rt.append(spec.getRT())
             # get intensity in range
             c.intensity.append(sum(spec.get_peaks()[lowPeak:highPeak,1]))
-        print "time",time.time() -timeA
-        """
-        for spec in self.model.currentProject.mzMLFile.exp:
-            if spec.getMSLevel() != c.msLevel:
-                continue
-            if spec.getRT() < rtLow:
-                continue
-            if spec.getRT() > rtHigh:
-                break
-            c.rt.append(spec.getRT())
-            # get intensity in range
-            yi = 0
-            for peak in spec:
-                if c.rangeLow  < peak.getMZ() and peak.getMZ() < c.rangeHigh:
-                    yi += peak.getIntensity()
-            c.intensity.append(yi)
-        """
+
         # set chromatogram within analysis
         self.model.currentAnalysis.chromatograms[c.name] = c
         self.model.currentAnalysis.selectedChromatogram = c
@@ -339,15 +318,60 @@ class NotebookScoring(ttk.Frame):
         self.updateTree()
 
     def showHistogram(self):
-        HistogramView(self,self.model)
+        if self.model.currentAnalysis == None:
+            return
+        if self.model.currentAnalysis.analysis == None:
+            return
+        HistogramFrame(self,self.model)
         return
 
 
-class HistogramView(Tkinter.Toplevel):
+class HistogramFrame(Tkinter.Toplevel):
     
     def __init__(self,master,model):
         Tkinter.Toplevel.__init__(self,master=master)
         self.master = master
         self.title("Score Histogram")
         self.model = model
+        self.view = HistogramView.HistogramView(self,model,height=450,width=500)
+        self.view.grid(row=0,column=0,columnspan=2,sticky="NW")
+        
+        analysisFile = self.model.currentAnalysis.analysis
+        
+        l1 = Tkinter.Label(self, text="Score-Threshold:")
+        l1.grid(row=1,column=0,sticky="NE")
+        self.v1 = Tkinter.StringVar()
+        c1 = Tkinter.Entry(self, textvariable=self.v1)
+        c1.grid(row=1,column=1,sticky="NW")
+        self.v1.set(analysisFile.parameters.getScoreThreshold())
+        
+        #l2 = Tkinter.Label(self, text="Score-Threshold:")
+        #l2.grid(row=1,column=0,sticky="NE")
+        b2 = Tkinter.Button(self, text="set Score-Threshold",command=self.validateEntry)
+        b2.grid(row=2,column=1,sticky="NW")
+        
+        # calculate series
+        series = []
+        #for spectrum in f.spectra:
+        for ms1,spectrum in self.model.currentAnalysis.data:
+            if spectrum.logScore < 10:
+                series.append(spectrum.logScore)
+        self.view.addSeries(series)
+        self.view.initHistogram(analysisFile.parameters.getScoreThreshold())
+        
+        #view.initHistogram(f.parameters.getIonThreshold())
+        
+    def validateEntry(self):
+        
+        try:
+            newThreshold = float(self.v1.get())
+            self.model.currentAnalysis.analysis.parameters.setScoreThreshold(newThreshold)
+            self.view.initHistogram(newThreshold)
+            for spectrum in self.model.currentAnalysis.analysis.spectra:
+                spectrum.isGlycopeptide = spectrum.logScore < newThreshold
+            self.model.funcUpdateNotebookScoring()
+        except ValueError:
+            print "cannot convert"
+            self.v1.set(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())
+        
         

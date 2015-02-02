@@ -55,6 +55,7 @@ class ContainerSpectrum(object):
     
     def __init__(self,spectrum):
         self._spectrum = spectrum
+        self.chromatogramSpectra = []
         
     @property
     def nativeId(self):
@@ -148,7 +149,7 @@ class ContainerAnalysisFile:
         self.spectraIds = {}
         self.featureIds = {}
         self.spectraInFeatures = {}
-        self.data = {}
+        self.data = []
         self.sortedColumn = ""
         self.reverse = False
         self.chromatograms = {}
@@ -171,6 +172,7 @@ class ContainerAnalysisFile:
             self.featureIds[feature.getId()] = feature
             for specId in feature.getSpectraIds():
                 self.spectraInFeatures[specId].append(feature.getId())
+                
 
         
         
