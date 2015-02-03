@@ -4,35 +4,6 @@ import DataModel
 import HistogramView
 import glyxsuite
 
-def treeview_sort_column(tv, col, reverse):
-    if col == "isGlycopeptide":
-        l = [(tv.set(k, col), k) for k in tv.get_children('')]
-    else:
-        l = [(float(tv.set(k, col)), k) for k in tv.get_children('')]
-    
-    l.sort(reverse=reverse)
-    
-
-    # rearrange items in sorted positions
-    for index, (val, k) in enumerate(l):
-        tv.move(k, '', index)
-        
-        # adjust tags
-        taglist = list(tv.item(k,"tags"))
-        if "oddrowFeature" in taglist:
-            taglist.remove("oddrowFeature")
-        if "evenrowFeature" in taglist:
-            taglist.remove("evenrowFeature")
-            
-        if index%2 == 0:    
-            taglist.append("evenrowFeature")
-        else:
-            taglist.append("oddrowFeature")
-        tv.item(k,tags = taglist)        
-
-    # reverse sort next time
-    tv.heading(col, command=lambda: treeview_sort_column(tv, col, not reverse))
-
 class NotebookScoring(ttk.Frame):
     
     def __init__(self,master,model):
@@ -128,7 +99,7 @@ class NotebookScoring(ttk.Frame):
         else:
             self.model.currentAnalysis.sortedColumn = col
             self.model.currentAnalysis.reverse = False
-        if col == "isGlycopeptide":
+        if col == "Is Glyco":
             l = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
         else:
             l = [(float(self.tree.set(k, col)), k) for k in self.tree.get_children('')]
@@ -234,7 +205,10 @@ class NotebookScoring(ttk.Frame):
         c.plot = True
         c.name = "test"
         c.rangeLow = mz-0.1
-        c.rangeHigh = mz+3/float(charge)+0.1
+        if charge != 0:
+            c.rangeHigh = mz+3/abs(float(charge))+0.1
+        else:
+            c.rangeHigh = mz+1+0.1
         c.rt = []
         c.intensity = []
         c.msLevel = 1

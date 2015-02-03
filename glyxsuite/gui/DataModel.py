@@ -163,12 +163,17 @@ class ContainerAnalysisFile:
         self.featureIds = {}
         for feature in self.analysis.features:
             self.featureIds[feature.getId()] = feature
-            for specId in feature.getSpectraIds():
-                self.spectraInFeatures[specId].append(feature.getId())
-                
-
-        
-        
+            minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
+            for spectrum in self.analysis.spectra:
+                if spectrum.rt < minRT:
+                    continue
+                if spectrum.rt > maxRT:
+                    continue
+                if spectrum.precursorMass < minMZ:
+                    continue
+                if spectrum.precursorMass > maxMZ:
+                    continue
+                self.spectraInFeatures[spectrum.nativeId].append(feature.getId())
             
     def addNewSpectrum(self,nativeID):
         spectrum = glyxsuite.io.GlyxXMLSpectrum()

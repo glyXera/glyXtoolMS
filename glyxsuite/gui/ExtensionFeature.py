@@ -12,3 +12,5 @@ class ExtensionFeature(ttk.Labelframe):
         twoDFrame.grid(row=0,column=0)
         twoDView = TwoDView.TwoDView(twoDFrame,model,height=450,width=500)
         twoDView.pack()
+
+

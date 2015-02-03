@@ -48,7 +48,6 @@ class HistogramView(FramePlot.FramePlot,glyxsuite.lib.Histogram):
                 self.bMax = height[b]
 
     def paintObject(self):
-    
         bottomStart = {}
         for label in self.bins.keys():
             bottom = []
@@ -63,7 +62,7 @@ class HistogramView(FramePlot.FramePlot,glyxsuite.lib.Histogram):
                         self.convAtoX(b*self.binwidth),
                         self.convBtoY(bottomStart[b]),
                         self.convAtoX(b*self.binwidth+self.binwidth),
-                        self.convBtoY(self.bins[label][b]),
+                        self.convBtoY(bottomStart[b]+self.bins[label][b]),
                         fill=self.colors[label])
                 bottomStart[b] += self.bins[label][b]
 

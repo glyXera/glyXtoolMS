@@ -83,7 +83,10 @@ class PrecursorView(FramePlot.FramePlot):
         intMax = self.convBtoY(self.viewYMax)
         if self.precursormass != 0:
             for i in range(0,4):
-                mass = self.precursormass+1/float(self.charge)*i
+                if self.charge == 0:
+                    mass = self.precursormass
+                else:
+                    mass = self.precursormass+1/abs(float(self.charge))*i
                 item = self.canvas.create_line(
                     self.convAtoX(mass),
                     intZero,

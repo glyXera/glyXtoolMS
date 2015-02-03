@@ -113,7 +113,6 @@ class App(Tkinter.Frame):
         
         
     def changedNotebook(self,event):
-        #self.model.debug = event
         idx = self.notebook.select()
         # hide all extensions
         self.e1.lower()

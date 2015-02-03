@@ -107,7 +107,6 @@ class FramePlot(ttk.Frame):
         self.canvas.focus_set()
         
     def eventMouseMotion(self,event):
-        #self.canvas.focus_set()
         self.coord.set(self.identifier()+"/"+str(round(self.convXtoA(event.x),2))+"/"+str(round(self.convYtoB(event.y),0)))
         if self.action == None:
             return
@@ -117,6 +116,7 @@ class FramePlot(ttk.Frame):
         
     
     def eventStartZoom(self,event):
+        self.canvas.focus_set()
         # ToDo: Cancel previous action?
         self.action = ActionZoom(self,self.canvas,event.x,event.y)
         return
