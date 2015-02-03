@@ -131,61 +131,61 @@ class GlyxXMLParameters:
 class GlyxXMLFeature:
     
     def __init__(self):
-        self._id = ""
-        self._mz = 0.0
-        self._rt = 0.0
-        self._intensity = 0.0
-        self._charge = 0
-        self._minRT = 0.0
-        self._maxRT = 0.0
-        self._minMZ = 0.0
-        self._maxMZ = 0.0
-        self._spectraIds = []
+        self.id = ""
+        self.mz = 0.0
+        self.rt = 0.0
+        self.intensity = 0.0
+        self.charge = 0
+        self.minRT = 0.0
+        self.maxRT = 0.0
+        self.minMZ = 0.0
+        self.maxMZ = 0.0
+        self.spectraIds = []
         
     def setId(self,id):
-        self._id = id
+        self.id = id
     
     def getId(self):
-        return self._id
+        return self.id
         
     def setMZ(self,mz):
-        self._mz = mz
+        self.mz = mz
         
     def getMZ(self):
-        return self._mz
-        
+        return self.mz
+    
     def setIntensity(self,intensity):
-        self._intensity = intensity
+        self.intensity = intensity
         
     def getIntensity(self):
-        return self._intensity        
+        return self.intensity        
 
     def setRT(self,rt):
-        self._rt = rt
+        self.rt = rt
         
     def getRT(self):
-        return self._rt
+        return self.rt
         
     def setCharge(self,charge):
-        self._charge = charge
+        self.charge = charge
     
     def getCharge(self):
-        return self._charge
+        return self.charge
 
     def setBoundingBox(self,minRT,maxRT,minMZ,maxMZ):
-        self._minRT = minRT
-        self._maxRT = maxRT
-        self._minMZ = minMZ
-        self._maxMZ = maxMZ
+        self.minRT = minRT
+        self.maxRT = maxRT
+        self.minMZ = minMZ
+        self.maxMZ = maxMZ
         
     def getBoundingBox(self):
-        return self._minRT,self._maxRT,self._minMZ,self._maxMZ
+        return self.minRT,self.maxRT,self.minMZ,self.maxMZ
  
     def addSpectrumId(self,spectrumId):
-        self._spectraIds.append(spectrumId)
+        self.spectraIds.append(spectrumId)
                
     def getSpectraIds(self):
-        return self._spectraIds
+        return self.spectraIds
         
 class XMLGlycan:
     
