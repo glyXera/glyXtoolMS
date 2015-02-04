@@ -123,4 +123,5 @@ class NotebookFeature(ttk.Frame):
         feature = self.treeIds[item]
         self.model.currentAnalysis.currentFeature = feature
         self.model.funcFeatureTwoDView(keepZoom = True)
+        self.model.funcUpdateExtentionFeature()
 

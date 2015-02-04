@@ -32,6 +32,8 @@ class DataModel:
         self.funcUpdateNotebookIdentification = None
         self.funcUpdateNotebookFeature = None
         
+        self.funcUpdateExtentionFeature = None
+        
 class Chromatogram:
     
     def __init__(self):

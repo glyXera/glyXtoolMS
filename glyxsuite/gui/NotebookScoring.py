@@ -53,13 +53,6 @@ class NotebookScoring(ttk.Frame):
         b1 = Tkinter.Button(frameSpectrum, text="save Changes",command=self.saveChanges)
         b1.grid(row=5,column=2)
         
-        #self.v7 = Tkinter.StringVar()
-        #self.c7 = Tkinter.Entry(frameSpectrum, textvariable=self.v7)
-        #self.c7.grid(row=4,column=2,columnspan=2,sticky="NW")
-        
-        #b2 = Tkinter.Button(frameSpectrum, text="setGlyco",command=self.setGlycoIdentityByScore)
-        #b2.grid(row=5,column=3)
-        
         b2 = Tkinter.Button(frameSpectrum, text="show Histogram",command=self.showHistogram)
         b2.grid(row=4,column=2)
         
