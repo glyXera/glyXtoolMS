@@ -33,6 +33,8 @@ class DataModel:
         self.funcUpdateNotebookFeature = None
         
         self.funcUpdateExtentionFeature = None
+        self.funcUpdateFeatureSpectrum = None
+        self.funcUpdateFeatureChromatogram = None
         
 class Chromatogram:
     
@@ -150,6 +152,7 @@ class ContainerAnalysisFile:
         self.chromatograms = {}
         self.selectedChromatogram = None
         self.currentFeature = None
+        self.featureSpectra = {} # Container for MS1 spectra within the feature, for faster chromatogram / Sum spectra generation
         
         
         
@@ -176,6 +179,22 @@ class ContainerAnalysisFile:
                 if spectrum.precursorMass > maxMZ:
                     continue
                 self.spectraInFeatures[spectrum.nativeId].append(feature.getId())
+                
+        self.featureSpectra = {}
+        for spec in self.project.mzMLFile.exp:
+            if spec.getMSLevel() != 1:
+                continue
+            rt = spec.getRT()
+            for feature in self.analysis.features:
+                minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
+                if rt < minRT:
+                    continue
+                if rt > maxRT:
+                    continue
+                featureID = feature.getId()
+                if not featureID in self.featureSpectra:
+                    self.featureSpectra[featureID] = []
+                self.featureSpectra[featureID].append(spec)
             
     def addNewSpectrum(self,nativeID):
         spectrum = glyxsuite.io.GlyxXMLSpectrum()
