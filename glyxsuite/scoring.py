@@ -1,4 +1,5 @@
 import pyopenms
+import glyxsuite.io
 import math
 from lxml import etree as ET
 import re
@@ -43,47 +44,7 @@ class IonSeriesCalculator:
             mass += self.masses[sugar]-self.masses["h2o"]
         self.glycans[name] = mass
         return mass
-        
-        """
-        symbols = re.findall("(\+|\-)?[A-z\d\w]+",name)
-        print "symbols",symbols
-
-        sugars = re.findall("[A-z\d\w]+",name)
-        print "sugars",sugars
-        
-        if len(symbols) != len(sugars):
-            raise Exception("Error in parsing glycan name!")
-        
-        mass = 0
-        for i in range(0,len(symbols)):
-            prefix = symbols[i]
-            sugar = sugars[i].lower()
-            if not sugar in self.masses:
-                raise Exception("SugarName "+sugars[i]+" is not defined!")
-            if prefix == "":
-                mass += self.masses[sugar]
-            elif prefix == "+":
-                mass += self.masses[sugar]-self.masses["h2o"]
-            elif prefix == "-":
-                mass -= self.masses[sugar]
-            else:
-                raise Exception("Error: Unknown prefix in glycan name parsing, only + or - allowed!")
-        self.glycans[name] = mass
-        return mass
-        """
-                           
-        """
-        mass = -self.masses["H2O"]
-        for sub  in re.findall("[A-z]+\d+",name):
-            glycanName = re.search("[A-z]+",sub).group()
-            amount = int(re.search("\d+",sub).group())
-            if not glycanName in self.masses:
-                raise Exception("SugarName "+glycanName+"is not defined!")
-            mass += self.masses[glycanName]
-        self.masses[name] = mass
-        return mass"""
-
-            
+                    
     def hasGlycan(self,glycan):
         if glycan in self.masses:
             return True
@@ -170,16 +131,17 @@ class Score:
             self.score += self.ions[name].calcIonScore()
 
 
-class SpectrumGlyxScore:
+class SpectrumGlyxScore(glyxsuite.io.GlyxXMLSpectrum):
 
-    def __init__(self,spectrumId,spectrumRT, precursorMass, precursorCharge, nrNeutrallosses, maxChargeOxoniumIon):
-        self.spectrumId = spectrumId
-        self.spectrumRT = spectrumRT
+    def __init__(self,nativeId,spectrumRT, precursorMass, precursorCharge, nrNeutrallosses, maxChargeOxoniumIon):
+              
+        self.nativeId = nativeId
+        self.rt = spectrumRT
         self.precursorCharge = precursorCharge
         self.precursorMass = precursorMass
         self.nrNeutrallosses = nrNeutrallosses
         self.maxChargeOxoniumIon = maxChargeOxoniumIon
-        self.spectrumIntensity = 0
+        self.ionCount = 0
         self.highestPeakIntensity = 0
         self.peaks = []
         self.totalIntensity = 0
@@ -188,7 +150,7 @@ class SpectrumGlyxScore:
         
     def addPeak(self,mass,intensity):
         p = Peak(mass,intensity)
-        self.spectrumIntensity += intensity
+        self.ionCount += intensity
         if intensity > self.highestPeakIntensity:
             self.highestPeakIntensity = intensity
         else:
@@ -198,7 +160,7 @@ class SpectrumGlyxScore:
 
     def normIntensity(self):
         for peak in self.peaks:
-            peak.normedIntensity = peak.intensity/float(self.spectrumIntensity)
+            peak.normedIntensity = peak.intensity/float(self.ionCount)
 
     def makeRanking(self):
         intensitySort = [(p.intensity,p) for p in self.peaks]
@@ -237,66 +199,31 @@ class SpectrumGlyxScore:
                         if abs(abs(ion.mass-distance)-peak.mass) < massDelta:
                             count += 1
         return count
-    
 
-    
-
-    def calcTotalScore(self):
+    def calcTotalScore(self,scoreThreshold):
         maxScore = 0
+        self.ions = {} # For XML Output of ions
         for glycan in self.glycanScores:
             glycanScore = self.glycanScores[glycan]
             if glycanScore.score > maxScore:
                 maxScore = glycanScore.score
-        self.logScore = 10
-        if maxScore > 0:
-            self.logScore = -math.log(maxScore)/math.log(10)
-        if self.reevaluateScores(0.2) == 0:
-            self.logScore += 0.1 
-        #if self.logScore < 3:
-        #    self.logScore -= self.reevaluateScores(0.3)/10.0
-        return self.logScore
-
-    def makeXMLOutput(self,xmlSpectra):
-        xmlSpectrum = ET.SubElement(xmlSpectra,"spectrum")
-        xmlSpectrumNativeId = ET.SubElement(xmlSpectrum,"nativeId")
-        xmlSpectrumNativeId.text = str(self.spectrumId)
-        xmlSpectrumRT = ET.SubElement(xmlSpectrum,"rt")
-        xmlSpectrumRT.text = str(self.spectrumRT)
-        xmlSpectrumIonCount = ET.SubElement(xmlSpectrum,"ionCount")
-        xmlSpectrumIonCount.text = str(self.spectrumIntensity)
-
-        xmlPrecursor = ET.SubElement(xmlSpectrum,"precursor")
-        xmlPrecursorMass = ET.SubElement(xmlPrecursor,"mass")
-        xmlPrecursorMass.text = str(self.precursorMass)
-        xmlPrecursorCharge = ET.SubElement(xmlPrecursor,"charge")
-        xmlPrecursorCharge.text = str(self.precursorCharge)
-        xmlTotalScore = ET.SubElement(xmlSpectrum,"logScore")
-        xmlTotalScore.text = str(self.logScore)
-
-        xmlScoreList = ET.SubElement(xmlSpectrum,"scores")        
-        for glycan in self.glycanScores:
-            glycanScore = self.glycanScores[glycan]
             if glycanScore.score == 0:
                 continue
-            xmlScore = ET.SubElement(xmlScoreList,"score")
-            xmlGlycanName = ET.SubElement(xmlScore,"glycan")
-            xmlGlycanName.text = glycan
-            xmlIons = ET.SubElement(xmlScore,"ions")
             for ionname in glycanScore.ions:
                 ion = glycanScore.ions[ionname]
-                xmlIon = ET.SubElement(xmlIons,"ion")
-                xmlIonName = ET.SubElement(xmlIon,"name")
-                xmlIonName.text = ionname
                 # get highest peak
                 highest = ion.peaks[0]
                 for peak in ion.peaks:
                     if peak.intensity > highest.intensity:
                         highest = peak
-                xmlIonMass = ET.SubElement(xmlIon,"mass")
-                xmlIonMass.text = str(highest.mass)
-                xmlIonIntensity = ET.SubElement(xmlIon,"intensity")
-                xmlIonIntensity.text = str(highest.intensity)
-                
-            
-        
-
+                self.addIon(glycan,ionname,highest.mass,highest.intensity)
+        self.logScore = 10
+        if maxScore > 0:
+            self.logScore = -math.log(maxScore)/math.log(10)
+        if self.reevaluateScores(0.2) == 0:
+            self.logScore += 0.1
+        if self.logScore < scoreThreshold:
+            self.isGlycopeptide = True
+        else:
+            self.isGlycopeptide = False
+        return self.logScore
