@@ -25,7 +25,7 @@ class PrecursorView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcUpdateFeatureSpectrum = self.initSpectrum
+        self.model.funcUpdateFeaturePrecursorSpectrum = self.initSpectrum
 
     def setMaxValues(self):
         self.aMax = -1

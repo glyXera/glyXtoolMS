@@ -41,6 +41,8 @@ class NotebookFeature(ttk.Frame):
         self.model.funcUpdateNotebookFeature = self.updateFeatureTree
         
         # ------------------- Spectrum Tree ---------------------------#
+        self.spectrumTreeIds = {}
+        
         scrollbar = Tkinter.Scrollbar(self)    
         self.spectrumTree = ttk.Treeview(self,yscrollcommand=scrollbar.set)
         columns = ("RT","Mass","Charge","Score","Is Glyco")
@@ -54,6 +56,7 @@ class NotebookFeature(ttk.Frame):
         scrollbar.grid(row=2,column=1,sticky=("N", "W", "E", "S"))
         
         scrollbar.config(command=self.spectrumTree.yview)
+        self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree);
         
         self.model.funcUpdateExtentionFeature = self.updateSpectrumTree
         
@@ -184,7 +187,7 @@ class NotebookFeature(ttk.Frame):
 
         self.model.funcFeatureTwoDView(keepZoom = True)
         self.model.funcUpdateExtentionFeature()
-        self.model.funcUpdateFeatureSpectrum(sumSpectra,minMZ,maxMZ)
+        self.model.funcUpdateFeaturePrecursorSpectrum(sumSpectra,minMZ,maxMZ)
         
 
     def sortSpectrumColumn(self,col):
@@ -239,6 +242,7 @@ class NotebookFeature(ttk.Frame):
         minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
         #print feature.getBoundingBox()
         index = 0
+        self.spectrumTreeIds = {}
         for spec,spectrum in analysis.data:
 
             if spectrum.rt < minRT:
@@ -268,4 +272,13 @@ class NotebookFeature(ttk.Frame):
                         round(spectrum.logScore,2),
                         isGlycopeptide),
                 tags = tag)
-            #self.spectrumTreeIds[itemSpectra] = (spec,spectrum)
+            self.spectrumTreeIds[itemSpectra] = (spec,spectrum)
+
+    def clickedSpectrumTree(self,event):
+        selection = self.spectrumTree.selection()
+        if len(selection) == 0:
+            return
+        item = selection[0]
+        spec,spectrum = self.spectrumTreeIds[item]
+        self.model.funcUpdateFeatureMSMSSpectrum(spec)
+        

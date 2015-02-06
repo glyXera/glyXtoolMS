@@ -3,6 +3,7 @@ import Tkinter
 import TwoDView
 import FeaturePrecursorView
 import FeatureChromatogramView
+import FeatureSpectrumView
 
 class Notebook1(ttk.Labelframe):
     
@@ -33,7 +34,12 @@ class Notebook2(ttk.Labelframe):
     def __init__(self,master,model):
         ttk.Labelframe.__init__(self,master=master)
         self.master = master
-        self.model = model               
+        self.model = model
+        
+        msmsFrame = ttk.Labelframe(self,text="MS/MS Spectrum")
+        msmsFrame.grid(row=0,column=0)
+        msmsView = FeatureSpectrumView.SpectrumView(self,model,height=300,width=800)
+        msmsView.grid(row=0,column=0)
 
 class ExtensionFeature(ttk.Labelframe):
     

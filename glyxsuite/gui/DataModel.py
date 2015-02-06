@@ -33,8 +33,9 @@ class DataModel:
         self.funcUpdateNotebookFeature = None
         
         self.funcUpdateExtentionFeature = None
-        self.funcUpdateFeatureSpectrum = None
+        self.funcUpdateFeaturePrecursorSpectrum = None
         self.funcUpdateFeatureChromatogram = None
+        self.funcUpdateFeatureMSMSSpectrum = None
         
 class Chromatogram:
     
