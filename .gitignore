@@ -6,5 +6,6 @@ build
 dist
 .directory
 TOPP/EXTERNAL
+TOPP/SCRIPTS
 bin/*.txt
 bin/guitests/*
