@@ -1,5 +1,4 @@
 import re    
-from matplotlib import pyplot as plt
 from itertools import product 
 import copy
 from glyxsuite import masses as glyxmass
@@ -46,7 +45,7 @@ class Histogram:
             if axis:
                 axis.barh(bottom,width,height=self.binwidth,left=left,label=label,color=color)
             else:
-                plt.barh(bottom,width,height=self.binwidth,left=left,label=label,color=color)
+                raise Exception("Please provide a plot axis, eg 'axis=plt'")
 
     def plot(self,order=None,axis=None):
         if not order:
@@ -68,7 +67,7 @@ class Histogram:
             if axis:
                 axis.bar(left,height,width=self.binwidth,bottom=bottom,label=label,color=self.colors[label])
             else:
-                plt.bar(left,height,width=self.binwidth,bottom=bottom,label=label,color=self.colors[label]) 
+                raise Exception("Please provide a plot axis, eg 'axis=plt'")
 
 
 # ---------------------------- Protein Digest -------------------------------------
