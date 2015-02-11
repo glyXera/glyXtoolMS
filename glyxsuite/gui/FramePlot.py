@@ -23,7 +23,7 @@ class ActionZoom:
 
 class FramePlot(ttk.Frame):
     
-    def __init__(self,master,model,height=300,width=800):
+    def __init__(self,master,model,height=300,width=800,xTitle="",yTitle=""):
         ttk.Frame.__init__(self,master=master)
         self.model = model
         self.master = master
@@ -31,9 +31,13 @@ class FramePlot(ttk.Frame):
         self.zoomHistory = []
         self.allowZoom = False
         
+        self.xTitle = xTitle
+        self.yTitle = yTitle
+        
+        self.NrXScales = 5.0
+        self.NrYScales = 5.0
+        
         # add canvas
-        self.aMax = -1
-        self.bMax = -1
         self.aMax = -1
         self.bMax = -1
         
@@ -53,13 +57,15 @@ class FramePlot(ttk.Frame):
         self.borderTop = 50
         self.borderBottom = 50
 
-        self.canvas = Canvas(self, width=self.width, height=self.height) # check screen resolution          
+        self.canvas = Canvas(self, width=self.width, height=self.height) # check screen resolution
+        self.canvas.config(bg="white")       
         self.canvas.grid(row=0, column=0, sticky=N+S+E+W)
         
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
         
         
+        self.canvas.bind("<Button-1>", self.eventTakeFokus)
         self.canvas.bind("<Motion>", self.eventMouseMotion)
         self.canvas.bind("<Control-Button-1>", self.eventStartZoom)
         self.canvas.bind("<ButtonRelease>", self.eventButtonRelease)
@@ -67,9 +73,6 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<Control-Left>", self.keyLeft)
         self.canvas.bind("<Control-Right>", self.keyRight)
         self.canvas.bind("<Control-BackSpace>", self.resetZoom)
-
-    def sayHi(self,event):
-        print "hi"
 
     def keyLeft(self,event):
         if self.allowZoom == False:
@@ -99,18 +102,21 @@ class FramePlot(ttk.Frame):
         
     def paintObject(self):
         raise Exception("Replace function!")
+    
+    def eventTakeFokus(self,event):
+        self.canvas.focus_set()
         
     def eventMouseMotion(self,event):
-        self.canvas.focus_set()
         self.coord.set(self.identifier()+"/"+str(round(self.convXtoA(event.x),2))+"/"+str(round(self.convYtoB(event.y),0)))
         if self.action == None:
             return
         if not hasattr(self.action,"onMotion"):
             return
         self.action.onMotion(event)
+        
     
     def eventStartZoom(self,event):
-        print "start zoom", self.identifier()
+        self.canvas.focus_set()
         # ToDo: Cancel previous action?
         self.action = ActionZoom(self,self.canvas,event.x,event.y)
         return
@@ -210,7 +216,7 @@ class FramePlot(ttk.Frame):
                                     tags=("axis",),arrow="last")                            
                                     
         # search scale X
-        start,end,diff,exp = findScale(self.viewXMin,self.viewXMax,5.0)
+        start,end,diff,exp = findScale(self.viewXMin,self.viewXMax,self.NrXScales)
         while start < end:
             if start > self.viewXMin and start < self.viewXMax:
                 x = self.convAtoX(start)
@@ -221,7 +227,7 @@ class FramePlot(ttk.Frame):
             start += diff
 
         # search scale Y
-        start,end,diff,exp = findScale(self.viewYMin,self.viewYMax,5.0)
+        start,end,diff,exp = findScale(self.viewYMin,self.viewYMax,self.NrYScales)
         while start < end:
             if start > self.viewYMin and start < self.viewYMax:
                 x = self.convAtoX(self.viewXMin)
@@ -230,6 +236,18 @@ class FramePlot(ttk.Frame):
                     (x-5,y),text = shortNr(start,exp),anchor=E)
                 self.canvas.create_line(x-4,y,x,y)
             start += diff
+            
+        # write axis description
+        item = self.canvas.create_text(
+                    self.convAtoX((self.viewXMin+self.viewXMax)/2.0),
+                    self.height-self.borderBottom/3.0,
+                    text = self.xTitle)
+                    
+        item = self.canvas.create_text(
+                self.borderLeft,
+                self.borderTop/2.0,
+                text = self.yTitle)
+
             
     def resetZoom(self,event):
         if self.allowZoom == False:

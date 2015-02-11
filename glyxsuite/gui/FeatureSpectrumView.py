@@ -2,19 +2,6 @@ import ttk
 from Tkinter import * 
 import math
 import FramePlot
-
-class PeakTMP:
-    
-    def __init__(self,mass,intensity):
-        self.mass = mass
-        self.intensity = intensity
-        
-    def getMZ(self):
-        return self.mass
-        
-    def getIntensity(self):
-        return self.intensity
-        
         
 class SpectrumView(FramePlot.FramePlot):
     
@@ -37,7 +24,7 @@ class SpectrumView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcScoringMSMSSpectrum = self.initSpectrum
+        self.model.funcUpdateFeatureMSMSSpectrum = self.initSpectrum
 
     def setMaxValues(self):
         self.aMax = -1

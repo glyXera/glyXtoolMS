@@ -1,0 +1,138 @@
+import ttk 
+from Tkinter import * 
+import math
+import FramePlot
+
+class PeakTMP:
+    
+    def __init__(self,mass,intensity):
+        self.mass = mass
+        self.intensity = intensity
+        
+    def getMZ(self):
+        return self.mass
+        
+    def getIntensity(self):
+        return self.intensity
+        
+        
+class PrecursorView(FramePlot.FramePlot):
+    
+    def __init__(self,master,model,height=300,width=800):
+        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width,xTitle="mz [Th]",yTitle="Intensity [counts]")
+        
+        self.master = master
+        self.spec = None
+        self.charge = 0
+        self.precursormass = 0.0
+        self.NrXScales = 3.0
+
+        self.coord = StringVar()
+        l = Label( self,textvariable=self.coord)
+        l.grid(row=4, column=0, sticky=N+S)
+        
+        self.keepZoom = IntVar()
+        c = Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
+        c.grid(row=5, column=0, sticky=N+S)
+                
+                
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        # link function
+        self.model.funcScoringMSSpectrum = self.initSpectrum
+
+    def setMaxValues(self):
+        self.aMax = -1
+        self.bMax = -1
+        
+        for peak in self.spec:
+            mz = peak.getMZ()
+            intens = peak.getIntensity()
+            if self.aMax == -1 or mz > self.aMax :
+                self.aMax = mz
+            if self.bMax == -1  or intens > self.bMax:
+                self.bMax = intens
+        
+
+    def paintObject(self):
+        if self.spec == None:
+            self.charge = 0
+            self.precursormass = 0.0
+            return
+
+        specId = self.spec.getNativeID()
+
+        # continuous spectrum
+        xy = []
+        for peak in self.spec:
+            mz = peak.getMZ()
+            
+            intens = peak.getIntensity()
+            if mz < self.viewXMin or mz > self.viewXMax:
+                continue
+            pMZ = self.convAtoX(mz)
+            pInt = self.convBtoY(intens)
+            xy.append(pMZ)
+            xy.append(pInt)
+        if len(xy) > 0:
+            item = self.canvas.create_line(xy,tags=("peak",))
+        
+        # plot precursor line
+        intZero = self.convBtoY(0)
+        intMax = self.convBtoY(self.viewYMax)
+        if self.precursormass != 0:
+            for i in range(0,4):
+                if self.charge == 0:
+                    mass = self.precursormass
+                else:
+                    mass = self.precursormass+1/abs(float(self.charge))*i
+                item = self.canvas.create_line(
+                    self.convAtoX(mass),
+                    intZero,
+                    self.convAtoX(mass),
+                    intMax,
+                    fill='green')
+                    
+        # plot rt line
+        c = self.model.currentAnalysis.selectedChromatogram
+        if  c != None:
+            item1 = self.canvas.create_line(
+                self.convAtoX(c.rangeLow),
+                intZero,
+                self.convAtoX(c.rangeLow),
+                intMax,
+                fill='blue')
+            item2 = self.canvas.create_line(
+                self.convAtoX(c.rangeHigh),
+                intZero,
+                self.convAtoX(c.rangeHigh),
+                intMax,
+                fill='blue')
+        self.allowZoom = True
+            
+    def initSpectrum(self,spec,mass, charge,low,high):
+        if spec == None:
+            self.charge = 0
+            self.precursormass = 0.0
+            return
+        self.spec = spec
+        self.precursormass = mass
+        self.charge = charge
+        self.viewXMin = low
+        self.viewXMax = high
+        self.viewYMin = 0
+        self.viewYMax = -1
+         # set self.viewYMax
+        for peak in self.spec:
+            mz = peak.getMZ()
+            intens = peak.getIntensity()
+            if mz < self.viewXMin or mz > self.viewXMax:
+                continue
+            if intens > self.viewYMax:
+                self.viewYMax = intens
+        
+        self.initCanvas(keepZoom = True)
+        
+    def identifier(self):
+        return "SpectrumView"
