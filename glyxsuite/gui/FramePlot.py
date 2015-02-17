@@ -1,5 +1,5 @@
 import ttk 
-from Tkinter import * 
+import Tkinter
 import math
        
         
@@ -57,9 +57,9 @@ class FramePlot(ttk.Frame):
         self.borderTop = 50
         self.borderBottom = 50
 
-        self.canvas = Canvas(self, width=self.width, height=self.height) # check screen resolution
+        self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height) # check screen resolution
         self.canvas.config(bg="white")       
-        self.canvas.grid(row=0, column=0, sticky=N+S+E+W)
+        self.canvas.grid(row=0, column=0, sticky="NSEW")
         
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
@@ -185,7 +185,7 @@ class FramePlot(ttk.Frame):
             self.zoomHistory.append((self.viewXMin,self.viewXMax,self.viewYMin,self.viewYMax))
         
         self.calcScales() 
-        self.canvas.delete(ALL)
+        self.canvas.delete("ALL")
         
         self.paintObject()
                             
@@ -222,7 +222,7 @@ class FramePlot(ttk.Frame):
                 x = self.convAtoX(start)
                 y = self.convBtoY(self.viewYMin)
                 self.canvas.create_text(
-                    (x,y+5),text = shortNr(start,exp),anchor=N)
+                    (x,y+5),text = shortNr(start,exp),anchor="n")
                 self.canvas.create_line(x,y,x,y+4)
             start += diff
 
@@ -233,7 +233,7 @@ class FramePlot(ttk.Frame):
                 x = self.convAtoX(self.viewXMin)
                 y = self.convBtoY(start)
                 self.canvas.create_text(
-                    (x-5,y),text = shortNr(start,exp),anchor=E)
+                    (x-5,y),text = shortNr(start,exp),anchor="e")
                 self.canvas.create_line(x-4,y,x,y)
             start += diff
             

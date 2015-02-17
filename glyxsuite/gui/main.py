@@ -41,36 +41,38 @@ GUI:
 """
 
 
-class App(Tkinter.Frame):
+class App(ttk.Frame):
     def __init__(self, master):
+        
         self.master = master
-        menubar = Tkinter.Menu(self.master)
+        menubar = Tkinter.Menu(self.master,bg="#d9d9d9")
         self.master.config(menu=menubar)
+        self.master.config(bg="#d9d9d9")
         self.model = DataModel.DataModel()
         
         self.model.root = master
         
-        filemenu = Tkinter.Menu(menubar, tearoff=0)
+        filemenu = Tkinter.Menu(menubar, tearoff=0,bg="#d9d9d9")
         filemenu.add_command(label="Parameters")
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.master.destroy)
         menubar.add_cascade(label="Program", menu=filemenu)
         
-        analysisMenu = Tkinter.Menu(menubar, tearoff=0)
+        analysisMenu = Tkinter.Menu(menubar, tearoff=0,bg="#d9d9d9")
         analysisMenu.add_command(label="Open Analysis")
         analysisMenu.add_command(label="Save Analysis")
         analysisMenu.add_separator()
         analysisMenu.add_command(label="Close Analysis")
         menubar.add_cascade(label="Analysisfile", menu=analysisMenu) 
         
-        mzfileMenu = Tkinter.Menu(menubar, tearoff=0)
+        mzfileMenu = Tkinter.Menu(menubar, tearoff=0,bg="#d9d9d9")
         mzfileMenu.add_command(label="Open mzML file")
         mzfileMenu.add_command(label="Save mzML file")
         mzfileMenu.add_separator()
         mzfileMenu.add_command(label="Close mzML file")
         menubar.add_cascade(label="mzMLFile", menu=mzfileMenu) 
         
-        toolMenu = Tkinter.Menu(menubar, tearoff=0)
+        toolMenu = Tkinter.Menu(menubar, tearoff=0,bg="#d9d9d9")
         menubar.add_cascade(label="Tool", menu=toolMenu) 
         
         frameProject = ttk.Labelframe(master,text="Projects")
@@ -79,12 +81,15 @@ class App(Tkinter.Frame):
         pojectFrame.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
         frameProject.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
         
-        self.notebook = ttk.Notebook(master)
+        
+        frameNotebook = ttk.Labelframe(master,text="Analysis")
+        frameNotebook.grid(row=1,column=0,sticky=("N", "W", "E"))
+        self.notebook = ttk.Notebook(frameNotebook)
         
         n1 = NotebookScoring.NotebookScoring(self.notebook,self.model)
         n2 = NotebookFeature.NotebookFeature(self.notebook,self.model)
         n3 = NotebookIdentification.NotebookIdentification(self.notebook,self.model)
-        n4 = Tkinter.Frame(self.notebook)
+        n4 = ttk.Frame(self.notebook)
 
         self.notebook.add(n1, text='1. Scoring')
         self.notebook.add(n2, text='2. Features')
@@ -112,6 +117,7 @@ class App(Tkinter.Frame):
         self.e4.grid(row=0,column=1,rowspan=2,sticky="NWES")
         
         
+        
     def changedNotebook(self,event):
         idx = self.notebook.select()
         # hide all extensions
@@ -133,6 +139,7 @@ class App(Tkinter.Frame):
 def run():
     global app
     root = Tkinter.Tk()
+    root.title("GlyxSuite Viewer")
     app = App(root)
     root.mainloop()
     return app

@@ -89,32 +89,32 @@ class ProjectFrame(ttk.Frame):
         ttk.Frame.__init__(self,master=master)
         self.master = master
         self.model = model
-        
-        tools = ttk.Labelframe(self,text="Tools")
-        self.b1 = Tkinter.Button(tools, text="add Project",command=self.clickedAddProject)
+
+        tools = ttk.Frame(self)
+        self.b1 = ttk.Button(tools, text="add Project",command=self.clickedAddProject)
         self.b1.grid(row=0,column=0)
         
-        self.b2 = Tkinter.Button(tools, text="delete Project",command=self.deleteProject)
+        self.b2 = ttk.Button(tools, text="delete Project",command=self.deleteProject)
         self.b2.grid(row=0,column=1)
         self.b2.config(state=Tkinter.DISABLED)
         
-        self.b3 = Tkinter.Button(tools, text="add Analysis",command=self.clickedAddAnalysis)
+        self.b3 = ttk.Button(tools, text="add Analysis",command=self.clickedAddAnalysis)
         self.b3.grid(row=1,column=0)
         self.b3.config(state=Tkinter.DISABLED)
 
         #NORMAL, ACTIVE or DISABLED
         
-        self.b4 = Tkinter.Button(tools, text="delete Analysis",command=self.deleteAnalysis)
+        self.b4 = ttk.Button(tools, text="delete Analysis",command=self.deleteAnalysis)
         self.b4.grid(row=1,column=1)
         self.b4.config(state=Tkinter.DISABLED)
         
-        self.b1 = Tkinter.Button(tools, text="load test",command=self.loadTest)
+        self.b1 = ttk.Button(tools, text="load test",command=self.loadTest)
         self.b1.grid(row=0,column=2)
         
         
         tools.grid(row=0,column=0,sticky=('N','W','E','S'))
         
-        yscrollbar = Tkinter.Scrollbar(self,orient=Tkinter.VERTICAL)
+        yscrollbar = ttk.Scrollbar(self,orient=Tkinter.VERTICAL)
         
         self.projectTree = ttk.Treeview(self,
                                         yscrollcommand=yscrollbar.set)

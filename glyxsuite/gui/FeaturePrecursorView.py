@@ -1,5 +1,5 @@
 import ttk 
-from Tkinter import * 
+import Tkinter
 import math
 import FramePlot
 
@@ -12,13 +12,13 @@ class PrecursorView(FramePlot.FramePlot):
         self.specArray = None
         self.NrXScales = 3.0
 
-        self.coord = StringVar()
-        l = Label( self,textvariable=self.coord)
-        l.grid(row=4, column=0, sticky=N+S)
+        self.coord = Tkinter.StringVar()
+        l = ttk.Label( self,textvariable=self.coord)
+        l.grid(row=4, column=0, sticky="NS")
         
-        self.keepZoom = IntVar()
-        c = Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky=N+S)
+        self.keepZoom = Tkinter.IntVar()
+        c = ttk.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
+        c.grid(row=5, column=0, sticky="NS")
                 
                 
         self.grid_rowconfigure(0, weight=1)
@@ -98,4 +98,4 @@ class PrecursorView(FramePlot.FramePlot):
         """
         
     def identifier(self):
-        return "SpectrumView"
+        return "FeatureSpectrumView"
