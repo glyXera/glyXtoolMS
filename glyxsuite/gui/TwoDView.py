@@ -26,6 +26,22 @@ class TwoDView(FramePlot.FramePlot):
 
         # link function
         self.model.funcFeatureTwoDView = self.init
+        s = ttk.Style()
+        #changes = s.map('TCheckbutton', 'indicatorcolor')
+        #changes = s.map('TCheckbutton')
+        
+        #print changes
+        #s.map('TCheckbutton',
+        #indicatoron=[('pressed', '#ececec'), ('selected', '#d9d9d9')])
+        
+        
+        s.map('TCheckbutton',
+        foreground=[('disabled', 'black'),
+                    ('pressed', 'black'),
+                    ('active', 'black')],
+        background=[('disabled', '#d9d9d9'),
+                    ('pressed', '!focus', '#d9d9d9'),
+                    ('active', '#d9d9d9')])
         
         # Events
         #self.canvas.bind("<Left>", self.setButtonValue)
@@ -41,6 +57,7 @@ class TwoDView(FramePlot.FramePlot):
                             variable=self.ov1,
                             command=lambda:self.setButtonValue(1))
         oc1.grid(row=3,column=0,sticky="WS")
+        #print "class",oc1.winfo_class()
         
         self.ov2 = Tkinter.IntVar() # Switch all Features and Wrong Charge
         oc2 = ttk.Checkbutton(optionsFrame,

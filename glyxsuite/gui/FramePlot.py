@@ -42,9 +42,9 @@ class FramePlot(ttk.Frame):
         self.bMax = -1
         
         self.viewXMin = 0
-        self.viewXMax = -1
+        self.viewXMax = 1
         self.viewYMin = 0
-        self.viewYMax = -1
+        self.viewYMax = 1
        
         self.slopeA = 1
         self.slopeB = 1
@@ -73,6 +73,9 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<Control-Left>", self.keyLeft)
         self.canvas.bind("<Control-Right>", self.keyRight)
         self.canvas.bind("<Control-BackSpace>", self.resetZoom)
+        
+        self.calcScales()
+        self._paintAxis()
 
     def keyLeft(self,event):
         if self.allowZoom == False:
@@ -185,9 +188,12 @@ class FramePlot(ttk.Frame):
             self.zoomHistory.append((self.viewXMin,self.viewXMax,self.viewYMin,self.viewYMax))
         
         self.calcScales() 
-        self.canvas.delete("ALL")
+        self.canvas.delete(Tkinter.ALL)
         
         self.paintObject()
+        self._paintAxis()
+        
+    def _paintAxis(self):
                             
         # overpaint possible overflows                    
         self.canvas.create_rectangle(0,0,

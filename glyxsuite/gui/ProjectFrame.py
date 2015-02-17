@@ -91,24 +91,24 @@ class ProjectFrame(ttk.Frame):
         self.model = model
 
         tools = ttk.Frame(self)
-        self.b1 = ttk.Button(tools, text="add Project",command=self.clickedAddProject)
+        self.b1 = ttk.Button(tools, text="Add Project",command=self.clickedAddProject)
         self.b1.grid(row=0,column=0)
         
-        self.b2 = ttk.Button(tools, text="delete Project",command=self.deleteProject)
+        self.b2 = ttk.Button(tools, text="Delete Project",command=self.deleteProject)
         self.b2.grid(row=0,column=1)
         self.b2.config(state=Tkinter.DISABLED)
         
-        self.b3 = ttk.Button(tools, text="add Analysis",command=self.clickedAddAnalysis)
+        self.b3 = ttk.Button(tools, text="Add Analysis",command=self.clickedAddAnalysis)
         self.b3.grid(row=1,column=0)
         self.b3.config(state=Tkinter.DISABLED)
 
         #NORMAL, ACTIVE or DISABLED
         
-        self.b4 = ttk.Button(tools, text="delete Analysis",command=self.deleteAnalysis)
+        self.b4 = ttk.Button(tools, text="Delete Analysis",command=self.deleteAnalysis)
         self.b4.grid(row=1,column=1)
         self.b4.config(state=Tkinter.DISABLED)
         
-        self.b1 = ttk.Button(tools, text="load test",command=self.loadTest)
+        self.b1 = ttk.Button(tools, text="Load Test",command=self.loadTest)
         self.b1.grid(row=0,column=2)
         
         

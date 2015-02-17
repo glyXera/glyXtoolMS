@@ -14,6 +14,9 @@ class NotebookScoring(ttk.Frame):
         frameSpectrum = ttk.Labelframe(self,text="Spectrum")
         frameSpectrum.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
         
+        frameTree = ttk.Labelframe(self,text="MS/MS Spectra")
+        frameTree.grid(row=1,column=0,sticky=("N", "W", "E", "S"))
+        
         l1 = ttk.Label(frameSpectrum, text="Spectrum-Id:")
         l1.grid(row=0,column=0,sticky="NE")
         self.v1 = Tkinter.StringVar()
@@ -51,14 +54,11 @@ class NotebookScoring(ttk.Frame):
         self.c6.grid(row=5,column=1)
         
         b1 = ttk.Button(frameSpectrum, text="save Changes",command=self.saveChanges)
-        b1.grid(row=5,column=2)
-        
-        b2 = ttk.Button(frameSpectrum, text="show Histogram",command=self.showHistogram)
-        b2.grid(row=4,column=2)
+        b1.grid(row=4,rowspan=2,column=2)
         
         # show treeview of mzML file MS/MS and MS   
-        scrollbar = ttk.Scrollbar(self)    
-        self.tree = ttk.Treeview(self,yscrollcommand=scrollbar.set)
+        scrollbar = ttk.Scrollbar(frameTree)    
+        self.tree = ttk.Treeview(frameTree,yscrollcommand=scrollbar.set)
             
         columns = ("RT","Mass","Charge","Score","Is Glyco")
         self.tree["columns"] = columns
@@ -68,9 +68,9 @@ class NotebookScoring(ttk.Frame):
             #self.tree.heading(col, text=col, command=lambda col=col: treeview_sort_column(self.tree, col, False))
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
             
-        self.tree.grid(row=1,column=0,sticky=("N", "W", "E", "S"))
+        self.tree.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
         
-        scrollbar.grid(row=1,column=1,sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=0,column=1,sticky=("N", "W", "E", "S"))
         scrollbar.config(command=self.tree.yview)
         
         self.treeIds = {}
@@ -262,71 +262,3 @@ class NotebookScoring(ttk.Frame):
                         spectrum.precursorCharge,
                         round(spectrum.logScore,2),
                         isGlycopeptide))
-
-    def showHistogram(self):
-        if self.model.currentAnalysis == None:
-            return
-        if self.model.currentAnalysis.analysis == None:
-            return
-        HistogramFrame(self,self.model)
-        return
-
-
-class HistogramFrame(Tkinter.Toplevel):
-    
-    def __init__(self,master,model):
-        Tkinter.Toplevel.__init__(self,master=master)
-        self.master = master
-        self.title("Score Histogram")
-        self.model = model
-        self.view = HistogramView.HistogramView(self,model,height=450,width=500)
-        self.view.grid(row=0,column=0,columnspan=2,sticky="NW")
-        
-        analysisFile = self.model.currentAnalysis.analysis
-        
-        l1 = Tkinter.Label(self, text="Score-Threshold:")
-        l1.grid(row=1,column=0,sticky="NE")
-        self.v1 = Tkinter.StringVar()
-        c1 = Tkinter.Entry(self, textvariable=self.v1)
-        c1.grid(row=1,column=1,sticky="NW")
-        self.v1.set(analysisFile.parameters.getScoreThreshold())
-        
-        #l2 = Tkinter.Label(self, text="Score-Threshold:")
-        #l2.grid(row=1,column=0,sticky="NE")
-        b2 = Tkinter.Button(self, text="set Score-Threshold",command=self.validateEntry)
-        b2.grid(row=2,column=1,sticky="NW")
-        
-        self.makeHistogram()
-    
-    def makeHistogram(self):
-        self.view.bins = {}
-        self.view.colors = {}
-        # calculate series
-        seriesGlyco = []
-        seriesNon = []
-        for ms1,spectrum in self.model.currentAnalysis.data:
-            if spectrum.logScore >= 10:
-                continue
-            if spectrum.isGlycopeptide == True:
-                seriesGlyco.append(spectrum.logScore)
-            else:
-                seriesNon.append(spectrum.logScore)
-        self.view.addSeries(seriesGlyco,label="glyco",color="green")
-        self.view.addSeries(seriesNon,label="noglyco",color="blue")
-        self.view.initHistogram(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())        
-        
-    
-    def validateEntry(self):
-        try:
-            newThreshold = float(self.v1.get())
-            self.model.currentAnalysis.analysis.parameters.setScoreThreshold(newThreshold)
-            self.view.initHistogram(newThreshold)
-            for spectrum in self.model.currentAnalysis.analysis.spectra:
-                spectrum.isGlycopeptide = spectrum.logScore < newThreshold
-            self.model.funcUpdateNotebookScoring()
-            self.makeHistogram()
-        except ValueError:
-            print "cannot convert"
-            self.v1.set(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())
-        
-        

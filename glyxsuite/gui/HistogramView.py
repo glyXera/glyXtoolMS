@@ -81,6 +81,10 @@ class HistogramView(FramePlot.FramePlot,glyxsuite.lib.Histogram):
         self.allowZoom = True
             
     def initHistogram(self,logScore):
+        self.viewXMin = 0
+        self.viewXMax = -1
+        self.viewYMin = 0
+        self.viewYMax = -1
         self.logScore = logScore
         self.initCanvas(keepZoom = True)
         
