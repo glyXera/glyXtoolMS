@@ -75,15 +75,20 @@ class App(ttk.Frame):
         #toolMenu = Tkinter.Menu(menubar, tearoff=0,bg="#d9d9d9")
         #menubar.add_cascade(label="Tool", menu=toolMenu) 
         
+
+        
         frameProject = ttk.Labelframe(master,text="Projects")
         pojectFrame = ProjectFrame.ProjectFrame(frameProject,self.model)
         #pojectFrame.pack()
         pojectFrame.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
-        frameProject.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
+        frameProject.grid(row=0,column=0,sticky=("N"))
         
         
         frameNotebook = ttk.Labelframe(master,text="Analysis")
-        frameNotebook.grid(row=1,column=0,sticky=("N", "W", "E"))
+        frameNotebook.grid(row=1,column=0,sticky=("NWES"))
+        frameNotebook.rowconfigure(0, weight=1)
+
+        
         self.notebook = ttk.Notebook(frameNotebook)
         
         n1 = NotebookScoring.NotebookScoring(self.notebook,self.model)
@@ -96,15 +101,12 @@ class App(ttk.Frame):
         self.notebook.add(n3, text='3. Identification')
         self.notebook.add(n4, text='4. Results')
 
-        self.notebook.grid(row=1,column=0,sticky=("N", "W", "E"))
+        #self.notebook.grid(row=1,column=0,sticky=("N", "W", "E"))
+        self.notebook.grid(row=0,column=0,sticky="NWES")
+        
         self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
         
-        # configure column and row behaviour
-        self.master.columnconfigure(0, minsize=200,weight=0)
-        self.master.columnconfigure(1, minsize=300,weight=1)
-        self.master.rowconfigure(0, minsize=200,weight=0)
-        self.master.rowconfigure(1, minsize=200,weight=1)
-        #self.master.rowconfigure(1, minsize=200,weight=1)
+
         
         # Add extention frames
         self.e1 = ExtensionScoring.ExtensionScoring(master,self.model,'1. Scoring')
@@ -116,7 +118,12 @@ class App(ttk.Frame):
         self.e4 = ttk.Labelframe(master,text = '4. Results')
         self.e4.grid(row=0,column=1,rowspan=2,sticky="NWES")
         
-        
+        # configure column and row behaviour
+        self.master.columnconfigure(0, minsize=200,weight=0)
+        self.master.columnconfigure(1, minsize=300,weight=1)
+        self.master.rowconfigure(0, weight=0)
+        self.master.rowconfigure(1, weight=1)
+        #self.master.rowconfigure(1, minsize=200,weight=1)
         
     def changedNotebook(self,event):
         idx = self.notebook.select()

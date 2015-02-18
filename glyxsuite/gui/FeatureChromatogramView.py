@@ -12,6 +12,7 @@ class ChromatogramView(FramePlot.FramePlot):
         
         self.master = master
         self.NrXScales = 3.0
+        self.chrom = None
         self.rt = None
         
         self.coord = Tkinter.StringVar()
@@ -66,40 +67,30 @@ class ChromatogramView(FramePlot.FramePlot):
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1
-        for treeId in self.model.currentAnalysis.chromatograms:
-            chrom = self.model.currentAnalysis.chromatograms[treeId]
-            if chrom.plot == False:
-                continue
-            for rt in chrom.rt:
-                if self.aMax == -1 or rt > self.aMax :
-                    self.aMax = rt
-            for intensity in chrom.intensity:
-                if self.bMax == -1 or intensity > self.bMax :
-                    self.bMax = intensity
+        
+        for rt in self.chrom.rt:
+            if self.aMax == -1 or rt > self.aMax :
+                self.aMax = rt
+        for intensity in self.chrom.intensity:
+            if self.bMax == -1 or intensity > self.bMax :
+                self.bMax = intensity
 
 
     def paintObject(self):
         self.allowZoom = False
-        for treeId in self.model.currentAnalysis.chromatograms:
-            chrom = self.model.currentAnalysis.chromatograms[treeId]
-            self.model.debug = chrom
-            if chrom.plot == False:
-                continue
-            if chrom.selected == True:
-                linewidth = 2
-            else:
-                linewidth = 1
-            if len(chrom.rt) != len(chrom.intensity):
-                raise Exception("Different length of chromatogram parameters!")
-            xy = []
-            for i in range(0,len(chrom.rt)):
-                rt = chrom.rt[i]
-                intens = chrom.intensity[i]       
-                xy.append(self.convAtoX(rt))
-                xy.append(self.convBtoY(intens))
-            if len(xy) == 0:
-                continue
-            item = self.canvas.create_line(xy,fill=chrom.color, width = linewidth)
+        if self.chrom == None:
+            return
+        if len(self.chrom.rt) != len(self.chrom.intensity):
+            raise Exception("Different length of chromatogram parameters!")
+        xy = []
+        for i in range(0,len(self.chrom.rt)):
+            rt = self.chrom.rt[i]
+            intens = self.chrom.intensity[i]       
+            xy.append(self.convAtoX(rt))
+            xy.append(self.convBtoY(intens))
+        if len(xy) == 0:
+            return
+        item = self.canvas.create_line(xy,fill=self.chrom.color, width = 1)
         if self.rt != None:
             intZero = self.convBtoY(0)
             intMax = self.convBtoY(self.viewYMax)
@@ -111,7 +102,9 @@ class ChromatogramView(FramePlot.FramePlot):
                 fill='blue')
             self.allowZoom = True
     
-    def initChromatogram(self,low,high,rt):
+    def initChromatogram(self,chrom,low,high,rt):
+        print "init"
+        self.chrom = chrom
         self.viewXMin = low
         self.viewXMax = high
         self.viewYMin = 0

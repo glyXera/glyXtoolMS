@@ -8,12 +8,22 @@ class NotebookFeature(ttk.Frame):
         ttk.Frame.__init__(self,master=master)
         self.master = master
         self.model = model
+        frameFeature = ttk.Labelframe(self,text="Features")
+        frameFeature.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
+        
+        frameSpectrum = ttk.Labelframe(self,text="Featurespectra")
+        frameSpectrum.grid(row=1,column=0,sticky=("N", "W", "E", "S"))
+        
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=0)
+        
+        frameFeature.rowconfigure(0, weight=1)
         
         # show treeview of mzML file MS/MS and MS   
         # ------------------- Feature Tree ----------------------------#
-        
-        scrollbar = Tkinter.Scrollbar(self)    
-        self.featureTree = ttk.Treeview(self,yscrollcommand=scrollbar.set)
+
+        scrollbar = Tkinter.Scrollbar(frameFeature)    
+        self.featureTree = ttk.Treeview(frameFeature,yscrollcommand=scrollbar.set)
             
         columns = ("RT","MZ","Charge","Best Score","Nr Spectra")
         self.featureTree["columns"] = columns
@@ -24,9 +34,9 @@ class NotebookFeature(ttk.Frame):
                 text=col,
                 command=lambda col=col: self.sortFeatureColumn(col))
             
-        self.featureTree.grid(row=1,column=0,sticky=("N", "W", "E", "S"))
+        self.featureTree.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
         
-        scrollbar.grid(row=1,column=1,sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=0,column=1,sticky=("N", "W", "E", "S"))
         scrollbar.config(command=self.featureTree.yview)
         
         self.featureTreeIds = {}
@@ -43,8 +53,8 @@ class NotebookFeature(ttk.Frame):
         # ------------------- Spectrum Tree ---------------------------#
         self.spectrumTreeIds = {}
         
-        scrollbar = Tkinter.Scrollbar(self)    
-        self.spectrumTree = ttk.Treeview(self,yscrollcommand=scrollbar.set)
+        scrollbar = Tkinter.Scrollbar(frameSpectrum)    
+        self.spectrumTree = ttk.Treeview(frameSpectrum,yscrollcommand=scrollbar.set)
         columns = ("RT","Mass","Charge","Score","Is Glyco")
         self.spectrumTree["columns"] = columns
         self.spectrumTree.column("#0",width=100)
@@ -52,8 +62,8 @@ class NotebookFeature(ttk.Frame):
             self.spectrumTree.column(col,width=80)
             self.spectrumTree.heading(col, text=col, command=lambda col=col: self.sortSpectrumColumn(col))
             
-        self.spectrumTree.grid(row=2,column=0,sticky=("N", "W", "E", "S"))
-        scrollbar.grid(row=2,column=1,sticky=("N", "W", "E", "S"))
+        self.spectrumTree.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=0,column=1,sticky=("N", "W", "E", "S"))
         
         scrollbar.config(command=self.spectrumTree.yview)
         self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree);
@@ -188,7 +198,7 @@ class NotebookFeature(ttk.Frame):
         self.model.funcFeatureTwoDView(keepZoom = True)
         self.model.funcUpdateExtentionFeature()
         self.model.funcUpdateFeaturePrecursorSpectrum(sumSpectra,minMZ,maxMZ)
-        
+        self.model.funcUpdateFeatureChromatogram(c,c.rt[0],c.rt[-1],None)
 
     def sortSpectrumColumn(self,col):
         

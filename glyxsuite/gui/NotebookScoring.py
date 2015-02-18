@@ -11,6 +11,10 @@ class NotebookScoring(ttk.Frame):
         self.master = master
         self.model = model
         
+        # layout self 
+        self.rowconfigure(0, weight=0) # frameSpectrum
+        self.rowconfigure(1, weight=1) # frameTree
+
         frameSpectrum = ttk.Labelframe(self,text="Spectrum")
         frameSpectrum.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
         
@@ -84,7 +88,10 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree);
         
         self.model.funcUpdateNotebookScoring = self.updateTree
-
+        
+        # layout frameTree
+        frameTree.rowconfigure(0, weight=1)
+        
     def sortColumn(self,col):
         
         if col == self.model.currentAnalysis.sortedColumn:
