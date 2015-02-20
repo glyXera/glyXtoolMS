@@ -2,6 +2,7 @@ import ttk
 import Tkinter
 import math
 import FramePlot
+import Appearance
 
 class PeakTMP:
     
@@ -29,7 +30,7 @@ class SpectrumView(FramePlot.FramePlot):
         l.grid(row=4, column=0, sticky="NS")
         
         self.keepZoom = Tkinter.IntVar()
-        c = ttk.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
+        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
         c.grid(row=5, column=0, sticky="NS")
                 
                 

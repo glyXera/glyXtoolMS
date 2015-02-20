@@ -2,6 +2,7 @@ import ttk
 import Tkinter
 import math
 import FramePlot
+import Appearance
 
 class PrecursorView(FramePlot.FramePlot):
     
@@ -17,7 +18,7 @@ class PrecursorView(FramePlot.FramePlot):
         l.grid(row=4, column=0, sticky="NS")
         
         self.keepZoom = Tkinter.IntVar()
-        c = ttk.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
+        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
         c.grid(row=5, column=0, sticky="NS")
                 
                 
@@ -53,11 +54,11 @@ class PrecursorView(FramePlot.FramePlot):
         if len(xy) > 0:
             item = self.canvas.create_line(xy,tags=("peak",))
         
-        
         self.allowZoom = True
             
     def initSpectrum(self,specArray,minMZ,maxMZ):
-        print "init feature spectrum"
+        if specArray == None:
+            return
         self.specArray = specArray
         self.viewXMin = minMZ
         self.viewXMax = maxMZ

@@ -108,8 +108,8 @@ class ProjectFrame(ttk.Frame):
         self.b4.grid(row=1,column=1)
         self.b4.config(state=Tkinter.DISABLED)
         
-        self.b1 = ttk.Button(tools, text="Load Test",command=self.loadTest)
-        self.b1.grid(row=0,column=2)
+        #self.b1 = ttk.Button(tools, text="Load Test",command=self.loadTest)
+        #self.b1.grid(row=0,column=2)
         
         
         tools.grid(row=0,column=0,sticky=('N','W','E','S'))
@@ -123,12 +123,8 @@ class ProjectFrame(ttk.Frame):
         
         yscrollbar.grid(row=1,column=1,sticky=('N','W','E','S'))
         yscrollbar.config(command=self.projectTree.yview)
-        
-        
+
         self.projectsTreeIds = {}
-        
-        # debug
-        self.model.debug = self.projectTree
         
         self.projectTree.heading("#0", text="Projects")
         

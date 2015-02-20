@@ -3,6 +3,7 @@ import Tkinter
 import math
 import FramePlot
 import DataModel
+import Appearance
 
 
 class ChromatogramView(FramePlot.FramePlot):
@@ -20,7 +21,7 @@ class ChromatogramView(FramePlot.FramePlot):
         l.grid(row=4, column=0, sticky="NS")
         
         self.keepZoom = Tkinter.IntVar()
-        c = ttk.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
+        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
         c.grid(row=5, column=0, sticky="NS")
                 
                 
@@ -103,7 +104,6 @@ class ChromatogramView(FramePlot.FramePlot):
             self.allowZoom = True
     
     def initChromatogram(self,chrom,low,high,rt):
-        print "init"
         self.chrom = chrom
         self.viewXMin = low
         self.viewXMax = high

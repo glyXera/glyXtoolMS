@@ -1,6 +1,7 @@
 import ttk
 import Tkinter
 import DataModel
+import numpy as np
 
 class NotebookFeature(ttk.Frame):
     
@@ -28,6 +29,7 @@ class NotebookFeature(ttk.Frame):
         columns = ("RT","MZ","Charge","Best Score","Nr Spectra")
         self.featureTree["columns"] = columns
         self.featureTree.column("#0",width=100)
+        self.featureTree.heading("#0", text="Feature Nr.")
         for col in columns:
             self.featureTree.column(col,width=80)
             self.featureTree.heading(col,
@@ -58,6 +60,7 @@ class NotebookFeature(ttk.Frame):
         columns = ("RT","Mass","Charge","Score","Is Glyco")
         self.spectrumTree["columns"] = columns
         self.spectrumTree.column("#0",width=100)
+        self.spectrumTree.heading("#0", text="Spectrum Nr.")
         for col in columns:
             self.spectrumTree.column(col,width=80)
             self.spectrumTree.heading(col, text=col, command=lambda col=col: self.sortSpectrumColumn(col))
@@ -131,7 +134,7 @@ class NotebookFeature(ttk.Frame):
                 tag = ("oddrowFeature",)
             else:
                 tag = ("evenrowFeature",)
-            name = str(index)
+            name = str(feature.index)
             bestScore = 10.0
             for specId in feature.getSpectraIds():
                 spectrum = analysis.spectraIds[specId]
@@ -159,7 +162,7 @@ class NotebookFeature(ttk.Frame):
         exp = self.model.currentProject.mzMLFile.exp
         minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
         
-        # get start/end positions for EIC
+        """# get start/end positions for EIC
         for spec in exp:
             if spec.getMSLevel() == 1:
                 break
@@ -173,21 +176,35 @@ class NotebookFeature(ttk.Frame):
                 highPeak = i
                 break
             i += 1
-        
-        sumSpectra = None
+        """
+        number = 10000
+        base = np.linspace(minMZ,maxMZ,num=number)
+        sumSpectra = np.zeros_like(base)
         c = DataModel.Chromatogram()
         c.rt = []
         c.intensity = []
         for spec in self.model.currentAnalysis.featureSpectra[feature.getId()]:
-            peaks = spec.get_peaks()[lowPeak:highPeak,:]
             c.rt.append(spec.getRT())
+            peaks = spec.get_peaks()
+            mzArray = peaks[:,0]
+            intensArray = peaks[:,1]
+            # get intensity in range
+            choice = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
+            arr_mz = np.extract(choice,mzArray)
+            arr_intens = np.extract(choice,intensArray)
+            c.intensity.append(arr_intens.sum())
+            # interpolate intensity to base
+            sumSpectra += np.interp(base, arr_mz, arr_intens)
+            #c.intensity.append(np.extract(choice,intensArray).sum())
+            """
+            peaks = spec.get_peaks()[lowPeak:highPeak,:]
             c.intensity.append(sum(peaks[:,1]))
             if sumSpectra == None:
                 sumSpectra = peaks
             else:
                 sumSpectra[:,1] += peaks[:,1]
-                
-
+            """
+        self.model.debug = self.model.currentAnalysis.featureSpectra[feature.getId()]
         c.plot = True
         c.name = "test"
         c.rangeLow = minMZ
@@ -197,7 +214,7 @@ class NotebookFeature(ttk.Frame):
 
         self.model.funcFeatureTwoDView(keepZoom = True)
         self.model.funcUpdateExtentionFeature()
-        self.model.funcUpdateFeaturePrecursorSpectrum(sumSpectra,minMZ,maxMZ)
+        self.model.funcUpdateFeaturePrecursorSpectrum(np.vstack((base,sumSpectra)).T,minMZ,maxMZ)
         self.model.funcUpdateFeatureChromatogram(c,c.rt[0],c.rt[-1],None)
 
     def sortSpectrumColumn(self,col):
@@ -273,7 +290,7 @@ class NotebookFeature(ttk.Frame):
             isGlycopeptide = "no"
             if spectrum.isGlycopeptide:
                 isGlycopeptide = "yes"
-            name = spectrum.nativeId
+            name = spectrum.index
             
             itemSpectra = self.spectrumTree.insert("" , "end",text=name,
                 values=(round(spectrum.rt,1),

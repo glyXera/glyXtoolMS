@@ -18,9 +18,9 @@ class NotebookIdentification(ttk.Frame):
         columns = {"Mass":70,"error":70,"Peptide":160,"Glycan":160}
         self.tree["columns"] = ("Mass","error","Peptide","Glycan")
         self.tree.column("#0",width=40)
+        self.tree.heading("#0", text="Feature Nr.")
         for col in columns:
             self.tree.column(col,width=columns[col])
-            #self.tree.heading(col, text=col, command=lambda col=col: treeview_sort_column(self.tree, col, False))
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
             
         self.tree.grid(row=1,column=0,sticky=("N", "W", "E", "S"))
@@ -102,7 +102,7 @@ class NotebookIdentification(ttk.Frame):
             # get feature
             feature = analysis.featureIds[hit.featureID]
             #name = #str(index)
-            name = hit.featureID
+            name = feature.index
             # mass
             mass = (feature.getMZ()-glyxsuite.masses.MASS["H+"])*feature.getCharge()
             peptide = hit.peptide.toString()

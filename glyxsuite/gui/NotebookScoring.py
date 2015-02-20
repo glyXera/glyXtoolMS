@@ -3,6 +3,8 @@ import Tkinter
 import DataModel
 import HistogramView
 import glyxsuite
+import Appearance
+import numpy as np
 
 class NotebookScoring(ttk.Frame):
     
@@ -54,7 +56,9 @@ class NotebookScoring(ttk.Frame):
         l6 = ttk.Label(frameSpectrum, text="Is Glycopeptide:")
         l6.grid(row=5,column=0,sticky="NE")
         self.v6 = Tkinter.IntVar()
-        self.c6 = ttk.Checkbutton(frameSpectrum, variable=self.v6)
+        self.c6 = Appearance.Checkbutton(frameSpectrum, variable=self.v6)
+        
+        #self.c6 = Tkinter.Checkbutton(frameSpectrum, variable=self.v6)
         self.c6.grid(row=5,column=1)
         
         b1 = ttk.Button(frameSpectrum, text="save Changes",command=self.saveChanges)
@@ -67,11 +71,12 @@ class NotebookScoring(ttk.Frame):
         columns = ("RT","Mass","Charge","Score","Is Glyco")
         self.tree["columns"] = columns
         self.tree.column("#0",width=100)
+        self.tree.heading("#0", text="Spectrum Nr.")
         for col in columns:
             self.tree.column(col,width=80)
             #self.tree.heading(col, text=col, command=lambda col=col: treeview_sort_column(self.tree, col, False))
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
-            
+        
         self.tree.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
         
         scrollbar.grid(row=0,column=1,sticky=("N", "W", "E", "S"))
@@ -93,7 +98,8 @@ class NotebookScoring(ttk.Frame):
         frameTree.rowconfigure(0, weight=1)
         
     def sortColumn(self,col):
-        
+        if self.model.currentAnalysis == None:
+            return
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
         else:
@@ -158,7 +164,8 @@ class NotebookScoring(ttk.Frame):
                 isGlycopeptide = "yes"
             name = spectrum.nativeId
             
-            itemSpectra = self.tree.insert("" , "end",text=name,
+            #itemSpectra = self.tree.insert("" , "end",text=name,
+            itemSpectra = self.tree.insert("" , "end",text=spectrum.index,
                 values=(round(spectrum.rt,1),
                         round(spectrum.precursorMass,4),
                         spectrum.precursorCharge,
@@ -213,26 +220,17 @@ class NotebookScoring(ttk.Frame):
         c.intensity = []
         c.msLevel = 1
         c.selected = True
-        # get mz range to extract
-        for spec in self.model.currentProject.mzMLFile.exp:
-            if spec.getMSLevel() == 1:
-                break
-        lowPeak = -1
-        highPeak = -1
-        i = 0
-        for mass in spec.get_peaks()[:,0]:
-            if lowPeak == -1 and mass > c.rangeLow:
-                lowPeak = i
-            if highPeak == -1 and mass > c.rangeHigh:
-                highPeak = i
-                break
-            i += 1
         rtLow = spectrum.chromatogramSpectra[0].getRT()
         rtHigh = spectrum.chromatogramSpectra[-1].getRT()
+        
         for spec in spectrum.chromatogramSpectra:
             c.rt.append(spec.getRT())
+            peaks = spec.get_peaks()
+            mzArray = peaks[:,0]
+            intensArray = peaks[:,1]
             # get intensity in range
-            c.intensity.append(sum(spec.get_peaks()[lowPeak:highPeak,1]))
+            choice = np.logical_and(np.greater(mzArray,  c.rangeLow), np.less(mzArray, c.rangeHigh))
+            c.intensity.append(np.extract(choice,intensArray).sum())
 
         # set chromatogram within analysis
         self.model.currentAnalysis.chromatograms[c.name] = c

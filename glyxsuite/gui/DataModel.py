@@ -54,6 +54,7 @@ class ContainerSpectrum(object):
     
     def __init__(self,spectrum):
         self._spectrum = spectrum
+        self.index = ""
         self.chromatogramSpectra = []
         
     @property
@@ -160,14 +161,21 @@ class ContainerAnalysisFile:
     def createIds(self):
         self.spectraIds = {}
         self.spectraInFeatures = {}
+        i = 0
         for spectrum in self.analysis.spectra:
-            self.spectraIds[spectrum.nativeId] = ContainerSpectrum(spectrum)
+            i += 1
+            c = ContainerSpectrum(spectrum)
+            c.index = str(i)
+            self.spectraIds[spectrum.nativeId] = c
             self.spectraInFeatures[spectrum.nativeId] = []
         
         # create featureIds
         # create feature - spectra link
         self.featureIds = {}
+        i = 0
         for feature in self.analysis.features:
+            i += 1
+            feature.index = str(i) # TODO: Warp feature
             self.featureIds[feature.getId()] = feature
             minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
             for spectrum in self.analysis.spectra:

@@ -75,8 +75,6 @@ class App(ttk.Frame):
         #toolMenu = Tkinter.Menu(menubar, tearoff=0,bg="#d9d9d9")
         #menubar.add_cascade(label="Tool", menu=toolMenu) 
         
-
-        
         frameProject = ttk.Labelframe(master,text="Projects")
         pojectFrame = ProjectFrame.ProjectFrame(frameProject,self.model)
         #pojectFrame.pack()
