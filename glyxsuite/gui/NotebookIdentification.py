@@ -23,9 +23,9 @@ class NotebookIdentification(ttk.Frame):
             self.tree.column(col,width=columns[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
             
-        self.tree.grid(row=1,column=0,sticky=("N", "W", "E", "S"))
+        self.tree.grid(row=0,column=0,sticky=("N", "W", "E", "S"))
         
-        scrollbar.grid(row=1,column=1,sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=0,column=1,sticky=("N", "W", "E", "S"))
         scrollbar.config(command=self.tree.yview)
         
         self.treeIds = {}
@@ -37,6 +37,8 @@ class NotebookIdentification(ttk.Frame):
         self.tree.tag_configure('evenSpectrum', background='LightBlue')
         self.tree.tag_configure('oddSpectrum', background='SkyBlue')
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree);
+        
+        self.rowconfigure(0, weight=1)
         
         self.model.funcUpdateNotebookIdentification = self.updateTree
 
