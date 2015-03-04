@@ -184,10 +184,10 @@ class NotebookScoring(ttk.Frame):
 
         # set values of spectrum
         self.v1.set(spectrum.nativeId)
-        self.v2.set(spectrum.rt)
-        self.v3.set(spectrum.precursorMass)
+        self.v2.set(round(spectrum.rt,1))
+        self.v3.set(round(spectrum.precursorMass,4))
         self.v4.set(spectrum.precursorCharge)
-        self.v5.set(spectrum.logScore)          
+        self.v5.set(round(spectrum.logScore,2))
         self.v6.set(spectrum.isGlycopeptide)
         
         # make calculations

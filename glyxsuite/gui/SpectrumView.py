@@ -121,23 +121,7 @@ class SpectrumView(FramePlot.FramePlot):
             pMZ = self.convAtoX(mz)
             pInt = self.convBtoY(intens)
             item = self.canvas.create_line(pMZ,pInt0,pMZ,pInt,tags=("peak",),fill="red")
-                
-        # make text
         
-        """
-        if specId in self.model.currentAnalysis.spectraIds:
-            spectrum = self.model.currentAnalysis.spectraIds[specId]
-            # paint ions from logscore
-            ions = spectrum.ions
-            for sugar in ions:
-                for fragment in ions[sugar]:
-                    intensity = ions[sugar][fragment]["intensity"]
-                    mass = ions[sugar][fragment]["mass"]
-                    pMZ = self.convAtoX(mass)
-                    pInt = self.convBtoY(intensity)
-                    self.canvas.create_text((pMZ,pInt,),text=fragment,anchor="s")
-                    self.canvas.create_line(pMZ,pInt0,pMZ,pInt,tags=("score",),fill="red")            
-        """
     def initSpectrum(self,spec):
         if spec == None:
             return

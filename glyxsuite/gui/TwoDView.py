@@ -177,8 +177,31 @@ class TwoDView(FramePlot.FramePlot):
                 self.aMax = rt
             if self.bMax < mz:
                 self.bMax = mz
+        self.aMax *= 1.1
+        self.bMax *= 1.1  
+
+    def plotFeatureLine(self):
+        # plot feature line
+        feature = self.model.currentAnalysis.currentFeature
+        if feature == None:
+            return
+        rt1,rt2,mz1,mz2 = feature.getBoundingBox()
+        rt1 = self.convAtoX(rt1)
+        rt2 = self.convAtoX(rt2)
+        mz1 = self.convBtoY(mz1)
+        mz2 = self.convBtoY(mz2)
+        rt0 = self.convAtoX(self.viewXMin)
+        rtMax = self.convAtoX(self.viewXMax)
+        mz0 = self.convBtoY(self.viewYMin)
+        mzMax = self.convBtoY(self.viewYMax)
+        color = "grey"
+        self.canvas.create_line(rt0,mz1,rtMax,mz1,fill=color)
+        self.canvas.create_line(rt0,mz2,rtMax,mz2,fill=color)
+        self.canvas.create_line(rt1,mz0,rt1,mzMax,fill=color)
+        self.canvas.create_line(rt2,mz0,rt2,mzMax,fill=color)
 
     def paintFeatures(self):
+        self.plotFeatureLine()
         for feature in self.model.currentAnalysis.analysis.features:
             rt1,rt2,mz1,mz2 = feature.getBoundingBox()
             rt1 = self.convAtoX(rt1)
@@ -196,18 +219,19 @@ class TwoDView(FramePlot.FramePlot):
             xy += [rt1,mz2]
             xy += [rt1,mz1]
             if self.model.currentAnalysis.currentFeature == feature:
-                color = "red"
-                colorSpec = "green"
+                color = "purple"
             else:
                 color = "black"
-                colorSpec = "white"
             item = self.canvas.create_line(xy,fill=color, width = linewidth)
+
     
     def paintSpectra(self):
         # calculate circle diameter
         #diam = int(min(self.slopeA,self.slopeB)*2)
         diam = int(min(self.slopeA,self.slopeB)*2)+1.5
         # plot msms spectra
+        colorGlyco = "green"
+        colorNonGlyco = "blue"
         for specId in self.model.currentAnalysis.spectraInFeatures:
             
             features = self.model.currentAnalysis.spectraInFeatures[specId]
@@ -233,31 +257,30 @@ class TwoDView(FramePlot.FramePlot):
                 nr *= 5
             else:
                 nr *= 7
-            
             if nr == 5:
                 if self.ov6.get() == 0:
                     continue
-                color = "green"
+                color = colorGlyco
             elif nr == 7:
                 if self.ov7.get() == 0:
                     continue
-                color = "green"
+                color = colorGlyco
             elif nr == 3:
                 if self.ov10.get() == 0:
                     continue
-                color = "green"
+                color = colorGlyco
             elif nr == 10:
                 if self.ov8.get() == 0:
                     continue
-                color = "red"
+                color = colorNonGlyco
             elif nr == 14:
                 if self.ov9.get() == 0:
                     continue
-                color = "red"
+                color = colorNonGlyco
             else:
                 if self.ov11.get() == 0:
                     continue
-                color = "red"
+                color = colorNonGlyco
                 
             x = self.convAtoX(spectrum.rt)
             y = self.convBtoY(spectrum.precursorMass)

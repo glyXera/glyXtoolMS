@@ -165,16 +165,17 @@ class HistogramFrame(Tkinter.Toplevel):
         Tkinter.Toplevel.__init__(self,master=master)
         self.master = master
         self.title("Score Histogram")
+        self.config(bg="#d9d9d9")
         self.model = model
         self.view = HistogramView.HistogramView(self,model,height=450,width=500)
         self.view.grid(row=0,column=0,columnspan=2,sticky="NW")
         
         analysisFile = self.model.currentAnalysis.analysis
         
-        l1 = Tkinter.Label(self, text="Score-Threshold:")
+        l1 = ttk.Label(self, text="Score-Threshold:")
         l1.grid(row=1,column=0,sticky="NE")
         self.v1 = Tkinter.StringVar()
-        c1 = Tkinter.Entry(self, textvariable=self.v1)
+        c1 = ttk.Entry(self, textvariable=self.v1)
         c1.grid(row=1,column=1,sticky="NW")
         self.v1.set(analysisFile.parameters.getScoreThreshold())
         

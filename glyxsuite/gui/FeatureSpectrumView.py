@@ -38,11 +38,77 @@ class SpectrumView(FramePlot.FramePlot):
                 self.aMax = mz
             if self.bMax == -1  or intens > self.bMax:
                 self.bMax = intens
-        
+        self.aMax *= 1.1
+        self.bMax *= 1.2       
 
     def paintObject(self):
         specId = self.spec.getNativeID()
+        pInt0 = self.convBtoY(self.viewYMin)
         
+        # create peaklist
+        peaks = []
+        for peak in self.spec:
+            mz = peak.getMZ()
+            intens = peak.getIntensity()
+            if mz < self.viewXMin or mz > self.viewXMax:
+                continue
+            if intens < self.viewYMin:
+                continue
+            peaks.append((intens,mz))
+            
+        # sort peaks after highest intensity
+        peaks.sort(reverse=True)
+        
+        # get scored peaks    
+        scored = {}
+        if specId in self.model.currentAnalysis.spectraIds:
+            ions = self.model.currentAnalysis.spectraIds[specId].ions
+            for sugar in ions:
+                for fragment in ions[sugar]:
+                    mass = ions[sugar][fragment]["mass"]
+                    l = []
+                    for intens,mz in peaks:
+                        if abs(mz-mass) < 1.0:
+                            l.append((abs(mz-mass),mz,sugar,fragment))
+                            
+                    l.sort()
+                    if len(l) > 0:
+                        err,mz,sugar,fragment = l[0]
+                        scored[mz] = (sugar,fragment)
+        
+        scoredPeaks = []
+        i = 0
+        e = 0
+        for intens,mz in peaks:
+            i += 1
+            # check if peak is a scored peak
+            pMZ = self.convAtoX(mz)
+            pInt = self.convBtoY(intens)
+            text = []
+            if mz in scored:
+                scoredPeaks.append((intens,mz))
+                sugar,fragment = scored[mz]
+                if e < 5:
+                    text.append(fragment)
+                    e += 1
+            else:
+                item = self.canvas.create_line(pMZ,pInt0,pMZ,pInt,tags=("peak",),fill="black")    
+            # plot only masses for 5 highest peaks
+            if i < 5:
+                text.append(str(round(mz,3)))
+            if len(text):
+                self.canvas.create_text((pMZ,pInt,),text="\n".join(text),anchor="s",justify="center")
+            
+            self.allowZoom = True
+        
+        # plot scored peaks last
+        scoredPeaks.sort(reverse=True)
+        for intens,mz in scoredPeaks:
+            pMZ = self.convAtoX(mz)
+            pInt = self.convBtoY(intens)
+            item = self.canvas.create_line(pMZ,pInt0,pMZ,pInt,tags=("peak",),fill="red")
+        """
+        specId = self.spec.getNativeID()
         pInt0 = self.convBtoY(self.viewYMin)
 
         for peak in self.spec:
@@ -72,7 +138,7 @@ class SpectrumView(FramePlot.FramePlot):
                     pMZ = self.convAtoX(mass)
                     pInt = self.convBtoY(intensity)
                     self.canvas.create_line(pMZ,pInt0,pMZ,pInt,tags=("score",),fill="red")            
-        
+        """
     def initSpectrum(self,spec):
         if spec == None:
             return
