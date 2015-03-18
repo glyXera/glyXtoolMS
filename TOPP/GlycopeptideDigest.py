@@ -94,11 +94,14 @@ def main(options):
         protein.loadFromFasta(fastaEntry.identifier,fastaEntry.description,fastaEntry.sequence)
         parameters.proteins.append(protein)
         proteinDigest.newDigest(protein)
-        # call digest functions
+        # call digest functions to set cleavage sites
         for digestFunc in digests:
             digestFunc()
+        # digest protein
+        peptides = proteinDigest.digest(missedCleavages)
+        
         # find glycopeptides
-        glycopeptides = proteinDigest.findGlycopeptides(missedCleavages,
+        glycopeptides = proteinDigest.findGlycopeptides(peptides,
                                     findNGlycosylation,
                                     findOGlycosylation)
         peptides += glycopeptides

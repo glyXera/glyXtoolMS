@@ -4,6 +4,8 @@ Contains also all functions for mass calculation.
 Source of mass values from: 
 http://web.expasy.org/findmod/findmod_masses.html
 """
+import re
+
 # --------------------------- Aminoacids ------------------------------#
 
 AMINOACID = {}
@@ -73,3 +75,47 @@ def calcPeptideMass(sequence):
             raise
     return mass   
      
+
+def calcIonMass(name):
+    """
+    Calculates Ionmass from a given input string:
+    Strings consists of possible Monomers surrounded by brackets, followed
+    by the amount of the monomer. The amount can be also negative to allow
+    for example water loss.
+    
+    Examples:
+    '(NeuAc)1(H+)1' results in 292.10268
+    '(NeuAc)1(H2O)-1(H+)1' results in 274.09211
+    '(HexNAc)1(Hex)1(NeuAc)1(H+)1' results in 657.23488
+    
+    Parsing of Monomer-Amount combinations consists of the follwing Regex:
+    '\(.+?\)-?\d+'
+    """
+    
+    if re.match("^(\(.+?\)-?\d+)+$",name) == None:
+        raise Exception(
+        """Input string '{}' doesn't follow the regex '^(\(.+?\)-?\d+)+$'
+        Please surrond monomers by brackets followed by the amount of 
+        the monomer, e.g. '(NeuAc)1(H2O)-1(H+)1'""".format(name))
+    
+    mass = 0
+    charge = 0
+    for part in re.findall("\(.+?\)-?\d+",name.upper()):
+        monomer,amount = part.split(")")
+        monomer = monomer[1:]
+        amount = int(amount)
+        if monomer == "H+":
+            charge += amount
+        elif monomer == "H-": # TODO: Select real charge for negative charges!
+            charge -= amount
+        if monomer in GLYCAN:
+            mass += GLYCAN[monomer]*amount
+        elif monomer in MASS:
+            mass += MASS[monomer]*amount
+        else:
+            raise Exception("cannot find monomer {} in {}".format(monomer,name))
+    if charge == 0:
+        return mass
+    else:
+        return mass/float(charge)
+    

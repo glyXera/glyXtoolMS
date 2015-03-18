@@ -48,7 +48,7 @@ def main(options):
     glycans.sort()
 
     print "starting comparison"
-    hits = []
+    glyML.glycoModHits = []
     for feature in glyML.features:
         precursorMass = feature.getMZ()*feature.getCharge()-glyxsuite.masses.MASS["H+"]*(feature.getCharge()-1)
         found = False
@@ -59,14 +59,22 @@ def main(options):
                 if diff > tolerance:
                     break
                 if abs(diff) < tolerance:
-                    hit = (feature.getRT(),precursorMass,peptide,glycan,mass,mass-precursorMass)
-                    hits.append(hit)
+                    hit = glyxsuite.io.GlyxXMLGlycoModHit()
+                    hit.featureID = feature.getId()
+                    hit.glycan = glycan
+                    hit.peptide = peptide
+                    hit.error = diff
+                    
+                    #hit = (feature.getRT(),precursorMass,peptide,glycan,mass,mass-precursorMass)
+                    #hits.append(hit)
+                    glyML.glycoModHits.append(hit)
 
-    print "found ",len(hits), " hits"
+    print "found ",len(glyML.glycoModHits), " hits"
     print "writing output"
-    fout = file(options.outfile,"w")
-    fout.write("foo")
-    fout.close()
+    glyML.writeToFile(options.outfile)
+    #fout = file(options.outfile,"w")
+    #fout.write("foo")
+    #fout.close()
     print "done"
     return
 

@@ -281,18 +281,13 @@ class ProteinDigest:
                 if i+m >= len(self.breakpoints):
                     break
                 stop = self.breakpoints[i+m]
-                #peptideSequence = self.protein.sequence[start+1:stop+1]
-                #peptide = Peptide(peptideSequence=peptideSequence,start=start+1, end=stop+1) # stop+1?
                 peptides.append(self.protein.getPeptide(start+1,stop+1))
             start = self.breakpoints[i]
             i += 1
         
         return peptides
 
-    def findGlycopeptides(self,maxMissedCleavage, NGlycosylation = False, OGlycosylation = False):
-
-        # make digest
-        peptides = self.digest(maxMissedCleavage)
+    def findGlycopeptides(self,peptides,NGlycosylation = False, OGlycosylation = False):
         
         # generate list of glycosylationsites
         sites = []
