@@ -87,7 +87,7 @@ def main(options):
             
     print "make digests"
    
-    peptides = []
+    allGlycopeptides = []
     for fastaEntry in fastaData:
         protein = glyxsuite.lib.Protein()
         
@@ -104,14 +104,14 @@ def main(options):
         glycopeptides = proteinDigest.findGlycopeptides(peptides,
                                     findNGlycosylation,
                                     findOGlycosylation)
-        peptides += glycopeptides
+        allGlycopeptides += glycopeptides
     
     
-    print "found ",len(peptides), " peptides"
+    print "found ",len(allGlycopeptides), " peptides"
     
     print "writing to file"
     outf = glyxsuite.io.XMLPeptideFile()
-    outf.peptides = peptides
+    outf.peptides = allGlycopeptides
     outf.parameters = parameters
     print options.outfile
     outf.writeToFile(options.outfile)
