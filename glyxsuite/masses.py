@@ -5,7 +5,8 @@ Source of mass values from:
 http://web.expasy.org/findmod/findmod_masses.html
 """
 import re
-
+import math
+import itertools
 # --------------------------- Aminoacids ------------------------------#
 
 AMINOACID = {}
@@ -62,7 +63,22 @@ MASS["H2O"] = 18.01057
 MASS["H+"] = 1.00728
 MASS["H"] = 1.00783
 
-
+# ----------------------------- Isotopes ------------------------------#
+"""
+Dictionary of isotopes, containing massshift, actual atomic mass
+and the probability of the isotope
+"""
+ISOTOPES = {}
+ISOTOPES["H"] = {0:(1.007825,99.9885),1:(2.014102,0.0115)}
+ISOTOPES["C"] = {0:(12.0,98.93),1:(13.003355,1.07)}
+ISOTOPES["N"] = {0:(14.003074,99.632),1:(15.000109,0.368)}
+ISOTOPES["O"] = {0:(15.994915,99.757),
+                 1:(16.999132,0.038),
+                 2:(17.999160,0.205)}
+ISOTOPES["S"] = {0:(31.972071,94.93),
+                 1:(32.971458,0.76),
+                 2:(33.967867,4.29),
+                 3:(35.967081,0.02)}
 
 # ------------------------------- Functions ---------------------------#
 def calcPeptideMass(sequence):
@@ -118,4 +134,115 @@ def calcIonMass(name):
         return mass
     else:
         return mass/float(charge)
+    
+def calculateIsotopicPattern(C=0,H=0,N=0,O=0,S=0,maxShift=10):
+    """
+    Calculates the isotopic pattern of the given elemental composition
+    Currently only supports C,H,N,O and S
+    maxShift option sets the calculated pattern size, which significantly
+    speeds up the calculation
+    
+    Result: tuple of summed probability (if significantly smaller than 1
+        increase maxShift), the monoisotopic mass and the pattern
+    """
+            
+    def element(name,N,maxShift=10):
+        """
+        Generates the isotpic pattern of an element with a given number N of
+        atoms. maxShift option sets maximum pattern size
+        
+        Result: dict of massshift and probabilities
+        """
+                
+        def _binominal(n,k):
+            try:
+                newK = int(k)
+                return math.factorial(n)/math.factorial(newK)/math.factorial(n-newK)
+            except:
+                pass
+            try:
+                newK = list(k)
+            except:
+                raise Exception("Unknown type of k, please supply an integer or a list")
+            # check if k sums up to n
+            if sum(newK) != n:
+                raise Exception("The sum of k has to equal n!")
+            divisor = 1
+            for k in newK:
+                divisor *= math.factorial(k)
+            return math.factorial(n)/divisor
+        
+        # generate isotope list
+        isotope = []
+        shifts = sorted(ISOTOPES[name])
+        summ = sum([ISOTOPES[name][shift][1] for shift in shifts])
+        for shift in shifts:
+            isotope.append((shift,ISOTOPES[name][shift][1]/summ))
+
+        # Generate amount ranges for each isotope, limited by the
+        # maximum shift allowed
+        amountList = []
+        for shift,p in isotope:
+            if shift == 0:
+                amountList.append(range(0,N+1))
+            else:
+                amountList.append(range(0,int(math.ceil(maxShift/shift))))
+        masses = {}
+        for amounts in itertools.product(*amountList):
+            if sum(amounts) != N:
+                continue
+            p = _binominal(N,amounts)
+            mass = 0
+            for i,amount in enumerate(amounts):
+                shift,probability = isotope[i]
+                p *= probability**amount
+                mass += shift*amount
+            masses[mass] = masses.get(mass,0)+p
+        trans = {}
+        for mass in masses:
+            if mass > maxShift and maxShift != 0:
+                continue
+            trans[mass] = masses[mass]
+        return trans    
+    
+    probs = []
+    monoMass = 0
+    if C > 0:
+        probs.append(element("C",C,maxShift=maxShift))
+        monoMass += C*ISOTOPES["C"][0][0]
+    if H > 0:
+        probs.append(element("H",H,maxShift=maxShift))
+        monoMass += H*ISOTOPES["H"][0][0]
+    if N > 0:
+        probs.append(element("N",N,maxShift=maxShift))   
+        monoMass += N*ISOTOPES["N"][0][0]
+    if O > 0:
+        probs.append(element("O",O,maxShift=maxShift))
+        monoMass += O*ISOTOPES["O"][0][0]
+    if S > 0:
+        probs.append(element("S",S,maxShift=maxShift))
+        monoMass += S*ISOTOPES["S"][0][0]
+    elementKeys = [e.keys() for e in probs]
+    masses = {}
+    for amounts in itertools.product(*elementKeys):
+        shift = sum(amounts)
+        if shift > maxShift:
+            continue
+        p = 1
+        for i,amount in enumerate(amounts):
+            p *= probs[i][amount]
+        masses[shift] = masses.get(shift,0) + p
+        
+    maxProb = max([masses[shift] for shift in masses])
+    
+    
+    # test if accumulated probability accounts for 
+    sumProb = sum([masses[shift] for shift in masses])
+    #print "sumProb",sumProb
+    trans = []
+    for shift in sorted(masses.keys()):
+        trans.append((shift,masses[shift]/maxProb*100))
+        #print shift,masses[shift]/maxProb*100
+    return sumProb,monoMass,trans
+    
     
