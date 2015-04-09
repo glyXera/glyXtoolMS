@@ -1,8 +1,7 @@
 import re    
 from itertools import product 
 import copy
-from glyxsuite import masses as glyxmass
-from glyxsuite.io import XMLPeptide
+import glyxsuite
 
 class Histogram:
     
@@ -96,15 +95,15 @@ class Protein:
         # check aminoacids and modifications
         try:
             for s in self.sequence:
-                glyxmass.AMINOACID[s]
+                assert s in glyxsuite.masses.AMINOACID
             for name,amino,pos in self.modifications:
-                glyxmass.PROTEINMODIFICATION[name]
+                assert name in glyxsuite.masses.PROTEINMODIFICATION
         except KeyError:
             print "Error in protein ", identifier
             raise
             
     def getPeptide(self,start,end):
-        peptide = XMLPeptide()
+        peptide = glyxsuite.io.XMLPeptide()
         peptide.sequence = self.sequence[start:end]
         peptide.start = start
         peptide.end = end
@@ -112,39 +111,7 @@ class Protein:
             if start <= pos and pos < end:
                 peptide.modifications.append((mod,amino,pos))
         return peptide
-        
-        
-"""
-class Peptide(XMLPeptide):
-    
-    def __init__(self):
-        self.sequence = ""
-        self.start = -1
-        self.end = -1
-        self.mass = 0.0
-        self.modifications = []
-        self.glycosylationSites = []
-            
-    def toString(self):
-        s = self.sequence
-        modi = {}
-        for mod,amino,pos in self.modifications:
-            if not mod in modi:
-                modi[mod] = []
-            modi[mod].append(pos)
-        for mod in modi:
-            modi[mod].sort()
-            s += " " + mod + "("+", ".join(map(str,modi[mod]))+")"
-        return s
-
-    def calcPeptideMass(self):
-        mass = glyxmass.calcPeptideMass(self.sequence)
-        for mod,amino,pos in self.modifications:
-            mass += glyxmass.PROTEINMODIFICATION[mod]
-        self.mass = mass
-            
-"""            
-            
+                 
 class ProteinDigest:
 
     def __init__(self):
@@ -237,9 +204,9 @@ class ProteinDigest:
             newPeptide.modifications += [("Cys_PAM","C",-1)]*cys_PAM
             newPeptide.modifications += [("MSO","M",-1)]*MSO
             # calc peptide mass
-            newPeptide.mass = glyxmass.calcPeptideMass(newPeptide.sequence)
+            newPeptide.mass = glyxsuite.masses.calcPeptideMass(newPeptide.sequence)
             for mod,amino,pos in newPeptide.modifications:
-                newPeptide.mass += glyxmass.PROTEINMODIFICATION[mod]          
+                newPeptide.mass += glyxsuite.masses.PROTEINMODIFICATION[mod]          
             masses.append(newPeptide)
                         
         return masses
@@ -328,7 +295,7 @@ class Glycan:
             unit = re.search("[A-z]+",comp).group()
             amount = int(re.search("\d+",comp).group())
             self.sugar[unit] = amount
-            self.mass += glyxmass.GLYCAN[unit]*amount
+            self.mass += glyxsuite.masses.GLYCAN[unit]*amount
             
     def getComposition(self,typ="N"):
         comp = self.sugar.copy()
