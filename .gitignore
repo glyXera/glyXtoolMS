@@ -9,3 +9,5 @@ TOPP/EXTERNAL
 TOPP/SCRIPTS
 bin/*.txt
 bin/guitests/*
+pylint.output
+run_pylint.sh
