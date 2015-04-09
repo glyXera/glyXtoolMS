@@ -25,6 +25,9 @@ def main(options):
     glyxXMLFile = glyxsuite.io.GlyxXMLFile()
     parameters = glyxXMLFile.parameters
     parameters.setTimestamp(str(datetime.datetime.today()))
+    source = exp.getSourceFiles()[0]
+    parameters.setSourceFilePath(options.infile)
+    parameters.setSourceFileChecksum(source.getChecksum())
 
     # write search parameters
     for glycan in glycans:

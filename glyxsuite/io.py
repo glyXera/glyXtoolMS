@@ -80,6 +80,8 @@ class GlyxXMLParameters:
         self._nrNeutrallosses = 0
         self._maxOxoniumCharge = 0
         self._scoreThreshold = 0
+        self._sourceFilePath = ""
+        self._sourceFileChecksum = ""
 
 
     def setTimestamp(self,timestamp):
@@ -127,6 +129,19 @@ class GlyxXMLParameters:
 
     def getGlycans(self):
         return self._glycans
+        
+    def getSourceFilePath(self):
+        return self._sourceFilePath
+        
+    def setSourceFilePath(self,path):
+        self._sourceFilePath = path
+    
+    def getSourceFileChecksum(self):
+        return self._sourceFileChecksum
+        
+    def setSourceFileChecksum(self,checksum):
+        self._sourceFileChecksum = checksum
+            
 
 class GlyxXMLFeature:
     
@@ -210,10 +225,14 @@ class GlyxXMLFile:
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self.version = "0.0.2"
+        self.version = "0.0.3"
 
     def _parseParameters(self,xmlParameters):
         timestamp = xmlParameters.find("./timestamp").text
+        if self.version > "0.0.2":
+            sourcePath = xmlParameters.find("./source/path").text
+            sourceHash = xmlParameters.find("./source/checksum").text
+            
         tolerance = float(xmlParameters.find("./tolerance").text)
         ionThreshold = int(xmlParameters.find("./ionthreshold").text)
         nrNeutrallosses = int(xmlParameters.find("./nrNeutrallosses").text)
@@ -231,6 +250,9 @@ class GlyxXMLFile:
         parameters.setMaxOxoniumCharge(maxOxoniumCharge)
         parameters.setScoreThreshold(scoreThreshold)
         parameters.setGlycanList(glycans)
+        if self.version > "0.0.2":
+            parameters.setSourceFilePath(sourcePath)
+            parameters.setSourceFileChecksum(sourceHash)
         
         return parameters
         
@@ -262,14 +284,20 @@ class GlyxXMLFile:
                 spectrum.setIsGlycopeptide(bool(int(s.find("./isGlycopeptide").text)))
             spectra.append(spectrum)
         return spectra
-        
-
      
     def _writeParameters(self,xmlParameters):
         # write search parameters
         xmlParametersDate = ET.SubElement(xmlParameters,"timestamp")
         xmlParametersDate.text = str(self.parameters.getTimestamp())
-
+        
+        xmlParametersSource = ET.SubElement(xmlParameters,"source")
+        
+        xmlSourcePath = ET.SubElement(xmlParametersSource,"path")
+        xmlSourcePath.text = self.parameters.getSourceFilePath()
+        
+        xmlSourceHash = ET.SubElement(xmlParametersSource,"checksum")
+        xmlSourceHash.text = self.parameters.getSourceFileChecksum()
+        
         xmlParametersGlycans = ET.SubElement(xmlParameters,"glycans")
         for glycan in self.parameters.getGlycans():
             xmlParametersGlycan = ET.SubElement(xmlParametersGlycans,"glycan")
