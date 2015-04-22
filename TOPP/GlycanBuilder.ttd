@@ -1,0 +1,46 @@
+<ttd>
+	<tool status="external">
+		<category>GlyxBox</category>
+		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
+		<type>GlycanCompositionBuilder</type>
+		// description of the wrapper
+		<external>
+      <text>
+        <onstartup>Startig GlyxBox - GlycanCompositionBuilder</onstartup>
+        <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
+        <onfinish>GlycanCompositionBuilder sucessfull</onfinish>
+      </text>    
+		  // currently disregarded by TOPPAS, but might become useful
+		  <e_category>GlycanCompositionBuilder</e_category>
+		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
+		  <cloptions> "%1"/GlycanBuilder.py --out "%2" --rangeHex "%4" --rangeHexNAc "%5" --rangeFuc "%6" --rangeNeuAc "%7"</cloptions>
+		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
+		  <path>/afs/mpi-magdeburg.mpg.de/data/bpt/personnel_folders/MarkusPioch/software/Envs/glyxbox/bin/python</path>
+      // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
+      // and thus starting the tool from somewhere else might actually lead to trouble
+      // use only real paths here (no placeholders like %TMP)
+      <workingdirectory>.</workingdirectory>
+		  // these mappings connect input parameters (from the 'ini_param' section below) and the command line options of your tool
+		  // any INI parameter can be referenced using %%'param_name', e.g. %%in
+		  // additionally you can use %TMP and %BASENAME[X] to get the current temp directory to store data, or the basename of X
+		  <mappings>
+			<mapping id="1" cl="%%scriptpath" />
+			<mapping id="2" cl="%%out" />
+			<mapping id="3" cl="%%in" />            
+			<mapping id="4" cl="%%rangeHex" />
+			<mapping id="5" cl="%%rangeHexNAc" />
+            <mapping id="6" cl="%%rangeFuc" />
+            <mapping id="7" cl="%%rangeNeuAc" />                                            			
+		  </mappings>
+		  <ini_param>
+			<ITEM name="scriptpath" value="." type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
+            <ITEM name="in" value="" type="string" tags="input file" description="dummy input file"/>
+			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.txt" description="File output glycan composition file .txt"/>
+            <ITEM name="rangeHex" value="0:0" type="string" description="Range of Hex within the glycan, use min:max as input"/>
+            <ITEM name="rangeHexNAc" value="0:0" type="string" description="Range of HexNAc within the glycan, use min:max as input"/>
+            <ITEM name="rangeFuc" value="0:0" type="string" description="Range of Fucose within the glycan, use min:max as input"/>
+            <ITEM name="rangeNeuAc" value="0:0" type="string" description="Range of NeuAc within the glycan, use min:max as input"/>            
+		  </ini_param>
+		</external>
+	</tool>
+</ttd>
