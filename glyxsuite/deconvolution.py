@@ -7,9 +7,11 @@ for peak in spectrum:
     peaklist.append(Peak(peak.getMZ(),peak.getIntensity()))
 
 d = Deconvolution(peaklist)
-deconvolutedPeaks = d.deconvolute(maxCharge,nrOfPeaks)
+deconvolutedPeaks = d.deconvolute(max_charge,nrOfPeaks)
 
 """
+from __future__ import (absolute_import, division,
+                        print_function, unicode_literals)
 
 class Peak(object):
     """ Stores peak information needed for deconvolution """
@@ -34,50 +36,52 @@ class Peak(object):
 class Deconvolution(object):
     """ Deconvolutes a given list of peaks
 
-    Add Peaks by mass and intensity with the AddPeak function, then
+    Add Peaks by mass and intensity with the add_peak function, then
     call the deconvolute function, to get a list of deconvoluted
     peaks
     """
-    def __init__(
-            self, max_charge=4, mz_tolerance=0.15,
-            intensity_tolerance=0.5):
+    def __init__(self, max_charge=4, mass_tolerance=0.15,
+                 intensity_tolerance=0.5):
 
         self.max_charge = max_charge
-        self.mz_tolerance = mz_tolerance
+        self.mass_tolerance = mass_tolerance
         self.intensity_tolerance = intensity_tolerance
         self.peaklist = []
         self.deconvoluted_peaks = []
 
-    def addPeak(self, mass, intensity):
+    def add_peak(self, mass, intensity):
+        """ Add a new peak to  be convoluted"""
         self.peaklist.append(Peak(mass, intensity))
 
     def _initialize(self):
-        mzSort = [(peak.mass, peak) for peak in self.peaklist]
-        mzSort.sort()
+        """Make linkages between peaks for search of isotope patterns"""
+        mz_sort = [(peak.mass, peak) for peak in self.peaklist]
+        mz_sort.sort()
         # Link with partners left and right
         i = 1
-        while i < len(mzSort)-1:
-            peak = mzSort[i][1]
-            peak.left = mzSort[i-1][1]
-            peak.right = mzSort[i+1][1]
+        while i < len(mz_sort)-1:
+            peak = mz_sort[i][1]
+            peak.left = mz_sort[i-1][1]
+            peak.right = mz_sort[i+1][1]
             i += 1
-        intensitySort = [(peak.intensity, peak) for peak in self.peaklist]
-        intensitySort.sort(reverse=True)
-        self.peaklist = [peak for intensity, peak in intensitySort]
+        intensity_sort = [(peak.intensity, peak) for peak in self.peaklist]
+        intensity_sort.sort(reverse=True)
+        self.peaklist = [peakpair[1] for peakpair in intensity_sort]
 
-    def _findPeaksAt(self, mass, delta, peakStart=None, reassignment=False):
-        if not peakStart:
-            peakStart = self.peaklist[0]
+    def _find_peaks_at(self, mass, delta, peak_start=None, reassignment=False):
+        """ find peaks within a given mass range"""
+        if not peak_start:
+            peak_start = self.peaklist[0]
 
         found = []
-        peak = peakStart
+        peak = peak_start
         while peak and peak.mass >= mass - delta:
             if peak.mass <= mass + delta:
                 if reassignment or not peak.charge:
                     found.append(peak)
             peak = peak.left
 
-        peak = peakStart
+        peak = peak_start
         while peak and peak.mass <= mass + delta:
             if peak.mass >= mass - delta:
                 if reassignment or not peak.charge:
@@ -85,9 +89,10 @@ class Deconvolution(object):
             peak = peak.right
         return found
 
-    def _findHighestPeakAt(
-            self, mass, delta, peakStart=None, reassignment=False):
-        peaks = self._findPeaksAt(mass, delta, peakStart, reassignment)
+    def _find_highest_peak_at(
+            self, mass, delta, peak_start=None, reassignment=False):
+        """ Find the highest peak within the given mass range """
+        peaks = self._find_peaks_at(mass, delta, peak_start, reassignment)
         if len(peaks) == 0:
             return None
         highest = None
@@ -96,55 +101,57 @@ class Deconvolution(object):
                 highest = peak
         return highest
 
-    def _getHighestUnassignedPeak(self):
+    def _get_highest_unassigned_peak(self):
+        """ Find the highest unassigned peak within the spectrum"""
         for peak in self.peaklist:
             if peak.charge == None:
                 return peak
         return None
 
-    def _findIsotopeCluster(self, peak, charge, pattern=None,
-                            mz_tolerance=0.15, reassignment=False):
+    def _find_isotopecluster(self, peak, charge, pattern=None,
+                             mass_tolerance=0.15, reassignment=False):
+        """ Find isotope cluster """
         if not pattern:
             mass = min(15000, int(peak.mass - 1) * charge) / 200
-            pattern = patternLookupTable[mass]
+            pattern = PATTERNLOOKUPTABLE[mass]
 
-        ISOTOPE_DISTANCE = 1
-        isotopeShift = 0
-        difference = (ISOTOPE_DISTANCE + isotopeShift)/float(abs(charge))
+        isotope_distance = 1
+        isotope_shift = 0
+        difference = (isotope_distance + isotope_shift)/float(abs(charge))
 
 
         # classify pattern
         cluster = {}
-        maxI = 0
-        for i, p in enumerate(pattern):
-            if p > pattern[maxI]:
-                maxI = i
-        for i, p in enumerate(pattern):
-            pos = i - maxI
-            mz = peak.mass + pos * difference
-            peaks = self._findPeaksAt(
-                mz, mz_tolerance, reassignment=reassignment)
+        max_i = 0
+        for i, probability in enumerate(pattern):
+            if probability > pattern[max_i]:
+                max_i = i
+        for i, probability in enumerate(pattern):
+            pos = i - max_i
+            mass = peak.mass + pos * difference
+            peaks = self._find_peaks_at(
+                mass, mass_tolerance, reassignment=reassignment)
             if len(peaks) == 0:
-                if p >= 0.33:
+                if probability >= 0.33:
                     return None
-                cluster[i - maxI] = [i, p, None, False]
+                cluster[i-max_i] = [i, probability, None, False]
                 continue
             # select peak candidate with best fitting intensity
             best = None
-            bestError = 0
+            best_error = 0
             for candidate in peaks:
-                intTheoretical = (peak.intensity / pattern[maxI]) * p
-                intError = candidate.intensity -intTheoretical
+                intensity_th = (peak.intensity / pattern[max_i]) * probability
+                intensity_error = candidate.intensity -intensity_th
 
-                if not best or abs(intError) < abs(bestError):
-                    best, bestError = candidate, intError
+                if not best or abs(intensity_error) < abs(best_error):
+                    best, best_error = candidate, intensity_error
 
-            if  abs(bestError) < intTheoretical*self.intensity_tolerance:
-                cluster[i - maxI] = [i, p, best, True]
-            elif bestError < 0 and i == 1:
+            if  abs(best_error) < intensity_th*self.intensity_tolerance:
+                cluster[i-max_i] = [i, probability, best, True]
+            elif best_error < 0 and i == 1:
                 return None
             else:
-                cluster[i-maxI] = [i, p, best, False]
+                cluster[i-max_i] = [i, probability, best, False]
 
         # if a peak can not be found remove all following peaks
         key = 0
@@ -165,94 +172,98 @@ class Deconvolution(object):
 
         return cluster
 
-    def _calcChargeState(self, peak, maxCharge):
+    def _calc_charge_state(self, peak, max_charge):
+        """ Find best fitting charge state for a peak """
          # get charges
-        if maxCharge < 0:
-            charges = [-x for x in range(1, abs(maxCharge)+1)]
+        if max_charge < 0:
+            charges = [-x for x in range(1, abs(max_charge)+1)]
         else:
-            charges = [x for x in range(1, maxCharge+1)]
+            charges = [x for x in range(1, max_charge+1)]
 
         charges.reverse()
-        bestScore = (0, None)
+        best_score = (0, None)
         scores = {}
-        for z in charges:
+        for charge in charges:
             score = {}
             # calculate pattern
-            massLookup = min(15000, int(peak.mass - 1) * z) / 200
-            pattern = patternLookupTable[massLookup]
+            lookup_mass = int(min(15000, int(peak.mass-1) * charge)/200)
+            pattern = PATTERNLOOKUPTABLE[lookup_mass]
             # a) get charge state of peak
-            cluster = self._findIsotopeCluster(peak, z, pattern)
+            cluster = self._find_isotopecluster(peak, charge, pattern)
             if not cluster:
                 continue
-            score[z] = cluster
+            score[charge] = cluster
             # TODO: negative charges and adducts
-            deconvolutedMass = (peak.mass - 1) * z
-            for zother in charges:
-                if zother == z:
+            deconvoluted_mass = (peak.mass - 1) * charge
+            for other_charge in charges:
+                if other_charge == charge:
                     continue
                 # calculate mass
-                mz = (deconvolutedMass+zother*1)/float(zother)
-                pnext = self._findHighestPeakAt(
-                    mz, self.mz_tolerance, peakStart=peak,
+                mass = (deconvoluted_mass+other_charge*1)/float(other_charge)
+                pnext = self._find_highest_peak_at(
+                    mass, self.mass_tolerance, peak_start=peak,
                     reassignment=False)
                 if not pnext:
                     continue
-                cluster = self._findIsotopeCluster(pnext, zother, pattern)
+                cluster = self._find_isotopecluster(pnext, other_charge, pattern)
                 if not cluster:
                     continue
-                score[zother] = cluster
+                score[other_charge] = cluster
 
             # calculate score value
-            scoreValue = 0
+            score_value = 0
             for charge in score:
                 for pos in score[charge]:
-                    p = score[charge][pos][2]
-                    if p and score[charge][pos][3] == True:
-                        scoreValue += p.intensity
-            if scoreValue >= bestScore[0]:
-                bestScore = (scoreValue, score)
-            scores[z] = (scoreValue, score)
-        if not bestScore[1]:
+                    scored_peak = score[charge][pos][2]
+                    if (scored_peak is not None and
+                            score[charge][pos][3] == True):
+                        score_value += scored_peak.intensity
+            if score_value >= best_score[0]:
+                best_score = (score_value, score)
+            scores[charge] = (score_value, score)
+        if not best_score[1]:
             peak.charge = 0
             peak.isotope = 0
             self.deconvoluted_peaks.append((peak.mass, peak.intensity))
             return None
         # assign charge and isotope pattern
 
-        score = bestScore[1]
+        score = best_score[1]
         deconv = []
         ioncount = 0
         for charge in score:
             for pos in score[charge]:
-                isotope, norm, p, inlimit = score[charge][pos]
-                if p:
-                    p.setcharge(charge)
-                    p.setisotope(isotope)
-                    deconv.append(p)
-                    ioncount += p.intensity
-                    #self.deconvolute.append(((p.mz-charge)*charge-isotope,p.intensity))
+                isotope = score[charge][pos][0]
+                scored_peak = score[charge][pos][2]
+                if scored_peak is not None:
+                    scored_peak.setcharge(charge)
+                    scored_peak.setisotope(isotope)
+                    deconv.append(scored_peak)
+                    ioncount += scored_peak.intensity
 
         # make deconvolution
         self.deconvoluted_peaks.append(
             ((peak.mass - 1) * peak.charge-peak.isotope, ioncount))
         return scores
 
-    def deconvolute(self, maxCharge=4, N=50):
+    def deconvolute(self, max_charge=4, deconvolution_depth=50):
+        """ Make deconvolution with the given max charge.
+        Stop after N deconvoluted peaks were found"""
         self._initialize()
         i = 0
-        while i < N:
+        while i < deconvolution_depth:
             i += 1
-            p = self._getHighestUnassignedPeak()
-            if not p:
+            peak = self._get_highest_unassigned_peak()
+            if peak is None:
                 break
-            self._calcChargeState(p, maxCharge)
-        print "stopped at "+str(i)
+            self._calc_charge_state(peak, max_charge)
+        print("stopped at "+str(i))
         return self.deconvoluted_peaks
 
 
 # pattern lookup table for amino building block
 # pylint: disable=line-too-long
-patternLookupTable = (
+PATTERNLOOKUPTABLE = (
     (1.000, 0.059, 0.003), #0
     (1.000, 0.122, 0.013), #200
     (1.000, 0.241, 0.040, 0.005), #400

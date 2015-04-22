@@ -204,9 +204,7 @@ class ProteinDigest:
             newPeptide.modifications += [("Cys_PAM","C",-1)]*cys_PAM
             newPeptide.modifications += [("MSO","M",-1)]*MSO
             # calc peptide mass
-            newPeptide.mass = glyxsuite.masses.calcPeptideMass(newPeptide.sequence)
-            for mod,amino,pos in newPeptide.modifications:
-                newPeptide.mass += glyxsuite.masses.PROTEINMODIFICATION[mod]          
+            newPeptide.mass = glyxsuite.masses.calcPeptideMass(newPeptide)
             masses.append(newPeptide)
                         
         return masses

@@ -24,12 +24,12 @@ def test_deconvolution():
     spectrum = exp[0]
 
     d = glyxsuite.deconvolution.Deconvolution(max_charge=4,
-                                            mz_tolerance=0.15, 
+                                            mass_tolerance=0.15, 
                                             intensity_tolerance=0.5)
                                             
     # add peaks
     for peak in spectrum:
-        d.addPeak(peak.getMZ(),peak.getIntensity())
+        d.add_peak(peak.getMZ(),peak.getIntensity())
         
     assert len(d.peaklist) == 1234
     

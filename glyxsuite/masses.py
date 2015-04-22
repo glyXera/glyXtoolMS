@@ -80,14 +80,65 @@ ISOTOPES["S"] = {0:(31.972071,94.93),
                  2:(33.967867,4.29),
                  3:(35.967081,0.02)}
 
+# --------------------------- Compositions ----------------------------#
+
+# http://www.webqc.org/aminoacids.php
+
+COMPOSITION = {}
+COMPOSITION['A'] = {'C': 3, 'H': 7, 'N': 1, 'O': 2}
+COMPOSITION['C'] = {'C': 3, 'H': 7, 'N': 1, 'O': 2, 'S': 1}
+COMPOSITION['D'] = {'C': 4, 'H': 7, 'N': 1, 'O': 4}
+COMPOSITION['E'] = {'C': 5, 'H': 9, 'N': 1, 'O': 4}
+COMPOSITION['F'] = {'C': 9, 'H': 11, 'N': 1, 'O': 2}
+COMPOSITION['G'] = {'C': 2, 'H': 5, 'N': 1, 'O': 2}
+COMPOSITION['H'] = {'C': 6, 'H': 9, 'N': 3, 'O': 2}
+COMPOSITION['I'] = {'C': 6, 'H': 13, 'N': 1, 'O': 2}
+COMPOSITION['K'] = {'C': 6, 'H': 14, 'N': 2, 'O': 2}
+COMPOSITION['L'] = {'C': 6, 'H': 13, 'N': 1, 'O': 2}
+COMPOSITION['M'] = {'C': 5, 'H': 11, 'N': 1, 'O': 2, 'S': 1}
+COMPOSITION['N'] = {'C': 4, 'H': 8, 'N': 2, 'O': 3}
+COMPOSITION['P'] = {'C': 5, 'H': 9, 'N': 1, 'O': 2}
+COMPOSITION['Q'] = {'C': 5, 'H': 10, 'N': 2, 'O': 3}
+COMPOSITION['R'] = {'C': 6, 'H': 14, 'N': 4, 'O': 2}
+COMPOSITION['S'] = {'C': 3, 'H': 7, 'N': 1, 'O': 3}
+COMPOSITION['T'] = {'C': 4, 'H': 9, 'N': 1, 'O': 3}
+COMPOSITION['V'] = {'C': 5, 'H': 11, 'N': 1, 'O': 2}
+COMPOSITION['W'] = {'C': 11, 'H': 12, 'N': 2, 'O': 2}
+COMPOSITION['Y'] = {'C': 9, 'H': 11, 'N': 1, 'O': 3}
+COMPOSITION["HEX"] = {'C': 6, 'H': 12, 'N': 0, 'O': 6}
+COMPOSITION["DHEX"] = {'C': 6, 'H': 12, 'N': 0, 'O': 5}
+COMPOSITION["HEXNAC"] = {'C': 8, 'H': 15, 'N': 1, 'O': 6}
+COMPOSITION["NEUAC"] = {'C': 11, 'H': 19, 'N': 1, 'O': 9}
+COMPOSITION["H2O"] = {'H': 2,'O': 1}
+
+
+COMPOSITION["Cys_CAM"] = {'C': 2, 'H': 3, 'O': 1, 'N': 1}
+COMPOSITION["Cys_CM"] = {'C': 2, 'H': 2, 'O': 2}
+COMPOSITION["Cys_PAM"] = {'C': 3, 'H': 5, 'O': 1, 'N': 1}
+COMPOSITION["MSO"] = {'O': 1}
+COMPOSITION["ACET"] = {'C': 2, 'H': 2, 'O': 1}
+COMPOSITION["AMID"] = {'H': 1, 'O': -1, 'N': 1}
+COMPOSITION["DEAM"] = {'H': -1, 'O': 1, 'N': -1}
+COMPOSITION["HYDR"] = {'O': 1}
+COMPOSITION["METH"] = {'C': 1, 'H': 2}
+
 # ------------------------------- Functions ---------------------------#
-def calcPeptideMass(sequence):
+def calcPeptideMass(peptide):
     mass = MASS["H2O"]
-    for s in sequence:
+    for s in peptide.sequence:
         try: 
             mass += AMINOACID[s]
         except KeyError:
             print "Unknown Aminoacid '"+s+"'!"
+            raise
+    # TODO: Checks for modification consistency
+    # a) amount of amino acids must be in sequence
+    # b) a given position (except -1) can only be 
+    for mod,amino,pos in peptide.modifications:
+        try:
+            mass += PROTEINMODIFICATION[mod]   
+        except KeyError:
+            print "Unknown Proteinmodification '"+mod+"'!"
             raise
     return mass   
      
@@ -245,4 +296,44 @@ def calculateIsotopicPattern(C=0,H=0,N=0,O=0,S=0,maxShift=10):
         #print shift,masses[shift]/maxProb*100
     return sumProb,monoMass,trans
     
+
+
+def calcGlyopeptidePattern(peptide,glycan):
     
+    # calculate element composition
+    elements = {}
+    def addElements(elements,name,amount):
+        if not name in COMPOSITION:
+            raise Exception("Cannot find name!")
+        for elementname in COMPOSITION[name]:
+            elements[elementname] = (elements.get(elementname,0) + 
+                                    COMPOSITION[name][elementname]*amount)
+
+
+    # a) peptide
+    
+    addElements(elements,"H2O",1)
+    for aminoacid in set(peptide.sequence):
+        amount = peptide.sequence.count(aminoacid)
+        addElements(elements,aminoacid,amount)
+        addElements(elements,"H2O",-1*amount)
+
+    for modification in peptide.modifications:
+        addElements(elements,modification[0],1)
+
+
+    # b) glycan
+    # parse glycancomposition
+    for match in re.findall("[A-z]+\d+",glycan.composition):
+        glycanname = re.sub("\d+","",match)
+        amount = int(re.sub("[A-z]+","",match))
+        addElements(elements,glycanname,amount)
+        addElements(elements,"H2O",-1*amount)
+
+    res = calculateIsotopicPattern(
+        C=elements.get("C",0),
+        H=elements.get("H",0),
+        N=elements.get("N",0),
+        O=elements.get("O",0),
+        S=elements.get("S",0))
+    return res
