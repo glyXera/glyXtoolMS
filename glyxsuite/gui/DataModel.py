@@ -3,16 +3,16 @@ import os
 
 
 class DataModel:
-    
+
     def __init__(self):
         #self.workingdir = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID"
         self.workingdir = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/ORBI/HCD"
         self.debug = None
         self.root = None
-        self.projects= {}
+        self.projects = {}
         self.currentProject = None
         self.currentAnalysis = None
-        
+
         # call function to paint Frameplots
         # PrecursorView
         # NotebookScoring
@@ -23,23 +23,23 @@ class DataModel:
         # ChromatogramView
         # NotebookScoring
         self.funcScoringChromatogram = None
-        
+
         #TwoDView
         # ExtentionFeature
         # NotebookFeature
         self.funcFeatureTwoDView = None
-        
+
         self.funcUpdateNotebookScoring = None
         self.funcUpdateNotebookIdentification = None
         self.funcUpdateNotebookFeature = None
-        
+
         self.funcUpdateExtentionFeature = None
         self.funcUpdateFeaturePrecursorSpectrum = None
         self.funcUpdateFeatureChromatogram = None
         self.funcUpdateFeatureMSMSSpectrum = None
-        
+
 class Chromatogram:
-    
+
     def __init__(self):
         self.name = ""
         self.color = "black"
@@ -50,14 +50,14 @@ class Chromatogram:
         self.intensity = []
         self.msLevel = 0
         self.selected = False
-                
+
 class ContainerSpectrum(object):
-    
-    def __init__(self,spectrum):
+
+    def __init__(self, spectrum):
         self._spectrum = spectrum
         self.index = ""
         self.chromatogramSpectra = []
-        
+
     @property
     def nativeId(self):
         return self._spectrum.nativeId
@@ -81,7 +81,7 @@ class ContainerSpectrum(object):
     @precursorMass.setter
     def precursorMass(self, value):
         self._spectrum.precursorMass = value
-        
+
     @property
     def precursorCharge(self):
         return self._spectrum.precursorCharge
@@ -111,22 +111,22 @@ class ContainerSpectrum(object):
         self._spectrum.isGlycopeptide = value
 
 class Project:
-    
-    def __init__(self,name,path):
+
+    def __init__(self, name, path):
         self.name = name
         self.path = path
         self.mzMLFile = None
-        self.analysisFiles = {}    
-      
+        self.analysisFiles = {}
+
 class ContainerMZMLFile:
-    
-    def __init__(self,project,path):
+
+    def __init__(self, project, path):
         self.exp = None
         self.path = path
         self.project = project
         self.experimentIds = {}
-        
-        
+
+
     def createIds(self):
         self.experimentIds = {}
         ms1 = None
@@ -136,11 +136,11 @@ class ContainerMZMLFile:
             if level == 1:
                 ms1 = spec
             elif level == 2:
-                self.experimentIds[nativeId] = (spec,ms1)           
+                self.experimentIds[nativeId] = (spec, ms1)
 
 class ContainerAnalysisFile:
-    
-    def __init__(self,project,path):
+
+    def __init__(self, project, path):
         self.path = path
         self.project = project
         self.name = os.path.basename(path)
@@ -156,9 +156,9 @@ class ContainerAnalysisFile:
         self.selectedChromatogram = None
         self.currentFeature = None
         self.featureSpectra = {} # Container for MS1 spectra within the feature, for faster chromatogram / Sum spectra generation
-        
-        
-        
+
+
+
     def createIds(self):
         self.spectraIds = {}
         self.spectraInFeatures = {}
@@ -169,7 +169,7 @@ class ContainerAnalysisFile:
             c.index = str(i)
             self.spectraIds[spectrum.nativeId] = c
             self.spectraInFeatures[spectrum.nativeId] = []
-        
+
         # create featureIds
         # create feature - spectra link
         self.featureIds = {}
@@ -178,7 +178,7 @@ class ContainerAnalysisFile:
             i += 1
             feature.index = str(i) # TODO: Warp feature
             self.featureIds[feature.getId()] = feature
-            minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
+            minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
             for spectrum in self.analysis.spectra:
                 if spectrum.rt < minRT:
                     continue
@@ -189,14 +189,14 @@ class ContainerAnalysisFile:
                 if spectrum.precursorMass > maxMZ:
                     continue
                 self.spectraInFeatures[spectrum.nativeId].append(feature.getId())
-                
+
         self.featureSpectra = {}
         for spec in self.project.mzMLFile.exp:
             if spec.getMSLevel() != 1:
                 continue
             rt = spec.getRT()
             for feature in self.analysis.features:
-                minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
+                minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
                 if rt < minRT:
                     continue
                 if rt > maxRT:
@@ -205,11 +205,11 @@ class ContainerAnalysisFile:
                 if not featureID in self.featureSpectra:
                     self.featureSpectra[featureID] = []
                 self.featureSpectra[featureID].append(spec)
-            
-    def addNewSpectrum(self,nativeID):
+
+    def addNewSpectrum(self, nativeID):
         spectrum = glyxsuite.io.GlyxXMLSpectrum()
         spectrum.setNativeId(nativeID)
         self.spectraIds[nativeID] = spectrum
         self.analysis.spectra.append(spectrum)
         return spectrum
-        
+

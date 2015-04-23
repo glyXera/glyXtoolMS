@@ -1,30 +1,30 @@
-import ttk 
+import ttk
 import Tkinter
 import math
 import FramePlot
 import glyxsuite
 import Appearance
 
-        
-class HistogramView(FramePlot.FramePlot,glyxsuite.lib.Histogram):
-    
-    def __init__(self,master,model,height=300,width=800):
-        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width,xTitle= "Glyco Score",yTitle="Counts")
-        glyxsuite.lib.Histogram.__init__(self,0.2)
-        
+
+class HistogramView(FramePlot.FramePlot, glyxsuite.lib.Histogram):
+
+    def __init__(self, master, model, height=300, width=800):
+        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle= "Glyco Score", yTitle="Counts")
+        glyxsuite.lib.Histogram.__init__(self, 0.2)
+
         self.master = master
         self.logScore = 0.0
         self.NrXScales = 5.0
 
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self,textvariable=self.coord)
+        l = ttk.Label( self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
-        
+
         self.keepZoom = Tkinter.IntVar()
         c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
         c.grid(row=5, column=0, sticky="NS")
-                
-                
+
+
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
@@ -77,18 +77,18 @@ class HistogramView(FramePlot.FramePlot,glyxsuite.lib.Histogram):
                 self.convAtoX(self.logScore),
                 intMax,
                 fill='red', width=4)
-                    
+
 
         self.allowZoom = True
-            
-    def initHistogram(self,logScore):
+
+    def initHistogram(self, logScore):
         self.viewXMin = 0
         self.viewXMax = -1
         self.viewYMin = 0
         self.viewYMax = -1
         self.logScore = logScore
         self.initCanvas(keepZoom = True)
-        
+
     def identifier(self):
         return "HistogramView"
-        
+

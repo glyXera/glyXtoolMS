@@ -1,4 +1,4 @@
-__all__ = ["reporter", "scoring","tests"]
+__all__ = ["reporter", "scoring", "tests"]
 import glyxsuite.reporter
 import glyxsuite.scoring
 import glyxsuite.tests

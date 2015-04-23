@@ -1,11 +1,12 @@
-import re    
-from itertools import product 
+import re
+from itertools import product
 import copy
 import glyxsuite
+import pyopenms
 
 class Histogram:
-    
-    def __init__(self,binwidth):
+
+    def __init__(self, binwidth):
         self.bins = {}
         self.colors = {}
         self.binwidth = float(binwidth)
@@ -14,7 +15,7 @@ class Histogram:
     def __version__(self):
         return "0.0.1"
 
-    def addSeries(self,series,label="",color="black"):
+    def addSeries(self, series, label="", color="black"):
         if not label in self.bins:
             self.bins[label] = {}
         self.colors[label] = color
@@ -26,9 +27,9 @@ class Histogram:
             if self.bins[label][b] > self.maxValue:
                 self.maxValue = self.bins[label][b]
 
-    def ploth(self,order=None,axis=None):
+    def ploth(self, order=None, axis=None):
         if not order:
-            order = self.bins.keys()        
+            order = self.bins.keys()
         leftStart = {}
         for label in order:
             bottom = []
@@ -42,13 +43,13 @@ class Histogram:
                 left.append(leftStart[b])
                 leftStart[b] += self.bins[label][b]
             if axis:
-                axis.barh(bottom,width,height=self.binwidth,left=left,label=label,color=color)
+                axis.barh(bottom, width, height=self.binwidth, left=left, label=label, color=color)
             else:
                 raise Exception("Please provide a plot axis, eg 'axis=plt'")
 
-    def plot(self,order=None,axis=None):
+    def plot(self, order=None, axis=None):
         if not order:
-            order = self.bins.keys()        
+            order = self.bins.keys()
         bottomStart = {}
         for label in order:
             bottom = []
@@ -64,7 +65,7 @@ class Histogram:
                 bottom.append(bottomStart[b])
                 bottomStart[b] += self.bins[label][b]
             if axis:
-                axis.bar(left,height,width=self.binwidth,bottom=bottom,label=label,color=self.colors[label])
+                axis.bar(left, height, width=self.binwidth, bottom=bottom, label=label, color=self.colors[label])
             else:
                 raise Exception("Please provide a plot axis, eg 'axis=plt'")
 
@@ -72,46 +73,46 @@ class Histogram:
 # ---------------------------- Protein Digest -------------------------------------
 
 class Protein:
-        
+
     def __init__(self):
         self.identifier = ""
         self.description = ""
         self.sequence = ""
         self.modifications = []
-        
-        
-    def loadFromFasta(self,identifier, description, sequence):
+
+
+    def loadFromFasta(self, identifier, description, sequence):
         self.identifier = identifier
         self.description = description
         self.modifications = []
         diff = 0
-        for x in re.finditer("\(.+?\)",sequence):
+        for x in re.finditer("\(.+?\)", sequence):
             name = x.group()[1:-1]
             pos = x.start()-diff-1
-            self.modifications.append((name,sequence[pos],pos))
+            self.modifications.append((name, sequence[pos], pos))
             diff += x.end()-x.start()
-        self.sequence = re.sub("\(.+?\)","",sequence)
-        
+        self.sequence = re.sub("\(.+?\)", "", sequence)
+
         # check aminoacids and modifications
         try:
             for s in self.sequence:
                 assert s in glyxsuite.masses.AMINOACID
-            for name,amino,pos in self.modifications:
+            for name, amino, pos in self.modifications:
                 assert name in glyxsuite.masses.PROTEINMODIFICATION
         except KeyError:
             print "Error in protein ", identifier
             raise
-            
-    def getPeptide(self,start,end):
+
+    def getPeptide(self, start, end):
         peptide = glyxsuite.io.XMLPeptide()
         peptide.sequence = self.sequence[start:end]
         peptide.start = start
         peptide.end = end
-        for mod,amino,pos in self.modifications:
+        for mod, amino, pos in self.modifications:
             if start <= pos and pos < end:
-                peptide.modifications.append((mod,amino,pos))
+                peptide.modifications.append((mod, amino, pos))
         return peptide
-                 
+
 class ProteinDigest:
 
     def __init__(self):
@@ -124,29 +125,29 @@ class ProteinDigest:
         self.protein = None
 
 
-    def setCarbamidation(self,boolean):
+    def setCarbamidation(self, boolean):
         if boolean == True:
             self.carbamidation = True
             self.carboxylation = False
         else:
             self.carbamidation = False
 
-    def setCarboxylation(self,boolean): # Iodoacetic acid
+    def setCarboxylation(self, boolean): # Iodoacetic acid
         if boolean == True:
             self.carboxylation = True
             self.carbamidation = False
         else:
             self.carboxylation = False
 
-    def setAcrylamideAdducts(self,boolean):
+    def setAcrylamideAdducts(self, boolean):
         self.acrylamideAdducts = boolean
-            
-    def setOxidation(self,boolean):
+
+    def setOxidation(self, boolean):
         self.oxidation = boolean
 
-    def calcPeptideMasses(self,peptide):
+    def calcPeptideMasses(self, peptide):
 
-        
+
         try:
             sequence = peptide.sequence
         except AttributeError:
@@ -156,26 +157,26 @@ class ProteinDigest:
             start = peptide.start
         except AttributeError:
             raise Exception("missing attribute 'start'! (Integer)")
-            
+
         try:
             end = peptide.end
         except AttributeError:
             raise Exception("missing attribute 'end'! (Integer)")
-        
-        
+
+
         # count Nr of Cysteine
         c = sequence.count("C")
 
         # count Nr of Methionine
         m = sequence.count("M")
-        
+
         # substract already specified modifications
-        for mod,amino,pos in peptide.modifications:
+        for mod, amino, pos in peptide.modifications:
             if amino == "C":
                 c -= 1
             elif amino == "M":
                 m -= 1
-                
+
         N_Cys_CAM = 0
         N_Cys_CM = 0
         N_Cys_PAM = 0
@@ -190,26 +191,26 @@ class ProteinDigest:
             N_MSO = m
         # make permutations
         masses = []
-        for cys_CAM,cys_CM,cys_PAM,MSO in product(range(0,N_Cys_CAM+1),
-                                                   range(0,N_Cys_CM+1),
-                                                   range(0,N_Cys_PAM+1),
-                                                   range(0,N_MSO+1)):
+        for cys_CAM, cys_CM, cys_PAM, MSO in product(range(0, N_Cys_CAM+1),
+                                                     range(0, N_Cys_CM+1),
+                                                     range(0, N_Cys_PAM+1),
+                                                     range(0, N_MSO+1)):
             if cys_CAM+cys_CM+cys_PAM > c:
-                continue 
-                            
+                continue
+
             newPeptide = copy.deepcopy(peptide)
-            
-            newPeptide.modifications += [("Cys_CAM","C",-1)]*cys_CAM
-            newPeptide.modifications += [("Cys_CM","C",-1)]*cys_CM
-            newPeptide.modifications += [("Cys_PAM","C",-1)]*cys_PAM
-            newPeptide.modifications += [("MSO","M",-1)]*MSO
+
+            newPeptide.modifications += [("Cys_CAM", "C", -1)]*cys_CAM
+            newPeptide.modifications += [("Cys_CM", "C", -1)]*cys_CM
+            newPeptide.modifications += [("Cys_PAM", "C", -1)]*cys_PAM
+            newPeptide.modifications += [("MSO", "M", -1)]*MSO
             # calc peptide mass
             newPeptide.mass = glyxsuite.masses.calcPeptideMass(newPeptide)
             masses.append(newPeptide)
-                        
+
         return masses
 
-    def newDigest(self,protein):
+    def newDigest(self, protein):
         self.protein = protein
         self.breakpoints = []
 
@@ -231,8 +232,8 @@ class ProteinDigest:
             if self.protein.sequence[i] == "D":
                 self.breakpoints.append(i-1)
             i += 1
-           
-    def digest(self,maxMissedCleavage):
+
+    def digest(self, maxMissedCleavage):
         self.breakpoints.append(len(self.protein.sequence)-1)
         # clean up breakpoints
         self.breakpoints = list(set(self.breakpoints))
@@ -242,36 +243,37 @@ class ProteinDigest:
         start = -1
         i = 0
         while i < len(self.breakpoints):
-            for m in range(0,maxMissedCleavage+1):
+            for m in range(0, maxMissedCleavage+1):
                 if i+m >= len(self.breakpoints):
                     break
                 stop = self.breakpoints[i+m]
-                peptides.append(self.protein.getPeptide(start+1,stop+1))
+                peptides.append(self.protein.getPeptide(start+1, stop+1))
             start = self.breakpoints[i]
             i += 1
-        
+
         return peptides
 
-    def findGlycopeptides(self,peptides,NGlycosylation = False, OGlycosylation = False):
-        
+    def findGlycopeptides(self, peptides, NGlycosylation=False,
+                          OGlycosylation=False):
+
         # generate list of glycosylationsites
         sites = []
         if NGlycosylation == True:
-            for match in re.finditer("N[^P](S|T)",self.protein.sequence):
-                sites.append((match.start(),"N"))
+            for match in re.finditer("N[^P](S|T)", self.protein.sequence):
+                sites.append((match.start(), "N"))
         if OGlycosylation == True:
-            for match in re.finditer("(S|T)",self.protein.sequence):
-                sites.append((match.start(),"O"))
-            
+            for match in re.finditer("(S|T)", self.protein.sequence):
+                sites.append((match.start(), "O"))
+
         sites.sort()
-        
+
         glycopeptides = []
         # b) search peptides with possible glycosylation site
         for peptide in peptides:
             glycopeptide = False
-            for site,typ in sites:
+            for site, typ in sites:
                 if peptide.start <= site and site < peptide.end:
-                    peptide.glycosylationSites.append((site,typ))
+                    peptide.glycosylationSites.append((site, typ))
                     glycopeptide = True
             if glycopeptide == True:
                 glycopeptides += self.calcPeptideMasses(peptide)
@@ -280,41 +282,41 @@ class ProteinDigest:
 # --------------------------------------- Glycan -----------------------
 class Glycan:
 
-    def __init__(self,composition):
+    def __init__(self, composition):
         self.composition = composition
         self.sugar = {'DHEX': 0, 'HEX': 0, 'HEXNAC': 0, 'NEUAC': 0}
         self.mass = 0
         self._splitComposition(composition)
 
 
-    def _splitComposition(self,composition):
+    def _splitComposition(self, composition):
         self.mass = 0
-        for comp in re.findall("[A-z]+\d+",composition):
-            unit = re.search("[A-z]+",comp).group()
-            amount = int(re.search("\d+",comp).group())
+        for comp in re.findall("[A-z]+\d+", composition):
+            unit = re.search("[A-z]+", comp).group()
+            amount = int(re.search("\d+", comp).group())
             self.sugar[unit] = amount
             self.mass += glyxsuite.masses.GLYCAN[unit]*amount
-            
-    def getComposition(self,typ="N"):
+
+    def getComposition(self, typ="N"):
         comp = self.sugar.copy()
         if typ == "N" and self.checkNCore() == "core":
             comp["HEX"] -= 3
             comp["HEXNAC"] -= 2
             composition = "(GlcNAc)2 (Man)3 + "
         else:
-            composition = ""    
+            composition = ""
 
-        for sugar in ["DHEX","HEX","HEXNAC","NEUAC"]:
+        for sugar in ["DHEX", "HEX", "HEXNAC", "NEUAC"]:
             if comp[sugar] > 0:
                 composition += sugar+str(comp[sugar])
         return composition
-        
-        
-    def checkNCore(self): # ouput: "None", "sub","core"
+
+
+    def checkNCore(self): # ouput: "None", "sub", "core"
         # Core: 2 HexNac + 3 Hex
         # Subcore:
         # 2 / 3
-        # 2/2   
+        # 2/2
         # 2/1
         #2/0
         # 1/0
@@ -327,13 +329,13 @@ class Glycan:
         if hexnac == 1 and hexose == 0:
             return "sub"
         return "none"
-        
 
 
 
-# --------------------------- Helper functions ------------------------------------ 
 
-def openDialog(path = "."):
+# --------------------------- Helper functions ------------------------------------
+
+def openDialog(path="."):
     import Tkinter, tkFileDialog
     root = Tkinter.Tk()
     root.withdraw()
@@ -341,16 +343,16 @@ def openDialog(path = "."):
     file_path = tkFileDialog.askopenfilename(initialdir=path)
     root.destroy()
     return file_path
-  
+
 
 def openOpenMSExperiment(path):
     if not path.endswith(".mzML"):
         raise Exception("not a .mzML file")
-    import pyopenms
+
     print "loading experiment"
     exp = pyopenms.MSExperiment()
     fh = pyopenms.FileHandler()
-    fh.loadExperiment(path,exp)
+    fh.loadExperiment(path, exp)
     print "loading finnished"
     return exp
 

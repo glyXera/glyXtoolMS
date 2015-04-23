@@ -1,7 +1,7 @@
 """
 Mass list of aminoacids, protenimodifications, glycan monomers, etc.
 Contains also all functions for mass calculation.
-Source of mass values from: 
+Source of mass values from:
 http://web.expasy.org/findmod/findmod_masses.html
 """
 import re
@@ -35,11 +35,11 @@ AMINOACID["V"] = 99.06841
 
 PROTEINMODIFICATION = {}
 # Cys_CAM Idoacetamide treatment (carbamidation)
-PROTEINMODIFICATION["Cys_CAM"] = 57.021464 
+PROTEINMODIFICATION["Cys_CAM"] = 57.021464
 # Cys_CM, Iodoacetic acid treatment (carboxylation)
-PROTEINMODIFICATION["Cys_CM"] = 58.005479 
+PROTEINMODIFICATION["Cys_CM"] = 58.005479
 # Cys_PAM Acrylamide Adduct
-PROTEINMODIFICATION["Cys_PAM"] = 71.03712 
+PROTEINMODIFICATION["Cys_PAM"] = 71.03712
 PROTEINMODIFICATION["MSO"] = 15.884915 # MSO
 PROTEINMODIFICATION["ACET"] = 42.0106 # Acetylation
 PROTEINMODIFICATION["AMID"] = -0.9840 # Amidation
@@ -52,8 +52,8 @@ PROTEINMODIFICATION["PHOS"] = 79.9663 # Phosphorylation
 
 GLYCAN = {}
 GLYCAN["DHEX"] = 146.0579
-GLYCAN["HEX"] =  162.0528
-GLYCAN["HEXNAC"] =  203.0794
+GLYCAN["HEX"] = 162.0528
+GLYCAN["HEXNAC"] = 203.0794
 GLYCAN["NEUAC"] = 291.0954
 
 
@@ -69,16 +69,16 @@ Dictionary of isotopes, containing massshift, actual atomic mass
 and the probability of the isotope
 """
 ISOTOPES = {}
-ISOTOPES["H"] = {0:(1.007825,99.9885),1:(2.014102,0.0115)}
-ISOTOPES["C"] = {0:(12.0,98.93),1:(13.003355,1.07)}
-ISOTOPES["N"] = {0:(14.003074,99.632),1:(15.000109,0.368)}
-ISOTOPES["O"] = {0:(15.994915,99.757),
-                 1:(16.999132,0.038),
-                 2:(17.999160,0.205)}
-ISOTOPES["S"] = {0:(31.972071,94.93),
-                 1:(32.971458,0.76),
-                 2:(33.967867,4.29),
-                 3:(35.967081,0.02)}
+ISOTOPES["H"] = {0:(1.007825, 99.9885), 1:(2.014102, 0.0115)}
+ISOTOPES["C"] = {0:(12.0, 98.93), 1:(13.003355, 1.07)}
+ISOTOPES["N"] = {0:(14.003074, 99.632), 1:(15.000109, 0.368)}
+ISOTOPES["O"] = {0:(15.994915, 99.757),
+                 1:(16.999132, 0.038),
+                 2:(17.999160, 0.205)}
+ISOTOPES["S"] = {0:(31.972071, 94.93),
+                 1:(32.971458, 0.76),
+                 2:(33.967867, 4.29),
+                 3:(35.967081, 0.02)}
 
 # --------------------------- Compositions ----------------------------#
 
@@ -109,7 +109,7 @@ COMPOSITION["HEX"] = {'C': 6, 'H': 12, 'N': 0, 'O': 6}
 COMPOSITION["DHEX"] = {'C': 6, 'H': 12, 'N': 0, 'O': 5}
 COMPOSITION["HEXNAC"] = {'C': 8, 'H': 15, 'N': 1, 'O': 6}
 COMPOSITION["NEUAC"] = {'C': 11, 'H': 19, 'N': 1, 'O': 9}
-COMPOSITION["H2O"] = {'H': 2,'O': 1}
+COMPOSITION["H2O"] = {'H': 2, 'O': 1}
 
 
 COMPOSITION["Cys_CAM"] = {'C': 2, 'H': 3, 'O': 1, 'N': 1}
@@ -126,22 +126,22 @@ COMPOSITION["METH"] = {'C': 1, 'H': 2}
 def calcPeptideMass(peptide):
     mass = MASS["H2O"]
     for s in peptide.sequence:
-        try: 
+        try:
             mass += AMINOACID[s]
         except KeyError:
             print "Unknown Aminoacid '"+s+"'!"
             raise
     # TODO: Checks for modification consistency
     # a) amount of amino acids must be in sequence
-    # b) a given position (except -1) can only be 
-    for mod,amino,pos in peptide.modifications:
+    # b) a given position (except -1) can only be
+    for mod, amino, pos in peptide.modifications:
         try:
-            mass += PROTEINMODIFICATION[mod]   
+            mass += PROTEINMODIFICATION[mod]
         except KeyError:
             print "Unknown Proteinmodification '"+mod+"'!"
             raise
-    return mass   
-     
+    return mass
+
 
 def calcIonMass(name):
     """
@@ -149,26 +149,26 @@ def calcIonMass(name):
     Strings consists of possible Monomers surrounded by brackets, followed
     by the amount of the monomer. The amount can be also negative to allow
     for example water loss.
-    
+
     Examples:
     '(NeuAc)1(H+)1' results in 292.10268
     '(NeuAc)1(H2O)-1(H+)1' results in 274.09211
     '(HexNAc)1(Hex)1(NeuAc)1(H+)1' results in 657.23488
-    
+
     Parsing of Monomer-Amount combinations consists of the follwing Regex:
     '\(.+?\)-?\d+'
     """
-    
-    if re.match("^(\(.+?\)-?\d+)+$",name) == None:
-        raise Exception(
-        """Input string '{}' doesn't follow the regex '^(\(.+?\)-?\d+)+$'
-        Please surrond monomers by brackets followed by the amount of 
+
+    if re.match("^(\(.+?\)-?\d+)+$", name) == None:
+        raise Exception("""Input string '{}' doesn't follow the
+        regex  '^(\(.+?\)-?\d+)+$'
+        Please surrond monomers by brackets followed by the amount of
         the monomer, e.g. '(NeuAc)1(H2O)-1(H+)1'""".format(name))
-    
+
     mass = 0
     charge = 0
-    for part in re.findall("\(.+?\)-?\d+",name.upper()):
-        monomer,amount = part.split(")")
+    for part in re.findall("\(.+?\)-?\d+", name.upper()):
+        monomer, amount = part.split(")")
         monomer = monomer[1:]
         amount = int(amount)
         if monomer == "H+":
@@ -180,32 +180,32 @@ def calcIonMass(name):
         elif monomer in MASS:
             mass += MASS[monomer]*amount
         else:
-            raise Exception("cannot find monomer {} in {}".format(monomer,name))
+            raise Exception("cannot find monomer {} in {}".format(monomer, name))
     if charge == 0:
         return mass
     else:
         return mass/float(charge)
-    
-def calculateIsotopicPattern(C=0,H=0,N=0,O=0,S=0,maxShift=10):
+
+def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
     """
     Calculates the isotopic pattern of the given elemental composition
-    Currently only supports C,H,N,O and S
+    Currently only supports C, H, N, O and S
     maxShift option sets the calculated pattern size, which significantly
     speeds up the calculation
-    
+
     Result: tuple of summed probability (if significantly smaller than 1
         increase maxShift), the monoisotopic mass and the pattern
     """
-            
-    def element(name,N,maxShift=10):
+
+    def element(name, N, maxShift=10):
         """
         Generates the isotpic pattern of an element with a given number N of
         atoms. maxShift option sets maximum pattern size
-        
+
         Result: dict of massshift and probabilities
         """
-                
-        def _binominal(n,k):
+
+        def _binominal(n, k):
             try:
                 newK = int(k)
                 return math.factorial(n)/math.factorial(newK)/math.factorial(n-newK)
@@ -222,56 +222,56 @@ def calculateIsotopicPattern(C=0,H=0,N=0,O=0,S=0,maxShift=10):
             for k in newK:
                 divisor *= math.factorial(k)
             return math.factorial(n)/divisor
-        
+
         # generate isotope list
         isotope = []
         shifts = sorted(ISOTOPES[name])
         summ = sum([ISOTOPES[name][shift][1] for shift in shifts])
         for shift in shifts:
-            isotope.append((shift,ISOTOPES[name][shift][1]/summ))
+            isotope.append((shift, ISOTOPES[name][shift][1]/summ))
 
         # Generate amount ranges for each isotope, limited by the
         # maximum shift allowed
         amountList = []
-        for shift,p in isotope:
+        for shift, p in isotope:
             if shift == 0:
-                amountList.append(range(0,N+1))
+                amountList.append(range(0, N+1))
             else:
-                amountList.append(range(0,int(math.ceil(maxShift/shift))))
+                amountList.append(range(0, int(math.ceil(maxShift/shift))))
         masses = {}
         for amounts in itertools.product(*amountList):
             if sum(amounts) != N:
                 continue
-            p = _binominal(N,amounts)
+            p = _binominal(N, amounts)
             mass = 0
-            for i,amount in enumerate(amounts):
-                shift,probability = isotope[i]
+            for i, amount in enumerate(amounts):
+                shift, probability = isotope[i]
                 p *= probability**amount
                 mass += shift*amount
-            masses[mass] = masses.get(mass,0)+p
+            masses[mass] = masses.get(mass, 0)+p
         trans = {}
         for mass in masses:
             if mass > maxShift and maxShift != 0:
                 continue
             trans[mass] = masses[mass]
-        return trans    
-    
+        return trans
+
     probs = []
     monoMass = 0
     if C > 0:
-        probs.append(element("C",C,maxShift=maxShift))
+        probs.append(element("C", C, maxShift=maxShift))
         monoMass += C*ISOTOPES["C"][0][0]
     if H > 0:
-        probs.append(element("H",H,maxShift=maxShift))
+        probs.append(element("H", H, maxShift=maxShift))
         monoMass += H*ISOTOPES["H"][0][0]
     if N > 0:
-        probs.append(element("N",N,maxShift=maxShift))   
+        probs.append(element("N", N, maxShift=maxShift))
         monoMass += N*ISOTOPES["N"][0][0]
     if O > 0:
-        probs.append(element("O",O,maxShift=maxShift))
+        probs.append(element("O", O, maxShift=maxShift))
         monoMass += O*ISOTOPES["O"][0][0]
     if S > 0:
-        probs.append(element("S",S,maxShift=maxShift))
+        probs.append(element("S", S, maxShift=maxShift))
         monoMass += S*ISOTOPES["S"][0][0]
     elementKeys = [e.keys() for e in probs]
     masses = {}
@@ -280,60 +280,60 @@ def calculateIsotopicPattern(C=0,H=0,N=0,O=0,S=0,maxShift=10):
         if shift > maxShift:
             continue
         p = 1
-        for i,amount in enumerate(amounts):
+        for i, amount in enumerate(amounts):
             p *= probs[i][amount]
-        masses[shift] = masses.get(shift,0) + p
-        
+        masses[shift] = masses.get(shift, 0) + p
+
     maxProb = max([masses[shift] for shift in masses])
-    
-    
-    # test if accumulated probability accounts for 
+
+
+    # test if accumulated probability accounts for
     sumProb = sum([masses[shift] for shift in masses])
-    #print "sumProb",sumProb
+    #print "sumProb", sumProb
     trans = []
     for shift in sorted(masses.keys()):
-        trans.append((shift,masses[shift]/maxProb*100))
-        #print shift,masses[shift]/maxProb*100
-    return sumProb,monoMass,trans
-    
+        trans.append((shift, masses[shift]/maxProb*100))
+        #print shift, masses[shift]/maxProb*100
+    return sumProb, monoMass, trans
 
 
-def calcGlyopeptidePattern(peptide,glycan):
-    
+
+def calcGlyopeptidePattern(peptide, glycan):
+
     # calculate element composition
     elements = {}
-    def addElements(elements,name,amount):
+    def addElements(elements, name, amount):
         if not name in COMPOSITION:
             raise Exception("Cannot find name!")
         for elementname in COMPOSITION[name]:
-            elements[elementname] = (elements.get(elementname,0) + 
-                                    COMPOSITION[name][elementname]*amount)
+            elements[elementname] = (elements.get(elementname, 0) +
+                                     COMPOSITION[name][elementname]*amount)
 
 
     # a) peptide
-    
-    addElements(elements,"H2O",1)
+
+    addElements(elements, "H2O", 1)
     for aminoacid in set(peptide.sequence):
         amount = peptide.sequence.count(aminoacid)
-        addElements(elements,aminoacid,amount)
-        addElements(elements,"H2O",-1*amount)
+        addElements(elements, aminoacid, amount)
+        addElements(elements, "H2O", -1*amount)
 
     for modification in peptide.modifications:
-        addElements(elements,modification[0],1)
+        addElements(elements, modification[0], 1)
 
 
     # b) glycan
     # parse glycancomposition
-    for match in re.findall("[A-z]+\d+",glycan.composition):
-        glycanname = re.sub("\d+","",match)
-        amount = int(re.sub("[A-z]+","",match))
-        addElements(elements,glycanname,amount)
-        addElements(elements,"H2O",-1*amount)
+    for match in re.findall("[A-z]+\d+", glycan.composition):
+        glycanname = re.sub("\d+", "", match)
+        amount = int(re.sub("[A-z]+", "", match))
+        addElements(elements, glycanname, amount)
+        addElements(elements, "H2O", -1*amount)
 
     res = calculateIsotopicPattern(
-        C=elements.get("C",0),
-        H=elements.get("H",0),
-        N=elements.get("N",0),
-        O=elements.get("O",0),
-        S=elements.get("S",0))
+        C=elements.get("C", 0),
+        H=elements.get("H", 0),
+        N=elements.get("N", 0),
+        O=elements.get("O", 0),
+        S=elements.get("S", 0))
     return res

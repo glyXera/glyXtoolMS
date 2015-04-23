@@ -1,4 +1,4 @@
-import ttk 
+import ttk
 import Tkinter
 import math
 import FramePlot
@@ -6,45 +6,45 @@ import DataModel
 import Appearance
 
 class ChromatogramView(FramePlot.FramePlot):
-    
-    def __init__(self,master,model,height=300,width=800):
-        FramePlot.FramePlot.__init__(self,master,model,height=height,width=width,xTitle="rt [s]",yTitle="Intensity [counts]")
-        
+
+    def __init__(self, master, model, height=300, width=800):
+        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="rt [s]", yTitle="Intensity [counts]")
+
         self.master = master
         self.NrXScales = 3.0
         self.rt = None
-        
+
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self,textvariable=self.coord)
+        l = ttk.Label( self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
-        
+
         self.keepZoom = Tkinter.IntVar()
         c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
         c.grid(row=5, column=0, sticky="NS")
-                
-                
+
+
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
         # link function
         self.model.funcScoringChromatogram = self.initChromatogram
-        
+
         # Events
         #self.canvas.bind("<Left>", self.sayHi)
         #self.canvas.bind("<Right>", self.sayHi)
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
-        
-        self.spectrumPointer = None
-        
-        
 
-    def setSpectrumPointer(self,event):
+        self.spectrumPointer = None
+
+
+
+    def setSpectrumPointer(self, event):
         if self.model.exp == None:
             return
         if self.allowZoom == False:
             return
         rt = self.convXtoA(event.x)
-        
+
         # get selected MSLevel
         if self.model.currentAnalysis.selectedChromatogram == None:
             return
@@ -60,9 +60,9 @@ class ChromatogramView(FramePlot.FramePlot):
                 diff = diffNew
         if diff != -1:
             self.model.funcPaintSpectrum(nearest)
-        
-        
-        
+
+
+
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1
@@ -92,14 +92,14 @@ class ChromatogramView(FramePlot.FramePlot):
             if len(chrom.rt) != len(chrom.intensity):
                 raise Exception("Different length of chromatogram parameters!")
             xy = []
-            for i in range(0,len(chrom.rt)):
+            for i in range(0, len(chrom.rt)):
                 rt = chrom.rt[i]
-                intens = chrom.intensity[i]       
+                intens = chrom.intensity[i]
                 xy.append(self.convAtoX(rt))
                 xy.append(self.convBtoY(intens))
             if len(xy) == 0:
                 continue
-            item = self.canvas.create_line(xy,fill=chrom.color, width = linewidth)
+            item = self.canvas.create_line(xy, fill=chrom.color, width = linewidth)
         if self.rt != None:
             intZero = self.convBtoY(0)
             intMax = self.convBtoY(self.viewYMax)
@@ -110,8 +110,8 @@ class ChromatogramView(FramePlot.FramePlot):
                 intMax,
                 fill='blue')
             self.allowZoom = True
-    
-    def initChromatogram(self,low,high,rt):
+
+    def initChromatogram(self, low, high, rt):
         self.viewXMin = low
         self.viewXMax = high
         self.viewYMin = 0
@@ -121,5 +121,5 @@ class ChromatogramView(FramePlot.FramePlot):
 
     def identifier(self):
         return "ChromatogramView"
-        
-    
+
+

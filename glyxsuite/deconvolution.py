@@ -4,10 +4,10 @@ Provides a simple deconvolution method for spectra
 Usage:
 peaklist = []
 for peak in spectrum:
-    peaklist.append(Peak(peak.getMZ(),peak.getIntensity()))
+    peaklist.append(Peak(peak.getMZ(), peak.getIntensity()))
 
 d = Deconvolution(peaklist)
-deconvolutedPeaks = d.deconvolute(max_charge,nrOfPeaks)
+deconvolutedPeaks = d.deconvolute(max_charge, nrOfPeaks)
 
 """
 from __future__ import (absolute_import, division,

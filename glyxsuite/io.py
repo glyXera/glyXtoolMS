@@ -1,8 +1,7 @@
 from lxml import etree as ET
 
-
 class GlyxXMLSpectrum:
-    
+
     def __init__(self):
         self.nativeId = ""
         self.rt = 0.0
@@ -13,29 +12,29 @@ class GlyxXMLSpectrum:
         self.ions = {}
         self.isGlycopeptide = False
 
-    def setNativeId(self,nativeId):
+    def setNativeId(self, nativeId):
         self.nativeId = nativeId
-    
-    def setRT(self,rt):
+
+    def setRT(self, rt):
         self.rt = rt
 
-    def setIonCount(self,ionCount):
+    def setIonCount(self, ionCount):
         if ionCount == 0:
             self.ionCount = 0
         else:
             self.ionCount = ionCount
 
-    def setPrecursor(self,mass,charge):
+    def setPrecursor(self, mass, charge):
         self.precursorMass = mass
         self.precursorCharge = charge
 
-    def setLogScore(self,logScore):
+    def setLogScore(self, logScore):
         self.logScore = logScore
-        
-    def setIsGlycopeptide(self,boolean):
+
+    def setIsGlycopeptide(self, boolean):
         self.isGlycopeptide = boolean
 
-    def addIon(self,glycan,ionName,mass,intensity):
+    def addIon(self, glycan, ionName, mass, intensity):
         if not glycan in self.ions:
             self.ions[glycan] = {}
         self.ions[glycan][ionName] = {}
@@ -63,11 +62,11 @@ class GlyxXMLSpectrum:
 
     def getIons(self):
         return self.ions
-        
+
     def getIsGlycopeptide(self):
         return self.isGlycopeptide
-        
-    
+
+
 
 
 class GlyxXMLParameters:
@@ -84,28 +83,28 @@ class GlyxXMLParameters:
         self._sourceFileChecksum = ""
 
 
-    def setTimestamp(self,timestamp):
+    def setTimestamp(self, timestamp):
         self._timestamp = timestamp
 
-    def setMassTolerance(self,tolerance):
+    def setMassTolerance(self, tolerance):
         self._tolerance = tolerance
 
-    def setIonThreshold(self,ionThreshold):
+    def setIonThreshold(self, ionThreshold):
         self._ionThreshold = ionThreshold
 
-    def setNrNeutrallosses(self,nrNeutrallosses):
+    def setNrNeutrallosses(self, nrNeutrallosses):
         self._nrNeutrallosses = nrNeutrallosses
 
-    def setMaxOxoniumCharge(self,maxOxoniumCharge):
+    def setMaxOxoniumCharge(self, maxOxoniumCharge):
         self._maxOxoniumCharge = maxOxoniumCharge
 
-    def setScoreThreshold(self,scoreThreshold):
+    def setScoreThreshold(self, scoreThreshold):
         self._scoreThreshold = scoreThreshold
 
-    def setGlycanList(self,glycans):
+    def setGlycanList(self, glycans):
         self._glycans = glycans
 
-    def addGlycan(self,glycan):
+    def addGlycan(self, glycan):
         self._glycans.append(glycan)
 
     def getTimestamp(self):
@@ -120,7 +119,6 @@ class GlyxXMLParameters:
     def getNrNeutrallosses(self):
         return self._nrNeutrallosses
 
-
     def getMaxOxoniumCharge(self):
         return self._maxOxoniumCharge
 
@@ -129,22 +127,22 @@ class GlyxXMLParameters:
 
     def getGlycans(self):
         return self._glycans
-        
+
     def getSourceFilePath(self):
         return self._sourceFilePath
-        
-    def setSourceFilePath(self,path):
+
+    def setSourceFilePath(self, path):
         self._sourceFilePath = path
-    
+
     def getSourceFileChecksum(self):
         return self._sourceFileChecksum
-        
-    def setSourceFileChecksum(self,checksum):
+
+    def setSourceFileChecksum(self, checksum):
         self._sourceFileChecksum = checksum
-            
+
 
 class GlyxXMLFeature:
-    
+
     def __init__(self):
         self.id = ""
         self.mz = 0.0
@@ -156,63 +154,63 @@ class GlyxXMLFeature:
         self.minMZ = 0.0
         self.maxMZ = 0.0
         self.spectraIds = []
-        
-    def setId(self,id):
+
+    def setId(self, id):
         self.id = id
-    
+
     def getId(self):
         return self.id
-        
-    def setMZ(self,mz):
+
+    def setMZ(self, mz):
         self.mz = mz
-        
+
     def getMZ(self):
         return self.mz
-    
-    def setIntensity(self,intensity):
-        self.intensity = intensity
-        
-    def getIntensity(self):
-        return self.intensity        
 
-    def setRT(self,rt):
+    def setIntensity(self, intensity):
+        self.intensity = intensity
+
+    def getIntensity(self):
+        return self.intensity
+
+    def setRT(self, rt):
         self.rt = rt
-        
+
     def getRT(self):
         return self.rt
-        
-    def setCharge(self,charge):
+
+    def setCharge(self, charge):
         self.charge = charge
-    
+
     def getCharge(self):
         return self.charge
 
-    def setBoundingBox(self,minRT,maxRT,minMZ,maxMZ):
+    def setBoundingBox(self, minRT, maxRT, minMZ, maxMZ):
         self.minRT = minRT
         self.maxRT = maxRT
         self.minMZ = minMZ
         self.maxMZ = maxMZ
-        
+
     def getBoundingBox(self):
-        return self.minRT,self.maxRT,self.minMZ,self.maxMZ
- 
-    def addSpectrumId(self,spectrumId):
+        return self.minRT, self.maxRT, self.minMZ, self.maxMZ
+
+    def addSpectrumId(self, spectrumId):
         self.spectraIds.append(spectrumId)
-               
+
     def getSpectraIds(self):
         return self.spectraIds
-        
+
 class XMLGlycan:
-    
+
     def __init__(self):
         self.composition = ""
         self.mass = 0.0
-                
-        
+
+
 class GlyxXMLGlycoModHit:
-    
+
     def __init__(self):
-        self.featureID = ""        
+        self.featureID = ""
         self.peptide = None
         self.glycan = None
         self.error = 0.0
@@ -227,12 +225,12 @@ class GlyxXMLFile:
         self.glycoModHits = []
         self.version = "0.0.3"
 
-    def _parseParameters(self,xmlParameters):
+    def _parseParameters(self, xmlParameters):
         timestamp = xmlParameters.find("./timestamp").text
         if self.version > "0.0.2":
             sourcePath = xmlParameters.find("./source/path").text
             sourceHash = xmlParameters.find("./source/checksum").text
-            
+
         tolerance = float(xmlParameters.find("./tolerance").text)
         ionThreshold = int(xmlParameters.find("./ionthreshold").text)
         nrNeutrallosses = int(xmlParameters.find("./nrNeutrallosses").text)
@@ -241,7 +239,7 @@ class GlyxXMLFile:
         glycans = []
         for glycanElement in xmlParameters.findall("./glycans/glycan"):
             glycans.append(glycanElement.text)
-            
+
         parameters = GlyxXMLParameters()
         parameters.setTimestamp(timestamp)
         parameters.setMassTolerance(tolerance)
@@ -253,10 +251,10 @@ class GlyxXMLFile:
         if self.version > "0.0.2":
             parameters.setSourceFilePath(sourcePath)
             parameters.setSourceFileChecksum(sourceHash)
-        
+
         return parameters
-        
-    def _parseSpectra(self,xmlSpectra):
+
+    def _parseSpectra(self, xmlSpectra):
         spectra = []
         for s in xmlSpectra:
             spectrum = GlyxXMLSpectrum()
@@ -269,173 +267,173 @@ class GlyxXMLFile:
             spectrum.setLogScore(logScore)
             rt = float(s.find("./rt").text)
             spectrum.setRT(rt)
-            precursor_mass= float(s.find("./precursor/mass").text)
-            precursor_charge= int(s.find("./precursor/charge").text)
-            spectrum.setPrecursor(precursor_mass,precursor_charge)
+            precursor_mass = float(s.find("./precursor/mass").text)
+            precursor_charge = int(s.find("./precursor/charge").text)
+            spectrum.setPrecursor(precursor_mass, precursor_charge)
             for score in s.findall("./scores/score"):
                 glycan = score.find("./glycan").text
                 for ion in score.findall("./ions/ion"):
                     ionName = ion.find("./name").text
                     ionMass = float(ion.find("./mass").text)
                     ionIntensity = float(ion.find("./intensity").text)
-                    spectrum.addIon(glycan,ionName,ionMass,ionIntensity)
+                    spectrum.addIon(glycan, ionName, ionMass, ionIntensity)
             # version 0.0.2
             if self.version > "0.0.1":
                 spectrum.setIsGlycopeptide(bool(int(s.find("./isGlycopeptide").text)))
             spectra.append(spectrum)
         return spectra
-     
-    def _writeParameters(self,xmlParameters):
+
+    def _writeParameters(self, xmlParameters):
         # write search parameters
-        xmlParametersDate = ET.SubElement(xmlParameters,"timestamp")
+        xmlParametersDate = ET.SubElement(xmlParameters, "timestamp")
         xmlParametersDate.text = str(self.parameters.getTimestamp())
-        
-        xmlParametersSource = ET.SubElement(xmlParameters,"source")
-        
-        xmlSourcePath = ET.SubElement(xmlParametersSource,"path")
+
+        xmlParametersSource = ET.SubElement(xmlParameters, "source")
+
+        xmlSourcePath = ET.SubElement(xmlParametersSource, "path")
         xmlSourcePath.text = self.parameters.getSourceFilePath()
-        
-        xmlSourceHash = ET.SubElement(xmlParametersSource,"checksum")
+
+        xmlSourceHash = ET.SubElement(xmlParametersSource, "checksum")
         xmlSourceHash.text = self.parameters.getSourceFileChecksum()
-        
-        xmlParametersGlycans = ET.SubElement(xmlParameters,"glycans")
+
+        xmlParametersGlycans = ET.SubElement(xmlParameters, "glycans")
         for glycan in self.parameters.getGlycans():
-            xmlParametersGlycan = ET.SubElement(xmlParametersGlycans,"glycan")
+            xmlParametersGlycan = ET.SubElement(xmlParametersGlycans, "glycan")
             xmlParametersGlycan.text = glycan
 
-        xmlParametersTol = ET.SubElement(xmlParameters,"tolerance")
+        xmlParametersTol = ET.SubElement(xmlParameters, "tolerance")
         xmlParametersTol.text = str(self.parameters.getMassTolerance())
 
-        xmlParametersIonthreshold = ET.SubElement(xmlParameters,"ionthreshold")
+        xmlParametersIonthreshold = ET.SubElement(xmlParameters, "ionthreshold")
         xmlParametersIonthreshold.text = str(self.parameters.getIonThreshold())
 
-        xmlParametersNeutral = ET.SubElement(xmlParameters,"nrNeutrallosses")
+        xmlParametersNeutral = ET.SubElement(xmlParameters, "nrNeutrallosses")
         xmlParametersNeutral.text = str(self.parameters.getNrNeutrallosses())
 
-        xmlParametersOxionCharge = ET.SubElement(xmlParameters,"maxOxoniumionCharge")
+        xmlParametersOxionCharge = ET.SubElement(xmlParameters, "maxOxoniumionCharge")
         xmlParametersOxionCharge.text = str(self.parameters.getMaxOxoniumCharge())
 
-        xmlParametersScorethreshold = ET.SubElement(xmlParameters,"scorethreshold")
+        xmlParametersScorethreshold = ET.SubElement(xmlParameters, "scorethreshold")
         xmlParametersScorethreshold.text = str(self.parameters.getScoreThreshold())
-        
-    def _writeSpectra(self,xmlSpectra):
+
+    def _writeSpectra(self, xmlSpectra):
         for spectrum in self.spectra:
-            xmlSpectrum = ET.SubElement(xmlSpectra,"spectrum")
-            xmlSpectrumNativeId = ET.SubElement(xmlSpectrum,"nativeId")
+            xmlSpectrum = ET.SubElement(xmlSpectra, "spectrum")
+            xmlSpectrumNativeId = ET.SubElement(xmlSpectrum, "nativeId")
             xmlSpectrumNativeId.text = str(spectrum.getNativeId())
-            xmlSpectrumRT = ET.SubElement(xmlSpectrum,"rt")
+            xmlSpectrumRT = ET.SubElement(xmlSpectrum, "rt")
             xmlSpectrumRT.text = str(spectrum.getRT())
-            xmlSpectrumIonCount = ET.SubElement(xmlSpectrum,"ionCount")
+            xmlSpectrumIonCount = ET.SubElement(xmlSpectrum, "ionCount")
             xmlSpectrumIonCount.text = str(spectrum.getIonCount())
 
-            xmlPrecursor = ET.SubElement(xmlSpectrum,"precursor")
-            xmlPrecursorMass = ET.SubElement(xmlPrecursor,"mass")
+            xmlPrecursor = ET.SubElement(xmlSpectrum, "precursor")
+            xmlPrecursorMass = ET.SubElement(xmlPrecursor, "mass")
             xmlPrecursorMass.text = str(spectrum.getPrecursorMass())
-            xmlPrecursorCharge = ET.SubElement(xmlPrecursor,"charge")
+            xmlPrecursorCharge = ET.SubElement(xmlPrecursor, "charge")
             xmlPrecursorCharge.text = str(spectrum.getPrecursorCharge())
-            xmlTotalScore = ET.SubElement(xmlSpectrum,"logScore")
+            xmlTotalScore = ET.SubElement(xmlSpectrum, "logScore")
             xmlTotalScore.text = str(spectrum.getLogScore())
             if self.version > "0.0.1":
-                xmlIsGlyco = ET.SubElement(xmlSpectrum,"isGlycopeptide")
+                xmlIsGlyco = ET.SubElement(xmlSpectrum, "isGlycopeptide")
                 xmlIsGlyco.text = str(int(spectrum.getIsGlycopeptide()))
-            xmlScoreList = ET.SubElement(xmlSpectrum,"scores")        
+            xmlScoreList = ET.SubElement(xmlSpectrum, "scores")
             ions = spectrum.getIons()
             for glycan in ions:
-                xmlScore = ET.SubElement(xmlScoreList,"score")
-                xmlGlycanName = ET.SubElement(xmlScore,"glycan")
+                xmlScore = ET.SubElement(xmlScoreList, "score")
+                xmlGlycanName = ET.SubElement(xmlScore, "glycan")
                 xmlGlycanName.text = glycan
-                xmlIons = ET.SubElement(xmlScore,"ions")
+                xmlIons = ET.SubElement(xmlScore, "ions")
                 for ionName in ions[glycan]:
-                    xmlIon = ET.SubElement(xmlIons,"ion")
-                    xmlIonName = ET.SubElement(xmlIon,"name")
+                    xmlIon = ET.SubElement(xmlIons, "ion")
+                    xmlIonName = ET.SubElement(xmlIon, "name")
                     xmlIonName.text = ionName
-                    xmlIonMass = ET.SubElement(xmlIon,"mass")
+                    xmlIonMass = ET.SubElement(xmlIon, "mass")
                     xmlIonMass.text = str(ions[glycan][ionName]["mass"])
-                    xmlIonIntensity = ET.SubElement(xmlIon,"intensity")
+                    xmlIonIntensity = ET.SubElement(xmlIon, "intensity")
                     xmlIonIntensity.text = str(ions[glycan][ionName]["intensity"])
-            
-                
-                    
-    def _writeFeatures(self,xmlFeatures):
+
+
+
+    def _writeFeatures(self, xmlFeatures):
         for feature in self.features:
-            xmlFeature = ET.SubElement(xmlFeatures,"feature")
-            
-            xmlFeatureId = ET.SubElement(xmlFeature,"id")
+            xmlFeature = ET.SubElement(xmlFeatures, "feature")
+
+            xmlFeatureId = ET.SubElement(xmlFeature, "id")
             xmlFeatureId.text = str(feature.getId())
-            
-            xmlFeatureRT = ET.SubElement(xmlFeature,"rt")
+
+            xmlFeatureRT = ET.SubElement(xmlFeature, "rt")
             xmlFeatureRT.text = str(feature.getRT())
-            
-            xmlFeatureMZ = ET.SubElement(xmlFeature,"mz")
+
+            xmlFeatureMZ = ET.SubElement(xmlFeature, "mz")
             xmlFeatureMZ.text = str(feature.getMZ())
-            
-            xmlFeatureIntensity = ET.SubElement(xmlFeature,"intensity")
+
+            xmlFeatureIntensity = ET.SubElement(xmlFeature, "intensity")
             xmlFeatureIntensity.text = str(feature.getIntensity())
-            
-            xmlFeatureCharge = ET.SubElement(xmlFeature,"charge")
+
+            xmlFeatureCharge = ET.SubElement(xmlFeature, "charge")
             xmlFeatureCharge.text = str(feature.getCharge())
-            
-            minRT,maxRT,minMZ,maxMZ = feature.getBoundingBox()
-            
-            xmlFeatureMinRT = ET.SubElement(xmlFeature,"minRT")
-            xmlFeatureMinRT.text = str(minRT)               
-            
-            xmlFeatureMaxRT = ET.SubElement(xmlFeature,"maxRT")
+
+            minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
+
+            xmlFeatureMinRT = ET.SubElement(xmlFeature, "minRT")
+            xmlFeatureMinRT.text = str(minRT)
+
+            xmlFeatureMaxRT = ET.SubElement(xmlFeature, "maxRT")
             xmlFeatureMaxRT.text = str(maxRT)
-            
-            xmlFeatureMinMZ = ET.SubElement(xmlFeature,"minMZ")
-            xmlFeatureMinMZ.text = str(minMZ)               
-            
-            xmlFeatureMaxMZ = ET.SubElement(xmlFeature,"maxMZ")
+
+            xmlFeatureMinMZ = ET.SubElement(xmlFeature, "minMZ")
+            xmlFeatureMinMZ.text = str(minMZ)
+
+            xmlFeatureMaxMZ = ET.SubElement(xmlFeature, "maxMZ")
             xmlFeatureMaxMZ.text = str(maxMZ)
-            
-            xmlFeatureSpectraIds = ET.SubElement(xmlFeature,"spectraIds")
-            
+
+            xmlFeatureSpectraIds = ET.SubElement(xmlFeature, "spectraIds")
+
             for spectrumId in feature.getSpectraIds():
-                xmlFeatureSpectraId = ET.SubElement(xmlFeatureSpectraIds,"id")
+                xmlFeatureSpectraId = ET.SubElement(xmlFeatureSpectraIds, "id")
                 xmlFeatureSpectraId.text = str(spectrumId)
-                    
-    def _writeGlycoModHits(self,xmlGlycoModHits):
+
+    def _writeGlycoModHits(self, xmlGlycoModHits):
         classXMLPeptide = XMLPeptide() # Use class as static to call _write function
         for glycoModHit  in self.glycoModHits:
-            xmlHit = ET.SubElement(xmlGlycoModHits,"hit")
-            
-            xmlHitId = ET.SubElement(xmlHit,"featureId")
+            xmlHit = ET.SubElement(xmlGlycoModHits, "hit")
+
+            xmlHitId = ET.SubElement(xmlHit, "featureId")
             xmlHitId.text = str(glycoModHit.featureID)
-            
+
             # write peptide
-            xmlPeptide = ET.SubElement(xmlHit,"peptide")
-            classXMLPeptide._write(xmlPeptide,glycoModHit.peptide)
-            
+            xmlPeptide = ET.SubElement(xmlHit, "peptide")
+            classXMLPeptide._write(xmlPeptide, glycoModHit.peptide)
+
             # write glycan, composition, mass
-            xmlGlycan =  ET.SubElement(xmlHit,"glycan")
-            xmlGlycanComposition = ET.SubElement(xmlGlycan,"composition")
+            xmlGlycan = ET.SubElement(xmlHit, "glycan")
+            xmlGlycanComposition = ET.SubElement(xmlGlycan, "composition")
             xmlGlycanComposition.text = glycoModHit.glycan.composition
-            xmlGlycanMass = ET.SubElement(xmlGlycan,"mass")
+            xmlGlycanMass = ET.SubElement(xmlGlycan, "mass")
             xmlGlycanMass.text = str(glycoModHit.glycan.mass)
-            
-            xmlError =  ET.SubElement(xmlHit,"error")
+
+            xmlError = ET.SubElement(xmlHit, "error")
             xmlError.text = str(glycoModHit.error)
 
-    def _parseGlycoModHits(self,xmlGlycoModHits):
+    def _parseGlycoModHits(self, xmlGlycoModHits):
         hits = []
         for xmlHit in xmlGlycoModHits:
             hit = GlyxXMLGlycoModHit()
             hit.featureID = str(xmlHit.find("./featureId").text)
             hit.error = float(xmlHit.find("./error").text)
-            
+
             glycan = XMLGlycan()
             glycan.composition = str(xmlHit.find("./glycan/composition").text)
             glycan.mass = float(xmlHit.find("./glycan/mass").text)
             hit.glycan = glycan
-            
+
             peptide = XMLPeptide()
-            peptide._parse(xmlHit.find("./peptide"),peptide)            
+            peptide._parse(xmlHit.find("./peptide"), peptide)
             hit.peptide = peptide
             hits.append(hit)
         return hits
 
-    def _parseFeatures(self,xmlFeatures):
+    def _parseFeatures(self, xmlFeatures):
         features = []
         for xmlFeature in xmlFeatures:
             feature = GlyxXMLFeature()
@@ -444,30 +442,30 @@ class GlyxXMLFile:
             feature.setMZ(float(xmlFeature.find("./mz").text))
             feature.setIntensity(float(xmlFeature.find("./intensity").text))
             feature.setCharge(int(xmlFeature.find("./charge").text))
-            
+
             minRT = float(xmlFeature.find("./minRT").text)
             maxRT = float(xmlFeature.find("./maxRT").text)
             minMZ = float(xmlFeature.find("./minMZ").text)
             maxMZ = float(xmlFeature.find("./maxMZ").text)
-            
-            feature.setBoundingBox(minRT,maxRT,minMZ,maxMZ)
+
+            feature.setBoundingBox(minRT, maxRT, minMZ, maxMZ)
             for spectrumId in xmlFeature.findall("./spectraIds/id"):
                 feature.addSpectrumId(spectrumId.text)
             features.append(feature)
-            
+
         return features
-       
-    def writeToFile(self,path):
+
+    def writeToFile(self, path):
         xmlRoot = ET.Element("glyxXML")
         # write version
-        xmlVersion = ET.SubElement(xmlRoot,"version")
+        xmlVersion = ET.SubElement(xmlRoot, "version")
         xmlVersion.text = self.version
-        
-        xmlParameters = ET.SubElement(xmlRoot,"parameters")
-        xmlSpectra = ET.SubElement(xmlRoot,"spectra")
-        xmlFeatures = ET.SubElement(xmlRoot,"features")
-        xmlGlycomodHits = ET.SubElement(xmlRoot,"glycomod")
-        
+
+        xmlParameters = ET.SubElement(xmlRoot, "parameters")
+        xmlSpectra = ET.SubElement(xmlRoot, "spectra")
+        xmlFeatures = ET.SubElement(xmlRoot, "features")
+        xmlGlycomodHits = ET.SubElement(xmlRoot, "glycomod")
+
         # write parameters
         self._writeParameters(xmlParameters)
         # write spectra
@@ -478,13 +476,13 @@ class GlyxXMLFile:
         self._writeGlycoModHits(xmlGlycomodHits)
         # writing to file
         xmlTree = ET.ElementTree(xmlRoot)
-        f = file(path,"w")
-        f.write(ET.tostring(xmlTree,pretty_print=True))
+        f = file(path, "w")
+        f.write(ET.tostring(xmlTree, pretty_print=True))
         f.close()
 
 
-    def readFromFile(self,path):
-        f = file(path,"r")
+    def readFromFile(self, path):
+        f = file(path, "r")
         root = ET.fromstring(f.read())
         f.close()
         # check version
@@ -493,7 +491,7 @@ class GlyxXMLFile:
             self.version = "0.0.1"
         else:
             self.version = version.text
-        # read parameters 
+        # read parameters
         parameters = self._parseParameters(root.find(".//parameters"))
         # parse spectra
         spectra = self._parseSpectra(root.findall("./spectra/spectrum"))
@@ -507,21 +505,21 @@ class GlyxXMLFile:
         self.features = features
         self.glycoModHits = glycoMod
 
-    def setParameters(self,parameters):
+    def setParameters(self, parameters):
         self.parameters = parameters
 
     def getParameters(self):
         return self.parameters
-    
-    def addSpectrum(self,glyxXMLSpectrum):
+
+    def addSpectrum(self, glyxXMLSpectrum):
         self.spectra.append(glyxXMLSpectrum)
-        
-    def addFeature(self,glyxXMLFeature):
+
+    def addFeature(self, glyxXMLFeature):
         self.features.append(glyxXMLFeature)
 
-    
+
 class XMLPeptide:
-    
+
     def __init__(self):
         self.proteinID = ""
         self.sequence = ""
@@ -530,79 +528,79 @@ class XMLPeptide:
         self.mass = 0.0
         self.modifications = []
         self.glycosylationSites = []
-        
+
     def toString(self):
         s = self.sequence
         modi = {}
-        for mod,amino,pos in self.modifications:
+        for mod, amino, pos in self.modifications:
             if not mod in modi:
                 modi[mod] = []
             modi[mod].append(pos)
         for mod in modi:
             modi[mod].sort()
-            s += " " + mod + "("+", ".join(map(str,modi[mod]))+")"
+            s += " " + mod + "("+", ".join(map(str, modi[mod]))+")"
         return s
-        
-    def _parse(self,xmlPeptide,peptide):
+
+    def _parse(self, xmlPeptide, peptide):
         peptide.proteinID = xmlPeptide.find("./proteinId").text
         peptide.sequence = xmlPeptide.find("./sequence").text
         peptide.start = int(xmlPeptide.find("./start").text)
         peptide.end = int(xmlPeptide.find("./end").text)
         peptide.mass = float(xmlPeptide.find("./mass").text)
-        
+
 
         for xmlMod in xmlPeptide.findall("./modifications/modification"):
             name = xmlMod.find("./name").text
             amino = xmlMod.find("./aminoacid").text
             pos = int(xmlMod.find("./position").text)
-            peptide.modifications.append((name,amino,pos))
+            peptide.modifications.append((name, amino, pos))
 
         for xmlSite in xmlPeptide.findall("./glycosylationsites/glycosylationsite"):
             typ = xmlSite.find("./type").text
             pos = int(xmlSite.find("./position").text)
-            peptide.glycosylationSites.append((pos,typ))
+            peptide.glycosylationSites.append((pos, typ))
         return
-            
-    def _write(self,xmlPeptide,peptide):
-        xmlSequence = ET.SubElement(xmlPeptide,"sequence")
+
+    def _write(self, xmlPeptide, peptide):
+        xmlSequence = ET.SubElement(xmlPeptide, "sequence")
         xmlSequence.text = peptide.sequence
-        
-        xmlProteinId = ET.SubElement(xmlPeptide,"proteinId")
+
+        xmlProteinId = ET.SubElement(xmlPeptide, "proteinId")
         xmlProteinId.text = peptide.proteinID
-        
-        xmlStart = ET.SubElement(xmlPeptide,"start")
+
+        xmlStart = ET.SubElement(xmlPeptide, "start")
         xmlStart.text = str(peptide.start)
-        
-        xmlEnd = ET.SubElement(xmlPeptide,"end")
+
+        xmlEnd = ET.SubElement(xmlPeptide, "end")
         xmlEnd.text = str(peptide.end)
-        
-        xmlMass = ET.SubElement(xmlPeptide,"mass")
+
+        xmlMass = ET.SubElement(xmlPeptide, "mass")
         xmlMass.text = str(peptide.mass)
-        
-        xmlModifications = ET.SubElement(xmlPeptide,"modifications")
-        for mod,amino,pos in peptide.modifications:
-            xmlMod = ET.SubElement(xmlModifications,"modification")
-            
-            xmlModName = ET.SubElement(xmlMod,"name")
+
+        xmlModifications = ET.SubElement(xmlPeptide, "modifications")
+        for mod, amino, pos in peptide.modifications:
+            xmlMod = ET.SubElement(xmlModifications, "modification")
+
+            xmlModName = ET.SubElement(xmlMod, "name")
             xmlModName.text = mod
-            
-            xmlModAmino = ET.SubElement(xmlMod,"aminoacid")
+
+            xmlModAmino = ET.SubElement(xmlMod, "aminoacid")
             xmlModAmino.text = amino
-            
-            xmlModPos = ET.SubElement(xmlMod,"position")
+
+            xmlModPos = ET.SubElement(xmlMod, "position")
             xmlModPos.text = str(pos)
-        
-        xmlSites = ET.SubElement(xmlPeptide,"glycosylationsites")
-        for pos,typ in peptide.glycosylationSites:
-            xmlSite = ET.SubElement(xmlSites,"glycosylationsite")
-            xmlSitePos = ET.SubElement(xmlSite,"position")
+
+        xmlSites = ET.SubElement(xmlPeptide, "glycosylationsites")
+        for pos, typ in peptide.glycosylationSites:
+            xmlSite = ET.SubElement(xmlSites, "glycosylationsite")
+            xmlSitePos = ET.SubElement(xmlSite, "position")
             xmlSitePos.text = str(pos)
-            xmlSiteTyp = ET.SubElement(xmlSite,"type")
+            xmlSiteTyp = ET.SubElement(xmlSite, "type")
             xmlSiteTyp.text = typ
         return
 
 class XMLPeptideParameters:
-    
+
     def __init__(self):
         self.proteins = []
         #self.data = []
@@ -611,80 +609,80 @@ class XMLPeptideParameters:
         self.OGlycosylation = False
         self.modifications = []
         self.missedCleavages = 0
-        
-        
-        
+
+
+
 class XMLPeptideFile:
-    
+
     def __init__(self):
         self.peptides = []
         self.parameters = XMLPeptideParameters()
-        
-        
-    def _writeParameters(self,xml):
+
+
+    def _writeParameters(self, xml):
         parameters = self.parameters
-        xmlProteins = ET.SubElement(xml,"proteins")
+        xmlProteins = ET.SubElement(xml, "proteins")
         for protein in parameters.proteins:
-            xmlProtein = ET.SubElement(xmlProteins,"proteinIdentifier")
+            xmlProtein = ET.SubElement(xmlProteins, "proteinIdentifier")
             xmlProtein.text = str(protein.identifier)
-        xmlEnzymes = ET.SubElement(xml,"enzymes")
-        xmlEnzymes.text = ",".join(parameters.digestionEnzymes)
+        xmlEnzymes = ET.SubElement(xml, "enzymes")
+        xmlEnzymes.text = ", ".join(parameters.digestionEnzymes)
         glycosylations = []
         if parameters.NGlycosylation == True:
             glycosylations.append("N")
         if parameters.OGlycosylation == True:
-             glycosylations.append("O")
-        xmlGlycosylations = ET.SubElement(xml,"glycosylations")
-        xmlGlycosylations.text = ",".join(glycosylations)
-        
-        xmlModifications = ET.SubElement(xml,"modifications")
-        xmlModifications.text = ",".join(parameters.modifications)
-        xmlmissedCleaveage = ET.SubElement(xml,"missedCleaveage")
+            glycosylations.append("O")
+        xmlGlycosylations = ET.SubElement(xml, "glycosylations")
+        xmlGlycosylations.text = ", ".join(glycosylations)
+
+        xmlModifications = ET.SubElement(xml, "modifications")
+        xmlModifications.text = ", ".join(parameters.modifications)
+        xmlmissedCleaveage = ET.SubElement(xml, "missedCleaveage")
         xmlmissedCleaveage.text = str(parameters.missedCleavages)
-        
+
         return
-        
-    def _writePeptides(self,xmlPeptides):
+
+    def _writePeptides(self, xmlPeptides):
         classXMLPeptide = XMLPeptide() # Use class as static to call _write function
         for peptide in self.peptides:
-            xmlPeptide = ET.SubElement(xmlPeptides,"peptide")
-            classXMLPeptide._write(xmlPeptide,peptide)
-        return 
-                
-    def _parsePeptides(self,xmlPeptides):
+            xmlPeptide = ET.SubElement(xmlPeptides, "peptide")
+            classXMLPeptide._write(xmlPeptide, peptide)
+        return
+
+    def _parsePeptides(self, xmlPeptides):
         peptides = []
-        
+
         for xmlPeptide in xmlPeptides:
             peptide = XMLPeptide()
-            peptide._parse(xmlPeptide,peptide)
+            peptide._parse(xmlPeptide, peptide)
             peptides.append(peptide)
-        
+
         return peptides
-        
-    def _parseParameters(self,xmlParameters):
+
+    def _parseParameters(self, xmlParameters):
         parameters = XMLPeptideParameters()
         return parameters
-    
-    def writeToFile(self,path):
+
+    def writeToFile(self, path):
         xmlRoot = ET.Element("xmlPeptides")
-        xmlParameters = ET.SubElement(xmlRoot,"parameters")
-        xmlPeptides = ET.SubElement(xmlRoot,"peptides")
+        xmlParameters = ET.SubElement(xmlRoot, "parameters")
+        xmlPeptides = ET.SubElement(xmlRoot, "peptides")
         # write parameters
         self._writeParameters(xmlParameters)
         # write peptide
         self._writePeptides(xmlPeptides)
         # writing to file
         xmlTree = ET.ElementTree(xmlRoot)
-        f = file(path,"w")
-        f.write(ET.tostring(xmlTree,pretty_print=True))
+        f = file(path, "w")
+        f.write(ET.tostring(xmlTree, pretty_print=True))
         f.close()
         return
-        
-    def loadFromFile(self,path):
-        f = file(path,"r")
+
+    def loadFromFile(self, path):
+        f = file(path, "r")
         root = ET.fromstring(f.read())
         f.close()
-        # read parameters 
+        # read parameters
         parameters = self._parseParameters(root.find(".//parameters"))
         # parse spectra
         peptides = self._parsePeptides(root.findall("./peptides/peptide"))
