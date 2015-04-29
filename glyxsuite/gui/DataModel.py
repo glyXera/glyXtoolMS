@@ -1,12 +1,11 @@
 import glyxsuite
 import os
-
+import configparser
 
 class DataModel:
 
     def __init__(self):
-        #self.workingdir = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID"
-        self.workingdir = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/ORBI/HCD"
+        self.workingdir = ""
         self.debug = None
         self.root = None
         self.projects = {}
@@ -37,6 +36,31 @@ class DataModel:
         self.funcUpdateFeaturePrecursorSpectrum = None
         self.funcUpdateFeatureChromatogram = None
         self.funcUpdateFeatureMSMSSpectrum = None
+        
+        # read settings
+        self.readSettings()
+        
+    def readSettings(self):
+        home = os.path.expanduser("~")
+        settingspath = os.path.join(home,'.glyxsuite.ini')
+        print "use settings under ",settingspath
+        # Set default settings
+        self.workingdir = home
+        # Create settings if not exists
+        if not os.path.exists(settingspath):
+            self.saveSettings()
+        config = configparser.ConfigParser()
+        config.read(os.path.join(settingspath))
+        self.workingdir = config["DEFAULT"]["workingdir"]
+        
+    def saveSettings(self):
+        home = os.path.expanduser("~")
+        settingspath = os.path.join(home,'.glyxsuite.ini')
+        config = configparser.ConfigParser()
+        config["DEFAULT"] = {}
+        config["DEFAULT"]["workingdir"] = self.workingdir
+        with open(settingspath, 'w') as configfile:
+            config.write(configfile)
 
 class Chromatogram:
 
