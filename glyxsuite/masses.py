@@ -184,7 +184,7 @@ def calcIonMass(name):
     if charge == 0:
         return mass
     else:
-        return mass/float(charge)
+        return mass/float(charge),charge
 
 def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
     """
