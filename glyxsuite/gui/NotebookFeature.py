@@ -271,15 +271,17 @@ class NotebookFeature(ttk.Frame):
         index = 0
         self.spectrumTreeIds = {}
         for spec, spectrum in analysis.data:
-
-            if spectrum.rt < minRT:
-                continue
-            if spectrum.rt > maxRT:
-                continue
-            if spectrum.precursorMass < minMZ:
-                continue
-            if spectrum.precursorMass > maxMZ:
-                continue
+            
+            # check if spectrum is linked to feature
+            if not spectrum.nativeId in feature.getSpectraIds():
+                if spectrum.rt < minRT:
+                    continue
+                if spectrum.rt > maxRT:
+                    continue
+                if spectrum.precursorMass < minMZ:
+                    continue
+                if spectrum.precursorMass > maxMZ:
+                    continue
 
             index += 1
             if index%2 == 0:
