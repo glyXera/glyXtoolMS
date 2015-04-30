@@ -1,6 +1,6 @@
 from lxml import etree as ET
 
-class GlyxXMLSpectrum:
+class GlyxXMLSpectrum(object):
 
     def __init__(self):
         self.nativeId = ""
