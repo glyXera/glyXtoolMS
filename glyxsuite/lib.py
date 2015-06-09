@@ -108,6 +108,7 @@ class Protein:
         peptide.sequence = self.sequence[start:end]
         peptide.start = start
         peptide.end = end
+        peptide.proteinID = self.identifier
         for mod, amino, pos in self.modifications:
             if start <= pos and pos < end:
                 peptide.modifications.append((mod, amino, pos))
