@@ -174,10 +174,10 @@ def parseOxoniumIons(options):
         Each oxoniumion has to look like this'(NeuAc)1(H2O)-1(H+)1' """
     oxoniumIons = {}
 
-    oxoniumIons['(HexNAc)1(H+)1'] = {'charge':1}
+    oxoniumIons['(HexNAc)1(H+)1'] = {'charge':1, 'depends':['(HexNAc)1(H2O)-1(H+)1']}
     oxoniumIons['(HexNAc)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(HexNAc)1(H+)1']}
 
-    oxoniumIons['(Hex)1(H+)1'] = {'charge':1}
+    oxoniumIons['(Hex)1(H+)1'] = {'charge':1, 'depends':['(Hex)1(H2O)-1(H+)1']}
     oxoniumIons['(Hex)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(Hex)1(H+)1']}
 
     oxoniumIons['(HexNAc)1(Hex)1(H+)1'] = {'charge':1}
@@ -187,7 +187,7 @@ def parseOxoniumIons(options):
 
     # Sialic acid
     if options.hasSial == "true":
-        oxoniumIons['(NeuAc)1(H+)1'] = {'charge':1}
+        oxoniumIons['(NeuAc)1(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H2O)-1(H+)1']}
         oxoniumIons['(NeuAc)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H+)1']}
 
         oxoniumIons['(Hex)1(HexNAc)1(NeuAc)1(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H+)1']}
@@ -195,7 +195,7 @@ def parseOxoniumIons(options):
 
     # Fucose
     if options.hasFucose == "true":
-        oxoniumIons['(dHex)1(H+)1'] = {'charge':1}
+        oxoniumIons['(dHex)1(H+)1'] = {'charge':1, 'depends':['(dHex)1(H2O)-1(H+)1']}
         oxoniumIons['(dHex)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(dHex)1(H+)1']}
         oxoniumIons['(HexNAc)1(Hex)1(dHex)1(H+)1'] = {'charge':1, 'depends':['(Hex)1(H+)1']}
 
