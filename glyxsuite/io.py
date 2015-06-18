@@ -1,7 +1,22 @@
+"""
+Provides the i/o methods used in the pipeline
+Contains for example:
+- GlyxXMLSpectrum
+- XMLPeptideFile
+- GlyxXMLFeature
+- GlyxXMLFile
+
+For example usage of the glyML file:
+f = GlyxXMLFile()
+f.loadFromFile(path)
+f.writeToFile(path)
+
+"""
+
 from lxml import etree as ET
 
 class GlyxXMLSpectrum(object):
-
+    """ Define the GlyxXMLSpectrum as used in the glyML format """
     def __init__(self):
         self.nativeId = ""
         self.rt = 0.0
@@ -13,28 +28,36 @@ class GlyxXMLSpectrum(object):
         self.isGlycopeptide = False
 
     def setNativeId(self, nativeId):
+        """ Set the native spectrum ID """
         self.nativeId = nativeId
 
     def setRT(self, rt):
+        """ Set the spectrum retention time """
         self.rt = rt
 
     def setIonCount(self, ionCount):
+        """ Set the ion count of the spectrum """
         if ionCount == 0:
             self.ionCount = 0
         else:
             self.ionCount = ionCount
 
     def setPrecursor(self, mass, charge):
+        """ Set the precursor mass and charge """
         self.precursorMass = mass
         self.precursorCharge = charge
 
     def setLogScore(self, logScore):
+        """ Set the calculated logScore of the spectrum """
         self.logScore = logScore
 
     def setIsGlycopeptide(self, boolean):
+        """ Set the glycopeptide identify of the spectrum True/False """
         self.isGlycopeptide = boolean
 
     def addIon(self, glycan, ionName, mass, intensity):
+        """ Add a reporter ion to the spectrum with the glycan,
+            the ionname, the theorectical mass and intensity of the ion"""
         if not glycan in self.ions:
             self.ions[glycan] = {}
         self.ions[glycan][ionName] = {}
@@ -43,34 +66,44 @@ class GlyxXMLSpectrum(object):
 
 
     def getNativeId(self):
+        """ Get the native spectrum ID """
         return self.nativeId
 
     def getRT(self):
+        """ Get the retention time of the spectrum """
         return self.rt
 
     def getIonCount(self):
+        """ Get the ion count of the spectrum """
         return self.ionCount
 
     def getPrecursorMass(self):
+        """ Get the precursor mass"""
         return self.precursorMass
 
     def getPrecursorCharge(self):
+        """ Get the precursor charge"""
         return self.precursorCharge
 
     def getLogScore(self):
+        """ Get the calculate logScore of the spectrum """
         return self.logScore
 
     def getIons(self):
+        """ Get the reporter ions of the spectrum
+        Contains a dictionary of the format
+        dict[glycan][ionname]["mass"] or dict[glycan][ionname]["intensity"]"""
         return self.ions
 
     def getIsGlycopeptide(self):
+        """ Get if the spectrum was identified as a glycopeptide spectrum"""
         return self.isGlycopeptide
 
 
 
 
-class GlyxXMLParameters:
-
+class GlyxXMLParameters(object):
+    """ Parameter class for glyML file"""
     def __init__(self):
         self._timestamp = ""
         self._glycans = []
@@ -141,7 +174,7 @@ class GlyxXMLParameters:
         self._sourceFileChecksum = checksum
 
 
-class GlyxXMLFeature:
+class GlyxXMLFeature(object):
 
     def __init__(self):
         self.id = ""
@@ -200,14 +233,14 @@ class GlyxXMLFeature:
     def getSpectraIds(self):
         return self.spectraIds
 
-class XMLGlycan:
+class XMLGlycan(object):
 
     def __init__(self):
         self.composition = ""
         self.mass = 0.0
 
 
-class GlyxXMLGlycoModHit:
+class GlyxXMLGlycoModHit(object):
 
     def __init__(self):
         self.featureID = ""
@@ -216,7 +249,7 @@ class GlyxXMLGlycoModHit:
         self.error = 0.0
 
 
-class GlyxXMLFile:
+class GlyxXMLFile(object):
     # Input/Output file of glyxXML file
     def __init__(self):
         self.parameters = GlyxXMLParameters()
@@ -518,7 +551,7 @@ class GlyxXMLFile:
         self.features.append(glyxXMLFeature)
 
 
-class XMLPeptide:
+class XMLPeptide(object):
 
     def __init__(self):
         self.proteinID = ""
@@ -599,7 +632,7 @@ class XMLPeptide:
             xmlSiteTyp.text = typ
         return
 
-class XMLPeptideParameters:
+class XMLPeptideParameters(object):
 
     def __init__(self):
         self.proteins = []
@@ -612,7 +645,7 @@ class XMLPeptideParameters:
 
 
 
-class XMLPeptideFile:
+class XMLPeptideFile(object):
 
     def __init__(self):
         self.peptides = []
