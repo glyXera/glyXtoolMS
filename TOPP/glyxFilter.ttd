@@ -15,7 +15,7 @@
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
 		  <cloptions> "%1"/glyxFilter.py --inMZML "%2" --inFeature "%3" --outGlyML "%4" --checkNGlycan "%5" --hasFucose "%6" --hasSial %7 --oxoniumions %8 --tolerance %9 --ionthreshold %10 --scorethreshold "%11"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
-		  <path>/afs/mpi-magdeburg.mpg.de/data/bpt/personnel_folders/MarkusPioch/software/Envs/glyxbox/bin/python</path>
+		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
       // and thus starting the tool from somewhere else might actually lead to trouble
       // use only real paths here (no placeholders like %TMP)
@@ -37,7 +37,7 @@
 			<mapping id="11" cl="%%scorethreshold" />
 		  </mappings>
 		  <ini_param>
-			<ITEM name="scriptpath" value="/afs/mpi-magdeburg.mpg.de/data/bpt/personnel_folders/MarkusPioch/software/OpenMS/share/OpenMS/SCRIPTS/" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
+			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
 			<ITEM name="inMZML" value="" type="string" tags="input file" restrictions="*.mzML" />
             <ITEM name="inFeature" value="" type="string" tags="input file" restrictions="*.featureXML" />
 			<ITEM name="outGlyML" value="" type="string" tags="output file" restrictions="*.xml" />

@@ -15,7 +15,7 @@
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
 		  <cloptions> "%1"/glyxReporter.py --in "%2" --out "%3"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
-		  <path>/afs/mpi-magdeburg.mpg.de/data/bpt/personnel_folders/MarkusPioch/software/Envs/glyxbox/bin/python</path>
+		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
       // and thus starting the tool from somewhere else might actually lead to trouble
       // use only real paths here (no placeholders like %TMP)
@@ -30,7 +30,7 @@
             <mapping id="3" cl="%%outReport" />
 		  </mappings>
 		  <ini_param>
-			<ITEM name="scriptpath" value="." type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
+			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
 			<ITEM name="inAnalysis" value="" type="string" tags="input file" restrictions="*.xml"/>
             <ITEM name="outReport" value="" type="string" tags="output file" restrictions="*.xls"/>
 		  </ini_param>

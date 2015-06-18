@@ -15,7 +15,7 @@
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
 		  <cloptions> "%1"/GlycanBuilder.py --out "%2" --rangeHex "%4" --rangeHexNAc "%5" --rangeFuc "%6" --rangeNeuAc "%7"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
-		  <path>/afs/mpi-magdeburg.mpg.de/data/bpt/personnel_folders/MarkusPioch/software/Envs/glyxbox/bin/python</path>
+		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
       // and thus starting the tool from somewhere else might actually lead to trouble
       // use only real paths here (no placeholders like %TMP)
@@ -33,7 +33,7 @@
             <mapping id="7" cl="%%rangeNeuAc" />                                            			
 		  </mappings>
 		  <ini_param>
-			<ITEM name="scriptpath" value="." type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
+			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
             <ITEM name="in" value="" type="string" tags="input file" description="dummy input file"/>
 			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.txt" description="File output glycan composition file .txt"/>
             <ITEM name="rangeHex" value="0:0" type="string" description="Range of Hex within the glycan, use min:max as input"/>
