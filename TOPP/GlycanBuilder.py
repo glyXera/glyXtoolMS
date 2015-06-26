@@ -52,7 +52,6 @@ def main(options):
                                         rangeDHex,
                                         rangeHex,
                                         rangeHexNAc):
-        print "x"
         # The sum of the number of hexose plus HexNAc residues cannot 
         # be zero, i.e., an N-linked glycan contain either a hexose 
         # or a HexNAc residue, or both.
@@ -76,7 +75,6 @@ def main(options):
         if mass > 8000:
             continue
         # write composition to file
-        print "writing"
         fout.write("DHEX"+str(DHEX)+
                     "HEX"+str(HEX)+
                     "HEXNAC"+str(HEXNAC)+
@@ -94,4 +92,4 @@ from itertools import product
 if __name__ == "__main__":
     options = handle_args()
     main(options)
- 
+

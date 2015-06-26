@@ -49,6 +49,7 @@ then
   exit 3
 fi
 
+### ------------------------- copy files ----------------------------###
 
 for fullfile in *.ttd
 do
@@ -57,4 +58,9 @@ do
     sed -e "s|{pythonpath}|$pythonpath|" -e "s|{scriptpath}|$scriptpath|"  "$fullfile" > "$externalpathUnlinked/$filename"
 done
 
-
+for fullfile in *.py
+do
+    echo "Processing $fullfile file..";
+    filename=$(basename "$fullfile")
+    cat  "$fullfile" > "$scriptpathUnlinked/$filename"
+done
