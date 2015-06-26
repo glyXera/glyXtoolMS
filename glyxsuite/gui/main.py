@@ -14,6 +14,7 @@ import NotebookIdentification
 import ExtensionScoring
 import ExtensionFeature
 import HistogramView
+import ExtensionIdentification
 
 """
 Viewer for analysis file
@@ -111,7 +112,7 @@ class App(ttk.Frame):
         self.e1.grid(row=0, column=1, rowspan=2, sticky="NWES")
         self.e2 = ExtensionFeature.ExtensionFeature(master, self.model, '2. Features')
         self.e2.grid(row=0, column=1, rowspan=2, sticky="NWES")
-        self.e3 = ttk.Labelframe(master, text = '3. Identification')
+        self.e3 = ExtensionIdentification.ExtensionIdentification(master, self.model, '3. Identification')
         self.e3.grid(row=0, column=1, rowspan=2, sticky="NWES")
         self.e4 = ttk.Labelframe(master, text = '4. Results')
         self.e4.grid(row=0, column=1, rowspan=2, sticky="NWES")
@@ -216,3 +217,5 @@ class HistogramFrame(Tkinter.Toplevel):
         except ValueError:
             print "cannot convert"
             self.v1.set(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())
+
+

@@ -119,10 +119,10 @@ class NotebookIdentification(ttk.Frame):
                     continue
                 comp[glycanname] = amount
                 glycan += find
-            if comp["HEXNAC"] < 2:
-                continue
-            if comp["HEX"] < 3:
-                continue
+            #if comp["HEXNAC"] < 2:
+            #    continue
+            #if comp["HEX"] < 3:
+            #    continue
             #("Mass", "error", "Peptide", "Glycan")
             index += 1
             if index%2 == 0:
@@ -136,7 +136,8 @@ class NotebookIdentification(ttk.Frame):
                         glycan),
                 tags = tag)
             #self.treeIds[itemSpectra] = (spec, spectrum)
-
+        # update Extention
+        self.model.funcUpdateExtentionIdentification()
 
     def clickedTree(self, event):
         print "clicked tree"

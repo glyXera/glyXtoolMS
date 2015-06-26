@@ -40,7 +40,9 @@ class FramePlot(ttk.Frame):
         # add canvas
         self.aMax = -1
         self.bMax = -1
-
+        self.aMin = 0
+        self.bMin = 0
+        
         self.viewXMin = 0
         self.viewXMax = 1
         self.viewYMin = 0
@@ -136,9 +138,9 @@ class FramePlot(ttk.Frame):
 
     def calcScales(self):
         if self.viewXMin == -1:
-            self.viewXMin = 0
+            self.viewXMin = self.aMin
         if self.viewYMin == -1:
-            self.viewYMin = 0
+            self.viewYMin = self.bMin
 
         if self.viewXMax == -1:
             self.viewXMax = self.aMax
@@ -176,9 +178,9 @@ class FramePlot(ttk.Frame):
     def initCanvas(self, keepZoom=False):
         self.setMaxValues()
         if self.keepZoom.get() == 0 and keepZoom == False:
-            self.viewXMin = 0
+            self.viewXMin = -1
             self.viewXMax = -1
-            self.viewYMin = 0
+            self.viewYMin = -1
             self.viewYMax = -1
             self.zoomHistory = []
         self._paintCanvas()
@@ -260,9 +262,9 @@ class FramePlot(ttk.Frame):
     def resetZoom(self, event):
         if self.allowZoom == False:
             return
-        self.viewXMin = 0
+        self.viewXMin = -1
         self.viewXMax = -1
-        self.viewYMin = 0
+        self.viewYMin = -1
         self.viewYMax = -1
         self._paintCanvas()
 
@@ -310,12 +312,12 @@ class FramePlot(ttk.Frame):
         # check maximal parameters
         if self.viewXMax > self.aMax:
             self.viewXMax = self.aMax
-        if self.viewXMin < 0:
-            self.viewXMin = 0
+        if self.viewXMin < self.aMin:
+            self.viewXMin = self.aMin
         if self.viewYMax > self.bMax:
             self.viewYMax = self.bMax
-        if self.viewYMin < 0:
-            self.viewYMin = 0
+        if self.viewYMin < self.bMin:
+            self.viewYMin = self.bMin
 
         self._paintCanvas()
 

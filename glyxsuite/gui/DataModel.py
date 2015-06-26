@@ -36,6 +36,7 @@ class DataModel:
         self.funcUpdateFeaturePrecursorSpectrum = None
         self.funcUpdateFeatureChromatogram = None
         self.funcUpdateFeatureMSMSSpectrum = None
+        self.funcUpdateExtentionIdentification = None
         
         # read settings
         self.readSettings()
