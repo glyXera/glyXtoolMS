@@ -2,18 +2,18 @@
 	<tool status="external">
 		<category>GlyxBox</category>
 		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
-		<type>GlycoMod</type>
+		<type>GlycopeptideMatcher</type>
 		// description of the wrapper
 		<external>
       <text>
-        <onstartup>Startig GlyxBox - GlycoMod</onstartup>
+        <onstartup>Startig GlyxBox - GlycopeptideMatcher</onstartup>
         <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
-        <onfinish>GlycoMod successfull</onfinish>
+        <onfinish>GlycopeptideMatcher successful</onfinish>
       </text>    
 		  // currently disregarded by TOPPAS, but might become useful
-		  <e_category>GlycoMod</e_category>
+		  <e_category>GlycopeptideMatcher</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/GlycoMod.py --out "%2" --inAnalysis "%3" --inGlycan "%4" --inPeptide "%5" --accuraccy "%6"</cloptions>
+		  <cloptions> "%1"/GlycopeptideMatcher.py --out "%2" --inAnalysis "%3" --inGlycan "%4" --inPeptide "%5" --accuracy "%6"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -29,7 +29,7 @@
 			<mapping id="3" cl="%%inAnalysis" />
 			<mapping id="4" cl="%%inGlycan" />
             <mapping id="5" cl="%%inPeptide" />
-            <mapping id="6" cl="%%accuraccy" />                                             			
+            <mapping id="6" cl="%%accuracy" />                                             			
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
@@ -37,7 +37,7 @@
 			<ITEM name="inAnalysis" value="" type="string" tags="input file" restrictions="*.xml" description="File input Analysis file .xml"/>
             <ITEM name="inGlycan" value="" type="string" tags="input file" restrictions="*.txt" description="File input Glycan composition file .txt"/>
             <ITEM name="inPeptide" value="" type="string" tags="input file" restrictions="*.xml" description="File input Glycopeptide file .xml"/>
-            <ITEM name="accuraccy" value="0.2" type="float" description="Mass accuracy in Dalton"/>
+            <ITEM name="accuracy" value="0.2" type="float" description="Mass accuracy in Dalton"/>
 		  </ini_param>
 		</external>
 	</tool>

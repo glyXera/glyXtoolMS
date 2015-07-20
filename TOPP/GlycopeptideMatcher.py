@@ -16,7 +16,7 @@ def handle_args(argv=None):
     parser.add_argument("--inGlycan", dest="infileGlycan",help="File input Glycan composition file .txt")
     parser.add_argument("--inPeptide", dest="infilePeptide",help="File input Glycopeptide file .xml")    
     parser.add_argument("--out", dest="outfile",help="File output Analysis file with appended Glycopeptide hits")
-    parser.add_argument("--accuraccy", dest="accuraccy",help="Mass accuracy in Dalton")
+    parser.add_argument("--accuracy", dest="accuracy",help="Mass accuracy in Dalton")
                 
     if not argv:
         args = parser.parse_args(sys.argv[1:])
@@ -27,7 +27,7 @@ def handle_args(argv=None):
 
 def main(options):
     print "parsing input parameters"
-    tolerance = float(options.accuraccy)
+    tolerance = float(options.accuracy)
     
     print "parsing input files"
     # Analysis file
