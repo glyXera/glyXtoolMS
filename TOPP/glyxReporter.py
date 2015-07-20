@@ -11,6 +11,17 @@ def handle_args(argv=None):
         args = parser.parse_args(argv)
     return args
 
+def parseComposition(comp):
+    string = ""
+    names = {"DHEX":"F","HEX":"H","HEXNAC":"HN","NEUAC":"NA","NEUGC":"NG"}
+    for match in re.findall("[A-z]+\d+",comp):
+        unit = re.search("[A-z]+",match).group()
+        amount = int(re.search("\d+",match).group())
+        if amount == 0:
+            continue
+        string += names[unit] + str(amount)
+    return string
+        
 
 def main(options): 
 
@@ -56,7 +67,8 @@ def main(options):
 
     # write header
     for col,comp in enumerate(["Peptides"]+comps):
-        ws0.write(0,col,re.sub("[A-Z]+0","",comp))
+        #ws0.write(0,col,re.sub("[A-Z]+0","",comp))
+        ws0.write(0,col,parseComposition(comp))
     row = 0
     for seq in data:
         row += 1
