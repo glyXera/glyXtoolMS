@@ -11,7 +11,9 @@ def handle_args(argv=None):
     import argparse
     usage = "\nFile Glycan composition builder"
     parser = argparse.ArgumentParser(description=usage)
+    parser.add_argument("--in", dest="infile",help="File input Glycanstructure file .txt")
     parser.add_argument("--out", dest="outfile",help="File output Glycanstructure file .txt")
+    parser.add_argument("--useinfile", dest="useinfile",help="Use file input as basis and filter with the given ranges (true)")
     parser.add_argument("--rangeHex", dest="rangeHex",help="Range of Hexoses in the glycan structure min:max")
     parser.add_argument("--rangeHexNAc", dest="rangeHexNAc",help="Range of HexNAc in the glycan structure min:max")
     parser.add_argument("--rangeFuc", dest="rangeDHex",help="Range of Fucose in the glycan structure min:max")
@@ -22,7 +24,6 @@ def handle_args(argv=None):
     else:
         args = parser.parse_args(argv)
     return args
-
 
 def main(options):
     print "parsing input parameters"
@@ -41,49 +42,57 @@ def main(options):
     rangeDHex = range(minDHex,maxDHex+1)
     rangeNeuAc = range(minNeuAc,maxNeuAc+1)
     
+    
+    
     # open output file
     fout = file(options.outfile,"w")
-    
-    
-    print "generating glycan compositions"
-    glycans = []
-    for NEUAC,DHEX,HEX,HEXNAC in product(
+    if options.useinfile == "true":
+        print "checking glycans in file"
+        fin = file(options.infile,"r")
+        for line in fin:
+            glycan = glyxsuite.lib.Glycan(line[:-1])
+            if not glycan.checkComposition():
+                continue
+            
+            print minHex,glycan.sugar["HEX"],maxHex
+            if not minHex <= glycan.sugar["HEX"] <= maxHex:
+                continue
+            
+            if not minHexNAc <= glycan.sugar["HEXNAC"] <= maxHexNAc:
+                continue
+            if not minDHex <= glycan.sugar["DHEX"] <= maxDHex:
+                continue
+            if not minNeuAc <= glycan.sugar["NEUAC"] <= maxNeuAc:
+                continue
+            if glycan.mass > 8000:
+                continue
+            
+            # write composition to file
+            fout.write(glycan.toString() + "\n")
+        fin.close()
+    else:
+        print "generating glycan compositions"
+        for NEUAC,DHEX,HEX,HEXNAC in product(
                                         rangeNeuAc,
                                         rangeDHex,
                                         rangeHex,
                                         rangeHexNAc):
-        # The sum of the number of hexose plus HexNAc residues cannot 
-        # be zero, i.e., an N-linked glycan contain either a hexose 
-        # or a HexNAc residue, or both.
-        if HEX+HEXNAC == 0:
-            continue
-        # The number of fucose residues plus 1 must be less than or 
-        # equal to the sum of the number of hexose plus HexNAc residues.
-        if DHEX >= HEX+HEXNAC:
-            continue
-        # If the number of HexNAc residues is less than or equal to 2 
-        # and the number of hexose residues is greater than 2, 
-        # then the number of NeuAc and NeuGc residues must be zero. 
-        if HEXNAC <= 2 and HEX > 2 and NEUAC > 0:
-            continue
-        # calc mass
-        mass = 0
-        mass += glyxsuite.masses.GLYCAN["NEUAC"]*NEUAC
-        mass += glyxsuite.masses.GLYCAN["DHEX"]*DHEX
-        mass += glyxsuite.masses.GLYCAN["HEX"]*HEX
-        mass += glyxsuite.masses.GLYCAN["HEXNAC"]*HEXNAC
-        if mass > 8000:
-            continue
-        # write composition to file
-        fout.write("DHEX"+str(DHEX)+
-                    "HEX"+str(HEX)+
-                    "HEXNAC"+str(HEXNAC)+
-                    "NEUAC"+str(NEUAC)+"\n")
-            
+            # calc mass
+            glycan = glyxsuite.lib.Glycan()
+            glycan.setComposition(NEUAC,DHEX,HEX,HEXNAC)
+            if not glycan.checkComposition():
+                continue
+            if glycan.mass > 8000:
+                continue
+            # write composition to file
+            fout.write(glycan.toString() + "\n")
+    
     fout.close()
 
     print "done"
     return
+    
+    
 
 import sys
 import glyxsuite
