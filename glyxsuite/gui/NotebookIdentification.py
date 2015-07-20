@@ -18,7 +18,8 @@ class NotebookIdentification(ttk.Frame):
         columns = {"Mass":70, "error":70, "Peptide":160, "Glycan":160}
         self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan")
         self.tree.column("#0", width=40)
-        self.tree.heading("#0", text="Feature Nr.")
+        
+        self.tree.heading("#0", text="Feature Nr.", command=lambda col='#0': self.sortColumn(col))
         for col in columns:
             self.tree.column(col, width=columns[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
@@ -43,19 +44,26 @@ class NotebookIdentification(ttk.Frame):
         self.model.funcUpdateNotebookIdentification = self.updateTree
 
     def sortColumn(self, col):
-
+        if self.model == None or self.model.currentAnalysis == None:
+            return
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
         else:
             self.model.currentAnalysis.sortedColumn = col
             self.model.currentAnalysis.reverse = False
+            
         if col == "Peptide" or col == "Glycan":
             l = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
         elif col == "Mass":
             l = [(float(self.tree.set(k, col)), k) for k in self.tree.get_children('')]
         elif col == "error":
             l = [(abs(float(self.tree.set(k, col))), k) for k in self.tree.get_children('')]
-
+        elif col == "#0":
+            l = [(int(self.tree.item(k, "text")), k) for k in self.tree.get_children('')]
+            #print [k for k in self.tree.get_children('')]
+            #return
+        else:
+            return
         l.sort(reverse=self.model.currentAnalysis.reverse)
 
 
@@ -109,16 +117,17 @@ class NotebookIdentification(ttk.Frame):
             mass = (feature.getMZ()-glyxsuite.masses.MASS["H+"])*feature.getCharge()
             peptide = hit.peptide.toString()
             # clean up glycan
-            glycan = ""
-            comp = {"HEX":0, "HEXNAC":0}
-            for find in re.findall("[A-z]+\d+", hit.glycan.composition):
-                x = re.search("\D+", find).end()
-                glycanname = find[:x]
-                amount = int(find[x:])
-                if amount == 0:
-                    continue
-                comp[glycanname] = amount
-                glycan += find
+            glycan = glyxsuite.lib.Glycan(hit.glycan.composition)
+            ###glycan = ""
+            ###comp = {"HEX":0, "HEXNAC":0}
+            ###for find in re.findall("[A-z]+\d+", hit.glycan.composition):
+            ###    x = re.search("\D+", find).end()
+            ###    glycanname = find[:x]
+            ###    amount = int(find[x:])
+            ###    if amount == 0:
+            ###        continue
+            ###    comp[glycanname] = amount
+            ###    glycan += find
             #if comp["HEXNAC"] < 2:
             #    continue
             #if comp["HEX"] < 3:
@@ -133,7 +142,7 @@ class NotebookIdentification(ttk.Frame):
                 values=(round(mass, 4),
                         round(hit.error, 4),
                         peptide,
-                        glycan),
+                        glycan.getShortName()),
                 tags = tag)
             #self.treeIds[itemSpectra] = (spec, spectrum)
         # update Extention
