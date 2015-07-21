@@ -71,7 +71,7 @@ class NotebookScoring(ttk.Frame):
         columns = ("RT", "Mass", "Charge", "Score", "Is Glyco")
         self.tree["columns"] = columns
         self.tree.column("#0", width=100)
-        self.tree.heading("#0", text="Spectrum Nr.")
+        self.tree.heading("#0", text="Spectrum Nr.", command=lambda col='#0': self.sortColumn(col))
         for col in columns:
             self.tree.column(col, width=80)
             #self.tree.heading(col, text=col, command=lambda col=col: treeview_sort_column(self.tree, col, False))
@@ -98,8 +98,10 @@ class NotebookScoring(ttk.Frame):
         frameTree.rowconfigure(0, weight=1)
 
     def sortColumn(self, col):
-        if self.model.currentAnalysis == None:
-            return
+
+        if self.model == None or self.model.currentAnalysis == None:
+            return        
+
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
         else:
@@ -107,6 +109,8 @@ class NotebookScoring(ttk.Frame):
             self.model.currentAnalysis.reverse = False
         if col == "Is Glyco":
             l = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
+        elif col == "#0":
+            l = [(int(self.tree.item(k, "text")), k) for k in self.tree.get_children('')]
         else:
             l = [(float(self.tree.set(k, col)), k) for k in self.tree.get_children('')]
 

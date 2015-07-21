@@ -29,7 +29,7 @@ class NotebookFeature(ttk.Frame):
         columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra")
         self.featureTree["columns"] = columns
         self.featureTree.column("#0", width=100)
-        self.featureTree.heading("#0", text="Feature Nr.")
+        self.featureTree.heading("#0", text="Feature Nr.", command=lambda col='#0': self.sortFeatureColumn(col))
         for col in columns:
             self.featureTree.column(col, width=80)
             self.featureTree.heading(col,
@@ -60,7 +60,7 @@ class NotebookFeature(ttk.Frame):
         columns = ("RT", "Mass", "Charge", "Score", "Is Glyco")
         self.spectrumTree["columns"] = columns
         self.spectrumTree.column("#0", width=100)
-        self.spectrumTree.heading("#0", text="Spectrum Nr.")
+        self.spectrumTree.heading("#0", text="Spectrum Nr.", command=lambda col='#0':  self.sortSpectrumColumn(col))
         for col in columns:
             self.spectrumTree.column(col, width=80)
             self.spectrumTree.heading(col, text=col, command=lambda col=col: self.sortSpectrumColumn(col))
@@ -75,13 +75,19 @@ class NotebookFeature(ttk.Frame):
 
     def sortFeatureColumn(self, col):
 
+        if self.model == None or self.model.currentAnalysis == None:
+            return
+
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
         else:
             self.model.currentAnalysis.sortedColumn = col
             self.model.currentAnalysis.reverse = False
+            
         if col == "isGlycopeptide":
             l = [(self.featureTree.set(k, col), k) for k in self.featureTree.get_children('')]
+        elif col == "#0":
+            l = [(int(self.featureTree.item(k, "text")), k) for k in self.featureTree.get_children('')]
         else:
             l = [(float(self.featureTree.set(k, col)), k) for k in self.featureTree.get_children('')]
 
@@ -221,7 +227,9 @@ class NotebookFeature(ttk.Frame):
         self.model.funcUpdateFeatureChromatogram(c, c.rt[0], c.rt[-1], None)
 
     def sortSpectrumColumn(self, col):
-
+        if self.model == None or self.model.currentAnalysis == None:
+            return
+    
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
         else:
@@ -229,6 +237,8 @@ class NotebookFeature(ttk.Frame):
             self.model.currentAnalysis.reverse = False
         if col == "Is Glyco":
             l = [(self.spectrumTree.set(k, col), k) for k in self.spectrumTree.get_children('')]
+        elif col == "#0":
+            l = [(int(self.spectrumTree.item(k, "text")), k) for k in self.spectrumTree.get_children('')]
         else:
             l = [(float(self.spectrumTree.set(k, col)), k) for k in self.spectrumTree.get_children('')]
 

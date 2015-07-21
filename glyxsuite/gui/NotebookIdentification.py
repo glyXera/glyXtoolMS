@@ -46,6 +46,7 @@ class NotebookIdentification(ttk.Frame):
     def sortColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
             return
+            
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
         else:
@@ -60,8 +61,6 @@ class NotebookIdentification(ttk.Frame):
             l = [(abs(float(self.tree.set(k, col))), k) for k in self.tree.get_children('')]
         elif col == "#0":
             l = [(int(self.tree.item(k, "text")), k) for k in self.tree.get_children('')]
-            #print [k for k in self.tree.get_children('')]
-            #return
         else:
             return
         l.sort(reverse=self.model.currentAnalysis.reverse)
