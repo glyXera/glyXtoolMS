@@ -186,8 +186,11 @@ class NotebookFeature(ttk.Frame):
         for spec in self.model.currentAnalysis.featureSpectra[feature.getId()]:
             c.rt.append(spec.getRT())
             peaks = spec.get_peaks()
-            mzArray = peaks[:, 0]
-            intensArray = peaks[:, 1]
+            if hasattr(peaks, "shape"):
+                mzArray = peaks[:, 0]
+                intensArray = peaks[:, 1]
+            else:
+                mzArray, intensArray = peaks
             # get intensity in range
             choice = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
             arr_mz = np.extract(choice, mzArray)

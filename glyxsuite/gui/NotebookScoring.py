@@ -226,8 +226,11 @@ class NotebookScoring(ttk.Frame):
         for spec in spectrum.chromatogramSpectra:
             c.rt.append(spec.getRT())
             peaks = spec.get_peaks()
-            mzArray = peaks[:, 0]
-            intensArray = peaks[:, 1]
+            if hasattr(peaks, "shape"):
+                mzArray = peaks[:, 0]
+                intensArray = peaks[:, 1]
+            else:
+                mzArray, intensArray = peaks
             # get intensity in range
             choice = np.logical_and(np.greater(mzArray,  c.rangeLow), np.less(mzArray, c.rangeHigh))
             c.intensity.append(np.extract(choice, intensArray).sum())
