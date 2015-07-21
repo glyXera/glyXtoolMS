@@ -185,6 +185,8 @@ class HistogramFrame(Tkinter.Toplevel):
         b2 = Tkinter.Button(self, text="set Score-Threshold", command=self.validateEntry)
         b2.grid(row=2, column=1, sticky="NW")
 
+        b3 = Tkinter.Button(self, text="close", command=self.close)
+        b3.grid(row=3, column=1, sticky="NW")
         self.makeHistogram()
 
     def makeHistogram(self):
@@ -203,7 +205,10 @@ class HistogramFrame(Tkinter.Toplevel):
         self.view.addSeries(seriesGlyco, label="glyco", color="green")
         self.view.addSeries(seriesNon, label="noglyco", color="blue")
         self.view.initHistogram(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())
-
+    
+    def close(self):
+        self.destroy()
+        
 
     def validateEntry(self):
         try:
