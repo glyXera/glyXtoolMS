@@ -98,7 +98,7 @@ class App(ttk.Frame):
         self.notebook.add(n1, text='1. Scoring')
         self.notebook.add(n2, text='2. Features')
         self.notebook.add(n3, text='3. Identification')
-        self.notebook.add(n4, text='4. Results')
+        #self.notebook.add(n4, text='4. Results')
 
         #self.notebook.grid(row=1, column=0, sticky=("N", "W", "E"))
         self.notebook.grid(row=0, column=0, sticky="NWES")
@@ -154,7 +154,7 @@ class App(ttk.Frame):
 def run():
     global app
     root = Tkinter.Tk()
-    root.title("GlyxSuite Viewer")
+    root.title("glyXtool-MS Viewer")
     app = App(root)
     root.mainloop()
     return app
