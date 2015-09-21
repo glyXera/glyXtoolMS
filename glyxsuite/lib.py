@@ -32,6 +32,7 @@ class Histogram:
         if not order:
             order = self.bins.keys()
         leftStart = {}
+        bars = []
         for label in order:
             bottom = []
             width = []
@@ -44,14 +45,17 @@ class Histogram:
                 left.append(leftStart[b])
                 leftStart[b] += self.bins[label][b]
             if axis:
-                axis.barh(bottom, width, height=self.binwidth, left=left, label=label, color=color)
+                bar = axis.barh(bottom, width, height=self.binwidth, left=left, label=label, color=self.colors[label])
+                bars.append(bar)
             else:
                 raise Exception("Please provide a plot axis, eg 'axis=plt'")
+        return bars
 
     def plot(self, order=None, axis=None):
         if not order:
             order = self.bins.keys()
         bottomStart = {}
+        bars = []
         for label in order:
             bottom = []
             height = []
@@ -66,9 +70,11 @@ class Histogram:
                 bottom.append(bottomStart[b])
                 bottomStart[b] += self.bins[label][b]
             if axis:
-                axis.bar(left, height, width=self.binwidth, bottom=bottom, label=label, color=self.colors[label])
+                bar = axis.bar(left, height, width=self.binwidth, bottom=bottom, label=label, color=self.colors[label])
+                bars.append(bar)
             else:
                 raise Exception("Please provide a plot axis, eg 'axis=plt'")
+        return bars
 
 
 # ---------------------------- Protein Digest -------------------------------------
@@ -233,6 +239,15 @@ class ProteinDigest:
         while i < len(self.protein.sequence):
             if self.protein.sequence[i] == "D":
                 self.breakpoints.append(i-1)
+            i += 1
+            
+    def add_ProtinaseK_digest(self):
+        # cleaves N-terminal side of D
+        i = 1
+        while i < len(self.protein.sequence):
+            
+            if self.protein.sequence[i] in ["A", "F", "Y", "W", "L", "I", "V"]:
+                self.breakpoints.append(i)
             i += 1
 
     def digest(self, maxMissedCleavage):
