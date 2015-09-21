@@ -160,7 +160,11 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
         for peak in self.oxoniumIons+self.oxoniumLosses:
             self.addIon("", peak.ionname, peak.mass, peak.intensity)
             scorevalue += peak.normedIntensity/peak.rank
-        scorevalue = -math.log10(scorevalue)
+            
+        if scorevalue > 0:
+            scorevalue = -math.log10(scorevalue)
+        else:
+            scorevalue = 10
         self.setLogScore(scorevalue)
 
 def parseOxoniumIons(options):

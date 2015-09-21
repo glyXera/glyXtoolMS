@@ -2,13 +2,13 @@
 	<tool status="external">
 		<category>GlyxBox</category>
 		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
-		<type>GlycoeptideDigest</type>
+		<type>GlycopetideDigest</type>
 		// description of the wrapper
 		<external>
       <text>
-        <onstartup>Startig GlyxBox - GlycoeptideDigest</onstartup>
+        <onstartup>Startig GlyxBox - GlycopeptideDigest</onstartup>
         <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
-        <onfinish>glyxFeatureExtractor sucessfull</onfinish>
+        <onfinish>glyxFeatureExtractor successfull</onfinish>
       </text>    
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>PeptideDigestor</e_category>
