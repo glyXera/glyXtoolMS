@@ -1,0 +1,42 @@
+<ttd>
+	<tool status="external">
+		<category>GlyxBox</category>
+		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
+		<type>GlycopeptideTable</type>
+		// description of the wrapper
+		<external>
+      <text>
+        <onstartup>Startig GlyxBox - GlycopeptideTable</onstartup>
+        <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
+        <onfinish>GlycopeptideMatcher successful</onfinish>
+      </text>    
+		  // currently disregarded by TOPPAS, but might become useful
+		  <e_category>GlycopeptideTable</e_category>
+		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
+		  <cloptions> "%1"/GlycopeptideTable.py --out "%2" --inGlycan "%3" --inPeptide "%4" --chargeRange "%5"</cloptions>
+		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
+		  <path>{pythonpath}</path>
+      // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
+      // and thus starting the tool from somewhere else might actually lead to trouble
+      // use only real paths here (no placeholders like %TMP)
+      <workingdirectory>.</workingdirectory>
+		  // these mappings connect input parameters (from the 'ini_param' section below) and the command line options of your tool
+		  // any INI parameter can be referenced using %%'param_name', e.g. %%in
+		  // additionally you can use %TMP and %BASENAME[X] to get the current temp directory to store data, or the basename of X
+		  <mappings>
+			<mapping id="1" cl="%%scriptpath" />
+			<mapping id="2" cl="%%out" />
+			<mapping id="3" cl="%%inGlycan" />
+            <mapping id="4" cl="%%inPeptide" />
+            <mapping id="5" cl="%%chargeRange" />                                             			
+		  </mappings>
+		  <ini_param>
+			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
+			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.xls" description="Excel output file"/>            
+            <ITEM name="inGlycan" value="" type="string" tags="input file" restrictions="*.txt" description="File input Glycan composition file .txt"/>
+            <ITEM name="inPeptide" value="" type="string" tags="input file" restrictions="*.xml" description="File input Glycopeptide file .xml"/>
+            <ITEM name="chargeRange" value="1:4" type="string" description="Range of charge states to output, use min:max as input"/>  
+		  </ini_param>
+		</external>
+	</tool>
+</ttd>
