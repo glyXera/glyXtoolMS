@@ -43,21 +43,23 @@ def main(options):
         peptide = h.peptide
         glycan = h.glycan
         charge = feature.getCharge()
-        
+        rt = feature.getRT()
         # calculate theoretical glycopeptide mass
         mass = (peptide.mass+
                 glycan.mass+
                 glyxsuite.masses.MASS["H+"]*charge)/charge
-        if abs(h.error) > 20*10**-6*(peptide.mass+glycan.mass):
-            continue
+
+        comp = glycan.composition
         comp = glycan.composition
         comps.add(comp)
         seq = peptide.toString()
+        
         if not seq in data:
             data[seq] = {}
         if not comp in data[seq]:
             data[seq][comp] = set()
-        data[seq][comp].add("{}({})".format(str(round(mass,1)),str(charge)))
+        data[seq][comp].add("{}({})[{}]".format(str(round(mass,1)),str(charge),str(round(rt/60.0,1))))
+        
 
     # write output
     comps = sorted(list(comps))
