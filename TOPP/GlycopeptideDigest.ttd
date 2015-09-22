@@ -37,7 +37,7 @@
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
 			<ITEM name="inFasta" value="" type="string" tags="input file" restrictions="*.fasta" description="File input Proteinsequences, only .fasta allowed"/>
 			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.xml" description="File output peptide sequence file .xml"/>
-            <ITEMLIST name="enzymes" value="[]" type="string" restrictions="Trypsin,AspN" description="Digestion enzymes"/>
+            <ITEMLIST name="enzymes" value="[]" type="string" restrictions="Trypsin,AspN,Unspecific" description="Digestion enzymes"/>
             <ITEM name="cystTreatment" value="None" type="string" restrictions="None,Iodacetic acid,Iodoacetamide" description="Cystein treatment (C)"/>
             <ITEMLIST name="modifications" value="[]" type="string" restrictions="None,Oxidation(M),AcrylamideAdduct(C)" description="variable modifications"/>
             <ITEMLIST name="glycosylation" value="[]" type="string" restrictions="N-Glycosylation,O-Glycosylation" description="glycosylation"/>

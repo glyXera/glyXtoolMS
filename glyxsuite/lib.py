@@ -242,13 +242,18 @@ class ProteinDigest:
             i += 1
             
     def add_ProtinaseK_digest(self):
-        # cleaves N-terminal side of D
+        # cleaves D-terminal side of multiple aminoacids
         i = 1
         while i < len(self.protein.sequence):
             
             if self.protein.sequence[i] in ["A", "F", "Y", "W", "L", "I", "V"]:
                 self.breakpoints.append(i)
             i += 1
+            
+    def add_Unspecific_digest(self):
+        # cleaves all possible aminoacids
+        for i in range(0,len(self.protein.sequence)):
+            self.breakpoints.append(i)
 
     def digest(self, maxMissedCleavage):
         self.breakpoints.append(len(self.protein.sequence)-1)

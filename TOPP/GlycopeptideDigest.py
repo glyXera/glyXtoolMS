@@ -81,6 +81,8 @@ def main(options):
             digests.append(proteinDigest.add_tryptic_digest)
         elif digest == "AspN":
             digests.append(proteinDigest.add_AspN_digest)
+        elif digest == "Unspecific":
+            digests.append(proteinDigest.add_Unspecific_digest)
         else:
             raise Exception("Unknown digestion enzyme used!")
             
