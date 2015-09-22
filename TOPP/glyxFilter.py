@@ -115,7 +115,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
             if not "depends" in oxoniumIons[oxname]:
                 continue
             for dependency in oxoniumIons[oxname]["depends"]:
-                if dependency not in oxoniumIons:
+                if dependency not in foundOxoniumIons:
                     todelete.add(oxname)
 
         # delete unfullfilled dependencies
