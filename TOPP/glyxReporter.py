@@ -24,7 +24,7 @@ def parseComposition(comp):
       
 def generateGlycoylationSiteKey(peptide):
     parts = []
-    for nr,amino in sorted(h.peptide.glycosylationSites):
+    for nr,amino in sorted(peptide.glycosylationSites):
         parts.append(amino + str(nr))
     return "/".join(parts)
     
