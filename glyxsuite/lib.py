@@ -241,6 +241,14 @@ class ProteinDigest:
                 self.breakpoints.append(i-1)
             i += 1
             
+    def add_AspN_digest_2(self):
+        # cleaves N-terminal side of E, D and C
+        i = 1
+        while i < len(self.protein.sequence):
+            if self.protein.sequence[i] in ["E","D","C"]:
+                self.breakpoints.append(i-1)
+            i += 1
+            
     def add_ProtinaseK_digest(self):
         # cleaves D-terminal side of multiple aminoacids
         i = 1

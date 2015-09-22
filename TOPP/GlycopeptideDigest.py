@@ -81,6 +81,8 @@ def main(options):
             digests.append(proteinDigest.add_tryptic_digest)
         elif digest == "AspN":
             digests.append(proteinDigest.add_AspN_digest)
+        elif digest == "AspN2":
+            digests.append(proteinDigest.add_AspN_digest_2)
         elif digest == "Unspecific":
             digests.append(proteinDigest.add_Unspecific_digest)
         else:
