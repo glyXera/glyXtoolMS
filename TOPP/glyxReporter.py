@@ -78,9 +78,9 @@ def main(options):
     ws0 = wb.add_sheet("Resultstable")
 
     # write header
-    for col,comp in enumerate(["Peptides"]+comps):
+    for col,comp in enumerate(["GlycoSite", "Peptide"]+[parseComposition(comp) for comp in comps]):
         #ws0.write(0,col,re.sub("[A-Z]+0","",comp))
-        ws0.write(0,col,parseComposition(comp))
+        ws0.write(0,col,comp)
     row = 0
     for seq in data:
         row += 1
