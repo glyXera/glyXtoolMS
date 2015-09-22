@@ -21,8 +21,13 @@ def parseComposition(comp):
             continue
         string += names[unit] + str(amount)
     return string
-        
-
+      
+def generateGlycoylationSiteKey(peptide):
+    parts = []
+    for nr,amino in sorted(h.peptide.glycosylationSites):
+        parts.append(amino + str(nr))
+    return "/".join(parts)
+    
 def main(options): 
 
     # parse analysis file
@@ -37,6 +42,7 @@ def main(options):
     # get hits
     data = {}
     comps = set()
+    glycoSites = {}
     for h in fin.glycoModHits:
        
         feature = features[h.featureID]
@@ -53,6 +59,10 @@ def main(options):
         comp = glycan.composition
         comps.add(comp)
         seq = peptide.toString()
+        
+        # generate glycosite
+        glycoSiteKey = generateGlycoylationSiteKey(peptide)
+        glycoSites[seq] = glycoSiteKey
         
         if not seq in data:
             data[seq] = {}
@@ -75,8 +85,9 @@ def main(options):
     for seq in data:
         row += 1
         # write sequence
-        ws0.write(row,0,seq)
-        col = 0
+        ws0.write(row,0,glycoSites[seq])
+        ws0.write(row,1,seq)
+        col = 1
         for comp in comps:
             col += 1
             if comp in data[seq]:
