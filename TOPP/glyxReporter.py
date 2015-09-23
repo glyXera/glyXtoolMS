@@ -41,8 +41,9 @@ def main(options):
 
     # get hits
     data = {}
-    comps = set()
+    comps = {}
     glycoSites = {}
+    peptideMasses = {}
     for h in fin.glycoModHits:
        
         feature = features[h.featureID]
@@ -57,8 +58,9 @@ def main(options):
 
         comp = glycan.composition
         comp = glycan.composition
-        comps.add(comp)
+        comps[comp] = glycan.mass
         seq = peptide.toString()
+        peptideMasses[seq] = peptide.mass+glyxsuite.masses.MASS["H+"]
         
         # generate glycosite
         glycoSiteKey = generateGlycoylationSiteKey(peptide)
@@ -72,24 +74,29 @@ def main(options):
         
 
     # write output
-    comps = sorted(list(comps))
+    compsHeader = sorted(list(comps))
 
     wb = xlwt.Workbook()
     ws0 = wb.add_sheet("Resultstable")
 
     # write header
-    for col,comp in enumerate(["GlycoSite", "Peptide"]+[parseComposition(comp) for comp in comps]):
-        #ws0.write(0,col,re.sub("[A-Z]+0","",comp))
-        ws0.write(0,col,comp)
-    row = 0
+    for col,comp in enumerate(["GlycoSite", "Peptide", "Peptidemass"]+[parseComposition(comp) for comp in compsHeader]):
+        ws0.write(1,col,comp)
+    
+    for col,comp in enumerate(compsHeader):
+        ws0.write(0,col+3,str(round(comps[comp],1)))
+    
+    row = 1
     for seq in data:
         row += 1
         # write sequence
         ws0.write(row,0,glycoSites[seq])
         ws0.write(row,1,seq)
-        col = 1
-        for comp in comps:
+        ws0.write(row,2,str(round(peptideMasses[seq],2)))
+        col = 2
+        for comp in compsHeader:
             col += 1
+            print 
             if comp in data[seq]:
                 ws0.write(row,col,";".join(data[seq][comp]))
                 
