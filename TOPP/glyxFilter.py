@@ -351,7 +351,6 @@ def main(options):
 def handle_args(argv=None):
     """ Handles input arguments """
     import argparse
-    print "here"
     usage = "\nGlycopeptide Scoringtool for highresolution MS/MS spectra"
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--inMZML", dest="inMZML",
