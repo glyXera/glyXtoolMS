@@ -26,11 +26,11 @@ def handle_args(argv=None):
 
 def main(options):
     
-    print "loading file "
+    print "loading original MS Experiment "
     exp1 = pyopenms.MSExperiment()
     fh = pyopenms.FileHandler()
     fh.loadExperiment(options.infileOriginal,exp1)
-    print "loading file 2"
+    print "loading replacement MS Experiment"
     exp2 = pyopenms.MSExperiment()
     fh.loadExperiment(options.infileReplace,exp2)
     print "loading finnished"          
