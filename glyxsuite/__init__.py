@@ -7,3 +7,4 @@ import glyxsuite.deconvolution
 import glyxsuite.io
 import glyxsuite.masses
 import glyxsuite.gui
+import glyxsuite.fragmentation

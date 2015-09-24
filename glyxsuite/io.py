@@ -247,6 +247,7 @@ class GlyxXMLGlycoModHit(object):
         self.peptide = None
         self.glycan = None
         self.error = 0.0
+        self.fragments = {}
 
 
 class GlyxXMLFile(object):
@@ -256,7 +257,7 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self.version = "0.0.3"
+        self.version = "0.0.4"
 
     def _parseParameters(self, xmlParameters):
         timestamp = xmlParameters.find("./timestamp").text
@@ -447,6 +448,23 @@ class GlyxXMLFile(object):
 
             xmlError = ET.SubElement(xmlHit, "error")
             xmlError.text = str(glycoModHit.error)
+            
+            # write identified fragments
+            fragments = glycoModHit.fragments
+            # sort fragments after mass
+            sortedFragmentNames = sorted(fragments.keys(), key=lambda name: fragments[name]["mass"])
+            xmlFragments = ET.SubElement(xmlHit, "fragments")
+            for fragmentname in sortedFragmentNames:
+                xmlFragment = ET.SubElement(xmlFragments, "fragment")
+                xmlFragmentName = ET.SubElement(xmlFragment, "name")
+                xmlFragmentName.text = fragmentname
+                
+                xmlFragmentSequence = ET.SubElement(xmlFragment, "sequence")
+                xmlFragmentSequence.text = fragments[fragmentname]["sequence"]
+                
+                xmlFragmentMass = ET.SubElement(xmlFragment, "mass")
+                xmlFragmentMass.text = str(fragments[fragmentname]["mass"])
+            
 
     def _parseGlycoModHits(self, xmlGlycoModHits):
         hits = []
@@ -463,6 +481,15 @@ class GlyxXMLFile(object):
             peptide = XMLPeptide()
             peptide._parse(xmlHit.find("./peptide"), peptide)
             hit.peptide = peptide
+            
+            hit.fragments = {}
+            if self.version > "0.0.3":
+                for xmlfragment in xmlHit.findall("./fragments/fragment"):
+                    fragment = {}
+                    fragmentname = xmlfragment.find("./name").text
+                    fragment["sequence"] = xmlfragment.find("./sequence").text
+                    fragment["mass"] = float(xmlfragment.find("./mass").text)
+                    hit.fragments[fragmentname] = fragment
             hits.append(hit)
         return hits
 
@@ -561,6 +588,17 @@ class XMLPeptide(object):
         self.mass = 0.0
         self.modifications = []
         self.glycosylationSites = []
+        
+    def copy(self):
+        new = XMLPeptide()
+        new.proteinID = self.proteinID
+        new.sequence = self.sequence
+        new.start = self.start
+        new.end = self.end
+        new.mass = self.mass
+        new.modifications = self.modifications
+        new.glycosylationSites = self.glycosylationSites
+        return new
 
     def toString(self):
         s = self.sequence

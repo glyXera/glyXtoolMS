@@ -39,20 +39,60 @@ def main(options):
         pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEX"]
 
         # search for hits in spectra
-        found = False
+        foundA = False
+        foundB = False
+        masslist = []
         for spectrumID in feature.getSpectraIds():
             spectrum = rawSpectra[spectrumID]
             for peak in spectrum:
-                if ionthreshold > 0 and peak.getIntensity() < ionthreshold:
-                    continue
+                masslist.append(peak.getMZ())
                 if abs(peak.getMZ()-pepIon) < tolerance:
-                    found = True
-                    break
+                    foundA = True
                 elif abs(peak.getMZ()-pepGlcNAcIon) < tolerance:
-                    found = True
-                    break
-        if found == True:
-            keep.append(hit)
+                    foundB = True
+        if foundA == False and foundB == False:
+            continue
+        hit.fragments = {}
+        if foundA:
+            fragment = {}
+            fragment["mass"] = pepIon
+            fragment["sequence"] = hit.peptide.sequence
+            hit.fragments["peptide"] = fragment
+        if foundB:
+            fragment = {}
+            fragment["mass"] = pepGlcNAcIon
+            fragment["sequence"] = hit.peptide.sequence+"+HexNAC"
+            hit.fragments["peptide+HexNAc"] = fragment
+        # search for peptide fragments
+        p = hit.peptide
+        fragmenthits = (None,{})
+        for i in glyxsuite.fragmentation.getModificationVariants(p):
+            
+            pepvariant = p.copy()
+            pepvariant.modifications = i
+            fragments = glyxsuite.fragmentation.generatePeptideFragments(pepvariant)
+            fhit = {}
+            for fragmentkey in fragments:
+                fragmentmass = fragments[fragmentkey][0]
+                for mass in masslist:
+                    if abs(fragmentmass-mass) < tolerance:
+                        fhit[fragmentkey] = fragments[fragmentkey]
+                        break
+
+            if len(fhit) > len(fragmenthits[1]):
+                fragmenthits = (pepvariant,fhit)
+        if fragmenthits[0] is not None:
+            pepvariant,fhit = fragmenthits
+            
+            # write fragments to hit
+            hit.peptide = pepvariant
+            for fragmentname in fhit:
+                fragment = {}
+                fragment["mass"] = fhit[fragmentname][0]
+                fragment["sequence"] = fhit[fragmentname][1]
+                hit.fragments[fragmentname] = fragment
+        keep.append(hit)
+
     print "keeping " + str(len(keep)) + " glycopeptide hits from " + str(len(glyxXMLFile.glycoModHits))
     glyxXMLFile.glycoModHits = keep
 
