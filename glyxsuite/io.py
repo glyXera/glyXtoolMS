@@ -464,6 +464,9 @@ class GlyxXMLFile(object):
                 
                 xmlFragmentMass = ET.SubElement(xmlFragment, "mass")
                 xmlFragmentMass.text = str(fragments[fragmentname]["mass"])
+                
+                xmlFragmentCounts = ET.SubElement(xmlFragment, "counts")
+                xmlFragmentCounts.text = str(fragments[fragmentname]["counts"])
             
 
     def _parseGlycoModHits(self, xmlGlycoModHits):
@@ -489,6 +492,7 @@ class GlyxXMLFile(object):
                     fragmentname = xmlfragment.find("./name").text
                     fragment["sequence"] = xmlfragment.find("./sequence").text
                     fragment["mass"] = float(xmlfragment.find("./mass").text)
+                    fragment["counts"] = float(xmlfragment.find("./counts").text)
                     hit.fragments[fragmentname] = fragment
             hits.append(hit)
         return hits

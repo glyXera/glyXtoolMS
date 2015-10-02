@@ -8,6 +8,15 @@ Ions are assumed to be singly charged.
 import sys
 import glyxsuite
 
+def countMassInSpectra(mass,tolerance,spectra):
+    count = 0
+    for spectrum in spectra:
+        for peak in spectrum:
+            if abs(peak.getMZ() - mass) < tolerance:
+                count += 1
+                break
+    return count
+
 def main(options):
     
     # parse parameters
@@ -24,7 +33,11 @@ def main(options):
     rawSpectra = {}
     for spectrum in exp:
         rawSpectra[spectrum.getNativeID()] = spectrum
-
+    
+    scoredSpectra = {}
+    for spectrum in glyxXMLFile.spectra:
+        scoredSpectra[spectrum.getNativeId()] = spectrum
+    
     features = {}
     for feature in glyxXMLFile.features:
         features[feature.getId()] = feature
@@ -36,33 +49,43 @@ def main(options):
         feature = features[hit.featureID]
             
         pepIon = hit.peptide.mass+glyxsuite.masses.MASS["H+"]
-        pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEX"]
+        pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEXNAC"]
+        pepNH3 = pepIon-glyxsuite.masses.MASS["N"] - 3*glyxsuite.masses.MASS["H"]
 
         # search for hits in spectra
-        foundA = False
-        foundB = False
-        masslist = []
+        foundA = 0
+        foundB = 0
+        spectraList = []
         for spectrumID in feature.getSpectraIds():
-            spectrum = rawSpectra[spectrumID]
-            for peak in spectrum:
-                masslist.append(peak.getMZ())
-                if abs(peak.getMZ()-pepIon) < tolerance:
-                    foundA = True
-                elif abs(peak.getMZ()-pepGlcNAcIon) < tolerance:
-                    foundB = True
-        if foundA == False and foundB == False:
+            if scoredSpectra[spectrumID].getLogScore() > 2.5:
+                continue
+            spectraList.append(rawSpectra[spectrumID])
+            
+        foundA = countMassInSpectra(pepIon,tolerance,spectraList)
+        foundB = countMassInSpectra(pepGlcNAcIon,tolerance,spectraList)
+        foundC = countMassInSpectra(pepNH3,tolerance,spectraList)
+        
+        if foundA + foundB + foundC == 0:
             continue
         hit.fragments = {}
-        if foundA:
+        if foundA > 0:
             fragment = {}
             fragment["mass"] = pepIon
             fragment["sequence"] = hit.peptide.sequence
+            fragment["counts"] = foundA
             hit.fragments["peptide"] = fragment
-        if foundB:
+        if foundB > 0:
             fragment = {}
             fragment["mass"] = pepGlcNAcIon
             fragment["sequence"] = hit.peptide.sequence+"+HexNAC"
+            fragment["counts"] = foundB
             hit.fragments["peptide+HexNAc"] = fragment
+        if foundC > 0:
+            fragment = {}
+            fragment["mass"] = pepNH3
+            fragment["sequence"] = hit.peptide.sequence+"-NH3"
+            fragment["counts"] = foundC
+            hit.fragments["peptide-NH3"] = fragment
         # search for peptide fragments
         p = hit.peptide
         fragmenthits = (None,{})
@@ -74,10 +97,11 @@ def main(options):
             fhit = {}
             for fragmentkey in fragments:
                 fragmentmass = fragments[fragmentkey][0]
-                for mass in masslist:
-                    if abs(fragmentmass-mass) < tolerance:
-                        fhit[fragmentkey] = fragments[fragmentkey]
-                        break
+                fragmentsequence = fragments[fragmentkey][1]
+                spectrahits = countMassInSpectra(fragmentmass,tolerance,spectraList)
+                if spectrahits > 0:
+                    fhit[fragmentkey] = (fragmentmass,fragmentsequence,spectrahits)
+                
 
             if len(fhit) > len(fragmenthits[1]):
                 fragmenthits = (pepvariant,fhit)
@@ -90,6 +114,7 @@ def main(options):
                 fragment = {}
                 fragment["mass"] = fhit[fragmentname][0]
                 fragment["sequence"] = fhit[fragmentname][1]
+                fragment["counts"] = fhit[fragmentname][2]
                 hit.fragments[fragmentname] = fragment
         keep.append(hit)
 
