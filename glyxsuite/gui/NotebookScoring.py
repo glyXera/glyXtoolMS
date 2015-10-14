@@ -93,6 +93,8 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree);
 
         self.model.funcUpdateNotebookScoring = self.updateTree
+        
+        self.model.funcClickedFeatureSpectrum = self.setSelectedSpectrum
 
         # layout frameTree
         frameTree.rowconfigure(0, weight=1)
@@ -274,3 +276,10 @@ class NotebookScoring(ttk.Frame):
                         spectrum.precursorCharge,
                         round(spectrum.logScore, 2),
                         isGlycopeptide))
+                        
+    def setSelectedSpectrum(self,index):
+        for itemSpectra in self.treeIds:
+            if index == self.treeIds[itemSpectra][1].index:
+                self.tree.selection_set(itemSpectra)
+                self.tree.see(itemSpectra)
+                break

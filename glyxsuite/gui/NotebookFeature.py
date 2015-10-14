@@ -72,6 +72,7 @@ class NotebookFeature(ttk.Frame):
         self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree);
 
         self.model.funcUpdateExtentionFeature = self.updateSpectrumTree
+        self.model.funcClickedIdentification = self.setSelectedFeature
 
     def sortFeatureColumn(self, col):
 
@@ -157,6 +158,7 @@ class NotebookFeature(ttk.Frame):
 
 
     def clickedFeatureTree(self, event):
+        print "clicked feature tree"
         selection = self.featureTree.selection()
         if len(selection) == 0:
             return
@@ -164,25 +166,10 @@ class NotebookFeature(ttk.Frame):
         feature = self.featureTreeIds[item]
         self.model.currentAnalysis.currentFeature = feature
 
-        # calcluate spectrum and chomratogram
+        # calculate spectrum and chromatogram
         exp = self.model.currentProject.mzMLFile.exp
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
 
-        """# get start/end positions for EIC
-        for spec in exp:
-            if spec.getMSLevel() == 1:
-                break
-        lowPeak = -1
-        highPeak = -1
-        i = 0
-        for mass in spec.get_peaks()[:, 0]:
-            if lowPeak == -1 and mass > minMZ:
-                lowPeak = i
-            if highPeak == -1 and mass > maxMZ:
-                highPeak = i
-                break
-            i += 1
-        """
         number = 10000
         base = np.linspace(minMZ, maxMZ, num=number)
         sumSpectra = np.zeros_like(base)
@@ -204,15 +191,7 @@ class NotebookFeature(ttk.Frame):
             c.intensity.append(arr_intens.sum())
             # interpolate intensity to base
             sumSpectra += np.interp(base, arr_mz, arr_intens)
-            #c.intensity.append(np.extract(choice, intensArray).sum())
-            """
-            peaks = spec.get_peaks()[lowPeak:highPeak, :]
-            c.intensity.append(sum(peaks[:, 1]))
-            if sumSpectra == None:
-                sumSpectra = peaks
-            else:
-                sumSpectra[:, 1] += peaks[:, 1]
-            """
+
         self.model.debug = self.model.currentAnalysis.featureSpectra[feature.getId()]
         c.plot = True
         c.name = "test"
@@ -315,6 +294,10 @@ class NotebookFeature(ttk.Frame):
                         isGlycopeptide),
                 tags = tag)
             self.spectrumTreeIds[itemSpectra] = (spec, spectrum)
+            # set first spectrum as selected
+            if index == 1:
+                self.spectrumTree.selection_set(itemSpectra)
+                self.spectrumTree.see(itemSpectra)
 
     def clickedSpectrumTree(self, event):
         selection = self.spectrumTree.selection()
@@ -323,4 +306,14 @@ class NotebookFeature(ttk.Frame):
         item = selection[0]
         spec, spectrum = self.spectrumTreeIds[item]
         self.model.funcUpdateFeatureMSMSSpectrum(spec)
+        self.model.funcClickedFeatureSpectrum(spectrum.index)
+        
+    def setSelectedFeature(self,index):
+        for item in self.featureTreeIds:
+            if index == self.featureTreeIds[item].index:
+                self.featureTree.selection_set(item)
+                self.featureTree.see(item)
+                break
+        
+        
 

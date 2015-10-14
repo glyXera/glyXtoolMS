@@ -117,21 +117,6 @@ class NotebookIdentification(ttk.Frame):
             peptide = hit.peptide.toString()
             # clean up glycan
             glycan = glyxsuite.lib.Glycan(hit.glycan.composition)
-            ###glycan = ""
-            ###comp = {"HEX":0, "HEXNAC":0}
-            ###for find in re.findall("[A-z]+\d+", hit.glycan.composition):
-            ###    x = re.search("\D+", find).end()
-            ###    glycanname = find[:x]
-            ###    amount = int(find[x:])
-            ###    if amount == 0:
-            ###        continue
-            ###    comp[glycanname] = amount
-            ###    glycan += find
-            #if comp["HEXNAC"] < 2:
-            #    continue
-            #if comp["HEX"] < 3:
-            #    continue
-            #("Mass", "error", "Peptide", "Glycan")
             index += 1
             if index%2 == 0:
                 tag = ("oddrowFeature", )
@@ -148,5 +133,10 @@ class NotebookIdentification(ttk.Frame):
         self.model.funcUpdateExtentionIdentification()
 
     def clickedTree(self, event):
-        print "clicked tree"
+        selection = self.tree.selection()
+        if len(selection) == 0:
+            return
+        item = selection[0]
+        self.model.funcClickedIdentification(self.tree.item(item,"text"))
+
 
