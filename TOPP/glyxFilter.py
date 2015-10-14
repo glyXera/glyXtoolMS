@@ -273,10 +273,11 @@ def main(options):
 
     scores = {}
     keepFeatures = set()
+    ms2Spectra = {}
     for spec in exp:
         if spec.getMSLevel() != 2:
             continue
-
+        ms2Spectra[spec.getNativeID()] = spec
         # check if spectrum lies within a feature
         precursor = spec.getPrecursors()[0] # Multiple precurors currently not handled!
         rt = spec.getRT()
@@ -344,7 +345,19 @@ def main(options):
 
     # write features
     for key in keepFeatures:
-        glyxXMLFile.features.append(allFeatures[key])
+        # generate consensus spectra
+        feature = allFeatures[key]
+        # collect all spectra
+        spectra = []
+        for nativeID in feature.spectraIds:
+            spectra.append(ms2Spectra[nativeID].get_peaks())
+        if len(spectra) == 1:
+            minSpecCount = 1
+        else:
+            minSpecCount = 2
+        keep,notkeep,underThreshold = glyxsuite.consensus.generateConsensusSpectrum(spectra,minSpecCount=minSpecCount)
+        feature.consensus = keep
+        glyxXMLFile.features.append(feature)
 
     glyxXMLFile.writeToFile(options.outGlyML)
 

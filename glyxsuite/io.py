@@ -14,6 +14,7 @@ f.writeToFile(path)
 """
 
 from lxml import etree as ET
+import base64
 
 class GlyxXMLSpectrum(object):
     """ Define the GlyxXMLSpectrum as used in the glyML format """
@@ -187,6 +188,7 @@ class GlyxXMLFeature(object):
         self.minMZ = 0.0
         self.maxMZ = 0.0
         self.spectraIds = []
+        self.consensus = []
 
     def setId(self, id):
         self.id = id
@@ -249,6 +251,11 @@ class GlyxXMLGlycoModHit(object):
         self.error = 0.0
         self.fragments = {}
 
+class GlyxXMLConsensusPeak(object):
+    
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
 
 class GlyxXMLFile(object):
     # Input/Output file of glyxXML file
@@ -257,7 +264,8 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self.version = "0.0.4"
+        self._version_ = "0.0.5" # current version
+        self.version = self._version_ # will be overwritten by file
 
     def _parseParameters(self, xmlParameters):
         timestamp = xmlParameters.find("./timestamp").text
@@ -426,6 +434,20 @@ class GlyxXMLFile(object):
             for spectrumId in feature.getSpectraIds():
                 xmlFeatureSpectraId = ET.SubElement(xmlFeatureSpectraIds, "id")
                 xmlFeatureSpectraId.text = str(spectrumId)
+            
+            xmlFeatureConsensus = ET.SubElement(xmlFeature, "consensusSpectrum")
+
+            x = ";".join([str(round(c.x,4)) for c in feature.consensus])
+            y = ";".join([str(round(c.y,2)) for c in feature.consensus])            
+            
+            xmlFeatureConsensusX = ET.SubElement(xmlFeatureConsensus, "x")
+            xmlFeatureConsensusX.text = x
+            xmlFeatureConsensusY = ET.SubElement(xmlFeatureConsensus, "y")
+            xmlFeatureConsensusY.text = y
+
+            
+            
+             
 
     def _writeGlycoModHits(self, xmlGlycoModHits):
         classXMLPeptide = XMLPeptide() # Use class as static to call _write function
@@ -515,6 +537,19 @@ class GlyxXMLFile(object):
             feature.setBoundingBox(minRT, maxRT, minMZ, maxMZ)
             for spectrumId in xmlFeature.findall("./spectraIds/id"):
                 feature.addSpectrumId(spectrumId.text)
+                
+            if self.version > "0.0.4":
+                try:
+                    xString = xmlFeature.find("./consensusSpectrum/x").text
+                    yString = xmlFeature.find("./consensusSpectrum/y").text
+                    feature.consensus = []
+                    for x,y in zip(xString.split(";"),yString.split(";")):
+                        x = float(x)
+                        y = float(y)
+                        feature.consensus.append(GlyxXMLConsensusPeak(x,y))
+                except:
+                    print "Parsing error at "+feature.id
+                    raise
             features.append(feature)
 
         return features
@@ -523,7 +558,7 @@ class GlyxXMLFile(object):
         xmlRoot = ET.Element("glyxXML")
         # write version
         xmlVersion = ET.SubElement(xmlRoot, "version")
-        xmlVersion.text = self.version
+        xmlVersion.text = self._version_
 
         xmlParameters = ET.SubElement(xmlRoot, "parameters")
         xmlSpectra = ET.SubElement(xmlRoot, "spectra")

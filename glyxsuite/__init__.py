@@ -8,3 +8,4 @@ import glyxsuite.io
 import glyxsuite.masses
 import glyxsuite.gui
 import glyxsuite.fragmentation
+import glyxsuite.consensus
