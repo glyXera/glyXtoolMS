@@ -350,7 +350,12 @@ def main(options):
         # collect all spectra
         spectra = []
         for nativeID in feature.spectraIds:
-            spectra.append(ms2Spectra[nativeID].get_peaks())
+            peaks = ms2Spectra[nativeID].get_peaks()
+            if hasattr(peaks, "shape"):
+                spectra.append(peaks)
+            else:
+                mzArray, intensArray = peaks
+                spectra.append(zip(mzArray, intensArray))
         if len(spectra) == 1:
             minSpecCount = 1
         else:
