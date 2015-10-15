@@ -37,6 +37,7 @@ class DataModel:
         self.funcUpdateFeatureChromatogram = None
         self.funcUpdateFeatureMSMSSpectrum = None
         self.funcUpdateExtentionIdentification = None
+        self.funcUpdateConsensusSpectrum = None
         self.funcClickedFeatureSpectrum = None
         self.funcClickedIdentification = None
         

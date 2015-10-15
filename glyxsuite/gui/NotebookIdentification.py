@@ -128,7 +128,7 @@ class NotebookIdentification(ttk.Frame):
                         peptide,
                         glycan.getShortName()),
                 tags = tag)
-            #self.treeIds[itemSpectra] = (spec, spectrum)
+            self.treeIds[itemSpectra] = hit
         # update Extention
         self.model.funcUpdateExtentionIdentification()
 
@@ -138,5 +138,6 @@ class NotebookIdentification(ttk.Frame):
             return
         item = selection[0]
         self.model.funcClickedIdentification(self.tree.item(item,"text"))
+        self.model.funcUpdateConsensusSpectrum(self.treeIds[item])
 
 
