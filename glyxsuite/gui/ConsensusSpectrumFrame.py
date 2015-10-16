@@ -51,22 +51,53 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
         if self.consensus == None:
             return
         pInt0 = self.convBtoY(self.viewYMin)
+        # compile list of found oxonium-ions within the MS2 Spectra
+        analysis = self.model.currentAnalysis
+        feature = analysis.featureIds[self.hit.featureID]
+        glycanFragments = {}
+        for specID in feature.spectraIds:
+            spectrum = analysis.spectraIds[specID]
+            for glycanname in spectrum.ions:
+                for ionname in spectrum.ions[glycanname]:
+                    ion = spectrum.ions[glycanname][ionname]
+                    glycanFragments[ionname] = ion["mass"]
+        annotationText = []
+        annotationMass = []
         for peak in self.consensus:
             pMZ = self.convAtoX(peak.x)
             pInt = self.convBtoY(peak.y)
+            
+            masstext = str(round(peak.x,4))
             # check if a fragment exists for the peak
-            found = None
-            for key in self.hit.fragments:
-                if abs(self.hit.fragments[key]["mass"]-peak.x) < 0.1:
-                    found = key
+            foundGlycan = None
+            for ionname in glycanFragments:
+                if abs(glycanFragments[ionname]-peak.x) < 0.1:
+                    foundGlycan = ionname
                     break
-            if found != None:
+            
+            foundPep = None
+            for key in self.hit.fragments:
+                if foundGlycan != None:
+                    break
+                if abs(self.hit.fragments[key]["mass"]-peak.x) < 0.1:
+                    foundPep = key
+                    break
+            if foundGlycan != None:
+                color = "red"
+                annotationText.append((pMZ, pInt,foundGlycan+"\n"+masstext))
+                #self.canvas.create_text((pMZ, pInt, ), text=foundGlycan, anchor="s", justify="center")
+            elif foundPep != None:
                 color = "blue"
-                self.canvas.create_text((pMZ, pInt, ), text=found, anchor="s", justify="center")
+                annotationText.append((pMZ, pInt,foundPep+"\n"+masstext))
+                #self.canvas.create_text((pMZ, pInt, ), text=foundPep, anchor="s", justify="center")
             else:
+                annotationMass.append((pMZ, pInt,masstext))
                 color= "black"
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill=color)
-            
+        items = self.plotText(annotationText,set(),0)
+        items = self.plotText(annotationMass,items,5)
+        
+        
         self.allowZoom = True
 
     def init(self,hit):
@@ -77,10 +108,9 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
             return
         self.hit = hit
         feature = analysis.featureIds[hit.featureID]
-        self.consensus = feature.consensus
-        if self.consensus == None:
+        if feature.consensus == None:
             return
-
+        self.consensus = sorted(feature.consensus,key=lambda e:e.y,reverse=True)
         self.viewXMin = 0
         self.viewXMax = -1
         self.viewYMin = -1
@@ -91,3 +121,33 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
     def identifier(self):
         return "ConsensusSpectrumFrame"
 
+    
+    def plotText(self,collectedText,items=set(),N=0):
+        # remove text which is outside of view
+        ymax = self.convBtoY(self.viewYMin)
+        ymin = self.convBtoY(self.viewYMax)
+        
+        xmin = self.convAtoX(self.viewXMin)
+        xmax = self.convAtoX(self.viewXMax)
+        viewable = []
+        for textinfo in collectedText:
+            x,y,text = textinfo
+            if xmin < x < xmax and ymin < y < ymax:
+                viewable.append(textinfo)
+        # sort textinfo
+        viewable = sorted(viewable,key=lambda t:t[1])
+        # plot items
+        
+        for textinfo in viewable:
+            if N > 0 and len(items) >= N:
+                break
+            x,y,text = textinfo
+            item = self.canvas.create_text((x,y,), text=text, fill="blue violet", anchor="s", justify="center")
+            # check bounds of other items
+            bbox = self.canvas.bbox(item)
+            overlap = set(self.canvas.find_overlapping(*bbox))
+            if len(overlap.intersection(items)) == 0:
+                items.add(item)
+            else:
+                self.canvas.delete(item)
+        return items
