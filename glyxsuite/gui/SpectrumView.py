@@ -91,27 +91,21 @@ class SpectrumView(FramePlot.FramePlot):
                         scored[mz] = (sugar, fragment)
 
         scoredPeaks = []
-        i = 0
-        e = 0
+        annotationText = []
+        annotationMass = []
         for intens, mz in peaks:
-            i += 1
             # check if peak is a scored peak
             pMZ = self.convAtoX(mz)
             pInt = self.convBtoY(intens)
-            text = []
+            masstext = str(round(mz,4))
             if mz in scored:
                 scoredPeaks.append((intens, mz))
                 sugar, fragment = scored[mz]
-                if e < 5:
-                    text.append(fragment)
-                    e += 1
+                annotationText.append((pMZ, pInt,fragment+"\n"+masstext))
+
             else:
                 item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="black")
-            # plot only masses for 5 highest peaks
-            if i < 5:
-                text.append(str(round(mz, 3)))
-            if len(text):
-                self.canvas.create_text((pMZ, pInt, ), text="\n".join(text), anchor="s", justify="center")
+                annotationMass.append((pMZ, pInt,masstext))
 
             self.allowZoom = True
 
@@ -121,6 +115,39 @@ class SpectrumView(FramePlot.FramePlot):
             pMZ = self.convAtoX(mz)
             pInt = self.convBtoY(intens)
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="red")
+        
+        items = self.plotText(annotationText,set(),0)
+        items = self.plotText(annotationMass,items,5)
+
+    def plotText(self,collectedText,items=set(),N=0):
+        # remove text which is outside of view
+        ymax = self.convBtoY(self.viewYMin)
+        ymin = self.convBtoY(self.viewYMax)
+        
+        xmin = self.convAtoX(self.viewXMin)
+        xmax = self.convAtoX(self.viewXMax)
+        viewable = []
+        for textinfo in collectedText:
+            x,y,text = textinfo
+            if xmin < x < xmax and ymin < y < ymax:
+                viewable.append(textinfo)
+        # sort textinfo
+        viewable = sorted(viewable,key=lambda t:t[1])
+        # plot items
+        
+        for textinfo in viewable:
+            if N > 0 and len(items) >= N:
+                break
+            x,y,text = textinfo
+            item = self.canvas.create_text((x,y,), text=text, fill="blue violet", anchor="s", justify="center")
+            # check bounds of other items
+            bbox = self.canvas.bbox(item)
+            overlap = set(self.canvas.find_overlapping(*bbox))
+            if len(overlap.intersection(items)) == 0:
+                items.add(item)
+            else:
+                self.canvas.delete(item)
+        return items
 
     def initSpectrum(self, spec):
         if spec == None:
