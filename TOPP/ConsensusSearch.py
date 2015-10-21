@@ -13,6 +13,10 @@ def searchMassInSpectrum(mass,tolerance,spectrum):
         if abs(peak.x - mass) < tolerance:
             return 1
     return 0
+    
+def calcChargedMass(singlyChargedMass,charge):
+    mass = singlyChargedMass+(charge-1)*glyxsuite.masses.MASS["H"]
+    return mass/float(charge)
 
 def main(options):
     
@@ -37,40 +41,42 @@ def main(options):
     for hit in glyxXMLFile.glycoModHits:
 
         feature = features[hit.featureID]
+        for charge in range(1,feature.getCharge()):
+            pepIon = hit.peptide.mass+glyxsuite.masses.MASS["H+"]
+            pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEXNAC"]
+            pepNH3 = pepIon-glyxsuite.masses.MASS["N"] - 3*glyxsuite.masses.MASS["H"]
             
-        pepIon = hit.peptide.mass+glyxsuite.masses.MASS["H+"]
-        pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEXNAC"]
-        pepNH3 = pepIon-glyxsuite.masses.MASS["N"] - 3*glyxsuite.masses.MASS["H"]
+            # calc charged mass
+            pepIon = calcChargedMass(pepIon,charge)
+            pepGlcNAcIon = calcChargedMass(pepGlcNAcIon,charge)
+            pepNH3 = calcChargedMass(pepNH3,charge)
 
-        # search for hits in spectra
-        foundA = 0
-        foundB = 0
-        consensusSpectrum = feature.consensus
-        foundA = searchMassInSpectrum(pepIon,tolerance,consensusSpectrum)
-        foundB = searchMassInSpectrum(pepGlcNAcIon,tolerance,consensusSpectrum)
-        foundC = searchMassInSpectrum(pepNH3,tolerance,consensusSpectrum)
-        
-        if foundA + foundB + foundC == 0:
-            continue
-        hit.fragments = {}
-        if foundA > 0:
-            fragment = {}
-            fragment["mass"] = pepIon
-            fragment["sequence"] = hit.peptide.sequence
-            fragment["counts"] = foundA
-            hit.fragments["peptide"] = fragment
-        if foundB > 0:
-            fragment = {}
-            fragment["mass"] = pepGlcNAcIon
-            fragment["sequence"] = hit.peptide.sequence+"+HexNAC"
-            fragment["counts"] = foundB
-            hit.fragments["peptide+HexNAc"] = fragment
-        if foundC > 0:
-            fragment = {}
-            fragment["mass"] = pepNH3
-            fragment["sequence"] = hit.peptide.sequence+"-NH3"
-            fragment["counts"] = foundC
-            hit.fragments["peptide-NH3"] = fragment
+            # search for hits in spectra
+            consensusSpectrum = feature.consensus
+            foundA = searchMassInSpectrum(pepIon,tolerance,consensusSpectrum)
+            foundB = searchMassInSpectrum(pepGlcNAcIon,tolerance,consensusSpectrum)
+            foundC = searchMassInSpectrum(pepNH3,tolerance,consensusSpectrum)
+
+            hit.fragments = {}
+            chargeName = "+("+str(charge)+"H+)"
+            if foundA > 0:
+                fragment = {}
+                fragment["mass"] = pepIon
+                fragment["sequence"] = hit.peptide.sequence+chargeName
+                fragment["counts"] = foundA
+                hit.fragments["peptide"+chargeName] = fragment
+            if foundB > 0:
+                fragment = {}
+                fragment["mass"] = pepGlcNAcIon
+                fragment["sequence"] = hit.peptide.sequence+"+HexNAC"+chargeName
+                fragment["counts"] = foundB
+                hit.fragments["peptide+HexNAc"+chargeName] = fragment
+            if foundC > 0:
+                fragment = {}
+                fragment["mass"] = pepNH3
+                fragment["sequence"] = hit.peptide.sequence+"-NH3"+chargeName
+                fragment["counts"] = foundC
+                hit.fragments["peptide-NH3"+chargeName] = fragment
         # search for peptide fragments
         p = hit.peptide
         fragmenthits = (None,{})
