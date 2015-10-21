@@ -61,6 +61,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
         self.logScore = 10
         self.oxoniumIons = []
         self.oxoniumLosses = []
+        self.neutralLosses = []
         self.feature = feature
 
     def addPeak(self, mass, intensity):
@@ -127,16 +128,20 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
             return
 
         self.oxoniumIons = []
+        self.oxoniumLosses = []
+        self.neutralLosses = []
+        
         for oxname in foundOxoniumIons:
             highest = max([peak for peak in foundOxoniumIons[oxname]],
                           key=lambda x: x.intensity)
             highest.ionname = oxname
             self.oxoniumIons.append(highest)
 
-        # Look for oxonium losses
+        # Look for oxonium losses and neutra losses
         oxoniumLosses = {}
+        neutralLosses = {}
         for peak, oxname in itertools.product(self.peaks,
-                                              foundOxoniumIons):
+                                              oxoniumIons):
             if peak.intensity < ionthreshold:
                 continue
             mzOx = oxoniumIons[oxname]["mass"]
@@ -149,15 +154,27 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
 
             if abs(mz_loss - peak.mass) < tolerance:
                 oxoniumLosses[oxname] = oxoniumLosses.get(oxname, []) +[peak]
+                
+            neutral_loss = (feature_mass-(mzOx-
+                            glyxsuite.masses.MASS["H+"])*chargeOx/feature_charge)
+            
+            if abs(neutral_loss - peak.mass) < tolerance:
+                neutralLosses[oxname] = neutralLosses.get(oxname, []) +[peak]
 
         for oxname in oxoniumLosses:
             highest = max([peak for peak in oxoniumLosses[oxname]],
                           key=lambda x: x.intensity)
             highest.ionname = "Loss: "+oxname
             self.oxoniumLosses.append(highest)
+            
+        for oxname in neutralLosses:
+            highest = max([peak for peak in neutralLosses[oxname]],
+                          key=lambda x: x.intensity)
+            highest.ionname = "Neutralloss: "+oxname
+            self.neutralLosses.append(highest)
 
         scorevalue = 0
-        for peak in self.oxoniumIons+self.oxoniumLosses:
+        for peak in self.oxoniumIons+self.oxoniumLosses+self.neutralLosses:
             self.addIon("", peak.ionname, peak.mass, peak.intensity)
             scorevalue += peak.normedIntensity/peak.rank
             

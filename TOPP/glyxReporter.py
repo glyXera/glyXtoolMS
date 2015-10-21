@@ -38,7 +38,12 @@ def main(options):
     features = {}
     for feature in fin.features:
         features[feature.getId()] = feature
-
+    
+    # get spectra
+    spectra = {}
+    for spectrum in fin.spectra:
+        spectra[spectrum.getNativeId()] = spectrum
+    
     # get hits
     data = {}
     comps = {}
@@ -77,28 +82,58 @@ def main(options):
     compsHeader = sorted(list(comps))
 
     wb = xlwt.Workbook()
-    ws0 = wb.add_sheet("Resultstable")
+    # -------------------------- Spectra -----------------------------#
+    #ws1 = wb.add_sheet("Spectra")
+    # -------------------------- Features -----------------------------#
+    ws1 = wb.add_sheet("Features")
+    
+    # write header
+    # rt, monoisotopic mass, charge, Logscore
+    
+    row = 0
+    ws1.write(row,0,"Feature Nr")
+    ws1.write(row,1,"RT [min]")
+    ws1.write(row,2,"Mass [Th]")
+    ws1.write(row,3,"Charge")
+    ws1.write(row,4,"LogScore")
+    
+    featNr = 0
+    for featureID in features:
+        feature = features[featureID]
+        featNr += 1
+        # get spectra
+        for specID in feature.getSpectraIds():
+            row += 1
+            spectrum = spectra[specID]
+            ws1.write(row,0,str(featNr))
+            ws1.write(row,1,str(round(spectrum.getRT()/60.0,2)))
+            ws1.write(row,2,str(round(feature.getMZ(),4)))
+            ws1.write(row,3,str(int(feature.getCharge())))
+            ws1.write(row,4,str(round(spectrum.getLogScore(),3)))
+    # ---------------------- Identifications --------------------------#
+    
+    ws2 = wb.add_sheet("Identifications")
 
     # write header
     for col,comp in enumerate(["GlycoSite", "Peptide", "Peptidemass"]+[parseComposition(comp) for comp in compsHeader]):
-        ws0.write(1,col,comp)
+        ws2.write(1,col,comp)
     
     for col,comp in enumerate(compsHeader):
-        ws0.write(0,col+3,str(round(comps[comp],1)))
+        ws2.write(0,col+3,str(round(comps[comp],1)))
     
     row = 1
     for seq in data:
         row += 1
         # write sequence
-        ws0.write(row,0,glycoSites[seq])
-        ws0.write(row,1,seq)
-        ws0.write(row,2,str(round(peptideMasses[seq],2)))
+        ws2.write(row,0,glycoSites[seq])
+        ws2.write(row,1,seq)
+        ws2.write(row,2,str(round(peptideMasses[seq],2)))
         col = 2
         for comp in compsHeader:
             col += 1
             print 
             if comp in data[seq]:
-                ws0.write(row,col,";".join(data[seq][comp]))
+                ws2.write(row,col,";".join(data[seq][comp]))
                 
     wb.save(options.outfile)
 
