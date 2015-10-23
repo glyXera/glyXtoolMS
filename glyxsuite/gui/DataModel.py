@@ -1,10 +1,17 @@
 import glyxsuite
 import os
 import configparser
+import tkFont
 
 class DataModel:
 
     def __init__(self):
+        
+        #for s in range(10,100):
+        #    font = tkFont.Font(family="Courier",size=s)
+        #    print s, font.measure(" ")
+
+        
         self.workingdir = ""
         self.debug = None
         self.root = None
@@ -37,6 +44,7 @@ class DataModel:
         self.funcUpdateFeatureChromatogram = None
         self.funcUpdateFeatureMSMSSpectrum = None
         self.funcUpdateExtentionIdentification = None
+        self.funcUpdateIdentificationCoverage = None
         self.funcUpdateConsensusSpectrum = None
         self.funcClickedFeatureSpectrum = None
         self.funcClickedIdentification = None
@@ -202,6 +210,7 @@ class ContainerAnalysisFile:
         # create feature - spectra link
         self.featureIds = {}
         i = 0
+
         for feature in self.analysis.features:
             i += 1
             feature.index = str(i) # TODO: Warp feature
@@ -218,6 +227,7 @@ class ContainerAnalysisFile:
                     continue
                 self.spectraInFeatures[spectrum.nativeId].append(feature.getId())
 
+            
         self.featureSpectra = {}
         for spec in self.project.mzMLFile.exp:
             if spec.getMSLevel() != 1:
@@ -241,3 +251,23 @@ class ContainerAnalysisFile:
         self.analysis.spectra.append(spectrum)
         return spectrum
 
+    def removeFeature(self,feature):
+        if feature in self.analysis.features:
+            self.analysis.features.remove(feature)
+        if feature.getId() in self.featureSpectra:
+            self.featureSpectra.pop(feature.getId())
+        if feature.getId() in self.featureIds:
+            self.featureIds.pop(feature.getId())
+        for specId in  self.spectraInFeatures:
+            if feature.getId() in  self.spectraInFeatures[specId]:
+                 self.spectraInFeatures[specId].remove(feature.getId())
+        # remove corresponding hits
+        todelete = []
+        for hit in self.analysis.glycoModHits:
+            if hit.featureID == feature.getId():
+                todelete.append(hit)
+        for hit in todelete:
+            self.analysis.glycoModHits.remove(hit)
+        
+        
+        

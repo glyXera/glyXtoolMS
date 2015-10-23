@@ -48,7 +48,9 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.tag_configure('evenrowFeature', background='PeachPuff')
         self.featureTree.tag_configure('evenSpectrum', background='LightBlue')
         self.featureTree.tag_configure('oddSpectrum', background='SkyBlue')
-        self.featureTree.bind("<<TreeviewSelect>>", self.clickedFeatureTree);
+        self.featureTree.bind("<<TreeviewSelect>>", self.clickedFeatureTree)
+        self.featureTree.bind("<Delete>", self.deleteFeature)
+        
 
         self.model.funcUpdateNotebookFeature = self.updateFeatureTree
 
@@ -314,6 +316,36 @@ class NotebookFeature(ttk.Frame):
                 self.featureTree.selection_set(item)
                 self.featureTree.see(item)
                 break
+                
+    def deleteFeature(self,event):
         
+        #updateFeatureTree
+        selection = self.featureTree.selection()
+        if len(selection) == 0:
+            return
+        item = selection[0]
         
+        feature = self.featureTreeIds[item]
+        nextItem = self.featureTree.next(item)
+        self.featureTree.delete(item)
+        self.featureTreeIds.pop(item)
+        if nextItem != {}:
+            self.featureTree.selection_set(nextItem)
+        # remove feature from analysis file
+        analysis = self.model.currentAnalysis
+        analysis.removeFeature(feature)
+        self.model.funcUpdateNotebookIdentification()
+        
+        # adjust tags
+        for index,k in enumerate(self.featureTree.get_children('')):
+            taglist = list(self.featureTree.item(k, "tags"))
+            if "oddrowFeature" in taglist:
+                taglist.remove("oddrowFeature")
+            if "evenrowFeature" in taglist:
+                taglist.remove("evenrowFeature")
 
+            if index%2 == 0:
+                taglist.append("evenrowFeature")
+            else:
+                taglist.append("oddrowFeature")
+            self.featureTree.item(k, tags = taglist)

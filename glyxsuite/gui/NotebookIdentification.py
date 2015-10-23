@@ -139,5 +139,6 @@ class NotebookIdentification(ttk.Frame):
         item = selection[0]
         self.model.funcClickedIdentification(self.tree.item(item,"text"))
         self.model.funcUpdateConsensusSpectrum(self.treeIds[item])
+        self.model.funcUpdateIdentificationCoverage(self.treeIds[item])
 
 

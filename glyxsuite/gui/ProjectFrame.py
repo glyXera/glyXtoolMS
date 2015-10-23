@@ -107,6 +107,10 @@ class ProjectFrame(ttk.Frame):
         self.b4 = ttk.Button(tools, text="Delete Analysis", command=self.deleteAnalysis)
         self.b4.grid(row=1, column=1)
         self.b4.config(state=Tkinter.DISABLED)
+        
+        self.b5 = ttk.Button(tools, text="Save Analysis", command=self.saveAnalysis)
+        self.b5.grid(row=1, column=2)
+        self.b5.config(state=Tkinter.DISABLED)
 
         #self.b1 = ttk.Button(tools, text="Load Test", command=self.loadTest)
         #self.b1.grid(row=0, column=2)
@@ -164,8 +168,8 @@ class ProjectFrame(ttk.Frame):
         options['defaultextension'] = '.xml'
         options['filetypes'] = [('Analysis files', '.xml'), ('all files', '.*')]
         options['initialdir'] = workingdir
-        options['parent'] = self.master
-        options['title'] = 'This is a title'
+        options['parent'] = self
+        options['title'] = 'Open Analysis file'
         path = tkFileDialog.askopenfilename(**options)
         print path
         if len(path) == 0:
@@ -248,6 +252,37 @@ class ProjectFrame(ttk.Frame):
 
         # delete analysis from Treeview
         self.projectTree.delete(item)
+        
+    def saveAnalysis(self):
+        item, obj, typ = self.getSelectedItem()
+        if item == None:
+            return
+        if typ != "analysis":
+            return
+        # get analysis
+        if not item in self.projectsTreeIds:
+            return
+        # get save path    
+        options = {}
+        options['defaultextension'] = '.xml'
+        options['filetypes'] = [('Analysis files', '.xml'), ('all files', '.*')]
+        options['initialdir'] = self.model.workingdir
+        options['title'] = 'Save Analysis'
+        options['confirmoverwrite'] = True
+        path = tkFileDialog.asksaveasfilename(**options)
+        print "path is", path
+        if path == "" or path == ():
+            return
+        
+        obj.analysis.writeToFile(path)
+        obj.project.analysisFiles.pop(obj.name)
+        # set new analysis name
+        obj.path = path
+        name = os.path.basename(path)
+        obj.name = name
+        self.projectTree.item(item, text = name)
+        obj.project.analysisFiles[name] = obj
+        
 
     def clickedTree(self, event):
         item, obj, typ = self.getSelectedItem()
@@ -256,6 +291,7 @@ class ProjectFrame(ttk.Frame):
             self.b2.config(state=Tkinter.DISABLED)
             self.b3.config(state=Tkinter.DISABLED)
             self.b4.config(state=Tkinter.DISABLED)
+            self.b5.config(state=Tkinter.DISABLED)
             return
         else:
             self.b2.config(state=Tkinter.NORMAL)
@@ -271,6 +307,7 @@ class ProjectFrame(ttk.Frame):
             self.model.currentAnalysis = obj
             self.model.currentProject = obj.project
             self.b4.config(state=Tkinter.NORMAL)
+            self.b5.config(state=Tkinter.NORMAL)
             self.model.funcUpdateNotebookScoring()
             self.model.funcUpdateNotebookIdentification()
             self.model.funcUpdateNotebookFeature()
@@ -279,6 +316,7 @@ class ProjectFrame(ttk.Frame):
         else:
             self.model.currentAnalysis = None
             self.b4.config(state=Tkinter.DISABLED)
+            self.b5.config(state=Tkinter.DISABLED)
             self.model.funcUpdateNotebookScoring()
             self.model.funcUpdateNotebookIdentification()
             self.model.funcUpdateNotebookFeature()
@@ -401,6 +439,8 @@ class AddProject(Tkinter.Toplevel):
         self.title("Add Project")
 
         self.model = model
+        # ensure correct window stacking
+        #self.lift(self.master)
 
         self.projectName = Tkinter.StringVar()
         projectLabel = Tkinter.Label(self, text="Name: ")
@@ -448,8 +488,8 @@ class AddProject(Tkinter.Toplevel):
         options['defaultextension'] = '.mzML'
         options['filetypes'] = [('mzML files', '.mzML'), ('all files', '.*')]
         options['initialdir'] = self.model.workingdir
-        options['parent'] = self.master
-        options['title'] = 'This is a title'
+        options['parent'] = self
+        options['title'] = 'Open mzML file'
         path = tkFileDialog.askopenfilename(**options)
         self.path.set(path)
 
