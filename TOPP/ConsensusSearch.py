@@ -41,6 +41,7 @@ def main(options):
     for hit in glyxXMLFile.glycoModHits:
 
         feature = features[hit.featureID]
+        hit.fragments = {}
         for charge in range(1,feature.getCharge()):
             pepIon = hit.peptide.mass+glyxsuite.masses.MASS["H+"]
             pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEXNAC"]
@@ -57,7 +58,6 @@ def main(options):
             foundB = searchMassInSpectrum(pepGlcNAcIon,tolerance,consensusSpectrum)
             foundC = searchMassInSpectrum(pepNH3,tolerance,consensusSpectrum)
 
-            hit.fragments = {}
             chargeName = "+("+str(charge)+"H+)"
             if foundA > 0:
                 fragment = {}
