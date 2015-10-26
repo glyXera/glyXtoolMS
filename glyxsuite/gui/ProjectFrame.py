@@ -270,7 +270,6 @@ class ProjectFrame(ttk.Frame):
         options['title'] = 'Save Analysis'
         options['confirmoverwrite'] = True
         path = tkFileDialog.asksaveasfilename(**options)
-        print "path is", path
         if path == "" or path == ():
             return
         

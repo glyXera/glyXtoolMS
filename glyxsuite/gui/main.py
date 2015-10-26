@@ -55,7 +55,7 @@ class App(ttk.Frame):
         self.model.root = master
 
         filemenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
-        filemenu.add_command(label="Parameters")
+        filemenu.add_command(label="Set workspace",command=self.setWorkspace)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.master.destroy)
         menubar.add_cascade(label="Program", menu=filemenu)
@@ -149,6 +149,18 @@ class App(ttk.Frame):
         if self.model.currentAnalysis.analysis == None:
             return
         HistogramFrame(self.master, self.model)
+        return
+        
+    def setWorkspace(self):
+        options = {}
+        options['initialdir'] = self.model.workingdir
+        options['title'] = 'Set Workspace'
+        options['mustexist'] = True
+        path = tkFileDialog.askdirectory(**options)
+        if path == "" or path == ():
+            return
+        self.model.workingdir = path
+        self.model.saveSettings()
         return
 
 def run():

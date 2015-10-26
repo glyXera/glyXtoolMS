@@ -48,6 +48,7 @@ class DataModel:
         self.funcUpdateConsensusSpectrum = None
         self.funcClickedFeatureSpectrum = None
         self.funcClickedIdentification = None
+        self.classes = {} # Functionhandler - each class should register itself here
         
         # read settings
         self.readSettings()
@@ -267,6 +268,10 @@ class ContainerAnalysisFile:
             if hit.featureID == feature.getId():
                 todelete.append(hit)
         for hit in todelete:
+            self.analysis.glycoModHits.remove(hit)
+            
+    def removeIdentification(self,hit):
+        if hit in self.analysis.glycoModHits:
             self.analysis.glycoModHits.remove(hit)
         
         

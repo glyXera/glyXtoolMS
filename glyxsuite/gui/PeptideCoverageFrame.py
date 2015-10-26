@@ -53,6 +53,7 @@ class PeptideCoverageFrame(ttk.Frame):
         
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)
+        self.model.debug = self.canvas
 
         # link function
         self.model.funcUpdateIdentificationCoverage = self.init
@@ -90,8 +91,8 @@ class PeptideCoverageFrame(ttk.Frame):
                 continue
             yHit = ySeries.get(y,False)
             bHit = ySeries.get(b,False)
-            self.fragmentCoverage[y] = name
-            self.fragmentCoverage[y] = name
+            self.fragmentCoverage[y] = self.fragmentCoverage.get(y,[]) + [name]
+            self.fragmentCoverage[b] = self.fragmentCoverage.get(b,[]) + [name]
                 
             fragmentSequence = hit.fragments[name]["sequence"].split("-")[0]
             fragmentSequence = re.sub("\(.+?\)","",fragmentSequence)
@@ -142,11 +143,11 @@ class PeptideCoverageFrame(ttk.Frame):
             x = start + (index-0.5)*letterSize
             color = "black"
             if ySeries[index] == True:
-                item1 = self.canvas.create_line(x, yc, x, 10, tags=("peak", ), fill=color)
-                item2 = self.canvas.create_line(x, 10, x+10, 10, tags=("peak", ), fill=color)
+                item1 = self.canvas.create_line(x, yc, x, 10, tags=("site", ), fill=color)
+                item2 = self.canvas.create_line(x, 10, x+10, 10, tags=("site", ), fill=color)
             else:
-                item1 = self.canvas.create_line(x, yc, x, 10, tags=("peak", ), fill=color, dash=(3,5))
-                item2 = self.canvas.create_line(x, 10, x+10, 10, tags=("peak", ), fill=color, dash=(3,5))
+                item1 = self.canvas.create_line(x, yc, x, 10, tags=("site", ), fill=color, dash=(3,5))
+                item2 = self.canvas.create_line(x, 10, x+10, 10, tags=("site", ), fill=color, dash=(3,5))
             self.coverage[item1] = index
             self.coverage[item2] = index
                 
@@ -155,11 +156,11 @@ class PeptideCoverageFrame(ttk.Frame):
             x = start + (index-0.5)*letterSize
             color = "black"
             if bSeries[index] == True:
-                item1 = self.canvas.create_line(x, yc, x, self.height-10, tags=("peak", ), fill=color)
-                item2 = self.canvas.create_line(x, self.height-10, x-10, self.height-10, tags=("peak", ), fill=color)
+                item1 = self.canvas.create_line(x, yc, x, self.height-10, tags=("site", ), fill=color)
+                item2 = self.canvas.create_line(x, self.height-10, x-10, self.height-10, tags=("site", ), fill=color)
             else:
-                item1 = self.canvas.create_line(x, yc, x, self.height-10, tags=("peak", ), fill=color, dash=(3,5))
-                item2 = self.canvas.create_line(x, self.height-10, x-10, self.height-10, tags=("peak", ), fill=color, dash=(3,5))
+                item1 = self.canvas.create_line(x, yc, x, self.height-10, tags=("site", ), fill=color, dash=(3,5))
+                item2 = self.canvas.create_line(x, self.height-10, x-10, self.height-10, tags=("site", ), fill=color, dash=(3,5))
             self.coverage[item1] = index
             self.coverage[item2] = index
         
@@ -167,16 +168,28 @@ class PeptideCoverageFrame(ttk.Frame):
         return "PeptideCoverageFrame"
         
     def eventMouseClick(self, event):
+        # clear color from all items
+        self.canvas.itemconfigure ("site",fill="black")
+        
         overlap = set(self.canvas.find_overlapping(event.x-10, 
                                                    event.y-10, 
                                                    event.x+10, 
                                                    event.y+10))
-        found = set()
+        
+        indexList = set()
         for item in overlap:
             if item in self.coverage:
                 key = self.coverage[item]
-                found.add(key)
-        print "found",found
+                indexList.add(key)
+                
+        found = []
+        for index in indexList:
+            found += self.fragmentCoverage[key]
+            for item in self.coverage:
+                if self.coverage[item] == index:
+                    self.canvas.itemconfigure (item,fill="red")
+
+        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found)
         
         
 

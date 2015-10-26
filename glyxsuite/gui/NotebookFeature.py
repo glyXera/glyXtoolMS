@@ -160,7 +160,6 @@ class NotebookFeature(ttk.Frame):
 
 
     def clickedFeatureTree(self, event):
-        print "clicked feature tree"
         selection = self.featureTree.selection()
         if len(selection) == 0:
             return
@@ -244,7 +243,6 @@ class NotebookFeature(ttk.Frame):
             self.spectrumTree.item(k, tags = taglist)
 
     def updateSpectrumTree(self):
-        print "update"
         # clear tree
         self.spectrumTree.delete(*self.spectrumTree.get_children());
 
@@ -331,6 +329,10 @@ class NotebookFeature(ttk.Frame):
         self.featureTreeIds.pop(item)
         if nextItem != {}:
             self.featureTree.selection_set(nextItem)
+        elif len(self.featureTree.get_children('')) > 0:
+            nextItem = self.featureTree.get_children('')[-1]
+            self.featureTree.selection_set(nextItem)
+            
         # remove feature from analysis file
         analysis = self.model.currentAnalysis
         analysis.removeFeature(feature)

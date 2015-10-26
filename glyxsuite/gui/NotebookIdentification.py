@@ -37,7 +37,8 @@ class NotebookIdentification(ttk.Frame):
 
         self.tree.tag_configure('evenSpectrum', background='LightBlue')
         self.tree.tag_configure('oddSpectrum', background='SkyBlue')
-        self.tree.bind("<<TreeviewSelect>>", self.clickedTree);
+        self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
+        self.tree.bind("<Delete>", self.deleteIdentification)
 
         self.rowconfigure(0, weight=1)
 
@@ -141,4 +142,22 @@ class NotebookIdentification(ttk.Frame):
         self.model.funcUpdateConsensusSpectrum(self.treeIds[item])
         self.model.funcUpdateIdentificationCoverage(self.treeIds[item])
 
-
+    def deleteIdentification(self,event):
+        selection = self.tree.selection()
+        if len(selection) == 0:
+            return
+        item = selection[0]
+        
+        hit = self.treeIds[item]
+        
+        nextItem = self.tree.next(item)
+        self.tree.delete(item)
+        self.treeIds.pop(item)
+        if nextItem != {}:
+            self.tree.selection_set(nextItem)
+        elif len(self.tree.get_children('')) > 0:
+            nextItem = self.tree.get_children('')[-1]
+            self.tree.selection_set(nextItem)
+        
+        analysis = self.model.currentAnalysis
+        analysis.removeIdentification(hit)

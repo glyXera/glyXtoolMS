@@ -147,6 +147,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
 
             if chargeOx >= feature_charge:
                 continue
+
             mz_loss = ((feature_mass*feature_charge-mzOx*chargeOx)/
                        (feature_charge-chargeOx))
 
