@@ -100,7 +100,7 @@ class PeptideCoverageFrame(ttk.Frame):
             if len(parts[key]) == 1:
                 yHit = True
                 bHit = True
-
+            
             ySeries[y] = yHit
             bSeries[b] = bHit
         
