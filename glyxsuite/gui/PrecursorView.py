@@ -4,7 +4,7 @@ import math
 import FramePlot
 import Appearance
 
-class PeakTMP:
+class PeakTMP(object):
 
     def __init__(self, mass, intensity):
         self.mass = mass

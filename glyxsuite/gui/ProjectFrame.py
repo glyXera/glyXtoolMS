@@ -107,7 +107,7 @@ class ProjectFrame(ttk.Frame):
         self.b4 = ttk.Button(tools, text="Delete Analysis", command=self.deleteAnalysis)
         self.b4.grid(row=1, column=1)
         self.b4.config(state=Tkinter.DISABLED)
-        
+
         self.b5 = ttk.Button(tools, text="Save Analysis", command=self.saveAnalysis)
         self.b5.grid(row=1, column=2)
         self.b5.config(state=Tkinter.DISABLED)
@@ -252,7 +252,7 @@ class ProjectFrame(ttk.Frame):
 
         # delete analysis from Treeview
         self.projectTree.delete(item)
-        
+
     def saveAnalysis(self):
         item, obj, typ = self.getSelectedItem()
         if item == None:
@@ -262,7 +262,7 @@ class ProjectFrame(ttk.Frame):
         # get analysis
         if not item in self.projectsTreeIds:
             return
-        # get save path    
+        # get save path
         options = {}
         options['defaultextension'] = '.xml'
         options['filetypes'] = [('Analysis files', '.xml'), ('all files', '.*')]
@@ -272,7 +272,7 @@ class ProjectFrame(ttk.Frame):
         path = tkFileDialog.asksaveasfilename(**options)
         if path == "" or path == ():
             return
-        
+
         obj.analysis.writeToFile(path)
         obj.project.analysisFiles.pop(obj.name)
         # set new analysis name
@@ -281,7 +281,7 @@ class ProjectFrame(ttk.Frame):
         obj.name = name
         self.projectTree.item(item, text = name)
         obj.project.analysisFiles[name] = obj
-        
+
 
     def clickedTree(self, event):
         item, obj, typ = self.getSelectedItem()

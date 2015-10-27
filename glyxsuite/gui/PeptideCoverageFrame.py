@@ -35,13 +35,13 @@ class PeptideCoverageFrame(ttk.Frame):
 
     def __init__(self, master, model, height=300, width=800):
         ttk.Frame.__init__(self, master=master)
-        
+
         self.master = master
         self.model = model
-        
+
         self.height = height
         self.width = width
-        
+
         self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height) # check screen resolution
         self.canvas.config(bg="white")
         self.canvas.grid(row=0, column=0, sticky="NSEW")
@@ -50,7 +50,7 @@ class PeptideCoverageFrame(ttk.Frame):
         self.grid_columnconfigure(0, weight=1)
 
         self.grid_columnconfigure(0, weight=1)
-        
+
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)
         self.model.debug = self.canvas
@@ -59,18 +59,18 @@ class PeptideCoverageFrame(ttk.Frame):
         self.model.funcUpdateIdentificationCoverage = self.init
 
     def init(self,hit):
-        
+
         analysis = self.model.currentAnalysis
         if analysis == None:
             return
         if hit.featureID not in analysis.featureIds:
             return
         self.hit = hit
-        
-        
+
+
         peptideSequence = hit.peptide.sequence
         peptideLength = len(peptideSequence)
-        
+
         parts = {}
         for i in range(0,peptideLength):
             for e in range(i+1,peptideLength+1):
@@ -93,41 +93,41 @@ class PeptideCoverageFrame(ttk.Frame):
             bHit = ySeries.get(b,False)
             self.fragmentCoverage[y] = self.fragmentCoverage.get(y,[]) + [name]
             self.fragmentCoverage[b] = self.fragmentCoverage.get(b,[]) + [name]
-                
+
             fragmentSequence = hit.fragments[name]["sequence"].split("-")[0]
             fragmentSequence = re.sub("\(.+?\)","",fragmentSequence)
             key = "".join(sorted(fragmentSequence))
             if len(parts[key]) == 1:
                 yHit = True
                 bHit = True
-            
+
             ySeries[y] = yHit
             bSeries[b] = bHit
-        
+
         # remove 0 and len
         if 0 in ySeries:
             ySeries.pop(0)
         if 0 in bSeries:
             bSeries.pop(0)
-        
+
         if peptideLength in ySeries:
             ySeries.pop(peptideLength)
         if peptideLength in bSeries:
             bSeries.pop(peptideLength)
-        
+
         self.canvas.delete(Tkinter.ALL)
 
         # write peptide sequence
         xc = self.width/2.0
         yc = self.height/2.0
         text = hit.peptide.sequence
-        
+
         # find fitting text size
         for s in range(0,100):
             font = tkFont.Font(family="Courier",size=s)
             if (font.measure(" ")+4)*len(text) > self.width:
                 break
-                
+
         s -= 1
         font = tkFont.Font(family="Courier",size=s)
         letterSize = font.measure(" ")+4
@@ -135,7 +135,7 @@ class PeptideCoverageFrame(ttk.Frame):
         for index,letter in enumerate(text):
             x = start + index*letterSize
             item = self.canvas.create_text((x,yc,), text=letter, font=("Courier", s), fill="black", anchor="center", justify="center")
-            
+
         # plot lines
 
         self.coverage = {}
@@ -150,8 +150,8 @@ class PeptideCoverageFrame(ttk.Frame):
                 item2 = self.canvas.create_line(x, 10, x+10, 10, tags=("site", ), fill=color, dash=(3,5))
             self.coverage[item1] = index
             self.coverage[item2] = index
-                
-        
+
+
         for index in bSeries:
             x = start + (index-0.5)*letterSize
             color = "black"
@@ -163,25 +163,25 @@ class PeptideCoverageFrame(ttk.Frame):
                 item2 = self.canvas.create_line(x, self.height-10, x-10, self.height-10, tags=("site", ), fill=color, dash=(3,5))
             self.coverage[item1] = index
             self.coverage[item2] = index
-        
+
     def identifier(self):
         return "PeptideCoverageFrame"
-        
+
     def eventMouseClick(self, event):
         # clear color from all items
         self.canvas.itemconfigure ("site",fill="black")
-        
-        overlap = set(self.canvas.find_overlapping(event.x-10, 
-                                                   event.y-10, 
-                                                   event.x+10, 
+
+        overlap = set(self.canvas.find_overlapping(event.x-10,
+                                                   event.y-10,
+                                                   event.x+10,
                                                    event.y+10))
-        
+
         indexList = set()
         for item in overlap:
             if item in self.coverage:
                 key = self.coverage[item]
                 indexList.add(key)
-                
+
         found = []
         for index in indexList:
             found += self.fragmentCoverage[key]
@@ -190,6 +190,6 @@ class PeptideCoverageFrame(ttk.Frame):
                     self.canvas.itemconfigure (item,fill="red")
 
         self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found)
-        
-        
+
+
 

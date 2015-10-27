@@ -44,7 +44,7 @@ def test_deconvolution():
     assert p.right.isotope == 1
 
 def test_peptide_digest():
-    
+
     # Protein
     protein = glyxsuite.lib.Protein()
     protein.sequence = "AAACAAAAANASAARHGGGGGGKMGAH"
@@ -55,7 +55,7 @@ def test_peptide_digest():
 
     proteinDigest.setCarboxylation(False) # Iodacetic acid
     proteinDigest.setAcrylamideAdducts(False)
-    
+
     proteinDigest.newDigest(protein)
     proteinDigest.add_tryptic_digest()
     peptides = proteinDigest.digest(1)
@@ -69,16 +69,16 @@ def test_peptide_digest():
     assert "HGGGGGGK" in peptidestrings
     assert "HGGGGGGKMGAH" in peptidestrings
     assert "MGAH" in peptidestrings
-    
+
     assert len(glycopeptides) == 4
-    
+
     glycopeptidestrings = [pep.toString() for pep in glycopeptides]
     assert "AAACAAAAANASAAR" in glycopeptidestrings
     assert "AAACAAAAANASAAR Cys_CAM(-1)" in glycopeptidestrings
     assert "AAACAAAAANASAARHGGGGGGK" in glycopeptidestrings
     assert "AAACAAAAANASAARHGGGGGGK Cys_CAM(-1)" in glycopeptidestrings
 
- 
+
 
 def test_io():
     # create spectrum
@@ -91,7 +91,7 @@ def test_io():
     spectrum.logScore = 1.3
     spectrum.addIon("Hex", "(Hex)1(H+)1", 163.059, 1234.5)
     spectrum.isGlycopeptide = True
-    
+
     # create Feature
     feature = glyxsuite.io.GlyxXMLFeature()
     feature.id = "featureID"
@@ -101,7 +101,7 @@ def test_io():
     feature.charge = 2
     feature.setBoundingBox(95.0,110.0,109.0,113.1)
     feature.addSpectrumId(spectrum.nativeId)
-    
+
     # create peptide
     peptide = glyxsuite.io.XMLPeptide()
     peptide.proteinID = "proteinID"
@@ -111,25 +111,25 @@ def test_io():
     peptide.mass = 1316.6255039999999
     peptide.modifications = [('Cys_CAM', 'C', -1)]
     peptide.glycosylationSites = [(9, 'N')]
-    
+
     # create glycan
     glycan = glyxsuite.io.XMLGlycan()
     glycan.composition = "HEX9HEXNAC5"
     glycan.mass = 1234.5
-    
+
     # create glycomod hit
     hit = glyxsuite.io.GlyxXMLGlycoModHit()
     hit.featureID = "featureID"
     hit.peptide = peptide
     hit.glycan = glycan
     hit.error = -0.01
-        
+
     # create GlyxXMLFile
     f = glyxsuite.io.GlyxXMLFile()
     f.spectra.append(spectrum)
     f.features.append(feature)
     f.glycoModHits.append(hit)
-    
+
     # write parameters
     param = f.parameters
     param.setTimestamp(time.time())
@@ -141,14 +141,14 @@ def test_io():
     param.setGlycanList(["Hex","HexNAc"])
     param.addGlycan("NeuAc")
     param.setSourceFileChecksum("md5")
-    
+
     # write file
     f.writeToFile("tempTest/glyML.xml")
-    
+
     # parse from file
     fparse = glyxsuite.io.GlyxXMLFile()
     fparse.readFromFile("tempTest/glyML.xml")
-    
+
     # check some paramters between the files
     assert len(fparse.spectra) == 1
     assert len(fparse.features) == 1

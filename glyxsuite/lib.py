@@ -5,7 +5,7 @@ import glyxsuite
 import pyopenms
 import glyxsuite.io
 
-class Histogram:
+class Histogram(object):
 
     def __init__(self, binwidth):
         self.bins = {}
@@ -79,7 +79,7 @@ class Histogram:
 
 # ---------------------------- Protein Digest -------------------------------------
 
-class Protein:
+class Protein(object):
 
     def __init__(self):
         self.identifier = ""
@@ -121,7 +121,7 @@ class Protein:
                 peptide.modifications.append((mod, amino, pos))
         return peptide
 
-class ProteinDigest:
+class ProteinDigest(object):
 
     def __init__(self):
 
@@ -240,7 +240,7 @@ class ProteinDigest:
             if self.protein.sequence[i] == "D":
                 self.breakpoints.append(i-1)
             i += 1
-            
+
     def add_AspN_digest_2(self):
         # cleaves N-terminal side of E, D and C
         i = 1
@@ -248,16 +248,16 @@ class ProteinDigest:
             if self.protein.sequence[i] in ["E","D","C"]:
                 self.breakpoints.append(i-1)
             i += 1
-            
+
     def add_ProtinaseK_digest(self):
         # cleaves D-terminal side of multiple aminoacids
         i = 1
         while i < len(self.protein.sequence):
-            
+
             if self.protein.sequence[i] in ["A", "F", "Y", "W", "L", "I", "V"]:
                 self.breakpoints.append(i)
             i += 1
-            
+
     def add_Unspecific_digest(self):
         # cleaves all possible aminoacids
         for i in range(0,len(self.protein.sequence)):
@@ -324,37 +324,37 @@ class Glycan(glyxsuite.io.XMLGlycan):
             self._splitComposition(composition)
 
     def setComposition(self,S=0,F=0,H=0,N=0):
-        
+
         self.sugar["NEUAC"] = S
         self.sugar["DHEX"] = F
         self.sugar["HEX"] = H
         self.sugar["HEXNAC"] = N
-        
+
         self.mass = 0
         for unit in self.sugar:
             self.mass += glyxsuite.masses.GLYCAN[unit]*self.sugar[unit]
-            
+
     def checkComposition(self):
         HEX = self.sugar["HEX"]
         HEXNAC= self.sugar["HEXNAC"]
         DHEX= self.sugar["DHEX"]
         NEUAC= self.sugar["NEUAC"]
-        
+
         if HEX+HEXNAC == 0:
             return False
-        # The number of fucose residues plus 1 must be less than or 
+        # The number of fucose residues plus 1 must be less than or
         # equal to the sum of the number of hexose plus HexNAc residues.
         if DHEX >= HEX+HEXNAC:
             return False
-        # If the number of HexNAc residues is less than or equal to 2 
-        # and the number of hexose residues is greater than 2, 
-        # then the number of NeuAc and NeuGc residues must be zero. 
+        # If the number of HexNAc residues is less than or equal to 2
+        # and the number of hexose residues is greater than 2,
+        # then the number of NeuAc and NeuGc residues must be zero.
         if HEXNAC <= 2 and HEX > 2 and NEUAC > 0:
             return False
         return True
 
     def _splitComposition(self, composition):
-        self.mass = 0        
+        self.mass = 0
         for comp in re.findall("[A-z]+\d+", composition):
             unit = re.search("[A-z]+", comp).group()
             keys = {"S":"NEUAC","F":"DHEX","H":"HEX","N":"HEXNAC"}
@@ -377,7 +377,7 @@ class Glycan(glyxsuite.io.XMLGlycan):
             if comp[sugar] > 0:
                 composition += sugar+str(comp[sugar])
         return composition
-        
+
     def getShortName(self):
         shortName = ""
         short = {'DHEX': "F", 'HEX': "H", 'HEXNAC': "HN", 'NEUAC': "NA",'NEUGC': "NG"}
@@ -387,7 +387,7 @@ class Glycan(glyxsuite.io.XMLGlycan):
                 continue
             shortName += short[name]+str(amount)
         return shortName
-    
+
     def toString(self):
         result = ""
         for name in sorted(self.sugar.keys()):

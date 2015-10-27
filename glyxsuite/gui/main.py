@@ -150,7 +150,7 @@ class App(ttk.Frame):
             return
         HistogramFrame(self.master, self.model)
         return
-        
+
     def setWorkspace(self):
         options = {}
         options['initialdir'] = self.model.workingdir
@@ -217,10 +217,10 @@ class HistogramFrame(Tkinter.Toplevel):
         self.view.addSeries(seriesGlyco, label="glyco", color="green")
         self.view.addSeries(seriesNon, label="noglyco", color="blue")
         self.view.initHistogram(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())
-    
+
     def close(self):
         self.destroy()
-        
+
 
     def validateEntry(self):
         try:

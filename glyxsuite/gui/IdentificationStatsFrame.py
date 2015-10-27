@@ -55,7 +55,7 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         self.aMax = self.aMax*1.1
         self.bMax = self.bMax+0.1
         self.bMin = self.bMin-0.1
-        
+
         #self.bMax = 2
         #self.bMin = -2
 
@@ -67,19 +67,19 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
             return
 
         # insert all glycomod hits
-        
+
         # paint zero line
         xMin = self.convAtoX(self.aMin)
         xMax = self.convAtoX(self.aMax)
         zero = self.convBtoY(0)
         self.canvas.create_line(xMin, zero, xMax, zero, fill="blue")
-        
-        for hit in analysis.analysis.glycoModHits:        
+
+        for hit in analysis.analysis.glycoModHits:
             feature = analysis.featureIds[hit.featureID]
             featureNr = int(feature.index)
             #featureNr = (feature.getMZ()-glyxsuite.masses.MASS["H+"])*feature.getCharge()
             error = hit.error
-            
+
             diam = 3
             x = self.convAtoX(featureNr)
             y = self.convBtoY(error)

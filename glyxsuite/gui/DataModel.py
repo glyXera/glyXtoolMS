@@ -3,15 +3,15 @@ import os
 import configparser
 import tkFont
 
-class DataModel:
+class DataModel(object):
 
     def __init__(self):
-        
+
         #for s in range(10,100):
         #    font = tkFont.Font(family="Courier",size=s)
         #    print s, font.measure(" ")
 
-        
+
         self.workingdir = ""
         self.debug = None
         self.root = None
@@ -49,10 +49,10 @@ class DataModel:
         self.funcClickedFeatureSpectrum = None
         self.funcClickedIdentification = None
         self.classes = {} # Functionhandler - each class should register itself here
-        
+
         # read settings
         self.readSettings()
-        
+
     def readSettings(self):
         home = os.path.expanduser("~")
         settingspath = os.path.join(home,'.glyxsuite.ini')
@@ -65,7 +65,7 @@ class DataModel:
         config = configparser.ConfigParser()
         config.read(os.path.join(settingspath))
         self.workingdir = config["DEFAULT"]["workingdir"]
-        
+
     def saveSettings(self):
         home = os.path.expanduser("~")
         settingspath = os.path.join(home,'.glyxsuite.ini')
@@ -75,7 +75,7 @@ class DataModel:
         with open(settingspath, 'w') as configfile:
             config.write(configfile)
 
-class Chromatogram:
+class Chromatogram(object):
 
     def __init__(self):
         self.name = ""
@@ -147,7 +147,7 @@ class ContainerSpectrum(object):
     def isGlycopeptide(self, value):
         self._spectrum.isGlycopeptide = value
 
-class Project:
+class Project(object):
 
     def __init__(self, name, path):
         self.name = name
@@ -155,7 +155,7 @@ class Project:
         self.mzMLFile = None
         self.analysisFiles = {}
 
-class ContainerMZMLFile:
+class ContainerMZMLFile(object):
 
     def __init__(self, project, path):
         self.exp = None
@@ -175,7 +175,7 @@ class ContainerMZMLFile:
             elif level == 2:
                 self.experimentIds[nativeId] = (spec, ms1)
 
-class ContainerAnalysisFile:
+class ContainerAnalysisFile(object):
 
     def __init__(self, project, path):
         self.path = path
@@ -228,7 +228,7 @@ class ContainerAnalysisFile:
                     continue
                 self.spectraInFeatures[spectrum.nativeId].append(feature.getId())
 
-            
+
         self.featureSpectra = {}
         for spec in self.project.mzMLFile.exp:
             if spec.getMSLevel() != 1:
@@ -269,10 +269,10 @@ class ContainerAnalysisFile:
                 todelete.append(hit)
         for hit in todelete:
             self.analysis.glycoModHits.remove(hit)
-            
+
     def removeIdentification(self,hit):
         if hit in self.analysis.glycoModHits:
             self.analysis.glycoModHits.remove(hit)
-        
-        
-        
+
+
+

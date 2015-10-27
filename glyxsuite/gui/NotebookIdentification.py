@@ -18,7 +18,7 @@ class NotebookIdentification(ttk.Frame):
         columns = {"Mass":70, "error":70, "Peptide":160, "Glycan":160}
         self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan")
         self.tree.column("#0", width=40)
-        
+
         self.tree.heading("#0", text="Feature Nr.", command=lambda col='#0': self.sortColumn(col))
         for col in columns:
             self.tree.column(col, width=columns[col])
@@ -47,13 +47,13 @@ class NotebookIdentification(ttk.Frame):
     def sortColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
             return
-            
+
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
         else:
             self.model.currentAnalysis.sortedColumn = col
             self.model.currentAnalysis.reverse = False
-            
+
         if col == "Peptide" or col == "Glycan":
             l = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
         elif col == "Mass":
@@ -147,9 +147,9 @@ class NotebookIdentification(ttk.Frame):
         if len(selection) == 0:
             return
         item = selection[0]
-        
+
         hit = self.treeIds[item]
-        
+
         nextItem = self.tree.next(item)
         self.tree.delete(item)
         self.treeIds.pop(item)
@@ -158,6 +158,6 @@ class NotebookIdentification(ttk.Frame):
         elif len(self.tree.get_children('')) > 0:
             nextItem = self.tree.get_children('')[-1]
             self.tree.selection_set(nextItem)
-        
+
         analysis = self.model.currentAnalysis
         analysis.removeIdentification(hit)

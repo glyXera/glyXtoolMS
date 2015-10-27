@@ -93,7 +93,7 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree);
 
         self.model.funcUpdateNotebookScoring = self.updateTree
-        
+
         self.model.funcClickedFeatureSpectrum = self.setSelectedSpectrum
 
         # layout frameTree
@@ -102,7 +102,7 @@ class NotebookScoring(ttk.Frame):
     def sortColumn(self, col):
 
         if self.model == None or self.model.currentAnalysis == None:
-            return        
+            return
 
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
@@ -276,7 +276,7 @@ class NotebookScoring(ttk.Frame):
                         spectrum.precursorCharge,
                         round(spectrum.logScore, 2),
                         isGlycopeptide))
-                        
+
     def setSelectedSpectrum(self,index):
         for itemSpectra in self.treeIds:
             if index == self.treeIds[itemSpectra][1].index:

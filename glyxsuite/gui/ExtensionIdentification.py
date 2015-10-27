@@ -16,9 +16,9 @@ class ExtensionIdentification(ttk.Labelframe):
 
         errorView = IdentificationStatsFrame.IdentificationStatsFrame(errorFrame, model, height=200, width=800)
         errorView.grid(row=0, column=0)
-        
-        
-        
+
+
+
         peptideFrame = ttk.Labelframe(self, text="Peptide")
         peptideFrame.grid(row=1, column=0, columnspan=2)
 

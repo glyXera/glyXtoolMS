@@ -1,7 +1,7 @@
 import Queue
 import threading
 
-class ThreadedIO:
+class ThreadedIO(object):
 
     def __init__(self):
         self.queue = Queue.Queue()

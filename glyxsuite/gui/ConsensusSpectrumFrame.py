@@ -31,7 +31,7 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
 
         # link function
         self.model.funcUpdateConsensusSpectrum = self.init
-        
+
         # register class
         self.model.classes["ConsensusSpectrumFrame"] = self
 
@@ -70,7 +70,7 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
         for peak in self.consensus:
             pMZ = self.convAtoX(peak.x)
             pInt = self.convBtoY(peak.y)
-            
+
             masstext = str(round(peak.x,4))
             # check if a fragment exists for the peak
             foundGlycan = None
@@ -78,7 +78,7 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
                 if abs(glycanFragments[ionname]-peak.x) < 0.1:
                     foundGlycan = ionname
                     break
-            
+
             foundPep = None
             for key in self.hit.fragments:
                 if foundGlycan != None:
@@ -101,9 +101,9 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill=color)
         items = self.plotText(annotationText,set(),0)
         items = self.plotText(annotationMass,items,5)
-        
+
         self.plotSelectedFragments()
-        
+
         self.allowZoom = True
 
     def init(self,hit):
@@ -128,12 +128,12 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
     def identifier(self):
         return "ConsensusSpectrumFrame"
 
-    
+
     def plotText(self,collectedText,items=set(),N=0):
         # remove text which is outside of view
         ymax = self.convBtoY(self.viewYMin)
         ymin = self.convBtoY(self.viewYMax)
-        
+
         xmin = self.convAtoX(self.viewXMin)
         xmax = self.convAtoX(self.viewXMax)
         viewable = []
@@ -144,7 +144,7 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
         # sort textinfo
         viewable = sorted(viewable,key=lambda t:t[1])
         # plot items
-        
+
         for textinfo in viewable:
             if N > 0 and len(items) >= N:
                 break
@@ -158,13 +158,13 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
             else:
                 self.canvas.delete(item)
         return items
-        
+
     def plotSelectedFragments(self,fragments=None):
         # remove previous fragment selections
         self.canvas.delete("fragmentSelection")
         if fragments != None:
             self.selectedFragments = fragments
-            
+
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         for ionname in self.selectedFragments:
@@ -172,4 +172,4 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
             pMZ = self.convAtoX(mz)
             self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("fragmentSelection", ), fill="green")
         self.canvas.tag_lower("fragmentSelection", "peak")
-            
+

@@ -100,7 +100,7 @@ class SpectrumView(FramePlot.FramePlot):
             pMZ = self.convAtoX(mz)
             pInt = self.convBtoY(intens)
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="red")
-        
+
         items = self.plotText(annotationText,set(),0)
         items = self.plotText(annotationMass,items,5)
 
@@ -108,7 +108,7 @@ class SpectrumView(FramePlot.FramePlot):
         # remove text which is outside of view
         ymax = self.convBtoY(self.viewYMin)
         ymin = self.convBtoY(self.viewYMax)
-        
+
         xmin = self.convAtoX(self.viewXMin)
         xmax = self.convAtoX(self.viewXMax)
         viewable = []
@@ -119,7 +119,7 @@ class SpectrumView(FramePlot.FramePlot):
         # sort textinfo
         viewable = sorted(viewable,key=lambda t:t[1])
         # plot items
-        
+
         for textinfo in viewable:
             if N > 0 and len(items) >= N:
                 break

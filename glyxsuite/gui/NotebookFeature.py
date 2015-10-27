@@ -50,7 +50,7 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.tag_configure('oddSpectrum', background='SkyBlue')
         self.featureTree.bind("<<TreeviewSelect>>", self.clickedFeatureTree)
         self.featureTree.bind("<Delete>", self.deleteFeature)
-        
+
 
         self.model.funcUpdateNotebookFeature = self.updateFeatureTree
 
@@ -86,7 +86,7 @@ class NotebookFeature(ttk.Frame):
         else:
             self.model.currentAnalysis.sortedColumn = col
             self.model.currentAnalysis.reverse = False
-            
+
         if col == "isGlycopeptide":
             l = [(self.featureTree.set(k, col), k) for k in self.featureTree.get_children('')]
         elif col == "#0":
@@ -209,7 +209,7 @@ class NotebookFeature(ttk.Frame):
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
             return
-    
+
         if col == self.model.currentAnalysis.sortedColumn:
             self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
         else:
@@ -263,7 +263,7 @@ class NotebookFeature(ttk.Frame):
         index = 0
         self.spectrumTreeIds = {}
         for spec, spectrum in analysis.data:
-            
+
             # check if spectrum is linked to feature
             if not spectrum.nativeId in feature.getSpectraIds():
                 if spectrum.rt < minRT:
@@ -307,22 +307,22 @@ class NotebookFeature(ttk.Frame):
         spec, spectrum = self.spectrumTreeIds[item]
         self.model.funcUpdateFeatureMSMSSpectrum(spec)
         self.model.funcClickedFeatureSpectrum(spectrum.index)
-        
+
     def setSelectedFeature(self,index):
         for item in self.featureTreeIds:
             if index == self.featureTreeIds[item].index:
                 self.featureTree.selection_set(item)
                 self.featureTree.see(item)
                 break
-                
+
     def deleteFeature(self,event):
-        
+
         #updateFeatureTree
         selection = self.featureTree.selection()
         if len(selection) == 0:
             return
         item = selection[0]
-        
+
         feature = self.featureTreeIds[item]
         nextItem = self.featureTree.next(item)
         self.featureTree.delete(item)
@@ -332,12 +332,12 @@ class NotebookFeature(ttk.Frame):
         elif len(self.featureTree.get_children('')) > 0:
             nextItem = self.featureTree.get_children('')[-1]
             self.featureTree.selection_set(nextItem)
-            
+
         # remove feature from analysis file
         analysis = self.model.currentAnalysis
         analysis.removeFeature(feature)
         self.model.funcUpdateNotebookIdentification()
-        
+
         # adjust tags
         for index,k in enumerate(self.featureTree.get_children('')):
             taglist = list(self.featureTree.item(k, "tags"))

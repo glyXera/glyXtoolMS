@@ -3,7 +3,7 @@ import Tkinter
 import math
 
 
-class ActionZoom:
+class ActionZoom(object):
 
     def __init__(self, master, canvas, x, y):
         self.master = master
@@ -42,7 +42,7 @@ class FramePlot(ttk.Frame):
         self.bMax = -1
         self.aMin = 0
         self.bMin = 0
-        
+
         self.viewXMin = 0
         self.viewXMax = 1
         self.viewYMin = 0
@@ -230,7 +230,7 @@ class FramePlot(ttk.Frame):
             if start > self.viewXMin and start < self.viewXMax:
                 x = self.convAtoX(start)
                 y = self.convBtoY(self.viewYMin)
-                self.canvas.create_text((x, y+5), 
+                self.canvas.create_text((x, y+5),
                                         text = shortNr(start, exp),
                                         anchor="n")
                 self.canvas.create_line(x, y, x, y+4)

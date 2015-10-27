@@ -1,30 +1,30 @@
 """
 Function to generate a consensus spectrum from a set of spectra
 
-""" 
+"""
 
 import glyxsuite
 
 class Peak(glyxsuite.io.GlyxXMLConsensusPeak,object):
-    
+
     def __init__(self,x,y,spectrum):
         super(Peak, self).__init__(x,y)
         self.spectrum = spectrum
         self.neighbors = []
         self.graph = None
         self.subpeaks = []
-        
+
 class Graph(object):
-    
+
     def __init__(self):
         self.vertices = []
-        
+
     def plot(self,color,text=False):
         for v in self.vertices:
             plt.plot((v.x,v.x),(0,v.y),color=color)
             if text == True:
                 plt.text(v.x,v.y,v.spectrum)
-                
+
     def separate(self,tolerance):
         allPeaks = sorted(self.vertices,key=lambda p:p.x)
         while True:
@@ -93,7 +93,7 @@ def generateConsensusSpectrum(spectra,tolerance=0.1, minSpecCount = 2, keepRange
                 break
             if diff < tolerance:
                 neighbors.append(p2)
-        
+
         e = i
         while e < len(allPeaks)-1:
             e += 1
@@ -107,7 +107,7 @@ def generateConsensusSpectrum(spectra,tolerance=0.1, minSpecCount = 2, keepRange
                 break
             if diff < tolerance:
                 neighbors.append(p2)
-        
+
         allPeaks[i].neighbors = neighbors
 
     # find connected graphs
@@ -132,8 +132,8 @@ def generateConsensusSpectrum(spectra,tolerance=0.1, minSpecCount = 2, keepRange
                     s.graph = graph
                     working.append(s)
         graphs.append(graph)
-        
-    
+
+
     # search single peaks
     underThreshold = []
     overThreshold = []
@@ -144,20 +144,20 @@ def generateConsensusSpectrum(spectra,tolerance=0.1, minSpecCount = 2, keepRange
             pi = nSpectra/float(len(spectra))
             scale = 0.95 + 0.05 * (1 + pi )**5
             p.y = p.y*scale
-            
+
             if len(p.subpeaks)+1 < minSpecCount:
                 underThreshold.append(p)
             else:
                 overThreshold.append(p)
-    
+
     # sort b after increasing intensity
-    
+
     sort = sorted(overThreshold,key=lambda v:v.y)
     keep = []
     notkeep = []
     if keepRange == 0:
         return overThreshold, [],underThreshold
-        
+
     for i in range(0,len(sort)):
         p1 = sort[i]
         N = 0
@@ -171,5 +171,5 @@ def generateConsensusSpectrum(spectra,tolerance=0.1, minSpecCount = 2, keepRange
             keep.append(p1)
         else:
             notkeep.append(p1)
-    
+
     return keep,notkeep,underThreshold

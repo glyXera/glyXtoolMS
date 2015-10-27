@@ -252,7 +252,7 @@ class GlyxXMLGlycoModHit(object):
         self.fragments = {}
 
 class GlyxXMLConsensusPeak(object):
-    
+
     def __init__(self,x,y):
         self.x = x
         self.y = y
@@ -434,20 +434,20 @@ class GlyxXMLFile(object):
             for spectrumId in feature.getSpectraIds():
                 xmlFeatureSpectraId = ET.SubElement(xmlFeatureSpectraIds, "id")
                 xmlFeatureSpectraId.text = str(spectrumId)
-            
+
             xmlFeatureConsensus = ET.SubElement(xmlFeature, "consensusSpectrum")
 
             x = ";".join([str(round(c.x,4)) for c in feature.consensus])
-            y = ";".join([str(round(c.y,2)) for c in feature.consensus])            
-            
+            y = ";".join([str(round(c.y,2)) for c in feature.consensus])
+
             xmlFeatureConsensusX = ET.SubElement(xmlFeatureConsensus, "x")
             xmlFeatureConsensusX.text = x
             xmlFeatureConsensusY = ET.SubElement(xmlFeatureConsensus, "y")
             xmlFeatureConsensusY.text = y
 
-            
-            
-             
+
+
+
 
     def _writeGlycoModHits(self, xmlGlycoModHits):
         classXMLPeptide = XMLPeptide() # Use class as static to call _write function
@@ -470,7 +470,7 @@ class GlyxXMLFile(object):
 
             xmlError = ET.SubElement(xmlHit, "error")
             xmlError.text = str(glycoModHit.error)
-            
+
             # write identified fragments
             fragments = glycoModHit.fragments
             # sort fragments after mass
@@ -480,16 +480,16 @@ class GlyxXMLFile(object):
                 xmlFragment = ET.SubElement(xmlFragments, "fragment")
                 xmlFragmentName = ET.SubElement(xmlFragment, "name")
                 xmlFragmentName.text = fragmentname
-                
+
                 xmlFragmentSequence = ET.SubElement(xmlFragment, "sequence")
                 xmlFragmentSequence.text = fragments[fragmentname]["sequence"]
-                
+
                 xmlFragmentMass = ET.SubElement(xmlFragment, "mass")
                 xmlFragmentMass.text = str(fragments[fragmentname]["mass"])
-                
+
                 xmlFragmentCounts = ET.SubElement(xmlFragment, "counts")
                 xmlFragmentCounts.text = str(fragments[fragmentname]["counts"])
-            
+
 
     def _parseGlycoModHits(self, xmlGlycoModHits):
         hits = []
@@ -506,7 +506,7 @@ class GlyxXMLFile(object):
             peptide = XMLPeptide()
             peptide._parse(xmlHit.find("./peptide"), peptide)
             hit.peptide = peptide
-            
+
             hit.fragments = {}
             if self.version > "0.0.3":
                 for xmlfragment in xmlHit.findall("./fragments/fragment"):
@@ -537,7 +537,7 @@ class GlyxXMLFile(object):
             feature.setBoundingBox(minRT, maxRT, minMZ, maxMZ)
             for spectrumId in xmlFeature.findall("./spectraIds/id"):
                 feature.addSpectrumId(spectrumId.text)
-                
+
             if self.version > "0.0.4":
                 try:
                     xString = xmlFeature.find("./consensusSpectrum/x").text
@@ -627,7 +627,7 @@ class XMLPeptide(object):
         self.mass = 0.0
         self.modifications = []
         self.glycosylationSites = []
-        
+
     def copy(self):
         new = XMLPeptide()
         new.proteinID = self.proteinID

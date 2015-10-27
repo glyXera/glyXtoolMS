@@ -6,7 +6,7 @@ import re
 
 
 
-class IonSeriesCalculator:
+class IonSeriesCalculator(object):
 
     def __init__(self):
         self.masses = {}
@@ -78,7 +78,7 @@ class IonSeriesCalculator:
         return series
 
 
-class Ion:
+class Ion(object):
     def __init__(self, name, mass, charge, parent=None):
         self.name = name
         self.charge = charge
@@ -106,7 +106,7 @@ class Ion:
         return self.score
 
 
-class Peak:
+class Peak(object):
 
     def __init__(self, mass, intensity):
         self.mass = mass
@@ -115,7 +115,7 @@ class Peak:
         self.ionname = None
         self.rank = 0
 
-class Score:
+class Score(object):
 
     def __init__(self, glycan):
         self.glycan = glycan
