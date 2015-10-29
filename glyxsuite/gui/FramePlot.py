@@ -30,6 +30,7 @@ class FramePlot(ttk.Frame):
         self.action = None
         self.zoomHistory = []
         self.allowZoom = False
+        self.coord = (0, 0)
 
         self.xTitle = xTitle
         self.yTitle = yTitle
@@ -231,7 +232,7 @@ class FramePlot(ttk.Frame):
                 x = self.convAtoX(start)
                 y = self.convBtoY(self.viewYMin)
                 self.canvas.create_text((x, y+5),
-                                        text = shortNr(start, exp),
+                                        text=shortNr(start, exp),
                                         anchor="n")
                 self.canvas.create_line(x, y, x, y+4)
             start += diff
@@ -256,7 +257,7 @@ class FramePlot(ttk.Frame):
 
         item = self.canvas.create_text(self.borderLeft,
                                        self.borderTop/2.0,
-                                       text = self.yTitle)
+                                       text=self.yTitle)
 
 
     def resetZoom(self, event):
@@ -335,7 +336,7 @@ class FramePlot(ttk.Frame):
 def shortNr(nr, exp):
     # shorten nr if precision is necessary
     if exp <= 0:
-        return round (nr, int(-exp+1))
+        return round(nr, int(-exp+1))
     if exp > 4:
         e = int(math.floor(math.log(nr)/math.log(10)))
         b = round(nr/float(10**e), 4)

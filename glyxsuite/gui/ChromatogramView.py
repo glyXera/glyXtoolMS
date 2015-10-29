@@ -1,9 +1,8 @@
 import ttk
 import Tkinter
-import math
-import FramePlot
-import DataModel
-import Appearance
+
+from glyxsuite.gui import FramePlot
+from glyxsuite.gui import Appearance
 
 class ChromatogramView(FramePlot.FramePlot):
 
@@ -15,7 +14,7 @@ class ChromatogramView(FramePlot.FramePlot):
         self.rt = None
 
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self, textvariable=self.coord)
+        l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
 
         self.keepZoom = Tkinter.IntVar()
@@ -71,10 +70,10 @@ class ChromatogramView(FramePlot.FramePlot):
             if chrom.plot == False:
                 continue
             for rt in chrom.rt:
-                if self.aMax == -1 or rt > self.aMax :
+                if self.aMax == -1 or rt > self.aMax:
                     self.aMax = rt
             for intensity in chrom.intensity:
-                if self.bMax == -1 or intensity > self.bMax :
+                if self.bMax == -1 or intensity > self.bMax:
                     self.bMax = intensity
 
 
@@ -99,11 +98,12 @@ class ChromatogramView(FramePlot.FramePlot):
                 xy.append(self.convBtoY(intens))
             if len(xy) == 0:
                 continue
-            item = self.canvas.create_line(xy, fill=chrom.color, width = linewidth)
+            self.canvas.create_line(xy, fill=chrom.color, width=linewidth)
+
         if self.rt != None:
             intZero = self.convBtoY(0)
             intMax = self.convBtoY(self.viewYMax)
-            item1 = self.canvas.create_line(
+            self.canvas.create_line(
                 self.convAtoX(self.rt),
                 intZero,
                 self.convAtoX(self.rt),
@@ -117,7 +117,7 @@ class ChromatogramView(FramePlot.FramePlot):
         self.viewYMin = 0
         self.viewYMax = -1
         self.rt = rt
-        self.initCanvas(keepZoom = True)
+        self.initCanvas(keepZoom=True)
 
     def identifier(self):
         return "ChromatogramView"

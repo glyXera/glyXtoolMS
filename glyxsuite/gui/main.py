@@ -1,21 +1,3 @@
-import Tkinter
-import ttk
-import tkFileDialog
-import time
-import pyopenms
-import SpectrumView
-import DataModel
-import ChromatogramView
-import TwoDView
-import ProjectFrame
-import NotebookScoring
-import NotebookFeature
-import NotebookIdentification
-import ExtensionScoring
-import ExtensionFeature
-import HistogramView
-import ExtensionIdentification
-
 """
 Viewer for analysis file
 a) MS/MS spectra, annotation
@@ -42,9 +24,25 @@ GUI:
 |---------------------------------------------------|
 """
 
+import Tkinter
+import ttk
+import tkFileDialog
+
+from glyxsuite.gui import DataModel
+from glyxsuite.gui import ProjectFrame
+from glyxsuite.gui import NotebookScoring
+from glyxsuite.gui import NotebookFeature
+from glyxsuite.gui import NotebookIdentification
+from glyxsuite.gui import ExtensionScoring
+from glyxsuite.gui import ExtensionFeature
+from glyxsuite.gui import HistogramView
+from glyxsuite.gui import ExtensionIdentification
 
 class App(ttk.Frame):
+
     def __init__(self, master):
+
+        ttk.Frame.__init__(self)
 
         self.master = master
         menubar = Tkinter.Menu(self.master, bg="#d9d9d9")
@@ -55,7 +53,7 @@ class App(ttk.Frame):
         self.model.root = master
 
         filemenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
-        filemenu.add_command(label="Set workspace",command=self.setWorkspace)
+        filemenu.add_command(label="Set workspace", command=self.setWorkspace)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.master.destroy)
         menubar.add_cascade(label="Program", menu=filemenu)
@@ -114,7 +112,7 @@ class App(ttk.Frame):
         self.e2.grid(row=0, column=1, rowspan=2, sticky="NWES")
         self.e3 = ExtensionIdentification.ExtensionIdentification(master, self.model, '3. Identification')
         self.e3.grid(row=0, column=1, rowspan=2, sticky="NWES")
-        self.e4 = ttk.Labelframe(master, text = '4. Results')
+        self.e4 = ttk.Labelframe(master, text='4. Results')
         self.e4.grid(row=0, column=1, rowspan=2, sticky="NWES")
 
         # configure column and row behaviour

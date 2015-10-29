@@ -1,15 +1,15 @@
 import ttk
 import Tkinter
-import math
-import FramePlot
+
 import glyxsuite
-import Appearance
+from glyxsuite.gui import FramePlot
+from glyxsuite.gui import Appearance
 
 
 class HistogramView(FramePlot.FramePlot, glyxsuite.lib.Histogram):
 
     def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle= "Glyco Score", yTitle="Counts")
+        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="Glyco Score", yTitle="Counts")
         glyxsuite.lib.Histogram.__init__(self, 0.2)
 
         self.master = master
@@ -17,7 +17,7 @@ class HistogramView(FramePlot.FramePlot, glyxsuite.lib.Histogram):
         self.NrXScales = 5.0
 
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self, textvariable=self.coord)
+        l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
 
         self.keepZoom = Tkinter.IntVar()
@@ -51,32 +51,27 @@ class HistogramView(FramePlot.FramePlot, glyxsuite.lib.Histogram):
     def paintObject(self):
         bottomStart = {}
         for label in self.bins.keys():
-            bottom = []
-            height = []
-            left = []
             if not label in self.bins:
                 continue
             for b in self.bins[label]:
                 if not b in bottomStart:
                     bottomStart[b] = 0
-                item = self.canvas.create_rectangle(
-                        self.convAtoX(b*self.binwidth),
-                        self.convBtoY(bottomStart[b]),
-                        self.convAtoX(b*self.binwidth+self.binwidth),
-                        self.convBtoY(bottomStart[b]+self.bins[label][b]),
-                        fill=self.colors[label])
+                self.canvas.create_rectangle(self.convAtoX(b*self.binwidth),
+                                             self.convBtoY(bottomStart[b]),
+                                             self.convAtoX(b*self.binwidth+self.binwidth),
+                                             self.convBtoY(bottomStart[b]+self.bins[label][b]),
+                                             fill=self.colors[label])
                 bottomStart[b] += self.bins[label][b]
 
         # plot logScore line
         intZero = self.convBtoY(0)
         intMax = self.convBtoY(self.viewYMax)
         if self.logScore != 0:
-            item = self.canvas.create_line(
-                self.convAtoX(self.logScore),
-                intZero,
-                self.convAtoX(self.logScore),
-                intMax,
-                fill='red', width=4)
+            self.canvas.create_line(self.convAtoX(self.logScore),
+                                    intZero,
+                                    self.convAtoX(self.logScore),
+                                    intMax,
+                                    fill='red', width=4)
 
 
         self.allowZoom = True
@@ -87,7 +82,7 @@ class HistogramView(FramePlot.FramePlot, glyxsuite.lib.Histogram):
         self.viewYMin = 0
         self.viewYMax = -1
         self.logScore = logScore
-        self.initCanvas(keepZoom = True)
+        self.initCanvas(keepZoom=True)
 
     def identifier(self):
         return "HistogramView"

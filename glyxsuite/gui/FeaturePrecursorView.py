@@ -1,8 +1,8 @@
 import ttk
 import Tkinter
-import math
-import FramePlot
-import Appearance
+
+from glyxsuite.gui import FramePlot
+from glyxsuite.gui import Appearance
 
 class PrecursorView(FramePlot.FramePlot):
 
@@ -12,9 +12,10 @@ class PrecursorView(FramePlot.FramePlot):
         self.master = master
         self.specArray = None
         self.NrXScales = 3.0
+        self.monoisotope = 0
 
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self, textvariable=self.coord)
+        l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
 
         self.keepZoom = Tkinter.IntVar()
@@ -33,7 +34,7 @@ class PrecursorView(FramePlot.FramePlot):
         self.bMax = -1
 
         for mz, intensity in self.specArray:
-            if self.aMax == -1 or mz > self.aMax :
+            if self.aMax == -1 or mz > self.aMax:
                 self.aMax = mz
             if self.bMax == -1  or intensity > self.bMax:
                 self.bMax = intensity
@@ -52,11 +53,17 @@ class PrecursorView(FramePlot.FramePlot):
             xy.append(pMZ)
             xy.append(pInt)
         if len(xy) > 0:
-            item = self.canvas.create_line(xy, tags=("peak", ))
+            self.canvas.create_line(xy, tags=("peak", ))
+        
+        pMZ = self.convAtoX(self.monoisotope)
+        pIntMin = self.convBtoY(self.viewYMin)
+        pIntMax = self.convBtoY(self.viewYMax)
+        
+        self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="red")
 
         self.allowZoom = True
 
-    def initSpectrum(self, specArray, minMZ, maxMZ):
+    def initSpectrum(self, specArray, monoisotope, minMZ, maxMZ):
         if specArray == None:
             return
         self.specArray = specArray
@@ -64,39 +71,8 @@ class PrecursorView(FramePlot.FramePlot):
         self.viewXMax = maxMZ
         self.viewYMin = 0
         self.viewYMax = max(specArray[:, 1])
-        self.initCanvas(keepZoom = True)
-        """
-        feature = self.model.currentAnalysis.currentFeature
-        exp = self.model.currentProject.mzMLFile
-        minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
-
-        for spec in exp:
-            if spec.getMSLevel() != 1:
-                continue
-
-
-        if spec == None:
-            self.charge = 0
-            self.precursormass = 0.0
-            return
-        self.spec = spec
-        self.precursormass = mass
-        self.charge = charge
-        self.viewXMin = low
-        self.viewXMax = high
-        self.viewYMin = 0
-        self.viewYMax = -1
-         # set self.viewYMax
-        for peak in self.spec:
-            mz = peak.getMZ()
-            intens = peak.getIntensity()
-            if mz < self.viewXMin or mz > self.viewXMax:
-                continue
-            if intens > self.viewYMax:
-                self.viewYMax = intens
-
-        self.initCanvas(keepZoom = True)
-        """
+        self.monoisotope = monoisotope
+        self.initCanvas(keepZoom=True)
 
     def identifier(self):
-        return "FeatureSpectrumView"
+        return "FeaturePrecursorView"

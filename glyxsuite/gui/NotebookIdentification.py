@@ -1,7 +1,6 @@
 import ttk
 import Tkinter
-import DataModel
-import re
+
 import glyxsuite
 
 class NotebookIdentification(ttk.Frame):
@@ -82,13 +81,13 @@ class NotebookIdentification(ttk.Frame):
                 taglist.append("evenrowFeature")
             else:
                 taglist.append("oddrowFeature")
-            self.tree.item(k, tags = taglist)
+            self.tree.item(k, tags=taglist)
 
 
     def updateTree(self):
 
         # clear tree
-        self.tree.delete(*self.tree.get_children());
+        self.tree.delete(*self.tree.get_children())
         self.treeIds = {}
 
         project = self.model.currentProject
@@ -123,12 +122,12 @@ class NotebookIdentification(ttk.Frame):
                 tag = ("oddrowFeature", )
             else:
                 tag = ("evenrowFeature", )
-            itemSpectra = self.tree.insert("" , "end", text=name,
-                values=(round(mass, 4),
-                        round(hit.error, 4),
-                        peptide,
-                        glycan.getShortName()),
-                tags = tag)
+            itemSpectra = self.tree.insert("", "end", text=name,
+                                           values=(round(mass, 4),
+                                                   round(hit.error, 4),
+                                                   peptide,
+                                                   glycan.getShortName()),
+                                           tags=tag)
             self.treeIds[itemSpectra] = hit
         # update Extention
         self.model.funcUpdateExtentionIdentification()
@@ -138,11 +137,11 @@ class NotebookIdentification(ttk.Frame):
         if len(selection) == 0:
             return
         item = selection[0]
-        self.model.funcClickedIdentification(self.tree.item(item,"text"))
+        self.model.funcClickedIdentification(self.tree.item(item, "text"))
         self.model.funcUpdateConsensusSpectrum(self.treeIds[item])
         self.model.funcUpdateIdentificationCoverage(self.treeIds[item])
 
-    def deleteIdentification(self,event):
+    def deleteIdentification(self, event):
         selection = self.tree.selection()
         if len(selection) == 0:
             return

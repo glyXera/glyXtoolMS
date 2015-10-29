@@ -1,8 +1,9 @@
 import ttk
 import Tkinter
-import ChromatogramView
-import SpectrumView
-import PrecursorView
+
+from glyxsuite.gui import ChromatogramView
+from glyxsuite.gui import SpectrumView
+from glyxsuite.gui import PrecursorView
 
 class ExtensionScoring(ttk.Labelframe):
 

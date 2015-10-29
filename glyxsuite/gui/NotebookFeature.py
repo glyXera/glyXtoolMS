@@ -1,7 +1,10 @@
 import ttk
 import Tkinter
-import DataModel
+
 import numpy as np
+
+from glyxsuite.gui import DataModel
+
 
 class NotebookFeature(ttk.Frame):
 
@@ -29,12 +32,13 @@ class NotebookFeature(ttk.Frame):
         columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra")
         self.featureTree["columns"] = columns
         self.featureTree.column("#0", width=100)
-        self.featureTree.heading("#0", text="Feature Nr.", command=lambda col='#0': self.sortFeatureColumn(col))
+        self.featureTree.heading("#0", text="Feature Nr.",
+                                 command=lambda col='#0': self.sortFeatureColumn(col))
         for col in columns:
             self.featureTree.column(col, width=80)
             self.featureTree.heading(col,
-                text=col,
-                command=lambda col=col: self.sortFeatureColumn(col))
+                                     text=col,
+                                     command=lambda col=col: self.sortFeatureColumn(col))
 
         self.featureTree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
 
@@ -62,16 +66,19 @@ class NotebookFeature(ttk.Frame):
         columns = ("RT", "Mass", "Charge", "Score", "Is Glyco")
         self.spectrumTree["columns"] = columns
         self.spectrumTree.column("#0", width=100)
-        self.spectrumTree.heading("#0", text="Spectrum Nr.", command=lambda col='#0':  self.sortSpectrumColumn(col))
+        self.spectrumTree.heading("#0",
+                                  text="Spectrum Nr.",
+                                  command=lambda col='#0': self.sortSpectrumColumn(col))
         for col in columns:
             self.spectrumTree.column(col, width=80)
-            self.spectrumTree.heading(col, text=col, command=lambda col=col: self.sortSpectrumColumn(col))
+            self.spectrumTree.heading(col, text=col,
+                                      command=lambda col=col: self.sortSpectrumColumn(col))
 
         self.spectrumTree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
         scrollbar.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
 
         scrollbar.config(command=self.spectrumTree.yview)
-        self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree);
+        self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree)
 
         self.model.funcUpdateExtentionFeature = self.updateSpectrumTree
         self.model.funcClickedIdentification = self.setSelectedFeature
@@ -87,12 +94,13 @@ class NotebookFeature(ttk.Frame):
             self.model.currentAnalysis.sortedColumn = col
             self.model.currentAnalysis.reverse = False
 
+        children = self.featureTree.get_children('')
         if col == "isGlycopeptide":
-            l = [(self.featureTree.set(k, col), k) for k in self.featureTree.get_children('')]
+            l = [(self.featureTree.set(k, col), k) for k in children]
         elif col == "#0":
-            l = [(int(self.featureTree.item(k, "text")), k) for k in self.featureTree.get_children('')]
+            l = [(int(self.featureTree.item(k, "text")), k) for k in children]
         else:
-            l = [(float(self.featureTree.set(k, col)), k) for k in self.featureTree.get_children('')]
+            l = [(float(self.featureTree.set(k, col)), k) for k in children]
 
         l.sort(reverse=self.model.currentAnalysis.reverse)
 
@@ -112,13 +120,13 @@ class NotebookFeature(ttk.Frame):
                 taglist.append("evenrowFeature")
             else:
                 taglist.append("oddrowFeature")
-            self.featureTree.item(k, tags = taglist)
+            self.featureTree.item(k, tags=taglist)
 
 
     def updateFeatureTree(self):
 
         # clear tree
-        self.featureTree.delete(*self.featureTree.get_children());
+        self.featureTree.delete(*self.featureTree.get_children())
         self.featureTreeIds = {}
 
         project = self.model.currentProject
@@ -149,13 +157,13 @@ class NotebookFeature(ttk.Frame):
                 spectrum = analysis.spectraIds[specId]
                 if spectrum.logScore < bestScore:
                     bestScore = spectrum.logScore
-            item = self.featureTree.insert("" , "end", text=name,
-                values=(round(feature.getRT(), 1),
-                        round(feature.getMZ(), 4),
-                        feature.getCharge(),
-                        round(bestScore, 2),
-                        len(feature.getSpectraIds())),
-                tags = tag)
+            item = self.featureTree.insert("", "end", text=name,
+                                           values=(round(feature.getRT(), 1),
+                                                   round(feature.getMZ(), 4),
+                                                   feature.getCharge(),
+                                                   round(bestScore, 2),
+                                                   len(feature.getSpectraIds())),
+                                           tags=tag)
             self.featureTreeIds[item] = feature
 
 
@@ -170,30 +178,43 @@ class NotebookFeature(ttk.Frame):
         # calculate spectrum and chromatogram
         exp = self.model.currentProject.mzMLFile.exp
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
+        minMZView = minMZ -2
+        maxMZView = maxMZ +2
+        minRTView = minRT - 60
+        maxRTView = maxRT - 60
 
         number = 10000
-        base = np.linspace(minMZ, maxMZ, num=number)
+        base = np.linspace(minMZView, maxMZView, num=number)
         sumSpectra = np.zeros_like(base)
         c = DataModel.Chromatogram()
         c.rt = []
         c.intensity = []
         for spec in self.model.currentAnalysis.featureSpectra[feature.getId()]:
-            c.rt.append(spec.getRT())
+            if spec.getMSLevel() != 1:
+                continue
+            rt = spec.getRT()
+            c.rt.append(rt)
             peaks = spec.get_peaks()
             if hasattr(peaks, "shape"):
                 mzArray = peaks[:, 0]
                 intensArray = peaks[:, 1]
             else:
                 mzArray, intensArray = peaks
+                
             # get intensity in range
-            choice = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
-            arr_mz = np.extract(choice, mzArray)
-            arr_intens = np.extract(choice, intensArray)
-            c.intensity.append(arr_intens.sum())
-            # interpolate intensity to base
-            sumSpectra += np.interp(base, arr_mz, arr_intens)
+            choice_MZ = np.logical_and(np.greater(mzArray, minMZView), np.less(mzArray, maxMZView))
+            choice_Chrom = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
+            arr_mz_MZ = np.extract(choice_MZ, mzArray)
+            arr_intens_MZ = np.extract(choice_MZ, intensArray)
+            
+            arr_intens_Chrom = np.extract(choice_Chrom, intensArray)
+
+            c.intensity.append(arr_intens_Chrom.sum())
+            if len(arr_mz_MZ) > 0:
+                sumSpectra += np.interp(base, arr_mz_MZ, arr_intens_MZ)
 
         self.model.debug = self.model.currentAnalysis.featureSpectra[feature.getId()]
+
         c.plot = True
         c.name = "test"
         c.rangeLow = minMZ
@@ -201,10 +222,10 @@ class NotebookFeature(ttk.Frame):
         c.msLevel = 1
         c.selected = True
 
-        self.model.funcFeatureTwoDView(keepZoom = True)
+        self.model.funcFeatureTwoDView(keepZoom=True)
         self.model.funcUpdateExtentionFeature()
-        self.model.funcUpdateFeaturePrecursorSpectrum(np.vstack((base, sumSpectra)).T, minMZ, maxMZ)
-        self.model.funcUpdateFeatureChromatogram(c, c.rt[0], c.rt[-1], None)
+        self.model.funcUpdateFeaturePrecursorSpectrum(np.vstack((base, sumSpectra)).T, feature.getMZ(), minMZView, maxMZView)
+        self.model.funcUpdateFeatureChromatogram(c, c.rt[0], c.rt[-1], None, minRT, maxRT)
 
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
@@ -215,12 +236,14 @@ class NotebookFeature(ttk.Frame):
         else:
             self.model.currentAnalysis.sortedColumn = col
             self.model.currentAnalysis.reverse = False
+
+        children = self.spectrumTree.get_children('')
         if col == "Is Glyco":
-            l = [(self.spectrumTree.set(k, col), k) for k in self.spectrumTree.get_children('')]
+            l = [(self.spectrumTree.set(k, col), k) for k in children]
         elif col == "#0":
-            l = [(int(self.spectrumTree.item(k, "text")), k) for k in self.spectrumTree.get_children('')]
+            l = [(int(self.spectrumTree.item(k, "text")), k) for k in children]
         else:
-            l = [(float(self.spectrumTree.set(k, col)), k) for k in self.spectrumTree.get_children('')]
+            l = [(float(self.spectrumTree.set(k, col)), k) for k in children]
 
         l.sort(reverse=self.model.currentAnalysis.reverse)
 
@@ -240,11 +263,11 @@ class NotebookFeature(ttk.Frame):
                 taglist.append("evenrowFeature")
             else:
                 taglist.append("oddrowFeature")
-            self.spectrumTree.item(k, tags = taglist)
+            self.spectrumTree.item(k, tags=taglist)
 
     def updateSpectrumTree(self):
         # clear tree
-        self.spectrumTree.delete(*self.spectrumTree.get_children());
+        self.spectrumTree.delete(*self.spectrumTree.get_children())
 
         analysis = self.model.currentAnalysis
 
@@ -286,13 +309,13 @@ class NotebookFeature(ttk.Frame):
                 isGlycopeptide = "yes"
             name = spectrum.index
 
-            itemSpectra = self.spectrumTree.insert("" , "end", text=name,
-                values=(round(spectrum.rt, 1),
-                        round(spectrum.precursorMass, 4),
-                        spectrum.precursorCharge,
-                        round(spectrum.logScore, 2),
-                        isGlycopeptide),
-                tags = tag)
+            itemSpectra = self.spectrumTree.insert("", "end", text=name,
+                                                   values=(round(spectrum.rt, 1),
+                                                           round(spectrum.precursorMass, 4),
+                                                           spectrum.precursorCharge,
+                                                           round(spectrum.logScore, 2),
+                                                           isGlycopeptide),
+                                                   tags=tag)
             self.spectrumTreeIds[itemSpectra] = (spec, spectrum)
             # set first spectrum as selected
             if index == 1:
@@ -308,14 +331,14 @@ class NotebookFeature(ttk.Frame):
         self.model.funcUpdateFeatureMSMSSpectrum(spec)
         self.model.funcClickedFeatureSpectrum(spectrum.index)
 
-    def setSelectedFeature(self,index):
+    def setSelectedFeature(self, index):
         for item in self.featureTreeIds:
             if index == self.featureTreeIds[item].index:
                 self.featureTree.selection_set(item)
                 self.featureTree.see(item)
                 break
 
-    def deleteFeature(self,event):
+    def deleteFeature(self, event):
 
         #updateFeatureTree
         selection = self.featureTree.selection()
@@ -339,7 +362,7 @@ class NotebookFeature(ttk.Frame):
         self.model.funcUpdateNotebookIdentification()
 
         # adjust tags
-        for index,k in enumerate(self.featureTree.get_children('')):
+        for index, k in enumerate(self.featureTree.get_children('')):
             taglist = list(self.featureTree.item(k, "tags"))
             if "oddrowFeature" in taglist:
                 taglist.remove("oddrowFeature")
@@ -350,4 +373,4 @@ class NotebookFeature(ttk.Frame):
                 taglist.append("evenrowFeature")
             else:
                 taglist.append("oddrowFeature")
-            self.featureTree.item(k, tags = taglist)
+            self.featureTree.item(k, tags=taglist)

@@ -1,34 +1,30 @@
 import ttk
-import Tkinter
-import math
-import glyxsuite
-import Appearance
 import tkFont
+import Tkinter
 import re
 
-
-def parseInternalFragment(name,length):
-    match = re.match("^y\d+b\d+",name)
+def parseInternalFragment(name, length):
+    match = re.match(r"^y\d+b\d+", name)
     if match == None:
-        return None,None
-    y,b = match.group()[1:].split("b")
+        return None, None
+    y, b = match.group()[1:].split("b")
     y = length-int(y)
     b = int(b)
-    return y,b
+    return y, b
 
-def parseBFragment(name,length):
-    match = re.match("^b\d+",name)
+def parseBFragment(name):
+    match = re.match(r"^b\d+", name)
     if match == None:
-        return None,None
+        return None, None
     b = int(match.group()[1:])
-    return 0,b
+    return 0, b
 
-def parseYFragment(name,length):
-    match = re.match("^y\d+",name)
+def parseYFragment(name, length):
+    match = re.match(r"^y\d+", name)
     if match == None:
-        return None,None
+        return None, None
     y = length-int(match.group()[1:])
-    return y,length
+    return y, length
 
 
 class PeptideCoverageFrame(ttk.Frame):
@@ -39,10 +35,14 @@ class PeptideCoverageFrame(ttk.Frame):
         self.master = master
         self.model = model
 
+        self.hit = None
+        self.coverage = {}
+        self.fragmentCoverage = {}
+
         self.height = height
         self.width = width
 
-        self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height) # check screen resolution
+        self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height)
         self.canvas.config(bg="white")
         self.canvas.grid(row=0, column=0, sticky="NSEW")
 
@@ -58,7 +58,7 @@ class PeptideCoverageFrame(ttk.Frame):
         # link function
         self.model.funcUpdateIdentificationCoverage = self.init
 
-    def init(self,hit):
+    def init(self, hit):
 
         analysis = self.model.currentAnalysis
         if analysis == None:
@@ -72,30 +72,30 @@ class PeptideCoverageFrame(ttk.Frame):
         peptideLength = len(peptideSequence)
 
         parts = {}
-        for i in range(0,peptideLength):
-            for e in range(i+1,peptideLength+1):
+        for i in range(0, peptideLength):
+            for e in range(i+1, peptideLength+1):
                 name = peptideSequence[i:e]
                 key = "".join(sorted(name))
-                parts[key] = parts.get(key,[]) + [name]
+                parts[key] = parts.get(key, []) + [name]
 
         ySeries = {}
         bSeries = {}
         self.fragmentCoverage = {}
         for name in hit.fragments:
-            y,b = parseInternalFragment(name,peptideLength)
+            y, b = parseInternalFragment(name, peptideLength)
             if y == None:
-                y,b = parseBFragment(name,peptideLength)
+                y, b = parseBFragment(name)
             if y == None:
-                y,b = parseYFragment(name,peptideLength)
+                y, b = parseYFragment(name, peptideLength)
             if y == None:
                 continue
-            yHit = ySeries.get(y,False)
-            bHit = ySeries.get(b,False)
-            self.fragmentCoverage[y] = self.fragmentCoverage.get(y,[]) + [name]
-            self.fragmentCoverage[b] = self.fragmentCoverage.get(b,[]) + [name]
+            yHit = ySeries.get(y, False)
+            bHit = ySeries.get(b, False)
+            self.fragmentCoverage[y] = self.fragmentCoverage.get(y, []) + [name]
+            self.fragmentCoverage[b] = self.fragmentCoverage.get(b, []) + [name]
 
             fragmentSequence = hit.fragments[name]["sequence"].split("-")[0]
-            fragmentSequence = re.sub("\(.+?\)","",fragmentSequence)
+            fragmentSequence = re.sub(r"\(.+?\)", "", fragmentSequence)
             key = "".join(sorted(fragmentSequence))
             if len(parts[key]) == 1:
                 yHit = True
@@ -123,18 +123,23 @@ class PeptideCoverageFrame(ttk.Frame):
         text = hit.peptide.sequence
 
         # find fitting text size
-        for s in range(0,100):
-            font = tkFont.Font(family="Courier",size=s)
+        s = 0
+        for s in range(0, 100):
+            font = tkFont.Font(family="Courier", size=s)
             if (font.measure(" ")+4)*len(text) > self.width:
                 break
 
         s -= 1
-        font = tkFont.Font(family="Courier",size=s)
+        font = tkFont.Font(family="Courier", size=s)
         letterSize = font.measure(" ")+4
         start = xc - letterSize/2.0*(len(text)-1)
-        for index,letter in enumerate(text):
+        for index, letter in enumerate(text):
             x = start + index*letterSize
-            item = self.canvas.create_text((x,yc,), text=letter, font=("Courier", s), fill="black", anchor="center", justify="center")
+            self.canvas.create_text((x, yc, ), text=letter,
+                                    font=("Courier", s),
+                                    fill="black",
+                                    anchor="center",
+                                    justify="center")
 
         # plot lines
 
@@ -143,11 +148,23 @@ class PeptideCoverageFrame(ttk.Frame):
             x = start + (index-0.5)*letterSize
             color = "black"
             if ySeries[index] == True:
-                item1 = self.canvas.create_line(x, yc, x, 10, tags=("site", ), fill=color)
-                item2 = self.canvas.create_line(x, 10, x+10, 10, tags=("site", ), fill=color)
+                item1 = self.canvas.create_line(x, yc,
+                                                x, 10,
+                                                tags=("site", ),
+                                                fill=color)
+                item2 = self.canvas.create_line(x, 10,
+                                                x+10, 10,
+                                                tags=("site", ),
+                                                fill=color)
             else:
-                item1 = self.canvas.create_line(x, yc, x, 10, tags=("site", ), fill=color, dash=(3,5))
-                item2 = self.canvas.create_line(x, 10, x+10, 10, tags=("site", ), fill=color, dash=(3,5))
+                item1 = self.canvas.create_line(x, yc,
+                                                x, 10,
+                                                tags=("site", ),
+                                                fill=color, dash=(3, 5))
+                item2 = self.canvas.create_line(x, 10,
+                                                x+10, 10,
+                                                tags=("site", ),
+                                                fill=color, dash=(3, 5))
             self.coverage[item1] = index
             self.coverage[item2] = index
 
@@ -156,11 +173,23 @@ class PeptideCoverageFrame(ttk.Frame):
             x = start + (index-0.5)*letterSize
             color = "black"
             if bSeries[index] == True:
-                item1 = self.canvas.create_line(x, yc, x, self.height-10, tags=("site", ), fill=color)
-                item2 = self.canvas.create_line(x, self.height-10, x-10, self.height-10, tags=("site", ), fill=color)
+                item1 = self.canvas.create_line(x, yc,
+                                                x, self.height-10,
+                                                tags=("site", ),
+                                                fill=color)
+                item2 = self.canvas.create_line(x, self.height-10,
+                                                x-10, self.height-10,
+                                                tags=("site", ),
+                                                fill=color)
             else:
-                item1 = self.canvas.create_line(x, yc, x, self.height-10, tags=("site", ), fill=color, dash=(3,5))
-                item2 = self.canvas.create_line(x, self.height-10, x-10, self.height-10, tags=("site", ), fill=color, dash=(3,5))
+                item1 = self.canvas.create_line(x, yc,
+                                                x, self.height-10,
+                                                tags=("site", ),
+                                                fill=color, dash=(3, 5))
+                item2 = self.canvas.create_line(x, self.height-10,
+                                                x-10, self.height-10,
+                                                tags=("site", ),
+                                                fill=color, dash=(3, 5))
             self.coverage[item1] = index
             self.coverage[item2] = index
 
@@ -169,7 +198,7 @@ class PeptideCoverageFrame(ttk.Frame):
 
     def eventMouseClick(self, event):
         # clear color from all items
-        self.canvas.itemconfigure ("site",fill="black")
+        self.canvas.itemconfigure("site", fill="black")
 
         overlap = set(self.canvas.find_overlapping(event.x-10,
                                                    event.y-10,
@@ -187,7 +216,7 @@ class PeptideCoverageFrame(ttk.Frame):
             found += self.fragmentCoverage[key]
             for item in self.coverage:
                 if self.coverage[item] == index:
-                    self.canvas.itemconfigure (item,fill="red")
+                    self.canvas.itemconfigure(item, fill="red")
 
         self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found)
 

@@ -1,10 +1,10 @@
 import ttk
 import Tkinter
-import DataModel
-import HistogramView
-import glyxsuite
-import Appearance
+
 import numpy as np
+
+from glyxsuite.gui import DataModel
+from glyxsuite.gui import Appearance
 
 class NotebookScoring(ttk.Frame):
 
@@ -74,7 +74,6 @@ class NotebookScoring(ttk.Frame):
         self.tree.heading("#0", text="Spectrum Nr.", command=lambda col='#0': self.sortColumn(col))
         for col in columns:
             self.tree.column(col, width=80)
-            #self.tree.heading(col, text=col, command=lambda col=col: treeview_sort_column(self.tree, col, False))
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
 
         self.tree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
@@ -90,7 +89,7 @@ class NotebookScoring(ttk.Frame):
 
         self.tree.tag_configure('evenSpectrum', background='LightBlue')
         self.tree.tag_configure('oddSpectrum', background='SkyBlue')
-        self.tree.bind("<<TreeviewSelect>>", self.clickedTree);
+        self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
 
         self.model.funcUpdateNotebookScoring = self.updateTree
 
@@ -134,13 +133,13 @@ class NotebookScoring(ttk.Frame):
                 taglist.append("evenrowFeature")
             else:
                 taglist.append("oddrowFeature")
-            self.tree.item(k, tags = taglist)
+            self.tree.item(k, tags=taglist)
 
 
     def updateTree(self):
 
         # clear tree
-        self.tree.delete(*self.tree.get_children());
+        self.tree.delete(*self.tree.get_children())
         self.treeIds = {}
 
         project = self.model.currentProject
@@ -171,13 +170,13 @@ class NotebookScoring(ttk.Frame):
             name = spectrum.nativeId
 
             #itemSpectra = self.tree.insert("" , "end", text=name,
-            itemSpectra = self.tree.insert("" , "end", text=spectrum.index,
-                values=(round(spectrum.rt, 1),
-                        round(spectrum.precursorMass, 4),
-                        spectrum.precursorCharge,
-                        round(spectrum.logScore, 2),
-                        isGlycopeptide),
-                tags = tag)
+            itemSpectra = self.tree.insert("", "end", text=spectrum.index,
+                                           values=(round(spectrum.rt, 1),
+                                                   round(spectrum.precursorMass, 4),
+                                                   spectrum.precursorCharge,
+                                                   round(spectrum.logScore, 2),
+                                                   isGlycopeptide),
+                                           tags=tag)
             self.treeIds[itemSpectra] = (spec, spectrum)
 
 
@@ -238,7 +237,8 @@ class NotebookScoring(ttk.Frame):
             else:
                 mzArray, intensArray = peaks
             # get intensity in range
-            choice = np.logical_and(np.greater(mzArray,  c.rangeLow), np.less(mzArray, c.rangeHigh))
+            choice = np.logical_and(np.greater(mzArray, c.rangeLow),
+                                    np.less(mzArray, c.rangeHigh))
             c.intensity.append(np.extract(choice, intensArray).sum())
 
         # set chromatogram within analysis
@@ -271,13 +271,14 @@ class NotebookScoring(ttk.Frame):
         isGlycopeptide = "no"
         if spectrum.isGlycopeptide:
             isGlycopeptide = "yes"
-        self.tree.item(item, values=(round(spectrum.rt, 1),
-                        round(spectrum.precursorMass, 4),
-                        spectrum.precursorCharge,
-                        round(spectrum.logScore, 2),
-                        isGlycopeptide))
+        self.tree.item(item,
+                       values=(round(spectrum.rt, 1),
+                               round(spectrum.precursorMass, 4),
+                               spectrum.precursorCharge,
+                               round(spectrum.logScore, 2),
+                               isGlycopeptide))
 
-    def setSelectedSpectrum(self,index):
+    def setSelectedSpectrum(self, index):
         for itemSpectra in self.treeIds:
             if index == self.treeIds[itemSpectra][1].index:
                 self.tree.selection_set(itemSpectra)

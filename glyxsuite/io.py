@@ -253,7 +253,7 @@ class GlyxXMLGlycoModHit(object):
 
 class GlyxXMLConsensusPeak(object):
 
-    def __init__(self,x,y):
+    def __init__(self, x, y):
         self.x = x
         self.y = y
 
@@ -437,8 +437,8 @@ class GlyxXMLFile(object):
 
             xmlFeatureConsensus = ET.SubElement(xmlFeature, "consensusSpectrum")
 
-            x = ";".join([str(round(c.x,4)) for c in feature.consensus])
-            y = ";".join([str(round(c.y,2)) for c in feature.consensus])
+            x = ";".join([str(round(c.x, 4)) for c in feature.consensus])
+            y = ";".join([str(round(c.y, 2)) for c in feature.consensus])
 
             xmlFeatureConsensusX = ET.SubElement(xmlFeatureConsensus, "x")
             xmlFeatureConsensusX.text = x
@@ -543,10 +543,10 @@ class GlyxXMLFile(object):
                     xString = xmlFeature.find("./consensusSpectrum/x").text
                     yString = xmlFeature.find("./consensusSpectrum/y").text
                     feature.consensus = []
-                    for x,y in zip(xString.split(";"),yString.split(";")):
+                    for x, y in zip(xString.split(";"), yString.split(";")):
                         x = float(x)
                         y = float(y)
-                        feature.consensus.append(GlyxXMLConsensusPeak(x,y))
+                        feature.consensus.append(GlyxXMLConsensusPeak(x, y))
                 except:
                     print "Parsing error at "+feature.id
                     raise
@@ -648,7 +648,7 @@ class XMLPeptide(object):
             modi[mod].append(pos)
         for mod in modi:
             modi[mod].sort()
-            s += " " + mod + "("+", ".join(map(str, modi[mod]))+")"
+            s += " " + mod + "("+", ".join([str(i) for i in modi[mod]])+")"
         return s
 
     def _parse(self, xmlPeptide, peptide):

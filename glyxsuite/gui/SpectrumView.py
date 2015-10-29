@@ -1,36 +1,33 @@
+"""
+Plot Spectrum within GUI
+"""
+
 import ttk
 import Tkinter
-import math
-import FramePlot
-import Appearance
-
-class PeakTMP(object):
-
-    def __init__(self, mass, intensity):
-        self.mass = mass
-        self.intensity = intensity
-
-    def getMZ(self):
-        return self.mass
-
-    def getIntensity(self):
-        return self.intensity
-
+from glyxsuite.gui import FramePlot
+from glyxsuite.gui import Appearance
 
 class SpectrumView(FramePlot.FramePlot):
+    """ Constructs the SpectrumView Panel. Needs the master panel,
+        the Datamodel, height and width as parameters """
 
     def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="mz [Th]", yTitle="Intensity [counts]")
+        FramePlot.FramePlot.__init__(self, master, model,
+                                     height=height,
+                                     width=width,
+                                     xTitle="mz [Th]",
+                                     yTitle="Intensity [counts]")
 
         self.master = master
         self.spec = None
 
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self, textvariable=self.coord)
+        l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
 
         self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
+        c = Appearance.Checkbutton(self, text="keep zoom fixed",
+                                   variable=self.keepZoom)
         c.grid(row=5, column=0, sticky="NS")
 
 
@@ -41,13 +38,14 @@ class SpectrumView(FramePlot.FramePlot):
         self.model.funcScoringMSMSSpectrum = self.initSpectrum
 
     def setMaxValues(self):
+        """ Recalculate Min/Max Values for the plot """
         self.aMax = -1
         self.bMax = -1
 
         for peak in self.spec:
             mz = peak.getMZ()
             intens = peak.getIntensity()
-            if self.aMax == -1 or mz > self.aMax :
+            if self.aMax == -1 or mz > self.aMax:
                 self.aMax = mz
             if self.bMax == -1  or intens > self.bMax:
                 self.bMax = intens
@@ -55,6 +53,7 @@ class SpectrumView(FramePlot.FramePlot):
         self.bMax *= 1.2
 
     def paintObject(self):
+        """ Draw everything within the Plot """
         specId = self.spec.getNativeID()
         pInt0 = self.convBtoY(self.viewYMin)
 
@@ -97,15 +96,15 @@ class SpectrumView(FramePlot.FramePlot):
             # check if peak is a scored peak
             pMZ = self.convAtoX(mz)
             pInt = self.convBtoY(intens)
-            masstext = str(round(mz,4))
+            masstext = str(round(mz, 4))
             if mz in scored:
                 scoredPeaks.append((intens, mz))
                 sugar, fragment = scored[mz]
-                annotationText.append((pMZ, pInt,fragment+"\n"+masstext))
+                annotationText.append((pMZ, pInt, fragment+"\n"+masstext))
 
             else:
                 item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="black")
-                annotationMass.append((pMZ, pInt,masstext))
+                annotationMass.append((pMZ, pInt, masstext))
 
             self.allowZoom = True
 
@@ -116,10 +115,14 @@ class SpectrumView(FramePlot.FramePlot):
             pInt = self.convBtoY(intens)
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="red")
 
-        items = self.plotText(annotationText,set(),0)
-        items = self.plotText(annotationMass,items,5)
+        items = self.plotText(annotationText, set(), 0)
+        items = self.plotText(annotationMass, items, 5)
 
-    def plotText(self,collectedText,items=set(),N=0):
+    def plotText(self, collectedText, items, N=0):
+        """ Draw text items onto the canvas, without overlap.
+            Parameters are the collectedText a List of (x, y, text),
+            a set of previously drawn items, and the maximum amount of
+            items to be drawn (0 - draw as many as possible)"""
         # remove text which is outside of view
         ymax = self.convBtoY(self.viewYMin)
         ymin = self.convBtoY(self.viewYMax)
@@ -128,18 +131,18 @@ class SpectrumView(FramePlot.FramePlot):
         xmax = self.convAtoX(self.viewXMax)
         viewable = []
         for textinfo in collectedText:
-            x,y,text = textinfo
+            x, y, text = textinfo
             if xmin < x < xmax and ymin < y < ymax:
                 viewable.append(textinfo)
         # sort textinfo
-        viewable = sorted(viewable,key=lambda t:t[1])
+        viewable = sorted(viewable, key=lambda t: t[1])
         # plot items
 
         for textinfo in viewable:
             if N > 0 and len(items) >= N:
                 break
-            x,y,text = textinfo
-            item = self.canvas.create_text((x,y,), text=text, fill="blue violet", anchor="s", justify="center")
+            x, y, text = textinfo
+            item = self.canvas.create_text((x, y, ), text=text, fill="blue violet", anchor="s", justify="center")
             # check bounds of other items
             bbox = self.canvas.bbox(item)
             overlap = set(self.canvas.find_overlapping(*bbox))
@@ -150,10 +153,12 @@ class SpectrumView(FramePlot.FramePlot):
         return items
 
     def initSpectrum(self, spec):
+        """ Draw a new spectrum in the frame """
         if spec == None:
             return
         self.spec = spec
         self.initCanvas()
 
     def identifier(self):
+        """ Returns a class identifier """
         return "SpectrumView"

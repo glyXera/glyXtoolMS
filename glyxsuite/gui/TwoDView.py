@@ -1,14 +1,15 @@
 import ttk
 import Tkinter
-import math
-import FramePlot
-import DataModel
-import Appearance
+
+from glyxsuite.gui import FramePlot
+from glyxsuite.gui import Appearance
 
 class TwoDView(FramePlot.FramePlot):
 
     def __init__(self, master, model, height=300, width=300):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle= "rt [s]", yTitle="mz [Th]")
+        FramePlot.FramePlot.__init__(self, master, model, height=height,
+                                     width=width, xTitle="rt [s]",
+                                     yTitle="mz [Th]")
 
         self.master = master
 
@@ -29,12 +30,12 @@ class TwoDView(FramePlot.FramePlot):
         s = ttk.Style()
 
         s.map('TCheckbutton',
-        foreground=[('disabled', 'black'),
-                    ('pressed', 'black'),
-                    ('active', 'black')],
-        background=[('disabled', '#d9d9d9'),
-                    ('pressed', '!focus', '#d9d9d9'),
-                    ('active', '#d9d9d9')])
+              foreground=[('disabled', 'black'),
+                          ('pressed', 'black'),
+                          ('active', 'black')],
+              background=[('disabled', '#d9d9d9'),
+                          ('pressed', '!focus', '#d9d9d9'),
+                          ('active', '#d9d9d9')])
 
         # Events
         #self.canvas.bind("<Left>", self.setButtonValue)
@@ -46,75 +47,75 @@ class TwoDView(FramePlot.FramePlot):
 
         self.ov1 = Tkinter.IntVar()
         oc1 = Appearance.Checkbutton(optionsFrame,
-                            text="Right Charge",
-                            variable=self.ov1,
-                            command=lambda:self.setButtonValue(1))
+                                     text="Right Charge",
+                                     variable=self.ov1,
+                                     command=lambda: self.setButtonValue(1))
         oc1.grid(row=3, column=0, sticky="WS")
         #print "class", oc1.winfo_class()
 
         self.ov2 = Tkinter.IntVar() # Switch all Features and Wrong Charge
         oc2 = Appearance.Checkbutton(optionsFrame,
-                            text="Wrong Charge",
-                            variable = self.ov2,
-                            command=lambda:self.setButtonValue(2))
+                                     text="Wrong Charge",
+                                     variable=self.ov2,
+                                     command=lambda: self.setButtonValue(2))
         oc2.grid(row=4, column=0, sticky="WS")
 
         self.ov3 = Tkinter.IntVar() # Switch all Outside Features
         oc3 = Appearance.Checkbutton(optionsFrame, text="Outside Feature",
-                            variable = self.ov3,
-                            command=lambda:self.setButtonValue(3))
+                                     variable=self.ov3,
+                                     command=lambda: self.setButtonValue(3))
         oc3.grid(row=6, column=0, sticky="WS")
 
         self.ov4 = Tkinter.IntVar() # Switch all Glycopeptide
         ol4 = ttk.Label(optionsFrame, text="Glycopeptide")
         ol4.grid(row=0, column=2, sticky="S")
         oc4 = Appearance.Checkbutton(optionsFrame,
-                            variable = self.ov4,
-                            command=lambda:self.setButtonValue(4))
+                                     variable=self.ov4,
+                                     command=lambda: self.setButtonValue(4))
         oc4.grid(row=1, column=2, sticky="S")
 
         self.ov5 = Tkinter.IntVar() # Switch all No Glycopeptide
         ol5 = ttk.Label(optionsFrame, text="No Glycopeptide")
         ol5.grid(row=0, column=4, sticky="S")
         oc5 = Appearance.Checkbutton(optionsFrame,
-                            variable = self.ov5,
-                            command=lambda:self.setButtonValue(5))
+                                     variable=self.ov5,
+                                     command=lambda: self.setButtonValue(5))
         oc5.grid(row=1, column=4, sticky="S")
 
         self.ov6 = Tkinter.IntVar() # In Feature / Glyco / Right Charge
         oc6 = Appearance.Checkbutton(optionsFrame,
-                            variable = self.ov6,
-                            command=lambda:self.setButtonValue(6))
+                                     variable=self.ov6,
+                                     command=lambda: self.setButtonValue(6))
         oc6.grid(row=3, column=2, sticky="NS")
 
         self.ov7 = Tkinter.IntVar() # In Feature / Glyco / Wrong Charge
         oc7 = Appearance.Checkbutton(optionsFrame,
-                            variable = self.ov7,
-                            command=lambda:self.setButtonValue(7))
+                                     variable=self.ov7,
+                                     command=lambda: self.setButtonValue(7))
         oc7.grid(row=4, column=2, sticky="NS")
 
         self.ov8 = Tkinter.IntVar() # In Feature / No Glyco / Right Charge
         oc8 = Appearance.Checkbutton(optionsFrame,
-                            variable = self.ov8,
-                            command=lambda:self.setButtonValue(8))
+                                     variable=self.ov8,
+                                     command=lambda: self.setButtonValue(8))
         oc8.grid(row=3, column=4, sticky="NS")
 
         self.ov9 = Tkinter.IntVar() # In Feature / No Glyco / Wrong Charge
         oc9 = Appearance.Checkbutton(optionsFrame,
-                            variable = self.ov9,
-                            command=lambda:self.setButtonValue(9))
+                                     variable=self.ov9,
+                                     command=lambda: self.setButtonValue(9))
         oc9.grid(row=4, column=4, sticky="NS")
 
         self.ov10 = Tkinter.IntVar() # Glyco / Outside feature
         oc10 = Appearance.Checkbutton(optionsFrame,
-                            variable = self.ov10,
-                            command=lambda:self.setButtonValue(10))
+                                      variable=self.ov10,
+                                      command=lambda: self.setButtonValue(10))
         oc10.grid(row=6, column=2, sticky="NS")
 
         self.ov11 = Tkinter.IntVar() # No Glyco / Outside feature
         oc11 = Appearance.Checkbutton(optionsFrame,
-                            variable = self.ov11,
-                            command=lambda:self.setButtonValue(11))
+                                      variable=self.ov11,
+                                      command=lambda: self.setButtonValue(11))
         oc11.grid(row=6, column=4, sticky="NS")
 
         s1 = ttk.Separator(optionsFrame)
@@ -222,7 +223,7 @@ class TwoDView(FramePlot.FramePlot):
                 color = "purple"
             else:
                 color = "black"
-            item = self.canvas.create_line(xy, fill=color, width = linewidth)
+            item = self.canvas.create_line(xy, fill=color, width=linewidth)
 
 
     def paintSpectra(self):
@@ -292,11 +293,10 @@ class TwoDView(FramePlot.FramePlot):
         self.paintFeatures()
         self.paintSpectra()
 
-
         self.allowZoom = True
 
-    def init(self, keepZoom = False):
-        self.initCanvas(keepZoom = keepZoom)
+    def init(self, keepZoom=False):
+        self.initCanvas(keepZoom=keepZoom)
 
     def identifier(self):
         return "2DView"

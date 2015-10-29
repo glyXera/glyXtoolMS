@@ -3,7 +3,6 @@ from itertools import product
 import copy
 import glyxsuite
 import pyopenms
-import glyxsuite.io
 
 class Histogram(object):
 
@@ -93,12 +92,12 @@ class Protein(object):
         self.description = description
         self.modifications = []
         diff = 0
-        for x in re.finditer("\(.+?\)", sequence):
+        for x in re.finditer(r"\(.+?\)", sequence):
             name = x.group()[1:-1]
             pos = x.start()-diff-1
             self.modifications.append((name, sequence[pos], pos))
             diff += x.end()-x.start()
-        self.sequence = re.sub("\(.+?\)", "", sequence)
+        self.sequence = re.sub(r"\(.+?\)", "", sequence)
 
         # check aminoacids and modifications
         try:
@@ -245,7 +244,7 @@ class ProteinDigest(object):
         # cleaves N-terminal side of E, D and C
         i = 1
         while i < len(self.protein.sequence):
-            if self.protein.sequence[i] in ["E","D","C"]:
+            if self.protein.sequence[i] in ["E", "D", "C"]:
                 self.breakpoints.append(i-1)
             i += 1
 
@@ -260,7 +259,7 @@ class ProteinDigest(object):
 
     def add_Unspecific_digest(self):
         # cleaves all possible aminoacids
-        for i in range(0,len(self.protein.sequence)):
+        for i in range(0, len(self.protein.sequence)):
             self.breakpoints.append(i)
 
     def digest(self, maxMissedCleavage):
@@ -289,10 +288,10 @@ class ProteinDigest(object):
         # generate list of glycosylationsites
         sites = []
         if NGlycosylation == True:
-            for match in re.finditer("N[^P](S|T)", self.protein.sequence):
+            for match in re.finditer(r"N[^P](S|T)", self.protein.sequence):
                 sites.append((match.start(), "N"))
         if OGlycosylation == True:
-            for match in re.finditer("(S|T)", self.protein.sequence):
+            for match in re.finditer(r"(S|T)", self.protein.sequence):
                 sites.append((match.start(), "O"))
 
         sites.sort()
@@ -313,6 +312,7 @@ class ProteinDigest(object):
 class Glycan(glyxsuite.io.XMLGlycan):
 
     def __init__(self, composition=None):
+        super(Glycan, self).__init__()
         self.composition = composition
         self.typ = None
         self.glycosylationSite = None
@@ -323,7 +323,7 @@ class Glycan(glyxsuite.io.XMLGlycan):
         if composition is not None:
             self._splitComposition(composition)
 
-    def setComposition(self,S=0,F=0,H=0,N=0):
+    def setComposition(self, S=0, F=0, H=0, N=0):
 
         self.sugar["NEUAC"] = S
         self.sugar["DHEX"] = F
@@ -336,9 +336,9 @@ class Glycan(glyxsuite.io.XMLGlycan):
 
     def checkComposition(self):
         HEX = self.sugar["HEX"]
-        HEXNAC= self.sugar["HEXNAC"]
-        DHEX= self.sugar["DHEX"]
-        NEUAC= self.sugar["NEUAC"]
+        HEXNAC = self.sugar["HEXNAC"]
+        DHEX = self.sugar["DHEX"]
+        NEUAC = self.sugar["NEUAC"]
 
         if HEX+HEXNAC == 0:
             return False
@@ -355,12 +355,12 @@ class Glycan(glyxsuite.io.XMLGlycan):
 
     def _splitComposition(self, composition):
         self.mass = 0
-        for comp in re.findall("[A-z]+\d+", composition):
-            unit = re.search("[A-z]+", comp).group()
-            keys = {"S":"NEUAC","F":"DHEX","H":"HEX","N":"HEXNAC"}
+        for comp in re.findall(r"[A-z]+\d+", composition):
+            unit = re.search(r"[A-z]+", comp).group()
+            keys = {"S":"NEUAC", "F":"DHEX", "H":"HEX", "N":"HEXNAC"}
             if unit in keys:
                 unit = keys[unit]
-            amount = int(re.search("\d+", comp).group())
+            amount = int(re.search(r"\d+", comp).group())
             self.sugar[unit] = amount
             self.mass += glyxsuite.masses.GLYCAN[unit]*amount
 
@@ -380,7 +380,7 @@ class Glycan(glyxsuite.io.XMLGlycan):
 
     def getShortName(self):
         shortName = ""
-        short = {'DHEX': "F", 'HEX': "H", 'HEXNAC': "HN", 'NEUAC': "NA",'NEUGC': "NG"}
+        short = {'DHEX': "F", 'HEX': "H", 'HEXNAC': "HN", 'NEUAC': "NA", 'NEUGC': "NG"}
         for name in sorted(self.sugar.keys()):
             amount = self.sugar[name]
             if amount == 0:

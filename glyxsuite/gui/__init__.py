@@ -1,4 +1,4 @@
-import main
+from glyxsuite.gui import main
 
 def runGUI():
     # run gui

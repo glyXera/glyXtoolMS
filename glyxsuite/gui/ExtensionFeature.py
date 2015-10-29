@@ -1,9 +1,10 @@
 import ttk
 import Tkinter
-import TwoDView
-import FeaturePrecursorView
-import FeatureChromatogramView
-import FeatureSpectrumView
+
+from glyxsuite.gui import TwoDView
+from glyxsuite.gui import FeaturePrecursorView
+from glyxsuite.gui import FeatureChromatogramView
+from glyxsuite.gui import FeatureSpectrumView
 
 class Notebook1(ttk.Frame):
 

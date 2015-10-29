@@ -1,25 +1,15 @@
-import ThreadedIO
 import ttk
 import Tkinter
-import pyopenms
+
 import tkFileDialog
 import tkMessageBox
-import DataModel
 import os
-import ThreadedIO
+
+import pyopenms
 import glyxsuite
+from glyxsuite.gui import ThreadedIO
+from glyxsuite.gui import DataModel
 
-"""
-|---------------|
-|      Tools    |
-|---------------|
-|               |
-|   Treeview    |
-|   of Projects |
-|               |
-|---------------|
-
-"""
 class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
 
     def __init__(self, master, path, project):
@@ -33,7 +23,7 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
     def updateExternal(self, running=False):
         if not running:
             print "loading finished"
-            self.project.mzMLFile.exp =  self.result
+            self.project.mzMLFile.exp = self.result
             self.master.loadedMzMLFile(self.error, self.project)
 
     def threadedAction(self):
@@ -48,7 +38,7 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
             self.running = False
             self.error = True
             tkMessageBox.showerror("File input error",
-                "Error while loading pyopenms file!")
+                                   "Error while loading pyopenms file!")
             raise
 
 class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
@@ -76,12 +66,10 @@ class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
             print "loading finnished"
         except:
             tkMessageBox.showerror("File input error",
-                "Error while loading analysis file! Please check glyML version.")
+                                   "Error while loading analysis "
+                                   "file! Please check glyML version.")
             self.running = False
             raise
-
-
-
 
 class ProjectFrame(ttk.Frame):
 
@@ -178,7 +166,8 @@ class ProjectFrame(ttk.Frame):
         analysis = DataModel.ContainerAnalysisFile(project, path)
         if analysis.name in project.analysisFiles:
             tkMessageBox.showinfo(title="Warning",
-                message="Analysisfile with this name already exists!")
+                                  message="Analysisfile with this name"
+                                  " already exists!")
             return
 
         # get project itemId
@@ -206,7 +195,7 @@ class ProjectFrame(ttk.Frame):
         if item == None:
             return
         if not tkMessageBox.askyesno('Delete Project',
-            'Do you want to delete this project?'):
+                                     'Do you want to delete this project?'):
             return
         # get project itemId
         while not "project" in self.projectTree.item(item, "tags"):
@@ -236,7 +225,7 @@ class ProjectFrame(ttk.Frame):
         if not item in self.projectsTreeIds:
             return
         if not tkMessageBox.askyesno('Delete Analysis',
-            'Do you want to delete this analysis?'):
+                                     'Do you want to delete this analysis?'):
             return
 
         analysis = self.projectsTreeIds[item]
@@ -279,7 +268,7 @@ class ProjectFrame(ttk.Frame):
         obj.path = path
         name = os.path.basename(path)
         obj.name = name
-        self.projectTree.item(item, text = name)
+        self.projectTree.item(item, text=name)
         obj.project.analysisFiles[name] = obj
 
 
@@ -327,7 +316,7 @@ class ProjectFrame(ttk.Frame):
         # reorganize data
         project.mzMLFile.createIds()
 
-        item = self.projectTree.insert("", "end", text=project.name, tags = ("project", ))
+        item = self.projectTree.insert("", "end", text=project.name, tags=("project", ))
         self.model.projects[project.name] = project
         self.projectsTreeIds[item] = project
 
@@ -336,8 +325,8 @@ class ProjectFrame(ttk.Frame):
         self.model.currentProject = project
 
         itemMZML = self.projectTree.insert(item, "end",
-                    text=os.path.basename(project.path),
-                    tags = ("mzMLFile", ))
+                                           text=os.path.basename(project.path),
+                                           tags=("mzMLFile", ))
 
         # add ContainerMZMLFile
         self.projectsTreeIds[itemMZML] = project.mzMLFile
@@ -354,8 +343,8 @@ class ProjectFrame(ttk.Frame):
         if error == True:
             return
         itemAnalysis = self.projectTree.insert(analysis.projectItem, "end",
-            text=analysis.name,
-            tags = ("analysis", ))
+                                               text=analysis.name,
+                                               tags=("analysis", ))
 
         analysis.project.analysisFiles[analysis.name] = analysis
         # add analysis to idTree
@@ -467,16 +456,16 @@ class AddProject(Tkinter.Toplevel):
         name = self.projectName.get()
         if name == "":
             tkMessageBox.showinfo(title="Warning",
-                message="Please provide a project name!")
+                                  message="Please provide a project name!")
             return
         if name in self.model.projects:
             tkMessageBox.showinfo(title="Warning",
-                message="Project with this name already exists!")
+                                  message="Project with this name already exists!")
             return
         path = self.path.get()
         if os.path.exists(path) == False:
             tkMessageBox.showinfo(title="Warning",
-                message="Please provide a valid mzML file to load!")
+                                  message="Please provide a valid mzML file to load!")
             return
         self.destroy()
         self.master.addProject(name, path)

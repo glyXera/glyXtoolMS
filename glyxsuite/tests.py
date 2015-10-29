@@ -24,8 +24,8 @@ def test_deconvolution():
     spectrum = exp[0]
 
     d = glyxsuite.deconvolution.Deconvolution(max_charge=4,
-                                             mass_tolerance=0.15,
-                                             intensity_tolerance=0.5)
+                                              mass_tolerance=0.15,
+                                              intensity_tolerance=0.5)
 
     # add peaks
     for peak in spectrum:
@@ -60,8 +60,8 @@ def test_peptide_digest():
     proteinDigest.add_tryptic_digest()
     peptides = proteinDigest.digest(1)
     glycopeptides = proteinDigest.findGlycopeptides(peptides,
-                                    True,
-                                    False)
+                                                    True,
+                                                    False)
     assert len(peptides) == 5
     peptidestrings = [pep.toString() for pep in peptides]
     assert "AAACAAAAANASAAR" in peptidestrings
@@ -99,7 +99,7 @@ def test_io():
     feature.rt = 100.4
     feature.intensity = 121.0
     feature.charge = 2
-    feature.setBoundingBox(95.0,110.0,109.0,113.1)
+    feature.setBoundingBox(95.0, 110.0, 109.0, 113.1)
     feature.addSpectrumId(spectrum.nativeId)
 
     # create peptide
@@ -138,7 +138,7 @@ def test_io():
     param.setNrNeutrallosses(1)
     param.setMaxOxoniumCharge(2)
     param.setScoreThreshold(2.5)
-    param.setGlycanList(["Hex","HexNAc"])
+    param.setGlycanList(["Hex", "HexNAc"])
     param.addGlycan("NeuAc")
     param.setSourceFileChecksum("md5")
 
@@ -154,6 +154,6 @@ def test_io():
     assert len(fparse.features) == 1
     assert len(fparse.glycoModHits) == 1
     newspectrum = fparse.spectra[0]
-    newfeature = fparse.features[0]
-    newhit = fparse.glycoModHits[0]
+    #newfeature = fparse.features[0]
+    #newhit = fparse.glycoModHits[0]
     assert newspectrum.isGlycopeptide == spectrum.isGlycopeptide

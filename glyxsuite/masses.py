@@ -148,7 +148,7 @@ def calcPeptideMass(peptide):
 
 
 def calcIonMass(name):
-    """
+    r"""
     Calculates Ionmass from a given input string:
     Strings consists of possible Monomers surrounded by brackets, followed
     by the amount of the monomer. The amount can be also negative to allow
@@ -163,15 +163,15 @@ def calcIonMass(name):
     '\(.+?\)-?\d+'
     """
 
-    if re.match("^(\(.+?\)-?\d+)+$", name) == None:
-        raise Exception("""Input string '{}' doesn't follow the
+    if re.match(r"^(\(.+?\)-?\d+)+$", name) == None:
+        raise Exception(r"""Input string '{}' doesn't follow the
         regex  '^(\(.+?\)-?\d+)+$'
         Please surrond monomers by brackets followed by the amount of
         the monomer, e.g. '(NeuAc)1(H2O)-1(H+)1'""".format(name))
 
     mass = 0
     charge = 0
-    for part in re.findall("\(.+?\)-?\d+", name.upper()):
+    for part in re.findall(r"\(.+?\)-?\d+", name.upper()):
         monomer, amount = part.split(")")
         monomer = monomer[1:]
         amount = int(amount)
@@ -188,7 +188,7 @@ def calcIonMass(name):
     if charge == 0:
         return mass
     else:
-        return mass/float(charge),charge
+        return mass/float(charge), charge
 
 def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
     """
@@ -328,9 +328,9 @@ def calcGlyopeptidePattern(peptide, glycan):
 
     # b) glycan
     # parse glycancomposition
-    for match in re.findall("[A-z]+\d+", glycan.composition):
-        glycanname = re.sub("\d+", "", match)
-        amount = int(re.sub("[A-z]+", "", match))
+    for match in re.findall(r"[A-z]+\d+", glycan.composition):
+        glycanname = re.sub(r"\d+", "", match)
+        amount = int(re.sub(r"[A-z]+", "", match))
         addElements(elements, glycanname, amount)
         addElements(elements, "H2O", -1*amount)
 

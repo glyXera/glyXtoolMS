@@ -35,8 +35,8 @@ class IonSeriesCalculator(object):
             return self.glycans[name]
 
         mass = self.masses["h2o"]
-        for part in re.findall("[A-z]+\d+", name):
-            start = re.search("\d+", part).start()
+        for part in re.findall(r"[A-z]+\d+", name):
+            start = re.search(r"\d+", part).start()
             sugar = part[:start].lower()
             amount = int(part[start:])
             if not sugar in self.masses:

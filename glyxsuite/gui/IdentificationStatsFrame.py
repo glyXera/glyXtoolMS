@@ -1,22 +1,23 @@
 import ttk
 import Tkinter
-import math
-import FramePlot
-import glyxsuite
-import Appearance
+
+from glyxsuite.gui import FramePlot
+from glyxsuite.gui import Appearance
 
 
 class IdentificationStatsFrame(FramePlot.FramePlot):
 
     def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle= "FeatureNr", yTitle="Error")
+        FramePlot.FramePlot.__init__(self, master, model, height=height,
+                                     width=width, xTitle="FeatureNr",
+                                     yTitle="Error")
 
         self.master = master
         self.logScore = 0.0
         self.NrXScales = 5.0
 
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self, textvariable=self.coord)
+        l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
 
         self.keepZoom = Tkinter.IntVar()
@@ -43,7 +44,6 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         # insert all glycomod hits
         for hit in analysis.analysis.glycoModHits:
             feature = analysis.featureIds[hit.featureID]
-            #featureNr = (feature.getMZ()-glyxsuite.masses.MASS["H+"])*feature.getCharge()
             featureNr = int(feature.index)
             error = hit.error
             if self.aMax == -1 or featureNr > self.aMax:
@@ -77,13 +77,12 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         for hit in analysis.analysis.glycoModHits:
             feature = analysis.featureIds[hit.featureID]
             featureNr = int(feature.index)
-            #featureNr = (feature.getMZ()-glyxsuite.masses.MASS["H+"])*feature.getCharge()
             error = hit.error
 
             diam = 3
             x = self.convAtoX(featureNr)
             y = self.convBtoY(error)
-            item = self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill="green")
+            self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill="green")
         self.allowZoom = True
 
     def init(self):
@@ -91,7 +90,7 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         self.viewXMax = -1
         self.viewYMin = -1
         self.viewYMax = -1
-        self.initCanvas(keepZoom = True)
+        self.initCanvas(keepZoom=True)
 
     def identifier(self):
         return "IdentificationErrorView"

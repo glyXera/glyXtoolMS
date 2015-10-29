@@ -55,8 +55,8 @@ class DataModel(object):
 
     def readSettings(self):
         home = os.path.expanduser("~")
-        settingspath = os.path.join(home,'.glyxsuite.ini')
-        print "use settings under ",settingspath
+        settingspath = os.path.join(home, '.glyxsuite.ini')
+        print "use settings under ", settingspath
         # Set default settings
         self.workingdir = home
         # Create settings if not exists
@@ -68,7 +68,7 @@ class DataModel(object):
 
     def saveSettings(self):
         home = os.path.expanduser("~")
-        settingspath = os.path.join(home,'.glyxsuite.ini')
+        settingspath = os.path.join(home, '.glyxsuite.ini')
         config = configparser.ConfigParser()
         config["DEFAULT"] = {}
         config["DEFAULT"]["workingdir"] = self.workingdir
@@ -236,9 +236,9 @@ class ContainerAnalysisFile(object):
             rt = spec.getRT()
             for feature in self.analysis.features:
                 minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
-                if rt < minRT:
+                if rt < minRT-60:
                     continue
-                if rt > maxRT:
+                if rt > maxRT+60:
                     continue
                 featureID = feature.getId()
                 if not featureID in self.featureSpectra:
@@ -252,7 +252,7 @@ class ContainerAnalysisFile(object):
         self.analysis.spectra.append(spectrum)
         return spectrum
 
-    def removeFeature(self,feature):
+    def removeFeature(self, feature):
         if feature in self.analysis.features:
             self.analysis.features.remove(feature)
         if feature.getId() in self.featureSpectra:
@@ -261,7 +261,7 @@ class ContainerAnalysisFile(object):
             self.featureIds.pop(feature.getId())
         for specId in  self.spectraInFeatures:
             if feature.getId() in  self.spectraInFeatures[specId]:
-                 self.spectraInFeatures[specId].remove(feature.getId())
+                self.spectraInFeatures[specId].remove(feature.getId())
         # remove corresponding hits
         todelete = []
         for hit in self.analysis.glycoModHits:
@@ -270,7 +270,7 @@ class ContainerAnalysisFile(object):
         for hit in todelete:
             self.analysis.glycoModHits.remove(hit)
 
-    def removeIdentification(self,hit):
+    def removeIdentification(self, hit):
         if hit in self.analysis.glycoModHits:
             self.analysis.glycoModHits.remove(hit)
 

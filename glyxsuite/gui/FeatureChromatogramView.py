@@ -1,9 +1,8 @@
 import ttk
 import Tkinter
-import math
-import FramePlot
-import DataModel
-import Appearance
+
+from glyxsuite.gui import FramePlot
+from glyxsuite.gui import Appearance
 
 
 class ChromatogramView(FramePlot.FramePlot):
@@ -15,9 +14,12 @@ class ChromatogramView(FramePlot.FramePlot):
         self.NrXScales = 3.0
         self.chrom = None
         self.rt = None
+        self.featureLow = 0
+        self.featureHigh = 0
+        
 
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self, textvariable=self.coord)
+        l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
 
         self.keepZoom = Tkinter.IntVar()
@@ -70,10 +72,10 @@ class ChromatogramView(FramePlot.FramePlot):
         self.bMax = -1
 
         for rt in self.chrom.rt:
-            if self.aMax == -1 or rt > self.aMax :
+            if self.aMax == -1 or rt > self.aMax:
                 self.aMax = rt
         for intensity in self.chrom.intensity:
-            if self.bMax == -1 or intensity > self.bMax :
+            if self.bMax == -1 or intensity > self.bMax:
                 self.bMax = intensity
 
 
@@ -91,26 +93,35 @@ class ChromatogramView(FramePlot.FramePlot):
             xy.append(self.convBtoY(intens))
         if len(xy) == 0:
             return
-        item = self.canvas.create_line(xy, fill=self.chrom.color, width = 1)
+        self.canvas.create_line(xy, fill=self.chrom.color, width=1)
         if self.rt != None:
             intZero = self.convBtoY(0)
             intMax = self.convBtoY(self.viewYMax)
-            item1 = self.canvas.create_line(
-                self.convAtoX(self.rt),
-                intZero,
-                self.convAtoX(self.rt),
-                intMax,
-                fill='blue')
-            self.allowZoom = True
+            self.canvas.create_line(self.convAtoX(self.rt),
+                                    intZero,
+                                    self.convAtoX(self.rt),
+                                    intMax,
+                                    fill='blue')
+        lowMZ = self.convAtoX(self.featureLow)
+        highMZ = self.convAtoX(self.featureHigh)
+        pIntMin = self.convBtoY(self.viewYMin)
+        pIntMax = self.convBtoY(self.viewYMax)
+        
+        self.canvas.create_line(lowMZ, pIntMin, lowMZ, pIntMax, tags=("border", ),fill="red")
+        self.canvas.create_line(highMZ, pIntMin, highMZ, pIntMax, tags=("border", ),fill="red")
+        
+        self.allowZoom = True
 
-    def initChromatogram(self, chrom, low, high, rt):
+    def initChromatogram(self, chrom, low, high, rt, featureLow, featureHigh):
         self.chrom = chrom
         self.viewXMin = low
         self.viewXMax = high
         self.viewYMin = 0
         self.viewYMax = -1
         self.rt = rt
-        self.initCanvas(keepZoom = True)
+        self.featureLow = featureLow
+        self.featureHigh = featureHigh
+        self.initCanvas(keepZoom=True)
 
     def identifier(self):
         return "FeatureChromatogramView"

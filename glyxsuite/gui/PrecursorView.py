@@ -1,26 +1,15 @@
 import ttk
 import Tkinter
-import math
-import FramePlot
-import Appearance
 
-class PeakTMP(object):
-
-    def __init__(self, mass, intensity):
-        self.mass = mass
-        self.intensity = intensity
-
-    def getMZ(self):
-        return self.mass
-
-    def getIntensity(self):
-        return self.intensity
-
+from glyxsuite.gui import FramePlot
+from glyxsuite.gui import Appearance
 
 class PrecursorView(FramePlot.FramePlot):
 
     def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="mz [Th]", yTitle="Intensity [counts]")
+        FramePlot.FramePlot.__init__(self, master, model, height=height,
+                                     width=width, xTitle="mz [Th]",
+                                     yTitle="Intensity [counts]")
 
         self.master = master
         self.spec = None
@@ -29,7 +18,7 @@ class PrecursorView(FramePlot.FramePlot):
         self.NrXScales = 3.0
 
         self.coord = Tkinter.StringVar()
-        l = ttk.Label( self, textvariable=self.coord)
+        l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
 
         self.keepZoom = Tkinter.IntVar()
@@ -50,7 +39,7 @@ class PrecursorView(FramePlot.FramePlot):
         for peak in self.spec:
             mz = peak.getMZ()
             intens = peak.getIntensity()
-            if self.aMax == -1 or mz > self.aMax :
+            if self.aMax == -1 or mz > self.aMax:
                 self.aMax = mz
             if self.bMax == -1  or intens > self.bMax:
                 self.bMax = intens
@@ -61,8 +50,6 @@ class PrecursorView(FramePlot.FramePlot):
             self.charge = 0
             self.precursormass = 0.0
             return
-
-        specId = self.spec.getNativeID()
 
         # continuous spectrum
         xy = []
@@ -77,7 +64,7 @@ class PrecursorView(FramePlot.FramePlot):
             xy.append(pMZ)
             xy.append(pInt)
         if len(xy) > 0:
-            item = self.canvas.create_line(xy, tags=("peak", ))
+            self.canvas.create_line(xy, tags=("peak", ))
 
         # plot precursor line
         intZero = self.convBtoY(0)
@@ -88,28 +75,25 @@ class PrecursorView(FramePlot.FramePlot):
                     mass = self.precursormass
                 else:
                     mass = self.precursormass+1/abs(float(self.charge))*i
-                item = self.canvas.create_line(
-                    self.convAtoX(mass),
-                    intZero,
-                    self.convAtoX(mass),
-                    intMax,
-                    fill='green')
+                self.canvas.create_line(self.convAtoX(mass),
+                                        intZero,
+                                        self.convAtoX(mass),
+                                        intMax,
+                                        fill='green')
 
         # plot rt line
         c = self.model.currentAnalysis.selectedChromatogram
         if  c != None:
-            item1 = self.canvas.create_line(
-                self.convAtoX(c.rangeLow),
-                intZero,
-                self.convAtoX(c.rangeLow),
-                intMax,
-                fill='blue')
-            item2 = self.canvas.create_line(
-                self.convAtoX(c.rangeHigh),
-                intZero,
-                self.convAtoX(c.rangeHigh),
-                intMax,
-                fill='blue')
+            self.canvas.create_line(self.convAtoX(c.rangeLow),
+                                    intZero,
+                                    self.convAtoX(c.rangeLow),
+                                    intMax,
+                                    fill='blue')
+            self.canvas.create_line(self.convAtoX(c.rangeHigh),
+                                    intZero,
+                                    self.convAtoX(c.rangeHigh),
+                                    intMax,
+                                    fill='blue')
         self.allowZoom = True
 
     def initSpectrum(self, spec, mass, charge, low, high):
@@ -133,7 +117,7 @@ class PrecursorView(FramePlot.FramePlot):
             if intens > self.viewYMax:
                 self.viewYMax = intens
 
-        self.initCanvas(keepZoom = True)
+        self.initCanvas(keepZoom=True)
 
     def identifier(self):
         return "SpectrumView"

@@ -7,6 +7,7 @@ class ThreadedIO(object):
         self.queue = Queue.Queue()
         self.running = False
         self.result = None
+        self.thread = None
 
 
     def updateExternal(self):
@@ -19,7 +20,7 @@ class ThreadedIO(object):
             return
         if self.queue.empty() == True:
             self.updateExternal(running=True)
-            ct = threading.Timer(1, self.checkQueue, args=() )
+            ct = threading.Timer(1, self.checkQueue, args=())
             ct.deamon = True
             ct.start()
         else:
@@ -29,9 +30,9 @@ class ThreadedIO(object):
 
     def start(self):
         try:
-            self.t = threading.Thread(target=self.threadedAction, args=())
+            self.thread = threading.Thread(target=self.threadedAction, args=())
             self.running = True
-            self.t.start()
+            self.thread.start()
             self.checkQueue()
         except:
             self.running = False # stop checkQueue()
