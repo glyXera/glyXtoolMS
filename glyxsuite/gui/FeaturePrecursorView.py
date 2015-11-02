@@ -13,6 +13,8 @@ class PrecursorView(FramePlot.FramePlot):
         self.specArray = None
         self.NrXScales = 3.0
         self.monoisotope = 0
+        self.spectrum = None
+        self.base = None
 
         self.coord = Tkinter.StringVar()
         l = ttk.Label(self, textvariable=self.coord)
@@ -27,19 +29,45 @@ class PrecursorView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcUpdateFeaturePrecursorSpectrum = self.initSpectrum
+        self.model.classes["FeaturePrecursorView"] = self
 
     def setMaxValues(self):
-        self.aMax = -1
-        self.bMax = -1
-
+        self.bMax = max(self.spectrum)
+        self.aMax = max(self.base)
+                
+        """
         for mz, intensity in self.specArray:
             if self.aMax == -1 or mz > self.aMax:
                 self.aMax = mz
             if self.bMax == -1  or intensity > self.bMax:
                 self.bMax = intensity
+        """
 
+    def paintObject(self):
+        if self.spectrum == None:
+            return
 
+        # continuous spectrum
+        xy = []
+        for mz, intensity in zip(self.base,self.spectrum):
+            if mz < self.viewXMin or mz > self.viewXMax:
+                continue
+            pMZ = self.convAtoX(mz)
+            pInt = self.convBtoY(intensity)
+            xy.append(pMZ)
+            xy.append(pInt)
+        if len(xy) > 0:
+            self.canvas.create_line(xy, tags=("peak", ))
+        
+        pMZ = self.convAtoX(self.monoisotope)
+        pIntMin = self.convBtoY(self.viewYMin)
+        pIntMax = self.convBtoY(self.viewYMax)
+        
+        self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="red")
+
+        self.allowZoom = True
+        
+    """
     def paintObject(self):
         if self.specArray == None:
             return
@@ -62,6 +90,7 @@ class PrecursorView(FramePlot.FramePlot):
         self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="red")
 
         self.allowZoom = True
+    """        
 
     def initSpectrum(self, specArray, monoisotope, minMZ, maxMZ):
         if specArray == None:
@@ -72,6 +101,18 @@ class PrecursorView(FramePlot.FramePlot):
         self.viewYMin = 0
         self.viewYMax = max(specArray[:, 1])
         self.monoisotope = monoisotope
+        self.initCanvas(keepZoom=True)
+        
+        
+    def init(self, base, spectrum, monoisotope, minMZ, maxMZ):
+        self.spectrum = spectrum
+        self.base = base
+        self.monoisotope = monoisotope
+        self.viewXMin = minMZ
+        self.viewXMax = maxMZ
+        self.viewYMin = 0
+        self.viewYMax = 0
+        self.viewYMax = max(spectrum)
         self.initCanvas(keepZoom=True)
 
     def identifier(self):

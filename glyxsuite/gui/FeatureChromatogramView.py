@@ -1,6 +1,8 @@
 import ttk
 import Tkinter
 
+import numpy as np
+
 from glyxsuite.gui import FramePlot
 from glyxsuite.gui import Appearance
 
@@ -16,6 +18,9 @@ class ChromatogramView(FramePlot.FramePlot):
         self.rt = None
         self.featureLow = 0
         self.featureHigh = 0
+        self.minMZView = 0
+        self.maxMZView = 0
+        self.index = 0
         
 
         self.coord = Tkinter.StringVar()
@@ -31,11 +36,13 @@ class ChromatogramView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcUpdateFeatureChromatogram = self.initChromatogram
+        #self.model.funcUpdateFeatureChromatogram = self.initChromatogram
+        self.model.classes["ChromatogramView"] = self
+        
 
         # Events
-        #self.canvas.bind("<Left>", self.sayHi)
-        #self.canvas.bind("<Right>", self.sayHi)
+        self.canvas.bind("<Left>", self.goLeft)
+        self.canvas.bind("<Right>", self.goRight)
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
 
         self.spectrumPointer = None
@@ -122,8 +129,85 @@ class ChromatogramView(FramePlot.FramePlot):
         self.featureLow = featureLow
         self.featureHigh = featureHigh
         self.initCanvas(keepZoom=True)
+        
+    def init(self,chrom, feature, minMZView, maxMZView, index):
+        self.chrom = chrom
+        self.feature = feature
+        minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
+        self.viewXMin = chrom.rt[0]
+        self.viewXMax =  chrom.rt[-1]
+        self.viewYMin = 0
+        self.viewYMax = -1
+        self.featureLow = minRT
+        self.featureHigh = maxRT
+        self.minMZView = minMZView
+        self.maxMZView = maxMZView
+        self.index = index
+        
+        self.initCanvas(keepZoom=True)
+        self.plotPrecursorSpectrum(self.index)
 
     def identifier(self):
         return "FeatureChromatogramView"
+        
+        
+    def plotPrecursorSpectrum(self, index):
+        self.canvas.delete("positionmarker")
+        spec = self.model.currentAnalysis.project.mzMLFile.exp[index]
+        rt = spec.getRT()
+        pRT = self.convAtoX(rt)
+        pIntMin = self.convBtoY(self.viewYMin)
+        pIntMax = self.convBtoY(self.viewYMax)
+        
+        self.canvas.create_line(pRT, pIntMin, pRT, pIntMax, tags=("positionmarker", ),fill="blue")
+        
+        
+        peaks = spec.get_peaks()
+        if hasattr(peaks, "shape"):
+            mzArray = peaks[:, 0]
+            intensArray = peaks[:, 1]
+        else:
+            mzArray, intensArray = peaks
+            
+        choice_MZ = np.logical_and(np.greater(mzArray, self.minMZView),
+                                   np.less(mzArray, self.maxMZView))
+        mz_array = np.extract(choice_MZ, mzArray)
+        
+        intens_array = np.extract(choice_MZ, intensArray)
+
+        self.model.classes["FeaturePrecursorView"].init(mz_array,
+                                                        intens_array,
+                                                        self.feature.getMZ(),
+                                                        self.minMZView,
+                                                        self.maxMZView)
+        #return rt, arr_mz_MZ, arr_intens_MZ
+
+    def goLeft(self, event):
+        exp = self.model.currentAnalysis.project.mzMLFile.exp
+        spec = None
+        while self.index > 0:
+            self.index -= 1
+            spec = exp[self.index]
+            if spec.getRT() < self.chrom.rt[0]:
+                return
+            if spec.getMSLevel() == 1:
+                break
+        if spec == None:
+            return
+        self.plotPrecursorSpectrum(self.index)
 
 
+    def goRight(self, event):
+        exp = self.model.currentAnalysis.project.mzMLFile.exp
+        spec = None
+        while self.index < exp.size():
+            self.index += 1
+            spec = exp[self.index]
+            if spec.getRT() > self.chrom.rt[-1]:
+                return
+            if spec.getMSLevel() == 1:
+                break
+        if spec == None:
+            return
+        self.plotPrecursorSpectrum(self.index)
+            

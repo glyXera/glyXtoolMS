@@ -186,14 +186,18 @@ class NotebookFeature(ttk.Frame):
         number = 10000
         base = np.linspace(minMZView, maxMZView, num=number)
         sumSpectra = np.zeros_like(base)
+        bestSpectra = np.zeros_like(base)
+        highestIntensity = 0
         c = DataModel.Chromatogram()
         c.rt = []
         c.intensity = []
+
         for spec in self.model.currentAnalysis.featureSpectra[feature.getId()]:
             if spec.getMSLevel() != 1:
                 continue
             rt = spec.getRT()
             c.rt.append(rt)
+            
             peaks = spec.get_peaks()
             if hasattr(peaks, "shape"):
                 mzArray = peaks[:, 0]
@@ -202,18 +206,20 @@ class NotebookFeature(ttk.Frame):
                 mzArray, intensArray = peaks
                 
             # get intensity in range
-            choice_MZ = np.logical_and(np.greater(mzArray, minMZView), np.less(mzArray, maxMZView))
             choice_Chrom = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
-            arr_mz_MZ = np.extract(choice_MZ, mzArray)
-            arr_intens_MZ = np.extract(choice_MZ, intensArray)
-            
             arr_intens_Chrom = np.extract(choice_Chrom, intensArray)
-
             c.intensity.append(arr_intens_Chrom.sum())
-            if len(arr_mz_MZ) > 0:
-                sumSpectra += np.interp(base, arr_mz_MZ, arr_intens_MZ)
 
-        self.model.debug = self.model.currentAnalysis.featureSpectra[feature.getId()]
+                
+        # find spectrum index in the middle of the feature
+        rt = (minRT+maxRT)/2.0
+        index = -1
+        for spec in self.model.currentAnalysis.project.mzMLFile.exp:
+            index += 1
+            if spec.getMSLevel() != 1:
+                continue
+            if spec.getRT() > rt:
+                break
 
         c.plot = True
         c.name = "test"
@@ -224,8 +230,10 @@ class NotebookFeature(ttk.Frame):
 
         self.model.funcFeatureTwoDView(keepZoom=True)
         self.model.funcUpdateExtentionFeature()
-        self.model.funcUpdateFeaturePrecursorSpectrum(np.vstack((base, sumSpectra)).T, feature.getMZ(), minMZView, maxMZView)
-        self.model.funcUpdateFeatureChromatogram(c, c.rt[0], c.rt[-1], None, minRT, maxRT)
+        #self.model.classes["FeaturePrecursorView"].initSpectrum(np.vstack((base, sumSpectra)).T, feature.getMZ(), minMZView, maxMZView)
+        #self.model.classes["FeaturePrecursorView"].init(mz_array, intens_array, feature.getMZ(), minMZView, maxMZView)
+        #self.model.classes["ChromatogramView"].initChromatogram(c, c.rt[0], c.rt[-1], None, minRT, maxRT)
+        self.model.classes["ChromatogramView"].init(c, feature, minMZView, maxMZView, index)
 
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:

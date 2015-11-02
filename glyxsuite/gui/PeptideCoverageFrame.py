@@ -53,7 +53,6 @@ class PeptideCoverageFrame(ttk.Frame):
 
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)
-        self.model.debug = self.canvas
 
         # link function
         self.model.funcUpdateIdentificationCoverage = self.init

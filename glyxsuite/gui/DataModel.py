@@ -40,7 +40,6 @@ class DataModel(object):
         self.funcUpdateNotebookFeature = None
 
         self.funcUpdateExtentionFeature = None
-        self.funcUpdateFeaturePrecursorSpectrum = None
         self.funcUpdateFeatureChromatogram = None
         self.funcUpdateFeatureMSMSSpectrum = None
         self.funcUpdateExtentionIdentification = None

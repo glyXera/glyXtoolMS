@@ -81,7 +81,6 @@ class ChromatogramView(FramePlot.FramePlot):
         self.allowZoom = False
         for treeId in self.model.currentAnalysis.chromatograms:
             chrom = self.model.currentAnalysis.chromatograms[treeId]
-            self.model.debug = chrom
             if chrom.plot == False:
                 continue
             if chrom.selected == True:
