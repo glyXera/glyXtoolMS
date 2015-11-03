@@ -88,14 +88,14 @@ class App(ttk.Frame):
 
         self.notebook = ttk.Notebook(frameNotebook)
 
-        n1 = NotebookScoring.NotebookScoring(self.notebook, self.model)
+        n1 = NotebookIdentification.NotebookIdentification(self.notebook, self.model)
         n2 = NotebookFeature.NotebookFeature(self.notebook, self.model)
-        n3 = NotebookIdentification.NotebookIdentification(self.notebook, self.model)
-        n4 = ttk.Frame(self.notebook)
-
-        self.notebook.add(n1, text='1. Scoring')
+        n3 = NotebookScoring.NotebookScoring(self.notebook, self.model)
+        
+        
+        self.notebook.add(n1, text='1. Identification')
         self.notebook.add(n2, text='2. Features')
-        self.notebook.add(n3, text='3. Identification')
+        self.notebook.add(n3, text='3. Scoring')
         #self.notebook.add(n4, text='4. Results')
 
         #self.notebook.grid(row=1, column=0, sticky=("N", "W", "E"))
@@ -106,14 +106,15 @@ class App(ttk.Frame):
 
 
         # Add extention frames
-        self.e1 = ExtensionScoring.ExtensionScoring(master, self.model, '1. Scoring')
+        
+        self.e1 = ExtensionIdentification.ExtensionIdentification(master, self.model, '1. Identification')
         self.e1.grid(row=0, column=1, rowspan=2, sticky="NWES")
+        
         self.e2 = ExtensionFeature.ExtensionFeature(master, self.model, '2. Features')
         self.e2.grid(row=0, column=1, rowspan=2, sticky="NWES")
-        self.e3 = ExtensionIdentification.ExtensionIdentification(master, self.model, '3. Identification')
+        
+        self.e3 = ExtensionScoring.ExtensionScoring(master, self.model, '3. Scoring')
         self.e3.grid(row=0, column=1, rowspan=2, sticky="NWES")
-        self.e4 = ttk.Labelframe(master, text='4. Results')
-        self.e4.grid(row=0, column=1, rowspan=2, sticky="NWES")
 
         # configure column and row behaviour
         self.master.columnconfigure(0, minsize=200, weight=0)
@@ -128,7 +129,6 @@ class App(ttk.Frame):
         self.e1.lower()
         self.e2.lower()
         self.e3.lower()
-        self.e4.lower()
         # show selected extension
         text = self.notebook.tab(idx, "text")
         if "1" in text:
@@ -137,9 +137,6 @@ class App(ttk.Frame):
             self.e2.lift()
         elif "3" in text:
             self.e3.lift()
-        else:
-            self.e4.lift()
-
 
     def showHistogram(self):
         if self.model.currentAnalysis == None:
