@@ -120,6 +120,7 @@ COMPOSITION["H2O"] = {'H': 2, 'O': 1}
 COMPOSITION["Cys_CAM"] = {'C': 2, 'H': 3, 'O': 1, 'N': 1}
 COMPOSITION["Cys_CM"] = {'C': 2, 'H': 2, 'O': 2}
 COMPOSITION["Cys_PAM"] = {'C': 3, 'H': 5, 'O': 1, 'N': 1}
+COMPOSITION["CAM"] = {'C': 2, 'H': 3, 'O': 1, 'N': 1}
 COMPOSITION["MSO"] = {'O': 1}
 COMPOSITION["ACET"] = {'C': 2, 'H': 2, 'O': 1}
 COMPOSITION["AMID"] = {'H': 1, 'O': -1, 'N': 1}

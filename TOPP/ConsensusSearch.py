@@ -84,6 +84,7 @@ def main(options):
             
             pepvariant = p.copy()
             pepvariant.modifications = i
+            print pepvariant.toString()
             fragments = glyxsuite.fragmentation.generatePeptideFragments(pepvariant)
             fhit = {}
             for fragmentkey in fragments:
