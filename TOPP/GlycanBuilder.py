@@ -41,11 +41,10 @@ def main(options):
     rangeHexNAc = range(minHexNAc,maxHexNAc+1)
     rangeDHex = range(minDHex,maxDHex+1)
     rangeNeuAc = range(minNeuAc,maxNeuAc+1)
-    
-    
-    
+
     # open output file
     fout = file(options.outfile,"w")
+    writeGlycans = set()
     if options.useinfile == "true":
         print "checking glycans in file"
         fin = file(options.infile,"r")
@@ -53,11 +52,8 @@ def main(options):
             glycan = glyxsuite.lib.Glycan(line[:-1])
             if not glycan.checkComposition():
                 continue
-            
-            print minHex,glycan.sugar["HEX"],maxHex
             if not minHex <= glycan.sugar["HEX"] <= maxHex:
                 continue
-            
             if not minHexNAc <= glycan.sugar["HEXNAC"] <= maxHexNAc:
                 continue
             if not minDHex <= glycan.sugar["DHEX"] <= maxDHex:
@@ -66,9 +62,7 @@ def main(options):
                 continue
             if glycan.mass > 8000:
                 continue
-            
-            # write composition to file
-            fout.write(glycan.toString() + "\n")
+            writeGlycans.add(glycan.toString())
         fin.close()
     else:
         print "generating glycan compositions"
@@ -84,9 +78,11 @@ def main(options):
                 continue
             if glycan.mass > 8000:
                 continue
-            # write composition to file
-            fout.write(glycan.toString() + "\n")
+            writeGlycans.add(glycan.toString())
     
+    # write composition to file
+    for glycanString in writeGlycans:
+        fout.write(glycanString + "\n")
     fout.close()
 
     print "done"

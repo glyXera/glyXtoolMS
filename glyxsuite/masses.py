@@ -36,6 +36,7 @@ AMINOACID["V"] = 99.06841
 PROTEINMODIFICATION = {}
 # Cys_CAM Idoacetamide treatment (carbamidation)
 PROTEINMODIFICATION["Cys_CAM"] = 57.021464
+PROTEINMODIFICATION["CAM"] = 57.021464
 # Cys_CM, Iodoacetic acid treatment (carboxylation)
 PROTEINMODIFICATION["Cys_CM"] = 58.005479
 # Cys_PAM Acrylamide Adduct

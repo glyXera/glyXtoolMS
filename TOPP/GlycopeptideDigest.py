@@ -17,7 +17,7 @@ def handle_args(argv=None):
     parser.add_argument("--out", dest="outfile",help="File output Glycopeptide file .glycopep")
     parser.add_argument("--enzymes", dest="enzymes",help="Digestion enzymes: Comma separated list of [Trypsin, AspN]")
     parser.add_argument("--cystTreatment", dest="cystTreatment",help="Cystein treatment (C): Either None, Iodacetic acid or Iodoacetamide")
-    parser.add_argument("--modifications", dest="modifications",help="variable modifications: List of [Oxidation (M),AcrylamideAdduct (C)]")
+    parser.add_argument("--modifications", dest="modifications",help="variable modifications: List of [Oxidation(M), AcrylamideAdduct(C)], Carbamylation(N-Term)")
     parser.add_argument("--glycosylation", dest="glycosylation",help="Glycosylation: List of [N-Glycosylation,O-Glycosylation]")
     parser.add_argument("--missedCleavageSites", dest="missedCleavageSites",help="maximum missed cleavage sites")
                 
@@ -61,6 +61,8 @@ def main(options):
             proteinDigest.setOxidation(True)
         elif modification == "AcrylamideAdduct(C)":
             proteinDigest.setAcrylamideAdducts(True)
+        elif modification == "Carbamylation(N-Term)":
+            proteinDigest.setNTermCarbamylation(True)
         elif modification == "None":
             continue
         else:

@@ -71,6 +71,8 @@ def getModificationVariants(peptide):
     static = set()
     amino_numbers = {}
     for mod, amino, pos in peptide.modifications:
+        if len(amino) > 0: # special case liek NTerm - dont check consistency
+            continue
         amino_numbers[amino] = amino_numbers.get(amino, 0) + 1
         if pos != -1:
             # check if aminoacid exists there
@@ -81,7 +83,7 @@ def getModificationVariants(peptide):
             static.add(pos)
             modify.append([(mod, amino, pos)])
 
-    # check if number of modifications on one aminoacid is smaller than the real amount of aminoacids in the sequence
+    # check if number of modifications on one aminoacid is greater than the real amount of aminoacids in the sequence
     for amino in amino_numbers:
         if amino_numbers[amino] > peptide.sequence.count(amino):
             raise Exception("More modifications than modifiable aminoacids in sequence")

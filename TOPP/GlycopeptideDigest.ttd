@@ -39,7 +39,7 @@
 			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.xml" description="File output peptide sequence file .xml"/>
             <ITEMLIST name="enzymes" value="[]" type="string" restrictions="Trypsin,AspN,AspN2,Unspecific" description="Digestion enzymes"/>
             <ITEM name="cystTreatment" value="None" type="string" restrictions="None,Iodacetic acid,Iodoacetamide" description="Cystein treatment (C)"/>
-            <ITEMLIST name="modifications" value="[]" type="string" restrictions="None,Oxidation(M),AcrylamideAdduct(C)" description="variable modifications"/>
+            <ITEMLIST name="modifications" value="[]" type="string" restrictions="None,Oxidation(M),AcrylamideAdduct(C),Carbamylation(N-Term)" description="variable modifications"/>
             <ITEMLIST name="glycosylation" value="[]" type="string" restrictions="N-Glycosylation,O-Glycosylation" description="glycosylation"/>
             <ITEM name="missedCleavageSites" value="0" type="int" description="maximum missed cleavage sites"/>
 		  </ini_param>

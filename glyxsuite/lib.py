@@ -127,6 +127,7 @@ class ProteinDigest(object):
         self.carbamidation = False
         self.carboxylation = False
         self.oxidation = False
+        self.carbamylation_N_Term = False
         self.acrylamideAdducts = False
         self.breakpoints = []
         self.protein = None
@@ -151,6 +152,9 @@ class ProteinDigest(object):
 
     def setOxidation(self, boolean):
         self.oxidation = boolean
+
+    def setNTermCarbamylation(self, boolean):
+        self.carbamylation_N_Term = boolean
 
     def calcPeptideMasses(self, peptide):
 
@@ -188,6 +192,7 @@ class ProteinDigest(object):
         N_Cys_CM = 0
         N_Cys_PAM = 0
         N_MSO = 0
+        N_NTERM_CAM = 0
         if self.carbamidation == True:
             N_Cys_CAM = c
         elif self.carboxylation == True:
@@ -196,12 +201,16 @@ class ProteinDigest(object):
             N_Cys_PAM = c
         if self.oxidation == True:
             N_MSO = m
+        if self.carbamylation_N_Term == True:
+            N_NTERM_CAM = 1
         # make permutations
         masses = []
-        for cys_CAM, cys_CM, cys_PAM, MSO in product(range(0, N_Cys_CAM+1),
-                                                     range(0, N_Cys_CM+1),
-                                                     range(0, N_Cys_PAM+1),
-                                                     range(0, N_MSO+1)):
+        for variationslist in product(range(0, N_Cys_CAM+1),
+                                       range(0, N_Cys_CM+1),
+                                       range(0, N_Cys_PAM+1),
+                                       range(0, N_MSO+1),
+                                       range(0, N_NTERM_CAM+1)):
+            cys_CAM, cys_CM, cys_PAM, MSO, nterm_CAM = variationslist
             if cys_CAM+cys_CM+cys_PAM > c:
                 continue
 
@@ -211,6 +220,7 @@ class ProteinDigest(object):
             newPeptide.modifications += [("Cys_CM", "C", -1)]*cys_CM
             newPeptide.modifications += [("Cys_PAM", "C", -1)]*cys_PAM
             newPeptide.modifications += [("MSO", "M", -1)]*MSO
+            newPeptide.modifications += [("CAM", "NTerm", 0)]*nterm_CAM
             # calc peptide mass
             newPeptide.mass = glyxsuite.masses.calcPeptideMass(newPeptide)
             masses.append(newPeptide)
