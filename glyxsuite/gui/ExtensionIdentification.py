@@ -11,32 +11,34 @@ class ExtensionIdentification(ttk.Labelframe):
         self.master = master
         self.model = model
 
+        self.columnconfigure(0, minsize=200, weight=1)
+        
         errorFrame = ttk.Labelframe(self, text="Identification errors")
-        errorFrame.grid(row=0, column=0, columnspan=2)
+        errorFrame.grid(row=0, column=0, columnspan=2, sticky="NWES")
 
         errorView = IdentificationStatsFrame.IdentificationStatsFrame(errorFrame,
                                                                       model,
                                                                       height=200,
                                                                       width=800)
-        errorView.grid(row=0, column=0)
-
+        errorView.pack(expand=True, fill="both")
 
 
         peptideFrame = ttk.Labelframe(self, text="Peptide")
-        peptideFrame.grid(row=1, column=0, columnspan=2)
+        peptideFrame.grid(row=1, column=0, columnspan=2, sticky="NWES")
+        
 
         peptideView = PeptideCoverageFrame.PeptideCoverageFrame(peptideFrame,
                                                                 model,
                                                                 height=200,
-                                                                width=800)
-        peptideView.grid(row=0, column=0)
+                                                                width=200)
+        peptideView.pack(expand=True, fill="both")
 
 
         consensusFrame = ttk.Labelframe(self, text="Consensus-Spectrum")
-        consensusFrame.grid(row=2, column=0, columnspan=2)
+        consensusFrame.grid(row=2, column=0, columnspan=2, sticky="NWES")
 
         consensusView = ConsensusSpectrumFrame.ConsensusSpectrumFrame(consensusFrame,
                                                                       model,
                                                                       height=300,
                                                                       width=800)
-        consensusView.grid(row=0, column=0)
+        consensusView.pack(expand=True, fill="both")

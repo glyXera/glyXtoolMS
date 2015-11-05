@@ -104,16 +104,19 @@ class ProjectFrame(ttk.Frame):
         #self.b1.grid(row=0, column=2)
 
 
-        tools.grid(row=0, column=0, sticky=('N', 'W', 'E', 'S'))
+        tools.grid(row=0, column=0, sticky="NWES")
+        
+        projects = ttk.Frame(self)
+        projects.grid(row=1, column=0, sticky="NWES")
 
-        yscrollbar = ttk.Scrollbar(self, orient=Tkinter.VERTICAL)
+        yscrollbar = ttk.Scrollbar(projects, orient=Tkinter.VERTICAL)
 
-        self.projectTree = ttk.Treeview(self,
+        self.projectTree = ttk.Treeview(projects,
                                         yscrollcommand=yscrollbar.set)
 
-        self.projectTree.grid(row=1, column=0, sticky=('N', 'W', 'E', 'S'))
+        self.projectTree.grid(row=0, column=0, sticky="NWES")
 
-        yscrollbar.grid(row=1, column=1, sticky=('N', 'W', 'E', 'S'))
+        yscrollbar.grid(row=0, column=1, sticky="NWES")
         yscrollbar.config(command=self.projectTree.yview)
 
         self.projectsTreeIds = {}
@@ -121,11 +124,14 @@ class ProjectFrame(ttk.Frame):
         self.projectTree.heading("#0", text="Projects")
 
         #tree.heading("size", text="File Size", anchor='w')
-        self.projectTree.column("#0", stretch=0, width=500)
+        #self.projectTree.column("#0", stretch=0, width=500)
 
         #self.rowconfigure(0, minsize=100, weight=0)
         #self.rowconfigure(1, minsize=200, weight=1)
-        #self.columnconfigure(0, minsize=100, weight=1)
+        projects.columnconfigure(0, weight=1)
+        projects.columnconfigure(1, weight=0)
+        
+        self.columnconfigure(0, weight=1)
 
         # Events
         self.projectTree.bind("<<TreeviewSelect>>", self.clickedTree)

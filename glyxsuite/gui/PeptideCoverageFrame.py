@@ -44,18 +44,26 @@ class PeptideCoverageFrame(ttk.Frame):
 
         self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height)
         self.canvas.config(bg="white")
-        self.canvas.grid(row=0, column=0, sticky="NSEW")
+        self.canvas.pack(expand=True, fill="both")
+        self.canvas.config(highlightthickness=0)
+        #self.canvas.bind("<Configure>", self.on_resize)
+        #self.canvas.grid(row=0, column=0, sticky="NSEW")
 
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        #self.grid_rowconfigure(0, weight=1)
+        #self.grid_columnconfigure(0, weight=1)
 
-        self.grid_columnconfigure(0, weight=1)
+        #self.grid_columnconfigure(0, weight=1)
 
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)
 
         # link function
         self.model.funcUpdateIdentificationCoverage = self.init
+
+    #def on_resize(self,event):
+    #    self.width = event.width
+    #    self.height = event.height
+    #    self.canvas.config(width=self.width, height=self.height)
 
     def init(self, hit):
 

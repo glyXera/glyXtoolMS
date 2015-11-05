@@ -73,16 +73,31 @@ class App(ttk.Frame):
 
         #toolMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
         #menubar.add_cascade(label="Tool", menu=toolMenu)
+        
+        panes = Tkinter.PanedWindow(master)
 
-        frameProject = ttk.Labelframe(master, text="Projects")
-        pojectFrame = ProjectFrame.ProjectFrame(frameProject, self.model)
-        #pojectFrame.pack()
-        pojectFrame.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
-        frameProject.grid(row=0, column=0, sticky=("N"))
+        panes.pack(fill="both", expand="yes")
+
+        left = Tkinter.Frame(panes)
+        left.pack()
+
+        right = Tkinter.Frame(panes)
+        right.pack()
+
+        panes.add(left)
+        panes.add(right)
+
+        frameProject = ttk.Labelframe(left, text="Projects")
+        projectFrame = ProjectFrame.ProjectFrame(frameProject, self.model)
+        #projectFrame.grid(row=0, column=0, sticky="NWES")
+        projectFrame.pack(fill="both", expand="yes")
+        
+        frameProject.grid(row=0, column=0, sticky="NWES")
 
 
-        frameNotebook = ttk.Labelframe(master, text="Analysis")
+        frameNotebook = ttk.Labelframe(left, text="Analysis")
         frameNotebook.grid(row=1, column=0, sticky=("NWES"))
+        frameNotebook.columnconfigure(0, weight=1)
         frameNotebook.rowconfigure(0, weight=1)
 
 
@@ -96,10 +111,9 @@ class App(ttk.Frame):
         self.notebook.add(n1, text='1. Identification')
         self.notebook.add(n2, text='2. Features')
         self.notebook.add(n3, text='3. Scoring')
-        #self.notebook.add(n4, text='4. Results')
 
-        #self.notebook.grid(row=1, column=0, sticky=("N", "W", "E"))
         self.notebook.grid(row=0, column=0, sticky="NWES")
+        self.notebook.columnconfigure(0, weight=1)
 
         self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
 
@@ -107,21 +121,21 @@ class App(ttk.Frame):
 
         # Add extention frames
         
-        self.e1 = ExtensionIdentification.ExtensionIdentification(master, self.model, '1. Identification')
-        self.e1.grid(row=0, column=1, rowspan=2, sticky="NWES")
+        self.e1 = ExtensionIdentification.ExtensionIdentification(right, self.model, '1. Identification')
+        self.e1.grid(row=0, column=0, sticky="NWES")
         
-        self.e2 = ExtensionFeature.ExtensionFeature(master, self.model, '2. Features')
-        self.e2.grid(row=0, column=1, rowspan=2, sticky="NWES")
+        self.e2 = ExtensionFeature.ExtensionFeature(right, self.model, '2. Features')
+        self.e2.grid(row=0, column=0, sticky="NWES")
         
-        self.e3 = ExtensionScoring.ExtensionScoring(master, self.model, '3. Scoring')
-        self.e3.grid(row=0, column=1, rowspan=2, sticky="NWES")
+        self.e3 = ExtensionScoring.ExtensionScoring(right, self.model, '3. Scoring')
+        self.e3.grid(row=0, column=0, sticky="NWES")
+        
+        
+        left.columnconfigure(0, weight=1)
+        left.rowconfigure(0, weight=0)
+        left.rowconfigure(1, weight=1)
+        right.columnconfigure(0, weight=1)
 
-        # configure column and row behaviour
-        self.master.columnconfigure(0, minsize=200, weight=0)
-        self.master.columnconfigure(1, minsize=300, weight=1)
-        self.master.rowconfigure(0, weight=0)
-        self.master.rowconfigure(1, weight=1)
-        #self.master.rowconfigure(1, minsize=200, weight=1)
 
     def changedNotebook(self, event):
         idx = self.notebook.select()
