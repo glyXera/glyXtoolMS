@@ -12,6 +12,9 @@ class ExtensionIdentification(ttk.Labelframe):
         self.model = model
 
         self.columnconfigure(0, minsize=200, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
         
         errorFrame = ttk.Labelframe(self, text="Identification errors")
         errorFrame.grid(row=0, column=0, columnspan=2, sticky="NWES")

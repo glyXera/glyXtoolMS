@@ -44,6 +44,8 @@ class SpectrumView(FramePlot.FramePlot):
         self.bMax *= 1.2
 
     def paintObject(self):
+        if self.spec == None:
+            return
         specId = self.spec.getNativeID()
         pInt0 = self.convBtoY(self.viewYMin)
 

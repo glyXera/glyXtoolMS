@@ -18,7 +18,7 @@ class NotebookIdentification(ttk.Frame):
         self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan")
         self.tree.column("#0", width=40)
 
-        self.tree.heading("#0", text="Feature Nr.", command=lambda col='#0': self.sortColumn(col))
+        self.tree.heading("#0", text="Nr.", command=lambda col='#0': self.sortColumn(col))
         for col in columns:
             self.tree.column(col, width=columns[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
@@ -40,7 +40,9 @@ class NotebookIdentification(ttk.Frame):
         self.tree.bind("<Delete>", self.deleteIdentification)
 
         self.rowconfigure(0, weight=1)
-
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=0)
+        
         self.model.funcUpdateNotebookIdentification = self.updateTree
 
     def sortColumn(self, col):

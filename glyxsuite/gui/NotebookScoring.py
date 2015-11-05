@@ -16,12 +16,16 @@ class NotebookScoring(ttk.Frame):
         # layout self
         self.rowconfigure(0, weight=0) # frameSpectrum
         self.rowconfigure(1, weight=1) # frameTree
+        self.columnconfigure(0, weight=1)
 
         frameSpectrum = ttk.Labelframe(self, text="Spectrum")
         frameSpectrum.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        frameSpectrum.columnconfigure(0, weight=1)
 
         frameTree = ttk.Labelframe(self, text="MS/MS Spectra")
         frameTree.grid(row=1, column=0, sticky=("N", "W", "E", "S"))
+        frameTree.columnconfigure(0, weight=1)
+        frameTree.columnconfigure(1, weight=0)
 
         l1 = ttk.Label(frameSpectrum, text="Spectrum-Id:")
         l1.grid(row=0, column=0, sticky="NE")
@@ -94,6 +98,8 @@ class NotebookScoring(ttk.Frame):
         self.model.funcUpdateNotebookScoring = self.updateTree
 
         self.model.funcClickedFeatureSpectrum = self.setSelectedSpectrum
+
+
 
         # layout frameTree
         frameTree.rowconfigure(0, weight=1)

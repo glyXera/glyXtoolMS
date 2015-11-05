@@ -75,6 +75,9 @@ class App(ttk.Frame):
         #menubar.add_cascade(label="Tool", menu=toolMenu)
         
         panes = Tkinter.PanedWindow(master)
+        panes.config(sashwidth=10)
+        panes.config(opaqueresize=False)
+        panes.config(sashrelief="raised")
 
         panes.pack(fill="both", expand="yes")
 
@@ -89,7 +92,6 @@ class App(ttk.Frame):
 
         frameProject = ttk.Labelframe(left, text="Projects")
         projectFrame = ProjectFrame.ProjectFrame(frameProject, self.model)
-        #projectFrame.grid(row=0, column=0, sticky="NWES")
         projectFrame.pack(fill="both", expand="yes")
         
         frameProject.grid(row=0, column=0, sticky="NWES")
@@ -135,6 +137,7 @@ class App(ttk.Frame):
         left.rowconfigure(0, weight=0)
         left.rowconfigure(1, weight=1)
         right.columnconfigure(0, weight=1)
+        right.rowconfigure(0, weight=1)
 
 
     def changedNotebook(self, event):

@@ -78,6 +78,8 @@ class ChromatogramView(FramePlot.FramePlot):
 
 
     def paintObject(self):
+        if self.model.currentAnalysis == None:
+            return
         self.allowZoom = False
         for treeId in self.model.currentAnalysis.chromatograms:
             chrom = self.model.currentAnalysis.chromatograms[treeId]
@@ -111,6 +113,8 @@ class ChromatogramView(FramePlot.FramePlot):
             self.allowZoom = True
 
     def initChromatogram(self, low, high, rt):
+        if self.model.currentAnalysis == None:
+            return
         self.viewXMin = low
         self.viewXMax = high
         self.viewYMin = 0

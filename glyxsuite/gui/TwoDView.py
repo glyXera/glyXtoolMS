@@ -183,6 +183,8 @@ class TwoDView(FramePlot.FramePlot):
 
     def plotFeatureLine(self):
         # plot feature line
+        if self.model.currentAnalysis == None:
+            return
         feature = self.model.currentAnalysis.currentFeature
         if feature == None:
             return
@@ -202,6 +204,10 @@ class TwoDView(FramePlot.FramePlot):
         self.canvas.create_line(rt2, mz0, rt2, mzMax, fill=color)
 
     def paintFeatures(self):
+        if self.model.currentAnalysis == None:
+            return
+        if self.model.currentAnalysis.analysis == None:
+            return
         self.plotFeatureLine()
         for feature in self.model.currentAnalysis.analysis.features:
             rt1, rt2, mz1, mz2 = feature.getBoundingBox()
@@ -227,6 +233,10 @@ class TwoDView(FramePlot.FramePlot):
 
 
     def paintSpectra(self):
+        if self.model.currentAnalysis == None:
+            return
+        if self.model.currentAnalysis.analysis == None:
+            return
         # calculate circle diameter
         #diam = int(min(self.slopeA, self.slopeB)*2)
         diam = int(min(self.slopeA, self.slopeB)*2)+1.5
@@ -288,6 +298,10 @@ class TwoDView(FramePlot.FramePlot):
             item = self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill=color)
 
     def paintObject(self):
+        if self.model.currentAnalysis == None:
+            return
+        if self.model.currentAnalysis.analysis == None:
+            return
         self.allowZoom = False
 
         self.paintFeatures()
@@ -296,6 +310,10 @@ class TwoDView(FramePlot.FramePlot):
         self.allowZoom = True
 
     def init(self, keepZoom=False):
+        if self.model.currentAnalysis == None:
+            return
+        if self.model.currentAnalysis.analysis == None:
+            return
         self.initCanvas(keepZoom=keepZoom)
 
     def identifier(self):

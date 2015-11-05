@@ -62,11 +62,11 @@ class FramePlot(ttk.Frame):
 
         self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height) # check screen resolution
         self.canvas.config(bg="white")
+        self.canvas.config(highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="NSEW")
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
-
 
         self.canvas.bind("<Button-1>", self.eventTakeFokus)
         self.canvas.bind("<Motion>", self.eventMouseMotion)
@@ -76,9 +76,16 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<Control-Left>", self.keyLeft)
         self.canvas.bind("<Control-Right>", self.keyRight)
         self.canvas.bind("<Control-BackSpace>", self.resetZoom)
+        self.canvas.bind("<Configure>", self.on_resize)
 
         self.calcScales()
         self._paintAxis()
+        
+    def on_resize(self,event):
+        self.width = event.width
+        self.height = event.height
+        self.canvas.config(width=self.width, height=self.height)
+        self._paintCanvas(False)
 
     def keyLeft(self, event):
         if self.allowZoom == False:

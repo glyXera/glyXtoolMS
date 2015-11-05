@@ -54,6 +54,11 @@ class SpectrumView(FramePlot.FramePlot):
 
     def paintObject(self):
         """ Draw everything within the Plot """
+        if self.model.currentAnalysis == None:
+            return
+        if self.spec == None:
+            return
+        
         specId = self.spec.getNativeID()
         pInt0 = self.convBtoY(self.viewYMin)
 

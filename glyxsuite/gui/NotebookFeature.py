@@ -12,16 +12,21 @@ class NotebookFeature(ttk.Frame):
         ttk.Frame.__init__(self, master=master)
         self.master = master
         self.model = model
+        
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=0)
+        self.columnconfigure(0, weight=1)
+        
         frameFeature = ttk.Labelframe(self, text="Features")
         frameFeature.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        frameFeature.rowconfigure(0, weight=1)
+        frameFeature.columnconfigure(0, weight=1)
+        frameFeature.columnconfigure(1, weight=0)
 
         frameSpectrum = ttk.Labelframe(self, text="Featurespectra")
         frameSpectrum.grid(row=1, column=0, sticky=("N", "W", "E", "S"))
-
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=0)
-
-        frameFeature.rowconfigure(0, weight=1)
+        frameSpectrum.columnconfigure(0, weight=1)
+        frameSpectrum.columnconfigure(1, weight=0)
 
         # show treeview of mzML file MS/MS and MS
         # ------------------- Feature Tree ----------------------------#

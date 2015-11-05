@@ -46,7 +46,7 @@ class PeptideCoverageFrame(ttk.Frame):
         self.canvas.config(bg="white")
         self.canvas.pack(expand=True, fill="both")
         self.canvas.config(highlightthickness=0)
-        #self.canvas.bind("<Configure>", self.on_resize)
+        self.canvas.bind("<Configure>", self.on_resize)
         #self.canvas.grid(row=0, column=0, sticky="NSEW")
 
         #self.grid_rowconfigure(0, weight=1)
@@ -60,10 +60,11 @@ class PeptideCoverageFrame(ttk.Frame):
         # link function
         self.model.funcUpdateIdentificationCoverage = self.init
 
-    #def on_resize(self,event):
-    #    self.width = event.width
-    #    self.height = event.height
-    #    self.canvas.config(width=self.width, height=self.height)
+    def on_resize(self,event):
+        self.width = event.width
+        self.height = event.height
+        self.canvas.config(width=self.width, height=self.height)
+        self.paint_canvas()
 
     def init(self, hit):
 
@@ -73,9 +74,12 @@ class PeptideCoverageFrame(ttk.Frame):
         if hit.featureID not in analysis.featureIds:
             return
         self.hit = hit
+        self.paint_canvas()
 
-
-        peptideSequence = hit.peptide.sequence
+    def paint_canvas(self):
+        if self.hit == None:
+            return
+        peptideSequence = self.hit.peptide.sequence
         peptideLength = len(peptideSequence)
 
         parts = {}
@@ -88,7 +92,7 @@ class PeptideCoverageFrame(ttk.Frame):
         ySeries = {}
         bSeries = {}
         self.fragmentCoverage = {}
-        for name in hit.fragments:
+        for name in self.hit.fragments:
             y, b = parseInternalFragment(name, peptideLength)
             if y == None:
                 y, b = parseBFragment(name)
@@ -101,7 +105,7 @@ class PeptideCoverageFrame(ttk.Frame):
             self.fragmentCoverage[y] = self.fragmentCoverage.get(y, []) + [name]
             self.fragmentCoverage[b] = self.fragmentCoverage.get(b, []) + [name]
 
-            fragmentSequence = hit.fragments[name]["sequence"].split("-")[0]
+            fragmentSequence = self.hit.fragments[name]["sequence"].split("-")[0]
             fragmentSequence = re.sub(r"\(.+?\)", "", fragmentSequence)
             key = "".join(sorted(fragmentSequence))
             if len(parts[key]) == 1:
@@ -127,7 +131,7 @@ class PeptideCoverageFrame(ttk.Frame):
         # write peptide sequence
         xc = self.width/2.0
         yc = self.height/2.0
-        text = hit.peptide.sequence
+        text = self.hit.peptide.sequence
 
         # find fitting text size
         s = 0
