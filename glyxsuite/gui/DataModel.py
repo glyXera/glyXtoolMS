@@ -210,7 +210,6 @@ class ContainerAnalysisFile(object):
         # create feature - spectra link
         self.featureIds = {}
         i = 0
-        print "been here"
         for feature in self.analysis.features:
             i += 1
             feature.index = str(i) # TODO: Warp feature
@@ -230,7 +229,6 @@ class ContainerAnalysisFile(object):
                     continue
                 self.spectraInFeatures[spectrum.nativeId].append(feature.getId())
             """
-        print "is in", self.spectraInFeatures["controllerType=0 controllerNumber=1 scan=3035"]
         
         self.featureSpectra = {}
         for spec in self.project.mzMLFile.exp:
