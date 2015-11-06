@@ -47,7 +47,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
     Result: after scoring the score value can be read via the function
                 getLogScore()
     """
-    def __init__(self, nativeId, spectrumRT, precursorMass, precursorCharge, feature=None):
+    def __init__(self, nativeId, spectrumRT, precursorMass, precursorCharge, feature):
         """ initialize Score with information about the spectrum
             Input: id, rt, precursor mass and charge """
 
@@ -93,9 +93,6 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
             oxoniumIons is a dict with the name as key, and
             a dict as value containing
             {"mass":00, "charge":0, "depends": other oxonium ion"}"""
-        
-        feature_mass = self.feature.getMZ()
-        feature_charge = self.feature.getCharge()
         
         # find oxonium ions
         foundOxoniumIons = {}
@@ -145,11 +142,11 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
             mzOx = oxoniumIons[oxname]["mass"]
             chargeOx = oxoniumIons[oxname]["charge"]
 
-            if chargeOx >= feature_charge:
+            if chargeOx >= self.precursorCharge:
                 continue
 
-            mz_loss = ((feature_mass*feature_charge-mzOx*chargeOx)/
-                       (feature_charge-chargeOx))
+            mz_loss = ((self.precursorMass*self.precursorCharge-mzOx*chargeOx)/
+                       (self.precursorCharge-chargeOx))
 
             if abs(mz_loss - peak.mass) < tolerance:
                 oxoniumLosses[oxname] = oxoniumLosses.get(oxname, []) +[peak]
@@ -276,9 +273,10 @@ def main(options):
     parameters.setMaxOxoniumCharge(str(1))
     parameters.setScoreThreshold(str(options.scorethreshold))
 
-    scores = {}
+    
     keepFeatures = set()
     ms2Spectra = {}
+    collectedScores = {}
     for spec in exp:
         if spec.getMSLevel() != 2:
             continue
@@ -288,31 +286,47 @@ def main(options):
         rt = spec.getRT()
         mz = precursor.getMZ()
         charge = precursor.getCharge()
-
-        # create dummy score
-        score = Score(spec.getNativeID(), rt, mz, charge)
-        scores[spec.getNativeID()] = score
-
         if spec.size() == 0:
             continue
-        if charge == 1:
-            skippedSingleCharged += 1
-            continue
+        # create list of all possible scores
+        scores = []
 
-        features = []
+        singleCharged = True # check if only single charges would be possible
+        if charge != 1:
+            score = Score(spec.getNativeID(), rt, mz, charge, None)
+            scores.append(score)
+            singleCharged = False
+
+
+        #if charge == 1:
+        #    skippedSingleCharged += 1
+        #    continue
+
+        # find all scores with possible features
         for feature in allFeatures.values():
             minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
             if minRT > rt or rt > maxRT:
                 continue
             if minMZ > mz or mz > maxMZ:
                 continue
-            features.append(feature)
-        if len(features) == 0:
+            rt = feature.getRT()
+            mz = feature.getMZ()
+            charge = feature.getCharge()
+            if charge != 1:
+                score = Score(spec.getNativeID(), rt, mz, charge, feature)
+                singleCharged = False
+        
+        if singleCharged == True:
+            skippedSingleCharged += 1
             continue
-
-        for feature in features:
-            # create new scoring
-            score = Score(spec.getNativeID(), rt, mz, charge,feature)
+        
+        if len(scores) == 0:
+            continue
+        
+        # run all possible scores
+        bestScore = scores[0]
+        for score in scores:
+            # add peaks from spectrum
             for peak in spec:
                 score.addPeak(peak.getMZ(), peak.getIntensity())
             # rank peaks
@@ -326,27 +340,25 @@ def main(options):
             
             if score.getLogScore() < scorethreshold:
                 score.setIsGlycopeptide(True)
-            # keep feature if score is below threshold
-            #if score.getLogScore() < scorethreshold:
-            #    keepFeatures.add(feature.getId())
-
-            # keep best score
-            if score.getLogScore() < scores[spec.getNativeID()]:
-                scores[spec.getNativeID()] = score
-
+            # replace bestScore if it is featureless or keep best Score
+            if score.feature != None and bestScore.feature == None:
+                bestScore = score
+            elif score.getLogScore() < bestScore.getLogScore():
+                bestScore = score
+                
+        collectedScores[bestScore.getNativeId()] = bestScore
+        
     print "skipped", skippedSingleCharged, " single charged spectra"
     print "writing outputfile"
     
-    for key in scores:
-        score = scores[key]
+    for key in collectedScores:
+        score = collectedScores[key]
         glyxXMLFile.spectra.append(score)
         if score.feature is None:
             continue
         score.feature.spectraIds.append(score.getNativeId())
         if score.getLogScore() < scorethreshold:
             keepFeatures.add(score.feature.getId())
-        
-        
 
     # write features
     for key in keepFeatures:
