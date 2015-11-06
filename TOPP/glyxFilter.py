@@ -305,15 +305,16 @@ def main(options):
         # find all scores with possible features
         for feature in allFeatures.values():
             minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
-            if minRT > rt or rt > maxRT:
+            if minRT > spec.getRT() or spec.getRT() > maxRT:
                 continue
-            if minMZ > mz or mz > maxMZ:
+            if minMZ > precursor.getMZ() or precursor.getMZ() > maxMZ:
                 continue
             rt = feature.getRT()
             mz = feature.getMZ()
             charge = feature.getCharge()
             if charge != 1:
                 score = Score(spec.getNativeID(), rt, mz, charge, feature)
+                scores.append(score)
                 singleCharged = False
         
         if singleCharged == True:
@@ -345,7 +346,6 @@ def main(options):
                 bestScore = score
             elif score.getLogScore() < bestScore.getLogScore():
                 bestScore = score
-                
         collectedScores[bestScore.getNativeId()] = bestScore
         
     print "skipped", skippedSingleCharged, " single charged spectra"
