@@ -210,11 +210,14 @@ class ContainerAnalysisFile(object):
         # create feature - spectra link
         self.featureIds = {}
         i = 0
-
+        print "been here"
         for feature in self.analysis.features:
             i += 1
             feature.index = str(i) # TODO: Warp feature
             self.featureIds[feature.getId()] = feature
+            for specID in feature.getSpectraIds():
+                self.spectraInFeatures[specID].append(feature.getId())
+            """
             minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
             for spectrum in self.analysis.spectra:
                 if spectrum.rt < minRT:
@@ -226,8 +229,9 @@ class ContainerAnalysisFile(object):
                 if spectrum.precursorMass > maxMZ:
                     continue
                 self.spectraInFeatures[spectrum.nativeId].append(feature.getId())
-
-
+            """
+        print "is in", self.spectraInFeatures["controllerType=0 controllerNumber=1 scan=3035"]
+        
         self.featureSpectra = {}
         for spec in self.project.mzMLFile.exp:
             if spec.getMSLevel() != 1:
@@ -243,6 +247,7 @@ class ContainerAnalysisFile(object):
                 if not featureID in self.featureSpectra:
                     self.featureSpectra[featureID] = []
                 self.featureSpectra[featureID].append(spec)
+        
 
     def addNewSpectrum(self, nativeID):
         spectrum = glyxsuite.io.GlyxXMLSpectrum()

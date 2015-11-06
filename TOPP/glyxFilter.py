@@ -307,7 +307,7 @@ def main(options):
             minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
             if minRT > spec.getRT() or spec.getRT() > maxRT:
                 continue
-            if minMZ > precursor.getMZ() or precursor.getMZ() > maxMZ:
+            if minMZ > precursor.getMZ() or precursor.getMZ() > maxMZ+tolerance:
                 continue
             rt = feature.getRT()
             mz = feature.getMZ()
