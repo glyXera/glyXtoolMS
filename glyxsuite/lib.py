@@ -286,10 +286,10 @@ class ProteinDigest(object):
                 if i+m >= len(self.breakpoints):
                     break
                 stop = self.breakpoints[i+m]
-                peptides.append(self.protein.getPeptide(start+1, stop+1))
+                p = self.protein.getPeptide(start+1, stop+1)
+                peptides.append(p)
             start = self.breakpoints[i]
             i += 1
-
         return peptides
 
     def findGlycopeptides(self, peptides, NGlycosylation=False,
@@ -298,12 +298,11 @@ class ProteinDigest(object):
         # generate list of glycosylationsites
         sites = []
         if NGlycosylation == True:
-            for match in re.finditer(r"N[^P](S|T)", self.protein.sequence):
+            for match in re.finditer(r"(?=(N[^P](S|T)))", self.protein.sequence):
                 sites.append((match.start(), "N"))
         if OGlycosylation == True:
-            for match in re.finditer(r"(S|T)", self.protein.sequence):
+            for match in re.finditer(r"(?=(S|T)))", self.protein.sequence):
                 sites.append((match.start(), "O"))
-
         sites.sort()
 
         glycopeptides = []
