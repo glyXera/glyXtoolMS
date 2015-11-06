@@ -15,7 +15,7 @@ class ChromatogramView(FramePlot.FramePlot):
         self.master = master
         self.NrXScales = 3.0
         self.chrom = None
-        self.rt = None
+        self.rt = 0
         self.featureLow = 0
         self.featureHigh = 0
         self.minMZView = 0
@@ -117,6 +117,8 @@ class ChromatogramView(FramePlot.FramePlot):
         self.canvas.create_line(lowMZ, pIntMin, lowMZ, pIntMax, tags=("border", ),fill="red")
         self.canvas.create_line(highMZ, pIntMin, highMZ, pIntMax, tags=("border", ),fill="red")
         
+        self.plotPositionMarker()
+        
         self.allowZoom = True
 
     def initChromatogram(self, chrom, low, high, rt, featureLow, featureHigh):
@@ -150,18 +152,19 @@ class ChromatogramView(FramePlot.FramePlot):
     def identifier(self):
         return "FeatureChromatogramView"
         
+    def plotPositionMarker(self):
         
-    def plotPrecursorSpectrum(self, index):
-        self.canvas.delete("positionmarker")
-        spec = self.model.currentAnalysis.project.mzMLFile.exp[index]
-        rt = spec.getRT()
-        pRT = self.convAtoX(rt)
+        pRT = self.convAtoX(self.rt)
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
-        
+        self.canvas.delete("positionmarker")
         self.canvas.create_line(pRT, pIntMin, pRT, pIntMax, tags=("positionmarker", ),fill="blue")
         
+    def plotPrecursorSpectrum(self, index):
         
+        spec = self.model.currentAnalysis.project.mzMLFile.exp[index]
+        self.rt = spec.getRT()
+        self.plotPositionMarker()
         peaks = spec.get_peaks()
         if hasattr(peaks, "shape"):
             mzArray = peaks[:, 0]

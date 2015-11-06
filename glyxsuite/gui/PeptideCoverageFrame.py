@@ -38,6 +38,7 @@ class PeptideCoverageFrame(ttk.Frame):
         self.hit = None
         self.coverage = {}
         self.fragmentCoverage = {}
+        self.indexList = set()
 
         self.height = height
         self.width = width
@@ -65,6 +66,7 @@ class PeptideCoverageFrame(ttk.Frame):
         self.height = event.height
         self.canvas.config(width=self.width, height=self.height)
         self.paint_canvas()
+        self.colorIndex()
 
     def init(self, hit):
 
@@ -74,7 +76,9 @@ class PeptideCoverageFrame(ttk.Frame):
         if hit.featureID not in analysis.featureIds:
             return
         self.hit = hit
+        self.indexList = set()
         self.paint_canvas()
+        
 
     def paint_canvas(self):
         if self.hit == None:
@@ -216,15 +220,17 @@ class PeptideCoverageFrame(ttk.Frame):
                                                    event.x+10,
                                                    event.y+10))
 
-        indexList = set()
+        self.indexList = set()
         for item in overlap:
             if item in self.coverage:
                 key = self.coverage[item]
-                indexList.add(key)
+                self.indexList.add(key)
+        self.colorIndex()
 
+    def colorIndex(self):
         found = []
-        for index in indexList:
-            found += self.fragmentCoverage[key]
+        for index in self.indexList:
+            found += self.fragmentCoverage[index]
             for item in self.coverage:
                 if self.coverage[item] == index:
                     self.canvas.itemconfigure(item, fill="red")
