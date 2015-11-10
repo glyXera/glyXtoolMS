@@ -14,7 +14,6 @@ f.writeToFile(path)
 """
 
 from lxml import etree as ET
-import base64
 
 class GlyxXMLSpectrum(object):
     """ Define the GlyxXMLSpectrum as used in the glyML format """
@@ -27,6 +26,7 @@ class GlyxXMLSpectrum(object):
         self.logScore = 10
         self.ions = {}
         self.isGlycopeptide = False
+        self.status = ConfirmationStatus.Unknown
 
     def setNativeId(self, nativeId):
         """ Set the native spectrum ID """
@@ -174,6 +174,14 @@ class GlyxXMLParameters(object):
     def setSourceFileChecksum(self, checksum):
         self._sourceFileChecksum = checksum
 
+class ConfirmationStatus(object):
+    
+    Unknown = "Unknown"
+    Deleted = "Deleted"
+    Accepted = "Accepted"
+    Rejected = "Rejected"
+    
+    _types = ["Unknown", "Deleted", "Accepted", "Rejected"]
 
 class GlyxXMLFeature(object):
 
@@ -187,6 +195,7 @@ class GlyxXMLFeature(object):
         self.maxRT = 0.0
         self.minMZ = 0.0
         self.maxMZ = 0.0
+        self.status = ConfirmationStatus.Unknown
         self.spectraIds = []
         self.consensus = []
 
@@ -249,6 +258,7 @@ class GlyxXMLGlycoModHit(object):
         self.peptide = None
         self.glycan = None
         self.error = 0.0
+        self.status = ConfirmationStatus.Unknown
         self.fragments = {}
 
 class GlyxXMLConsensusPeak(object):
@@ -264,7 +274,7 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self._version_ = "0.0.5" # current version
+        self._version_ = "0.0.6" # current version
         self.version = self._version_ # will be overwritten by file
 
     def _parseParameters(self, xmlParameters):
@@ -322,6 +332,8 @@ class GlyxXMLFile(object):
             # version 0.0.2
             if self.version > "0.0.1":
                 spectrum.setIsGlycopeptide(bool(int(s.find("./isGlycopeptide").text)))
+            if self.version > "0.0.5":
+                spectrum.status = s.find("./status").text
             spectra.append(spectrum)
         return spectra
 
@@ -379,6 +391,10 @@ class GlyxXMLFile(object):
                 xmlIsGlyco = ET.SubElement(xmlSpectrum, "isGlycopeptide")
                 xmlIsGlyco.text = str(int(spectrum.getIsGlycopeptide()))
             xmlScoreList = ET.SubElement(xmlSpectrum, "scores")
+            
+            xmlStatus = ET.SubElement(xmlSpectrum, "status")
+            xmlStatus.text = spectrum.status
+            
             ions = spectrum.getIons()
             for glycan in ions:
                 xmlScore = ET.SubElement(xmlScoreList, "score")
@@ -393,6 +409,7 @@ class GlyxXMLFile(object):
                     xmlIonMass.text = str(ions[glycan][ionName]["mass"])
                     xmlIonIntensity = ET.SubElement(xmlIon, "intensity")
                     xmlIonIntensity.text = str(ions[glycan][ionName]["intensity"])
+            
 
 
 
@@ -444,9 +461,9 @@ class GlyxXMLFile(object):
             xmlFeatureConsensusX.text = x
             xmlFeatureConsensusY = ET.SubElement(xmlFeatureConsensus, "y")
             xmlFeatureConsensusY.text = y
-
-
-
+            
+            xmlStatus = ET.SubElement(xmlFeature, "status")
+            xmlStatus.text = feature.status
 
 
     def _writeGlycoModHits(self, xmlGlycoModHits):
@@ -470,6 +487,9 @@ class GlyxXMLFile(object):
 
             xmlError = ET.SubElement(xmlHit, "error")
             xmlError.text = str(glycoModHit.error)
+            
+            xmlStatus = ET.SubElement(xmlHit, "status")
+            xmlStatus.text = str(glycoModHit.status)
 
             # write identified fragments
             fragments = glycoModHit.fragments
@@ -516,6 +536,8 @@ class GlyxXMLFile(object):
                     fragment["mass"] = float(xmlfragment.find("./mass").text)
                     fragment["counts"] = float(xmlfragment.find("./counts").text)
                     hit.fragments[fragmentname] = fragment
+            if self.version > "0.0.5":
+                hit.status = xmlHit.find("./status").text
             hits.append(hit)
         return hits
 
@@ -550,6 +572,8 @@ class GlyxXMLFile(object):
                 except:
                     print "Parsing error at "+feature.id
                     raise
+            if self.version > "0.0.5":
+                feature.status = xmlFeature.find("./status").text
             features.append(feature)
 
         return features

@@ -9,13 +9,22 @@ class NotebookIdentification(ttk.Frame):
         ttk.Frame.__init__(self, master=master)
         self.master = master
         self.model = model
+        
+        # create popup menu
+        self.aMenu = Tkinter.Menu(self, tearoff=0)
+        self.aMenu.add_command(label="Accepted", 
+                               command=lambda x="Accepted": self.setStatus(x))
+        self.aMenu.add_command(label="Rejected",
+                               command=lambda x="Rejected": self.setStatus(x))
+        self.aMenu.add_command(label="Deleted",
+                               command=lambda x="Deleted": self.setStatus(x))
 
         # show treeview of mzML file MS/MS and MS
         scrollbar = Tkinter.Scrollbar(self)
         self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
 
-        columns = {"Mass":70, "error":70, "Peptide":160, "Glycan":160}
-        self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan")
+        columns = {"Mass":70, "error":70, "Peptide":160, "Glycan":160, "Status":80}
+        self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan", "Status")
         self.tree.column("#0", width=40)
 
         self.tree.heading("#0", text="Nr.", command=lambda col='#0': self.sortColumn(col))
@@ -31,19 +40,59 @@ class NotebookIdentification(ttk.Frame):
         self.treeIds = {}
 
         # treeview style
-        self.tree.tag_configure('oddrowFeature', background='Moccasin')
-        self.tree.tag_configure('evenrowFeature', background='PeachPuff')
+        self.tree.tag_configure('oddUnknown', background='Moccasin')
+        self.tree.tag_configure('evenUnknown', background='PeachPuff')
+        
+        self.tree.tag_configure('oddDeleted', background='LightSalmon')
+        self.tree.tag_configure('evenDeleted', background='Salmon')
+        
+        self.tree.tag_configure('oddAccepted', background='PaleGreen')
+        self.tree.tag_configure('evenAccepted', background='YellowGreen')
+        
+        self.tree.tag_configure('oddRejected', background='LightBlue')
+        self.tree.tag_configure('evenRejected', background='SkyBlue')
 
-        self.tree.tag_configure('evenSpectrum', background='LightBlue')
-        self.tree.tag_configure('oddSpectrum', background='SkyBlue')
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
         self.tree.bind("<Delete>", self.deleteIdentification)
+        self.tree.bind("<Button-3>", self.popup)
 
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=0)
         
         self.model.funcUpdateNotebookIdentification = self.updateTree
+
+    def setStatus(self,status):
+        # get currently active hit
+        selection = self.tree.selection()
+        if len(selection) == 0:
+            return
+        item = selection[0]
+        hit = self.treeIds[item]
+        
+        if status == "Accepted":
+            hit.status = glyxsuite.io.ConfirmationStatus.Accepted
+        elif status == "Rejected":
+            hit.status = glyxsuite.io.ConfirmationStatus.Rejected
+        elif status == "Deleted":
+            hit.status = glyxsuite.io.ConfirmationStatus.Deleted
+        # Update on Treeview
+        values = self.tree.item(item)["values"]
+        values[4] = hit.status
+        self.tree.item(item, values=values)
+        
+        taglist = list(self.tree.item(item, "tags"))
+        taglist = self.setHighlightingTag(taglist, hit.status)
+        self.tree.item(item, tags=taglist)
+        
+    def popup(self, event):
+        self.aMenu.post(event.x_root, event.y_root)
+        self.aMenu.focus_set()
+        self.aMenu.bind("<FocusOut>", self.removePopup)
+        
+    def removePopup(self,event):
+        if self.focus_get() != self.aMenu:
+            self.aMenu.unpost()
 
     def sortColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
@@ -55,7 +104,7 @@ class NotebookIdentification(ttk.Frame):
             self.model.currentAnalysis.sortedColumn = col
             self.model.currentAnalysis.reverse = False
 
-        if col == "Peptide" or col == "Glycan":
+        if col == "Peptide" or col == "Glycan" or col == "Status":
             l = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
         elif col == "Mass":
             l = [(float(self.tree.set(k, col)), k) for k in self.tree.get_children('')]
@@ -71,19 +120,36 @@ class NotebookIdentification(ttk.Frame):
         # rearrange items in sorted positions
         for index, (val, k) in enumerate(l):
             self.tree.move(k, '', index)
-
+            status = self.tree.item(k)["values"][4]
+            
             # adjust tags
             taglist = list(self.tree.item(k, "tags"))
-            if "oddrowFeature" in taglist:
-                taglist.remove("oddrowFeature")
-            if "evenrowFeature" in taglist:
-                taglist.remove("evenrowFeature")
-
+            if "odd" in taglist:
+                taglist.remove("odd")
+            if "even" in taglist:
+                taglist.remove("even")
             if index%2 == 0:
-                taglist.append("evenrowFeature")
+                taglist.append("even")
+                taglist = self.setHighlightingTag(taglist, status)
             else:
-                taglist.append("oddrowFeature")
+                taglist.append("odd")
+                taglist = self.setHighlightingTag(taglist, status)
             self.tree.item(k, tags=taglist)
+            
+    def setHighlightingTag(self, taglist, status):
+        assert status in glyxsuite.io.ConfirmationStatus._types
+        for statustype in glyxsuite.io.ConfirmationStatus._types:
+            if "even"+statustype in taglist:
+                taglist.remove("even"+statustype)
+            if "odd"+statustype in taglist:
+                taglist.remove("odd"+statustype)
+        if "even" in taglist:
+            taglist.append("even"+status)
+        elif "odd" in taglist:
+            taglist.append("odd"+status)
+        else:
+            raise Exception("Cannot find 'even' or 'odd' tag in taglist!")
+        return taglist
 
 
     def updateTree(self):
@@ -119,17 +185,19 @@ class NotebookIdentification(ttk.Frame):
             peptide = hit.peptide.toString()
             # clean up glycan
             glycan = glyxsuite.lib.Glycan(hit.glycan.composition)
-            index += 1
+
             if index%2 == 0:
-                tag = ("oddrowFeature", )
+                taglist = ("even" + hit.status, "even")
             else:
-                tag = ("evenrowFeature", )
+                taglist = ("odd" + hit.status, "odd")
+            index += 1
             itemSpectra = self.tree.insert("", "end", text=name,
                                            values=(round(mass, 4),
                                                    round(hit.error, 4),
                                                    peptide,
-                                                   glycan.getShortName()),
-                                           tags=tag)
+                                                   glycan.getShortName(),
+                                                   hit.status),
+                                           tags=taglist)
             self.treeIds[itemSpectra] = hit
         # update Extention
         self.model.funcUpdateExtentionIdentification()
@@ -162,3 +230,6 @@ class NotebookIdentification(ttk.Frame):
 
         analysis = self.model.currentAnalysis
         analysis.removeIdentification(hit)
+        
+        # update NotebookFeature
+        self.model.classes["NotebookFeature"].updateFeatureTree()

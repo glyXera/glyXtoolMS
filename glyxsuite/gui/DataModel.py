@@ -20,10 +20,6 @@ class DataModel(object):
         self.currentAnalysis = None
 
         # call function to paint Frameplots
-        # PrecursorView
-        # NotebookScoring
-        self.funcScoringMSSpectrum = None
-        # SpectrumView
         # NotebookScoring
         self.funcScoringMSMSSpectrum = None
         # ChromatogramView
@@ -37,7 +33,6 @@ class DataModel(object):
 
         self.funcUpdateNotebookScoring = None
         self.funcUpdateNotebookIdentification = None
-        self.funcUpdateNotebookFeature = None
 
         self.funcUpdateExtentionFeature = None
         self.funcUpdateFeatureChromatogram = None
@@ -101,6 +96,14 @@ class ContainerSpectrum(object):
     @nativeId.setter
     def nativeId(self, value):
         self._spectrum.nativeId = value
+        
+    @property
+    def status(self):
+        return self._spectrum.status
+
+    @status.setter
+    def status(self, value):
+        self._spectrum.status = value
 
     @property
     def rt(self):
@@ -192,8 +195,7 @@ class ContainerAnalysisFile(object):
         self.selectedChromatogram = None
         self.currentFeature = None
         self.featureSpectra = {} # Container for MS1 spectra within the feature, for faster chromatogram / Sum spectra generation
-
-
+        self.featureHits = {} #feature -> hit link
 
     def createIds(self):
         self.spectraIds = {}
@@ -216,19 +218,6 @@ class ContainerAnalysisFile(object):
             self.featureIds[feature.getId()] = feature
             for specID in feature.getSpectraIds():
                 self.spectraInFeatures[specID].append(feature.getId())
-            """
-            minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
-            for spectrum in self.analysis.spectra:
-                if spectrum.rt < minRT:
-                    continue
-                if spectrum.rt > maxRT:
-                    continue
-                if spectrum.precursorMass < minMZ:
-                    continue
-                if spectrum.precursorMass > maxMZ:
-                    continue
-                self.spectraInFeatures[spectrum.nativeId].append(feature.getId())
-            """
         
         self.featureSpectra = {}
         for spec in self.project.mzMLFile.exp:
@@ -245,7 +234,13 @@ class ContainerAnalysisFile(object):
                 if not featureID in self.featureSpectra:
                     self.featureSpectra[featureID] = []
                 self.featureSpectra[featureID].append(spec)
-        
+                
+        # create feature -> hit link
+        self.featureHits = {}
+        for hit in self.analysis.glycoModHits:
+            if not hit.featureID in self.featureHits:
+                self.featureHits[hit.featureID] = []
+            self.featureHits[hit.featureID].append(hit)
 
     def addNewSpectrum(self, nativeID):
         spectrum = glyxsuite.io.GlyxXMLSpectrum()
@@ -265,16 +260,14 @@ class ContainerAnalysisFile(object):
             if feature.getId() in  self.spectraInFeatures[specId]:
                 self.spectraInFeatures[specId].remove(feature.getId())
         # remove corresponding hits
-        todelete = []
-        for hit in self.analysis.glycoModHits:
-            if hit.featureID == feature.getId():
-                todelete.append(hit)
-        for hit in todelete:
+        for hits in self.featureHits.get(feature.getId(),[]):
             self.analysis.glycoModHits.remove(hit)
+        self.featureHits.pop(feature.getId())
 
     def removeIdentification(self, hit):
         if hit in self.analysis.glycoModHits:
             self.analysis.glycoModHits.remove(hit)
+        self.featureHits[hit.featureID].remove(hit)
 
 
 

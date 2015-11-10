@@ -28,9 +28,6 @@ class HistogramView(FramePlot.FramePlot, glyxsuite.lib.Histogram):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # link function
-        #self.model.funcScoringMSSpectrum = self.initSpectrum
-
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1

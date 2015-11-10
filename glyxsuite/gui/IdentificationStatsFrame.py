@@ -29,7 +29,6 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        #self.model.funcScoringMSSpectrum = self.initSpectrum
         self.model.funcUpdateExtentionIdentification = self.init
 
     def setMaxValues(self):
