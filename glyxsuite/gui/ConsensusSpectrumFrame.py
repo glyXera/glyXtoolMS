@@ -29,9 +29,6 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # link function
-        self.model.funcUpdateConsensusSpectrum = self.init
-
         # register class
         self.model.classes["ConsensusSpectrumFrame"] = self
 

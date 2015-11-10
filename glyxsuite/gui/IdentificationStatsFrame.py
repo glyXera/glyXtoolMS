@@ -29,7 +29,7 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcUpdateExtentionIdentification = self.init
+        self.model.classes["IdentificationStatsFrame"] = self
 
     def setMaxValues(self):
         self.aMax = -1

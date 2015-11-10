@@ -36,8 +36,7 @@ class ChromatogramView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        #self.model.funcUpdateFeatureChromatogram = self.initChromatogram
-        self.model.classes["ChromatogramView"] = self
+        self.model.classes["FeatureChromatogramView"] = self
         
 
         # Events

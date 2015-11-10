@@ -59,8 +59,8 @@ class NotebookIdentification(ttk.Frame):
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=0)
-        
-        self.model.funcUpdateNotebookIdentification = self.updateTree
+
+        self.model.classes["NotebookIdentification"] = self
 
     def setStatus(self,status):
         # get currently active hit
@@ -200,16 +200,16 @@ class NotebookIdentification(ttk.Frame):
                                            tags=taglist)
             self.treeIds[itemSpectra] = hit
         # update Extention
-        self.model.funcUpdateExtentionIdentification()
+        self.model.classes["IdentificationStatsFrame"].init()
 
     def clickedTree(self, event):
         selection = self.tree.selection()
         if len(selection) == 0:
             return
         item = selection[0]
-        self.model.funcClickedIdentification(self.tree.item(item, "text"))
-        self.model.funcUpdateConsensusSpectrum(self.treeIds[item])
-        self.model.funcUpdateIdentificationCoverage(self.treeIds[item])
+        self.model.classes["NotebookFeature"].setSelectedFeature(self.tree.item(item, "text"))
+        self.model.classes["ConsensusSpectrumFrame"].init(self.treeIds[item])
+        self.model.classes["PeptideCoverageFrame"].init(self.treeIds[item])
 
     def deleteIdentification(self, event):
         selection = self.tree.selection()

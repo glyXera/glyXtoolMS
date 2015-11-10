@@ -26,7 +26,7 @@ class ChromatogramView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcScoringChromatogram = self.initChromatogram
+        self.model.classes["ChromatogramView"] = self
 
         # Events
         #self.canvas.bind("<Left>", self.sayHi)

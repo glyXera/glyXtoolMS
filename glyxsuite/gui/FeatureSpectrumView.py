@@ -4,7 +4,7 @@ import Tkinter
 from glyxsuite.gui import FramePlot
 from glyxsuite.gui import Appearance
 
-class SpectrumView(FramePlot.FramePlot):
+class FeatureSpectrumView(FramePlot.FramePlot):
 
     def __init__(self, master, model, height=300, width=800):
         FramePlot.FramePlot.__init__(self, master, model, height=height,
@@ -27,7 +27,7 @@ class SpectrumView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcUpdateFeatureMSMSSpectrum = self.initSpectrum
+        self.model.classes["FeatureSpectrumView"] = self
 
     def setMaxValues(self):
         self.aMax = -1

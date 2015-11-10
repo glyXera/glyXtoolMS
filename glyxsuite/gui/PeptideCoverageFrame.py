@@ -59,7 +59,7 @@ class PeptideCoverageFrame(ttk.Frame):
         self.canvas.bind("<Button-1>", self.eventMouseClick)
 
         # link function
-        self.model.funcUpdateIdentificationCoverage = self.init
+        self.model.classes["PeptideCoverageFrame"] = self
 
     def on_resize(self,event):
         self.width = event.width

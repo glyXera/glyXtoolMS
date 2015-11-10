@@ -35,7 +35,7 @@ class SpectrumView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcScoringMSMSSpectrum = self.initSpectrum
+        self.model.classes["SpectrumView"] = self
 
     def setMaxValues(self):
         """ Recalculate Min/Max Values for the plot """

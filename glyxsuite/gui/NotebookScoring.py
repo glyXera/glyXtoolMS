@@ -111,10 +111,9 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
         self.tree.bind("<Button-3>", self.popup)
 
-        self.model.funcUpdateNotebookScoring = self.updateTree
 
-        self.model.funcClickedFeatureSpectrum = self.setSelectedSpectrum
-
+        self.model.classes["NotebookScoring"] = self
+        
         # layout frameTree
         frameTree.rowconfigure(0, weight=1)
 
@@ -316,13 +315,13 @@ class NotebookScoring(ttk.Frame):
         self.model.currentAnalysis.selectedChromatogram = c
 
         # init spectrum view
-        self.model.funcScoringMSMSSpectrum(ms2)
+        self.model.classes["SpectrumView"].initSpectrum(ms2)
 
         # init precursor spectrum view
         self.model.classes["PrecursorView"].initSpectrum(ms1, mz, charge, low, high)
 
         # init chromatogram view
-        self.model.funcScoringChromatogram(rtLow, rtHigh, ms2.getRT())
+        self.model.classes["ChromatogramView"].initChromatogram(rtLow, rtHigh, ms2.getRT())
 
     def saveChanges(self):
         selection = self.tree.selection()

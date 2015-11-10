@@ -100,9 +100,6 @@ class NotebookFeature(ttk.Frame):
 
         scrollbar.config(command=self.spectrumTree.yview)
         self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree)
-
-        self.model.funcUpdateExtentionFeature = self.updateSpectrumTree
-        self.model.funcClickedIdentification = self.setSelectedFeature
         
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)
@@ -302,9 +299,9 @@ class NotebookFeature(ttk.Frame):
         c.msLevel = 1
         c.selected = True
 
-        self.model.funcFeatureTwoDView(keepZoom=True)
-        self.model.funcUpdateExtentionFeature()
-        self.model.classes["ChromatogramView"].init(c, feature, minMZView, maxMZView, index)
+        self.model.classes["TwoDView"].init(keepZoom=True)
+        self.updateSpectrumTree()
+        self.model.classes["FeatureChromatogramView"].init(c, feature, minMZView, maxMZView, index)
 
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
@@ -407,8 +404,8 @@ class NotebookFeature(ttk.Frame):
             return
         item = selection[0]
         spec, spectrum = self.spectrumTreeIds[item]
-        self.model.funcUpdateFeatureMSMSSpectrum(spec)
-        self.model.funcClickedFeatureSpectrum(spectrum.index)
+        self.model.classes["FeatureSpectrumView"].initSpectrum(spec)
+        self.model.classes["NotebookScoring"].setSelectedSpectrum(spectrum.index)
 
     def setSelectedFeature(self, index):
         for item in self.featureTreeIds:
@@ -438,7 +435,7 @@ class NotebookFeature(ttk.Frame):
         # remove feature from analysis file
         analysis = self.model.currentAnalysis
         analysis.removeFeature(feature)
-        self.model.funcUpdateNotebookIdentification()
+        self.model.classes["NotebookIdentification"].updateTree()
 
         # adjust tags
         for index, k in enumerate(self.featureTree.get_children('')):            

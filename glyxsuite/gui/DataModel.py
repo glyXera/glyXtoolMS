@@ -11,7 +11,6 @@ class DataModel(object):
         #    font = tkFont.Font(family="Courier",size=s)
         #    print s, font.measure(" ")
 
-
         self.workingdir = ""
         self.debug = None
         self.root = None
@@ -19,29 +18,6 @@ class DataModel(object):
         self.currentProject = None
         self.currentAnalysis = None
 
-        # call function to paint Frameplots
-        # NotebookScoring
-        self.funcScoringMSMSSpectrum = None
-        # ChromatogramView
-        # NotebookScoring
-        self.funcScoringChromatogram = None
-
-        #TwoDView
-        # ExtentionFeature
-        # NotebookFeature
-        self.funcFeatureTwoDView = None
-
-        self.funcUpdateNotebookScoring = None
-        self.funcUpdateNotebookIdentification = None
-
-        self.funcUpdateExtentionFeature = None
-        self.funcUpdateFeatureChromatogram = None
-        self.funcUpdateFeatureMSMSSpectrum = None
-        self.funcUpdateExtentionIdentification = None
-        self.funcUpdateIdentificationCoverage = None
-        self.funcUpdateConsensusSpectrum = None
-        self.funcClickedFeatureSpectrum = None
-        self.funcClickedIdentification = None
         self.classes = {} # Functionhandler - each class should register itself here
 
         # read settings

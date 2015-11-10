@@ -41,7 +41,7 @@ class Notebook2(ttk.Frame):
 
         msmsFrame = ttk.Labelframe(self, text="MS/MS Spectrum")
         msmsFrame.grid(row=0, column=0)
-        msmsView = FeatureSpectrumView.SpectrumView(msmsFrame, model, height=300, width=800)
+        msmsView = FeatureSpectrumView.FeatureSpectrumView(msmsFrame, model, height=300, width=800)
         msmsView.grid(row=0, column=0)
 
 class ExtensionFeature(ttk.Labelframe):

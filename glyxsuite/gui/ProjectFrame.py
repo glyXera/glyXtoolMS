@@ -302,17 +302,17 @@ class ProjectFrame(ttk.Frame):
             self.model.currentProject = obj.project
             self.b4.config(state=Tkinter.NORMAL)
             self.b5.config(state=Tkinter.NORMAL)
-            self.model.funcUpdateNotebookScoring()
-            self.model.funcUpdateNotebookIdentification()
+            self.model.classes["NotebookScoring"].updateTree()
+            self.model.classes["NotebookIdentification"].updateTree()
             self.model.classes["NotebookFeature"].updateFeatureTree()
-            self.model.funcFeatureTwoDView()
+            self.model.classes["TwoDView"].init()
 
         else:
             self.model.currentAnalysis = None
             self.b4.config(state=Tkinter.DISABLED)
             self.b5.config(state=Tkinter.DISABLED)
-            self.model.funcUpdateNotebookScoring()
-            self.model.funcUpdateNotebookIdentification()
+            self.model.classes["NotebookScoring"].updateTree()
+            self.model.classes["NotebookIdentification"].updateTree()
             self.model.classes["NotebookFeature"].updateFeatureTree()
 
     def loadedMzMLFile(self, error, project):
@@ -402,8 +402,8 @@ class ProjectFrame(ttk.Frame):
                 spectrum.chromatogramSpectra.append(spec)
 
         # update Notebooks
-        self.model.funcUpdateNotebookScoring()
-        self.model.funcUpdateNotebookIdentification()
+        self.model.classes["NotebookScoring"].updateTree()
+        self.model.classes["NotebookIdentification"].updateTree()
         self.model.classes["NotebookFeature"].updateFeatureTree()
 
     def getSelectedItem(self):

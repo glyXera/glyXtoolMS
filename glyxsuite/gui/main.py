@@ -241,7 +241,7 @@ class HistogramFrame(Tkinter.Toplevel):
             self.view.initHistogram(newThreshold)
             for spectrum in self.model.currentAnalysis.analysis.spectra:
                 spectrum.isGlycopeptide = spectrum.logScore < newThreshold
-            self.model.funcUpdateNotebookScoring()
+            self.model.classes["NotebookScoring"].updateTree()
             self.makeHistogram()
         except ValueError:
             print "cannot convert"

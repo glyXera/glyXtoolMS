@@ -26,7 +26,8 @@ class TwoDView(FramePlot.FramePlot):
         self.grid_columnconfigure(0, weight=1)
 
         # link function
-        self.model.funcFeatureTwoDView = self.init
+        self.model.classes["TwoDView"] = self
+        
         s = ttk.Style()
 
         s.map('TCheckbutton',
