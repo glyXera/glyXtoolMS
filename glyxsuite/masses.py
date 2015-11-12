@@ -48,6 +48,7 @@ PROTEINMODIFICATION["DEAM"] = 0.9840 # Deamidation
 PROTEINMODIFICATION["HYDR"] = 15.9949 # Hydroxylation
 PROTEINMODIFICATION["METH"] = 14.0157 # Methylation
 PROTEINMODIFICATION["PHOS"] = 79.9663 # Phosphorylation
+PROTEINMODIFICATION["CHO"] = 29.00275 # Aldehyde
 
 # ------------------------------ Glycans ------------------------------#
 
@@ -185,6 +186,8 @@ def calcIonMass(name):
             mass += GLYCAN[monomer]*amount
         elif monomer in MASS:
             mass += MASS[monomer]*amount
+        elif monomer in PROTEINMODIFICATION:
+            mass += PROTEINMODIFICATION[monomer]*amount
         else:
             raise Exception("cannot find monomer {} in {}".format(monomer, name))
     if charge == 0:
