@@ -25,6 +25,7 @@ class Peak(object):
         self.mass = mass
         self.intensity = intensity
         self.normedIntensity = 0
+        self.intensityPercent = 0
         self.ionname = None
         self.rank = 0
 
@@ -58,6 +59,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
         self.precursorMass = precursorMass
         self.precursorIntensity = precursorIntensity
         self.intensity_sum = 0
+        self.highest_intensity = 0
         self.peaks = []
         self.logScore = 10
         self.oxoniumIons = []
@@ -69,6 +71,8 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
         """ add a spectrum peak to the scoring with its mass and intensity
             Input: mass, intensity """
         p = Peak(mass, intensity)
+        if intensity > self.highest_intensity:
+            self.highest_intensity = intensity
         self.intensity_sum += intensity
         self.peaks.append(p)
         return p
@@ -78,6 +82,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
             Input: None """
         for peak in self.peaks:
             peak.normedIntensity = peak.intensity/float(self.intensity_sum)
+            peak.intensityPercent = peak.intensity/float(self.highest_intensity)*100
 
     def makeRanking(self):
         """ rank all peaks accoring to their intensity
@@ -161,7 +166,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
 
         scorevalue = 0
         for peak in self.oxoniumIons+self.oxoniumLosses:
-            self.addIon("", peak.ionname, peak.mass, peak.intensity)
+            self.addIon("", peak.ionname, peak.mass, peak.intensityPercent)
             scorevalue += peak.normedIntensity/peak.rank
             
         if scorevalue > 0:

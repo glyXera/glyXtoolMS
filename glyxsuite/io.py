@@ -320,7 +320,7 @@ class GlyxXMLFile(object):
             spectrum.precursorMass = float(s.find("./precursor/mass").text)
             spectrum.precursorCharge = int(s.find("./precursor/charge").text)
             if self.version > "0.0.6":
-                spectrum.precursoIntensity = float(s.find("./precursor/intensity").text)
+                spectrum.precursorIntensity = float(s.find("./precursor/intensity").text)
 
             for score in s.findall("./scores/score"):
                 glycan = score.find("./glycan").text
