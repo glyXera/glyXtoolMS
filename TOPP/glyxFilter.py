@@ -47,7 +47,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
     Result: after scoring the score value can be read via the function
                 getLogScore()
     """
-    def __init__(self, nativeId, spectrumRT, precursorMass, precursorCharge, feature):
+    def __init__(self, nativeId, spectrumRT, precursorMass, precursorCharge, precursorIntensity, feature):
         """ initialize Score with information about the spectrum
             Input: id, rt, precursor mass and charge """
 
@@ -56,6 +56,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
         self.rt = spectrumRT
         self.precursorCharge = precursorCharge
         self.precursorMass = precursorMass
+        self.precursorIntensity = precursorIntensity
         self.intensity_sum = 0
         self.peaks = []
         self.logScore = 10
@@ -213,10 +214,10 @@ def parseOxoniumIons(options):
 
     for name in oxoniumIons:
         oxoniumIons[name]["mass"] = glyxsuite.masses.calcIonMass(name)[0]
-
-    if len(options.oxoniumions) > 2:
-        for name in list(set(options.oxoniumIonList.split(" "))):
+    if len(options.oxoniumions) > 0:
+        for name in list(set(options.oxoniumions.split(" "))):
             mass, charge = glyxsuite.masses.calcIonMass(name)
+            oxoniumIons[name] = {}
             oxoniumIons[name]["mass"] = mass
             oxoniumIons[name]["charge"] = charge
     return oxoniumIons
@@ -226,7 +227,9 @@ def main(options):
     """ Scores a given mzML file with a given featurefile """
 
     oxoniumIons = parseOxoniumIons(options)
-    print "oxoniumIonList: ", oxoniumIons.items()
+    print "------oxoniumIonList-----"
+    for key in oxoniumIons:
+        print key, "\t", oxoniumIons[key]
 
     # set parameters
     skippedSingleCharged = 0
@@ -286,6 +289,7 @@ def main(options):
         rt = spec.getRT()
         mz = precursor.getMZ()
         charge = precursor.getCharge()
+        intensity = precursor.getIntensity()
         if spec.size() == 0:
             continue
         # create list of all possible scores
@@ -293,7 +297,7 @@ def main(options):
 
         singleCharged = True # check if only single charges would be possible
         if charge != 1:
-            score = Score(spec.getNativeID(), rt, mz, charge, None)
+            score = Score(spec.getNativeID(), rt, mz, charge, intensity, None)
             scores.append(score)
             singleCharged = False
 
@@ -313,7 +317,7 @@ def main(options):
             mz = feature.getMZ()
             charge = feature.getCharge()
             if charge != 1:
-                score = Score(spec.getNativeID(), rt, mz, charge, feature)
+                score = Score(spec.getNativeID(), rt, mz, charge, intensity, feature)
                 scores.append(score)
                 singleCharged = False
         
@@ -413,10 +417,8 @@ def handle_args(argv=None):
                         help="Score threshold for identifying glycopeptide spectra",
                         type=float)
     if not argv:
-        print "parameters", sys.argv[1:]
         args = parser.parse_args(sys.argv[1:])
     else:
-        print "parameters", argv
         args = parser.parse_args(argv)
     return args
 

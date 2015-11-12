@@ -83,19 +83,49 @@ def main(options):
 
     wb = xlwt.Workbook()
     # -------------------------- Spectra -----------------------------#
-    #ws1 = wb.add_sheet("Spectra")
+    ws1 = wb.add_sheet("Spectra")
+    row = 1
+    ionlist = {}
+    columnions = 5
+    for spectrum in fin.spectra:
+        # rt / mz / charge / intensity / logscore / ions
+        ws1.write(row,0,str(round(spectrum.rt/60.0,2)))
+        ws1.write(row,1,str(round(spectrum.precursorMass,4)))
+        ws1.write(row,2,str(int(spectrum.precursorCharge)))
+        ws1.write(row,3,str(round(spectrum.precursorIntensity,2)))
+        ws1.write(row,4,str(round(spectrum.logScore,3)))
+        # write ions
+        for glycan in spectrum.ions:
+            for ionname in spectrum.ions[glycan]:
+                intensity = round(spectrum.ions[glycan][ionname]["intensity"],2)
+                # find column position
+                if not ionname in ionlist:
+                    columnions += 1
+                    ionlist[ionname] = columnions
+                ws1.write(row,ionlist[ionname], str(intensity))
+        row += 1
+    
+    # write header
+    ws1.write(0,0,"RT [min]")
+    ws1.write(0,1,"MZ")
+    ws1.write(0,2,"Charge")
+    ws1.write(0,3,"Intensity")
+    ws1.write(0,4,"Logscore")
+    for ionname in ionlist:
+        ws1.write(0,ionlist[ionname],ionname)
+    
     # -------------------------- Features -----------------------------#
-    ws1 = wb.add_sheet("Features")
+    ws2 = wb.add_sheet("Features")
     
     # write header
     # rt, monoisotopic mass, charge, Logscore
     
     row = 0
-    ws1.write(row,0,"Feature Nr")
-    ws1.write(row,1,"RT [min]")
-    ws1.write(row,2,"Mass [Th]")
-    ws1.write(row,3,"Charge")
-    ws1.write(row,4,"LogScore")
+    ws2.write(row,0,"Feature Nr")
+    ws2.write(row,1,"RT [min]")
+    ws2.write(row,2,"Mass [Th]")
+    ws2.write(row,3,"Charge")
+    ws2.write(row,4,"LogScore")
     
     featNr = 0
     for featureID in features:
@@ -105,35 +135,35 @@ def main(options):
         for specID in feature.getSpectraIds():
             row += 1
             spectrum = spectra[specID]
-            ws1.write(row,0,str(featNr))
-            ws1.write(row,1,str(round(spectrum.getRT()/60.0,2)))
-            ws1.write(row,2,str(round(feature.getMZ(),4)))
-            ws1.write(row,3,str(int(feature.getCharge())))
-            ws1.write(row,4,str(round(spectrum.getLogScore(),3)))
+            ws2.write(row,0,str(featNr))
+            ws2.write(row,1,str(round(spectrum.getRT()/60.0,2)))
+            ws2.write(row,2,str(round(feature.getMZ(),4)))
+            ws2.write(row,3,str(int(feature.getCharge())))
+            ws2.write(row,4,str(round(spectrum.getLogScore(),3)))
     # ---------------------- Identifications --------------------------#
     
-    ws2 = wb.add_sheet("Identifications")
+    ws3 = wb.add_sheet("Identifications")
 
     # write header
     for col,comp in enumerate(["GlycoSite", "Peptide", "Peptidemass"]+[parseComposition(comp) for comp in compsHeader]):
-        ws2.write(1,col,comp)
+        ws3.write(1,col,comp)
     
     for col,comp in enumerate(compsHeader):
-        ws2.write(0,col+3,str(round(comps[comp],1)))
+        ws3.write(0,col+3,str(round(comps[comp],1)))
     
     row = 1
     for seq in data:
         row += 1
         # write sequence
-        ws2.write(row,0,glycoSites[seq])
-        ws2.write(row,1,seq)
-        ws2.write(row,2,str(round(peptideMasses[seq],2)))
+        ws3.write(row,0,glycoSites[seq])
+        ws3.write(row,1,seq)
+        ws3.write(row,2,str(round(peptideMasses[seq],2)))
         col = 2
         for comp in compsHeader:
             col += 1
             print 
             if comp in data[seq]:
-                ws2.write(row,col,";".join(data[seq][comp]))
+                ws3.write(row,col,";".join(data[seq][comp]))
                 
     wb.save(options.outfile)
 

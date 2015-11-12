@@ -23,6 +23,7 @@ class GlyxXMLSpectrum(object):
         self.ionCount = 0
         self.precursorMass = 0
         self.precursorCharge = 0
+        self.precursorIntensity = 0
         self.logScore = 10
         self.ions = {}
         self.isGlycopeptide = False
@@ -42,11 +43,6 @@ class GlyxXMLSpectrum(object):
             self.ionCount = 0
         else:
             self.ionCount = ionCount
-
-    def setPrecursor(self, mass, charge):
-        """ Set the precursor mass and charge """
-        self.precursorMass = mass
-        self.precursorCharge = charge
 
     def setLogScore(self, logScore):
         """ Set the calculated logScore of the spectrum """
@@ -274,7 +270,7 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self._version_ = "0.0.6" # current version
+        self._version_ = "0.0.7" # current version
         self.version = self._version_ # will be overwritten by file
 
     def _parseParameters(self, xmlParameters):
@@ -321,7 +317,11 @@ class GlyxXMLFile(object):
             spectrum.setRT(rt)
             precursor_mass = float(s.find("./precursor/mass").text)
             precursor_charge = int(s.find("./precursor/charge").text)
-            spectrum.setPrecursor(precursor_mass, precursor_charge)
+            spectrum.precursorMass = float(s.find("./precursor/mass").text)
+            spectrum.precursorCharge = int(s.find("./precursor/charge").text)
+            if self.version > "0.0.6":
+                spectrum.precursoIntensity = float(s.find("./precursor/intensity").text)
+
             for score in s.findall("./scores/score"):
                 glycan = score.find("./glycan").text
                 for ion in score.findall("./ions/ion"):
@@ -385,6 +385,9 @@ class GlyxXMLFile(object):
             xmlPrecursorMass.text = str(spectrum.getPrecursorMass())
             xmlPrecursorCharge = ET.SubElement(xmlPrecursor, "charge")
             xmlPrecursorCharge.text = str(spectrum.getPrecursorCharge())
+            xmlPrecursorIntensity = ET.SubElement(xmlPrecursor, "intensity")
+            xmlPrecursorIntensity.text = str(spectrum.precursorIntensity)
+
             xmlTotalScore = ET.SubElement(xmlSpectrum, "logScore")
             xmlTotalScore.text = str(spectrum.getLogScore())
             if self.version > "0.0.1":
