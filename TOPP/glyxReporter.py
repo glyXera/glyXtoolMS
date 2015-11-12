@@ -86,7 +86,7 @@ def main(options):
     ws1 = wb.add_sheet("Spectra")
     row = 1
     ionlist = {}
-    columnions = 5
+    columnions = 4
     for spectrum in fin.spectra:
         # rt / mz / charge / intensity / logscore / ions
         ws1.write(row,0,str(round(spectrum.rt/60.0,2)))
