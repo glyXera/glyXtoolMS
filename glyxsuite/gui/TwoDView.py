@@ -12,6 +12,7 @@ class TwoDView(FramePlot.FramePlot):
                                      yTitle="mz [Th]")
 
         self.master = master
+        self.featureItems = {}
 
         self.coord = Tkinter.StringVar()
         l = ttk.Label(self, textvariable=self.coord)
@@ -39,6 +40,7 @@ class TwoDView(FramePlot.FramePlot):
                           ('active', '#d9d9d9')])
 
         # Events
+        self.canvas.bind("<Button-1>", self.eventMouseClick)
         #self.canvas.bind("<Left>", self.setButtonValue)
         #self.canvas.bind("<Right>", self.setButtonValue)
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
@@ -209,6 +211,7 @@ class TwoDView(FramePlot.FramePlot):
             return
         if self.model.currentAnalysis.analysis == None:
             return
+        self.featureItems = {}
         self.plotFeatureLine()
         for feature in self.model.currentAnalysis.analysis.features:
             rt1, rt2, mz1, mz2 = feature.getBoundingBox()
@@ -231,6 +234,7 @@ class TwoDView(FramePlot.FramePlot):
             else:
                 color = "black"
             item = self.canvas.create_line(xy, fill=color, width=linewidth)
+            self.featureItems[item] = feature
 
 
     def paintSpectra(self):
@@ -316,6 +320,30 @@ class TwoDView(FramePlot.FramePlot):
         if self.model.currentAnalysis.analysis == None:
             return
         self.initCanvas(keepZoom=keepZoom)
+        
+    def eventMouseClick(self, event):
+        # clear color from all items
+        self.canvas.itemconfigure("site", fill="black")
+
+        overlap = set(self.canvas.find_overlapping(event.x-10,
+                                                   event.y-10,
+                                                   event.x+10,
+                                                   event.y+10))
+        nearest, distn = None, 0
+        
+        for item in overlap:
+            if item in self.featureItems:
+                # find nearest
+                coords = self.canvas.coords(item)
+                x = sum(coords[0:8:4])/2.0
+                y = sum(coords[1:8:4])/2.0
+                dist = (x-event.x)**2 + (y-event.y)**2
+                if nearest == None or dist < distn:
+                    nearest = self.featureItems[item]
+                    distn = dist
+        if nearest != None:
+            self.model.currentAnalysis.currentFeature = nearest
+            self.init(True)
 
     def identifier(self):
         return "2DView"
