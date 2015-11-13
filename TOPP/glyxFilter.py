@@ -220,7 +220,7 @@ def parseOxoniumIons(options):
     for name in oxoniumIons:
         oxoniumIons[name]["mass"] = glyxsuite.masses.calcIonMass(name)[0]
     if len(options.oxoniumions) > 0:
-        for name in list(set(options.oxoniumions.split(" "))):
+        for name in list(set(options.oxoniumions.split(","))):
             mass, charge = glyxsuite.masses.calcIonMass(name)
             oxoniumIons[name] = {}
             oxoniumIons[name]["mass"] = mass
@@ -422,6 +422,7 @@ def handle_args(argv=None):
                         help="Score threshold for identifying glycopeptide spectra",
                         type=float)
     if not argv:
+        print argv
         args = parser.parse_args(sys.argv[1:])
     else:
         args = parser.parse_args(argv)
