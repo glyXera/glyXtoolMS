@@ -1,8 +1,6 @@
 import ttk
 import Tkinter
 import math
-from StringIO import StringIO
-from PIL import Image
 import os
 import tkFileDialog
 
@@ -97,9 +95,6 @@ class FramePlot(ttk.Frame):
         if filename == "":
             return
         self.canvas.postscript(file=filename, height=self.height, width=self.width)
-        #img = Image.open(StringIO(pst))
-        #img = img.resize((self.width*10, self.height*10))
-        #img.save("test.png", "png")
         
     def on_resize(self,event):
         self.width = event.width
