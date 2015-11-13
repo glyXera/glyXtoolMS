@@ -1,6 +1,10 @@
 import ttk
 import Tkinter
 import math
+from StringIO import StringIO
+from PIL import Image
+import os
+import tkFileDialog
 
 
 class ActionZoom(object):
@@ -77,9 +81,25 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<Control-Right>", self.keyRight)
         self.canvas.bind("<Control-BackSpace>", self.resetZoom)
         self.canvas.bind("<Configure>", self.on_resize)
+        self.canvas.bind("<Control-s>", self.savePlot)
+        
+        #saveButton = ttk.Button(self, text="Save Plot", command=self.savePlot)
+        #saveButton.grid(row=5, column=1, sticky="NS")
 
         self.calcScales()
         self._paintAxis()
+        
+    def savePlot(self, event):
+        options = {}
+        options['filetypes'] = [('post script', '.eps'), ]
+        options['parent'] = self
+        filename = tkFileDialog.asksaveasfilename(**options)
+        if filename == "":
+            return
+        self.canvas.postscript(file=filename, height=self.height, width=self.width)
+        #img = Image.open(StringIO(pst))
+        #img = img.resize((self.width*10, self.height*10))
+        #img.save("test.png", "png")
         
     def on_resize(self,event):
         self.width = event.width
