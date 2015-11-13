@@ -88,8 +88,12 @@ class FramePlot(ttk.Frame):
         self._paintAxis()
         
     def savePlot(self, event):
+        if self.model.currentAnalysis == None:
+            return
         options = {}
         options['filetypes'] = [('post script', '.eps'), ]
+        workingdir = os.path.dirname(self.model.currentAnalysis.path)
+        options['initialdir'] = workingdir
         options['parent'] = self
         filename = tkFileDialog.asksaveasfilename(**options)
         if filename == "":
@@ -223,16 +227,24 @@ class FramePlot(ttk.Frame):
         # overpaint possible overflows
         self.canvas.create_rectangle(0, 0,
                                      self.borderLeft, self.height,
-                                     fill=self.canvas["background"], width=0)
+                                     fill=self.canvas["background"],
+                                     outline=self.canvas["background"],
+                                     width=0)
         self.canvas.create_rectangle(self.width-self.borderRight,
                                      0, self.width, self.height,
-                                     fill=self.canvas["background"], width=0)
+                                     fill=self.canvas["background"],
+                                     outline=self.canvas["background"],
+                                     width=0)
         self.canvas.create_rectangle(0, 0,
                                      self.width, self.borderTop,
-                                     fill=self.canvas["background"], width=0)
+                                     fill=self.canvas["background"],
+                                     outline=self.canvas["background"],
+                                     width=0)
         self.canvas.create_rectangle(0, self.height-self.borderBottom,
                                      self.width, self.height+1,
-                                     fill=self.canvas["background"], width=0)
+                                     fill=self.canvas["background"],
+                                     outline=self.canvas["background"],
+                                     width=0)
 
         # create axis
         self.canvas.create_line(self.convAtoX(self.viewXMin),
