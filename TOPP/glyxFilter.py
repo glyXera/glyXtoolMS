@@ -247,7 +247,8 @@ def main(options):
     print "loading feature file"
     fm = pyopenms.FeatureMap()
     fh = pyopenms.FeatureXMLFile()
-    fh.load(options.inFeature, fm)
+    if options.inFeature != None:
+        fh.load(options.inFeature, fm)
 
     allFeatures = {}
     for feature in fm:
@@ -399,7 +400,7 @@ def handle_args(argv=None):
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--inMZML", dest="inMZML",
                         help="mzML file input")
-    parser.add_argument("--inFeature", dest="inFeature",
+    parser.add_argument("--inFeature", dest="inFeature", nargs='?',
                         help="feature file input")
     parser.add_argument("--outGlyML", dest="outGlyML",
                         help="glyML output")
@@ -421,8 +422,8 @@ def handle_args(argv=None):
     parser.add_argument("--scorethreshold", dest="scorethreshold",
                         help="Score threshold for identifying glycopeptide spectra",
                         type=float)
+    
     if not argv:
-        print argv
         args = parser.parse_args(sys.argv[1:])
     else:
         args = parser.parse_args(argv)
