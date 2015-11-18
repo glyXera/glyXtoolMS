@@ -307,7 +307,7 @@ def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
 
 
 
-def calcGlyopeptidePattern(peptide, glycan):
+def calcGlycopeptidePattern(peptide, glycan):
 
     # calculate element composition
     elements = {}
