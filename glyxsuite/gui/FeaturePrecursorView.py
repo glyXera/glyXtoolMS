@@ -32,16 +32,14 @@ class PrecursorView(FramePlot.FramePlot):
         self.model.classes["FeaturePrecursorView"] = self
 
     def setMaxValues(self):
-        self.bMax = max(self.spectrum)
-        self.aMax = max(self.base)
-                
-        """
-        for mz, intensity in self.specArray:
-            if self.aMax == -1 or mz > self.aMax:
-                self.aMax = mz
-            if self.bMax == -1  or intensity > self.bMax:
-                self.bMax = intensity
-        """
+        try:
+            self.bMax = max(self.spectrum)
+        except:
+            self.bMax = 1
+        try:
+            self.aMax = max(self.base)
+        except:
+            self.aMax = 1
 
     def paintObject(self):
         if self.spectrum == None:
@@ -104,15 +102,16 @@ class PrecursorView(FramePlot.FramePlot):
         self.initCanvas(keepZoom=True)
         
         
-    def init(self, base, spectrum, monoisotope, minMZ, maxMZ):
-        self.spectrum = spectrum
-        self.base = base
+    def init(self, spectrumXArray, spectrumYArray, monoisotope, minMZ, maxMZ):
+        self.spectrum = spectrumYArray
+        self.base = spectrumXArray
         self.monoisotope = monoisotope
         self.viewXMin = minMZ
         self.viewXMax = maxMZ
         self.viewYMin = 0
-        self.viewYMax = 0
-        self.viewYMax = max(spectrum)
+        #self.viewYMax = 1
+        if sum(spectrumYArray) > 0:
+            self.viewYMax = max(spectrumYArray)
         self.initCanvas(keepZoom=True)
 
     def identifier(self):

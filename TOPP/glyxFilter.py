@@ -361,11 +361,27 @@ def main(options):
     print "skipped", skippedSingleCharged, " single charged spectra"
     print "writing outputfile"
     
+    featureNr = 0
     for key in collectedScores:
         score = collectedScores[key]
         glyxXMLFile.spectra.append(score)
         if score.feature is None:
-            continue
+            # generate new feature
+            f = glyxsuite.io.GlyxXMLFeature()
+            featureNr += 1
+            f.setId("own"+str(featureNr))
+            minRT = score.rt
+            maxRT = score.rt
+            minMZ = score.precursorMass
+            maxMZ = minMZ+1/float(score.precursorCharge)*3 # TODO: handle other Adducts
+            f.setBoundingBox(minRT, maxRT, minMZ, maxMZ)
+            f.setIntensity(score.precursorIntensity)
+            f.setRT(score.rt)
+            f.setMZ(score.precursorMass)
+            f.setCharge(score.precursorCharge)
+            score.feature = f
+            allFeatures[f.getId()] = f
+            
         score.feature.spectraIds.append(score.getNativeId())
         if score.getLogScore() < scorethreshold:
             keepFeatures.add(score.feature.getId())

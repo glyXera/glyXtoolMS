@@ -231,6 +231,8 @@ class TwoDView(FramePlot.FramePlot):
             xy += [rt1, mz1]
             if self.model.currentAnalysis.currentFeature == feature:
                 color = "purple"
+            elif feature.getId().startswith("own"):
+                color = "orange"
             else:
                 color = "black"
             item = self.canvas.create_line(xy, fill=color, width=linewidth)
@@ -343,7 +345,7 @@ class TwoDView(FramePlot.FramePlot):
                     distn = dist
         if nearest != None:
             self.model.currentAnalysis.currentFeature = nearest
-            self.init(True)
+            self.model.classes["NotebookFeature"].selectFeature(nearest)
 
     def identifier(self):
         return "2DView"

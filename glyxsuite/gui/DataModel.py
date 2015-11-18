@@ -236,9 +236,10 @@ class ContainerAnalysisFile(object):
             if feature.getId() in  self.spectraInFeatures[specId]:
                 self.spectraInFeatures[specId].remove(feature.getId())
         # remove corresponding hits
-        for hits in self.featureHits.get(feature.getId(),[]):
+        for hit in self.featureHits.get(feature.getId(),[]):
             self.analysis.glycoModHits.remove(hit)
-        self.featureHits.pop(feature.getId())
+        if feature.getId() in self.featureHits:
+            self.featureHits.pop(feature.getId())
 
     def removeIdentification(self, hit):
         if hit in self.analysis.glycoModHits:

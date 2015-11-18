@@ -59,6 +59,7 @@ class NotebookFeature(ttk.Frame):
         scrollbar.config(command=self.featureTree.yview)
 
         self.featureTreeIds = {}
+        self.featureItems = {}
 
         # treeview style
         self.featureTree.tag_configure('oddUnknown', background='Moccasin')
@@ -208,6 +209,8 @@ class NotebookFeature(ttk.Frame):
 
         if analysis == None:
             return
+            
+        self.featureItems = {}
 
         # insert all ms2 spectra
         #("RT", "MZ", "Charge", "Best Score", "Nr Spectra")
@@ -236,7 +239,16 @@ class NotebookFeature(ttk.Frame):
                                                    nrFeatureHits),
                                            tags=taglist)
             self.featureTreeIds[item] = feature
+            self.featureItems[feature.getId()] = item
 
+    def selectFeature(self, feature):
+        item = self.featureItems.get(feature.getId(), False)
+        if item == False:
+            return
+        self.featureTree.selection_set(item)
+        self.featureTree.see(item)
+        self.clickedFeatureTree(None)
+        
 
     def clickedFeatureTree(self, event):
         selection = self.featureTree.selection()
@@ -348,17 +360,13 @@ class NotebookFeature(ttk.Frame):
         analysis = self.model.currentAnalysis
 
         if analysis == None:
-            #print "foo1"
             return
 
         feature = analysis.currentFeature
         if feature == None:
-            #print "foo2"
             return
-        #print "foo3", len(analysis.data)
         # insert all ms2 spectra
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
-        #print feature.getBoundingBox()
         index = 0
         self.spectrumTreeIds = {}
         for spec, spectrum in analysis.data:
@@ -426,11 +434,16 @@ class NotebookFeature(ttk.Frame):
         nextItem = self.featureTree.next(item)
         self.featureTree.delete(item)
         self.featureTreeIds.pop(item)
+        #print self.featureItems
+        self.featureItems.pop(feature.getId())
+        
         if nextItem != {}:
             self.featureTree.selection_set(nextItem)
+            self.featureTree.see(nextItem)
         elif len(self.featureTree.get_children('')) > 0:
             nextItem = self.featureTree.get_children('')[-1]
             self.featureTree.selection_set(nextItem)
+            self.featureTree.see(nextItem)
 
         # remove feature from analysis file
         analysis = self.model.currentAnalysis

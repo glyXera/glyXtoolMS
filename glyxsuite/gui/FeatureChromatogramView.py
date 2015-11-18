@@ -100,14 +100,6 @@ class ChromatogramView(FramePlot.FramePlot):
         if len(xy) == 0:
             return
         self.canvas.create_line(xy, fill=self.chrom.color, width=1)
-        if self.rt != None:
-            intZero = self.convBtoY(0)
-            intMax = self.convBtoY(self.viewYMax)
-            self.canvas.create_line(self.convAtoX(self.rt),
-                                    intZero,
-                                    self.convAtoX(self.rt),
-                                    intMax,
-                                    fill='blue')
         lowMZ = self.convAtoX(self.featureLow)
         highMZ = self.convAtoX(self.featureHigh)
         pIntMin = self.convBtoY(self.viewYMin)
@@ -116,20 +108,7 @@ class ChromatogramView(FramePlot.FramePlot):
         self.canvas.create_line(lowMZ, pIntMin, lowMZ, pIntMax, tags=("border", ),fill="red")
         self.canvas.create_line(highMZ, pIntMin, highMZ, pIntMax, tags=("border", ),fill="red")
         
-        self.plotPositionMarker()
-        
         self.allowZoom = True
-
-    def initChromatogram(self, chrom, low, high, rt, featureLow, featureHigh):
-        self.chrom = chrom
-        self.viewXMin = low
-        self.viewXMax = high
-        self.viewYMin = 0
-        self.viewYMax = -1
-        self.rt = rt
-        self.featureLow = featureLow
-        self.featureHigh = featureHigh
-        self.initCanvas(keepZoom=True)
         
     def init(self,chrom, feature, minMZView, maxMZView, index):
         self.chrom = chrom
@@ -143,10 +122,9 @@ class ChromatogramView(FramePlot.FramePlot):
         self.featureHigh = maxRT
         self.minMZView = minMZView
         self.maxMZView = maxMZView
-        self.index = index
         
         self.initCanvas(keepZoom=True)
-        self.plotPrecursorSpectrum(self.index)
+        self.plotPrecursorSpectrum(index)
 
     def identifier(self):
         return "FeatureChromatogramView"
@@ -157,25 +135,27 @@ class ChromatogramView(FramePlot.FramePlot):
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         self.canvas.delete("positionmarker")
-        self.canvas.create_line(pRT, pIntMin, pRT, pIntMax, tags=("positionmarker", ),fill="blue")
+        item = self.canvas.create_line(pRT, pIntMin, pRT, pIntMax, tags=("positionmarker", ),fill="blue")
         
     def plotPrecursorSpectrum(self, index):
-        
         spec = self.model.currentAnalysis.project.mzMLFile.exp[index]
-        self.rt = spec.getRT()
-        self.plotPositionMarker()
+        if spec.getMSLevel() != 1:
+            return
         peaks = spec.get_peaks()
         if hasattr(peaks, "shape"):
             mzArray = peaks[:, 0]
             intensArray = peaks[:, 1]
         else:
             mzArray, intensArray = peaks
-            
+        
         choice_MZ = np.logical_and(np.greater(mzArray, self.minMZView),
                                    np.less(mzArray, self.maxMZView))
         mz_array = np.extract(choice_MZ, mzArray)
         
         intens_array = np.extract(choice_MZ, intensArray)
+        self.index = index
+        self.rt = spec.getRT()
+        self.plotPositionMarker()
 
         self.model.classes["FeaturePrecursorView"].init(mz_array,
                                                         intens_array,
@@ -187,29 +167,31 @@ class ChromatogramView(FramePlot.FramePlot):
     def goLeft(self, event):
         exp = self.model.currentAnalysis.project.mzMLFile.exp
         spec = None
-        while self.index > 0:
-            self.index -= 1
-            spec = exp[self.index]
+        index = self.index
+        while index > 0:
+            index -= 1
+            spec = exp[index]
             if spec.getRT() < self.chrom.rt[0]:
                 return
             if spec.getMSLevel() == 1:
                 break
         if spec == None:
             return
-        self.plotPrecursorSpectrum(self.index)
+        self.plotPrecursorSpectrum(index)
 
 
     def goRight(self, event):
         exp = self.model.currentAnalysis.project.mzMLFile.exp
         spec = None
-        while self.index < exp.size():
-            self.index += 1
-            spec = exp[self.index]
+        index = self.index
+        while index < exp.size():
+            index += 1
+            spec = exp[index]
             if spec.getRT() > self.chrom.rt[-1]:
                 return
             if spec.getMSLevel() == 1:
                 break
         if spec == None:
             return
-        self.plotPrecursorSpectrum(self.index)
+        self.plotPrecursorSpectrum(index)
             
