@@ -37,6 +37,7 @@ from glyxsuite.gui import ExtensionScoring
 from glyxsuite.gui import ExtensionFeature
 from glyxsuite.gui import HistogramView
 from glyxsuite.gui import ExtensionIdentification
+from glyxsuite.gui import FilterPanel
 
 class App(ttk.Frame):
 
@@ -70,6 +71,10 @@ class App(ttk.Frame):
         statisticsMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
         statisticsMenu.add_command(label="Scorehistogram", command=self.showHistogram)
         menubar.add_cascade(label="Statistics", menu=statisticsMenu)
+
+        filterMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
+        filterMenu.add_command(label="Set Filter Options", command=self.showFilterOptions)
+        menubar.add_cascade(label="Filter", menu=filterMenu)   
 
         #toolMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
         #menubar.add_cascade(label="Tool", menu=toolMenu)
@@ -162,6 +167,9 @@ class App(ttk.Frame):
             return
         HistogramFrame(self.master, self.model)
         return
+        
+    def showFilterOptions(self):
+        FilterPanel.FilterPanel(self.master, self.model)
 
     def setWorkspace(self):
         options = {}

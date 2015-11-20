@@ -3,6 +3,18 @@ import os
 import configparser
 import tkFont
 
+class FilterMass:
+    
+    def __init__(self, value):
+        self.value = value
+    
+    def evaluate(self, hit):
+        # calculate glycopeptide mass
+        mass = hit.glycan.mass + hit.peptide.mass
+        if mass < self.value:
+            return True
+        return False
+
 class DataModel(object):
 
     def __init__(self):
@@ -17,7 +29,7 @@ class DataModel(object):
         self.projects = {}
         self.currentProject = None
         self.currentAnalysis = None
-
+        self.filters = {"Identification":[], "Features":[], "Scoring":[]} # stores filter used to filter data
         self.classes = {} # Functionhandler - each class should register itself here
 
         # read settings
