@@ -9,10 +9,11 @@ import sys
 import glyxsuite
 
 def searchMassInSpectrum(mass,tolerance,spectrum):
+    intensity = 0
     for peak in spectrum:
         if abs(peak.x - mass) < tolerance:
-            return 1
-    return 0
+            intensity += peak.y
+    return intensity
     
 def calcChargedMass(singlyChargedMass,charge):
     mass = singlyChargedMass+(charge-1)*glyxsuite.masses.MASS["H"]

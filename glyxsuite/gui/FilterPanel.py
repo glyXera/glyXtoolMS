@@ -4,15 +4,17 @@ Panel to set Filteroptions for all Data
 """ 
 import Tkinter
 import ttk
+import re
 
 class FieldTypes:
     INACTIVE=1
     ENTRY=2
     MENU=3
+    ASSISTED=4
 
 class Filter(object):
     
-    def __init__(self,name):
+    def __init__(self, name):
         self.name = name
         self.field1 = ""
         self.choices1 = []
@@ -24,9 +26,11 @@ class Filter(object):
         self.type2 = FieldTypes.INACTIVE
         self.valid = False
     
+    def reinitialize(self):
+        return
+
     def parseValues(self, field1, operator, field2):
         raise Exception("overwrite this function!")
-        
         
     def parseField1(self, field1):
         raise Exception("overwrite this function!")
@@ -37,8 +41,7 @@ class Filter(object):
     def parseOperator(self, operator):
         assert operator in self.operatorChoices
         self.operator = operator
-        
-    
+
     def evaluate(self, obj, typ):
         raise Exception("overwrite this function!")
     
@@ -191,36 +194,65 @@ class Fragmentmass_Filter(Filter):
                 
                 
 class Fragmentname_Filter(Filter):
-    def __init__(self):
+    def __init__(self, model):
         super(Fragmentname_Filter, self).__init__("Fragmentname")
-        self.field1 = "Fragmentname"
-        self.type1 = FieldTypes.ENTRY
+        self.model = model
+        self.field1 = ""
+        self.type1 = FieldTypes.ASSISTED
         self.field2 = "0 - 1"
+        self.choices1 = []
         self.type2 = FieldTypes.INACTIVE
         self.operatorChoices = ["exists", "exists not"]
         self.operator = "exists"
+        self.collectNames()
+        
+    def reinitialize(self):
+        self.collectNames()
+        
+    def collectNames(self):
+        self.choices1 = set()
+        for projectName in self.model.projects:
+            project = self.model.projects[projectName]
+            for analysisName in project.analysisFiles:
+                analysis = project.analysisFiles[analysisName]
+                for hit in analysis.analysis.glycoModHits:
+                    self.choices1 = self.choices1.union(self.collectLabels(hit))
+        self.choices1 = list(self.choices1)
         
     def parseField1(self,field1):
         self.field1 = field1
         
     def parseField2(self,field2):
         return
+        
+    def collectLabels(self, hit):
+        labels = set()
+        for name in hit.fragments:
+            labels.add(name)
+        for spectrum in hit.feature.spectra:
+            for key in spectrum.ions:
+                for label in spectrum.ions[key]:
+                    labels.add(label)
+        return labels
+        
+    def existsLabel(self, label, hit):
+        if self.field1 in hit.fragments:
+            return True
+        # search spectra for glycan fragments
+        for spectrum in hit.feature.spectra:
+            for key in spectrum.ions:
+                if label in spectrum.ions[key]:
+                    return True
+        return False
 
     def evaluate(self, hit, typ):
-
         if typ != "hit":
             return True
                 
         if self.operator == "exists":
-            if self.field1 in hit.fragments:
-                return True
-            else:
-                return False
+            return self.existsLabel(self.field1, hit)
         else:
-            if self.field1 in hit.fragments:
-                return False
-            else:
-                return True
+            return not self.existsLabel(self.field1, hit)
 
 class FilterEntry(ttk.Frame):
     def __init__(self, master, model, definedFilter=None):
@@ -239,7 +271,7 @@ class FilterEntry(ttk.Frame):
         self.filters.append(EmptyFilter())
         self.filters.append(GlycopeptideMass_Filter())
         self.filters.append(Fragmentmass_Filter())
-        self.filters.append(Fragmentname_Filter())
+        self.filters.append(Fragmentname_Filter(self.model))
 
         self.var = Tkinter.StringVar(self)
         
@@ -265,7 +297,10 @@ class FilterEntry(ttk.Frame):
         choices = ['', ]
         self.options1 = Tkinter.OptionMenu(self, self.field1Var, *choices)
         self.options1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
-
+        
+        self.assisted1 = InteractiveEntry(self, self.field1Var)
+        self.assisted1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
+    
         self.operatorVar = Tkinter.StringVar(self)
         self.operatorVar.trace("w", self.valuesChanged)
         choicesOperator = ['', ]
@@ -279,10 +314,14 @@ class FilterEntry(ttk.Frame):
         
         choices = ['', ]
         self.options2 = Tkinter.OptionMenu(self, self.field2Var, *choices)
-        self.options1.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
+        self.options2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
+        
+        self.assisted2 = InteractiveEntry(self, self.field2Var)
+        self.assisted2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
         
         if definedFilter != None:
             self.currentFilter = definedFilter
+            
         self.traceChanges = False
         self.paintCurrentFilter()
         self.traceChanges = True
@@ -344,14 +383,31 @@ class FilterEntry(ttk.Frame):
         if self.currentFilter.type1 == FieldTypes.INACTIVE:
             self.entry1.grid_remove()
             self.options1.grid_remove()
+            self.assisted1.grid_remove()
+            self.assisted1.setVisible(False)
         elif self.currentFilter.type1 == FieldTypes.ENTRY:
             self.entry1.grid()
             self.options1.grid_remove()
+            self.assisted1.grid_remove()
+            self.assisted1.setVisible(False)
             self.field1Var.set(self.currentFilter.field1)
-        else:
+        elif self.currentFilter.type1 == FieldTypes.MENU:
             self.entry1.grid_remove()
             self.options1.grid()
+            self.assisted1.grid_remove()
+            self.assisted1.setVisible(False)
             self.setMenuChoices(self.options1,self.currentFilter.choices1, self.field1Var)
+            self.field1Var.set(self.currentFilter.field1)           
+        elif self.currentFilter.type1 == FieldTypes.ASSISTED:
+            self.entry1.grid_remove()
+            self.options1.grid_remove()
+            self.assisted1.grid()
+            self.assisted1.all_choices = self.currentFilter.choices1
+            self.field1Var.set(self.currentFilter.field1)
+            self.assisted1.setVisible(True)
+        else:
+            raise Exception("Unknown FieldType!")
+
         
         self.setMenuChoices(self.optionOperator, self.currentFilter.operatorChoices, self.operatorVar)
         self.operatorVar.set(self.currentFilter.operator)
@@ -359,15 +415,31 @@ class FilterEntry(ttk.Frame):
         if self.currentFilter.type2 == FieldTypes.INACTIVE:
             self.entry2.grid_remove()
             self.options2.grid_remove()
+            self.assisted2.grid_remove()
+            self.assisted2.setVisible(False)
         elif self.currentFilter.type2 == FieldTypes.ENTRY:
             self.entry2.grid()
             self.options2.grid_remove()
+            self.assisted2.grid_remove()
+            self.assisted2.setVisible(False)
             self.field2Var.set(self.currentFilter.field2)
-            
-        else:
+        elif self.currentFilter.type2 == FieldTypes.MENU:
             self.entry2.grid_remove()
             self.options2.grid()
-            self.setMenuChoices(self.options2,self.currentFilter.choices2, self.field2Var)
+            self.assisted2.grid_remove()
+            self.assisted2.setVisible(False)
+            self.setMenuChoices(self.options2, self.currentFilter.choices2, self.field2Var)
+            self.field2Var.set(self.currentFilter.field2)
+        elif self.currentFilter.type2 == FieldTypes.ASSISTED:
+            self.entry2.grid_remove()
+            self.options2.grid_remove()
+            self.assisted2.grid()
+            self.assisted2.all_choices = self.currentFilter.choices2
+            self.field2Var.set(self.currentFilter.field2)
+            self.assisted2.setVisible(True)
+            
+        else:
+            raise Exception("Unknown FieldType!")
         self.traceChanges = True
         self.valuesChanged()
         
@@ -389,6 +461,103 @@ class FilterEntry(ttk.Frame):
             self.model.filters["Identification"].remove(self.currentFilter)
         return
 
+class InteractiveEntry(Tkinter.Entry):
+    def __init__(self, master, var):
+        Tkinter.Entry.__init__(self, master=master, textvariable=var)
+        self.var = var
+        self.var.trace("w", self.valuesChanged)
+        
+        self.all_choices = []
+        self.currentText = None
+        self.choices = []
+        self.keepTrace = True
+        self.isVisible = False
+        
+        self.aMenu = Tkinter.Menu(self.master, tearoff=0)
+        self.aMenu.bind("<FocusOut>", self.removeOptions, "+")
+        self.bind("<FocusIn>", lambda x: self.valuesChanged(2), "+")
+        self.bind("<FocusOut>", self.removeOptions, "+")
+        
+        
+    def setVisible(self, boolean):
+        self.isVisible = boolean
+    
+    def showOptions(self, event):
+        if self.isVisible == False:
+            return
+        if len(self.all_choices) == 0:
+            return
+        x = self.winfo_rootx()
+        y = self.winfo_rooty()+self.winfo_height()
+        self.aMenu.post(x, y)
+        self.aMenu.bind("<FocusOut>", lambda x: self.removeOptions())
+        self.aMenu.unbind_class("Menu", "<Button>") # needed to properly use the FocusOut binding
+        
+    def removeOptions(self, event = None):
+        if self.focus_get() != self.aMenu or self.focus_get() != self:
+            self.aMenu.unpost()
+            
+    def valuesChanged(self, *args):
+        if self.isVisible == False:
+            return
+        if len(self.all_choices) == 0:
+            return
+        if self.keepTrace == False:
+            return
+        if self.currentText == self.var.get():
+            return
+        self.currentText = self.var.get()
+        self.removeOptions()
+
+        self.choices = []
+        for choice in self.all_choices:
+            if self.currentText in choice:
+                self.choices.append(choice)
+        self.choicePosition = 0
+        self.showChoices(0)
+        self.showOptions(None)
+        
+    def showChoices(self, position):
+        # delete old options
+        self.aMenu.delete(0,"last")
+        self.collapseMenu = True
+        self.choicePosition = position
+        if len(self.choices) > 10 and self.choicePosition > 0:
+            self.aMenu.add_command(label="...", command=self.showPrev)
+            self.aMenu.add_separator()
+        for i in range(self.choicePosition, self.choicePosition+10):
+            if i >= len(self.choices):
+                break
+            choice = self.choices[i]
+            item = self.aMenu.add_command(label=choice,
+                                          command=lambda x=choice: self.setValue(x))
+        if self.choicePosition+10 < len(self.choices):
+            self.aMenu.add_separator()
+            self.aMenu.add_command(label="...", command=self.showNext)
+            
+    def setValue(self,choice):
+        self.keepTrace = False
+        self.var.set(choice)
+        self.removeOptions()
+        self.master.focus_set()
+        self.keepTrace = True
+    
+    def showNext(self, *args):
+        if self.choicePosition+5 < len(self.choices):
+            self.removeOptions()
+            self.showChoices(self.choicePosition+5)
+            self.showOptions(None)
+            self.focus_set()
+
+    def showPrev(self):
+        self.keepTrace = False
+        self.removeOptions()
+        if self.choicePosition-5 >= 0:
+            self.showChoices(self.choicePosition-5)
+        self.showOptions(None)
+        self.keepTrace = True
+
+
 class FilterPanel(Tkinter.Toplevel):
 
     def __init__(self, master, model):
@@ -396,7 +565,6 @@ class FilterPanel(Tkinter.Toplevel):
         self.master = master
         self.model = model
         self.title("Filter Options")
-        
         
         button = Tkinter.Button(self, text="add Filter", command=self.addFilter)
         button.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
@@ -406,10 +574,12 @@ class FilterPanel(Tkinter.Toplevel):
         self.filterFrame = ttk.Frame(self, width=100, height=30)
         self.filterFrame.grid(row=1, column=0, sticky=("N", "W", "E", "S"))
         
+        
         # add predefined filters
         for f in self.model.filters["Identification"]:
-            print f.field1, f.operator, f.field2
+            f.reinitialize()
             self.addFilter(f)
+            
         
     def addFilter(self, definedFilter=None):
         f = FilterEntry(self.filterFrame, self.model, definedFilter=definedFilter)

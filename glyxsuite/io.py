@@ -193,6 +193,7 @@ class GlyxXMLFeature(object):
         self.maxMZ = 0.0
         self.status = ConfirmationStatus.Unknown
         self.spectraIds = []
+        self.spectra = []
         self.consensus = []
 
     def setId(self, id):
@@ -251,6 +252,7 @@ class GlyxXMLGlycoModHit(object):
 
     def __init__(self):
         self.featureID = ""
+        self.feature = None
         self.peptide = None
         self.glycan = None
         self.error = 0.0
@@ -625,6 +627,21 @@ class GlyxXMLFile(object):
         features = self._parseFeatures(root.findall("./features/feature"))
         # parse glycomod
         glycoMod = self._parseGlycoModHits(root.findall("./glycomod/hit"))
+        
+        #Link all data
+        specIDs = {}
+        featureIDs = {}
+        for spec in spectra:
+            specIDs[spec.getNativeId()] = spec
+            
+        for feature in features:
+            featureIDs[feature.id] = feature
+            feature.spectra = []
+            for specID in feature.spectraIds:
+                feature.spectra.append(specIDs[specID])
+        for hit in glycoMod:
+            hit.feature = featureIDs[hit.featureID]
+        
         # assign data to object
         self.parameters = parameters
         self.spectra = spectra
