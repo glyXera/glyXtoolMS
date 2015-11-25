@@ -4,261 +4,147 @@ Panel to set Filteroptions for all Data
 """ 
 import Tkinter
 import ttk
-import re
 
-class FieldTypes:
-    INACTIVE=1
-    ENTRY=2
-    MENU=3
-    ASSISTED=4
+class FilterPanel(Tkinter.Toplevel):
 
-class Filter(object):
-    
-    def __init__(self, name):
-        self.name = name
-        self.field1 = ""
-        self.choices1 = []
-        self.type1 = FieldTypes.INACTIVE
-        self.operator = ""
-        self.operatorChoices = []
-        self.field2 = ""
-        self.choices2 = []
-        self.type2 = FieldTypes.INACTIVE
-        self.valid = False
-    
-    def reinitialize(self):
-        return
-
-    def parseValues(self, field1, operator, field2):
-        raise Exception("overwrite this function!")
-        
-    def parseField1(self, field1):
-        raise Exception("overwrite this function!")
-        
-    def parseField2(self, field1):
-        raise Exception("overwrite this function!")
-        
-    def parseOperator(self, operator):
-        assert operator in self.operatorChoices
-        self.operator = operator
-
-    def evaluate(self, obj, typ):
-        raise Exception("overwrite this function!")
-    
-    def parseFloatRange(self, string):
-        if not "-" in string:
-            raise Exception("please provide a range")
-        
-        sp = string.replace(" ", "").split("-")
-        if len(sp) != 2:
-            raise Exception("use only one '-'")
-        a,b = sp
-        try:
-            a = float(a)
-            b = float(b)
-            return a,b
-        except:
-            raise Exception("cannot convert to number")
-            
-    def parseFloat(self,string):
-        try:
-            return float(string)
-        except:
-            raise Exception("cannot convert to number")    
-    
-class EmptyFilter(Filter):
-    def __init__(self):
-        super(EmptyFilter, self).__init__("")
-        self.type1 = FieldTypes.INACTIVE
-        self.type2 = FieldTypes.INACTIVE
-        self.operatorChoices = [""]
-        
-    def parseField1(self,field1):
-        return
-        
-    def parseField2(self,field2):
-        return
-
-    def evaluate(self, obj, typ):
-        return True
-
-class GlycopeptideMass_Filter(Filter):
-    def __init__(self):
-        super(GlycopeptideMass_Filter, self).__init__("Glycopeptidemass")
-        self.type1 = FieldTypes.INACTIVE
-        self.field2 = "0 - 1"
-        self.type2 = FieldTypes.ENTRY
-        self.operatorChoices = ["=", "<", ">"]
-        self.operator = "="
-        self.lowValue = 0
-        self.highValue = 0
-        self.value = 0
-        
-    def parseField1(self,field1):
-        return
-        
-    def parseField2(self,field2):
-        if self.operator == "=":
-            a, b = self.parseFloatRange(field2)
-            if a < b:
-                self.lowValue, self.highValue = a, b
-            else:
-                 self.lowValue, self.highValue = b, a
-            self.field2 = str(self.lowValue) + " - " + str(self.highValue)
-        else:
-            self.value = self.parseFloat(field2)
-            self.field2 = str(self.value)
-            self.field2 = str(self.value)
-
-    def evaluate(self, hit, typ):
-        if typ != "hit":
-            return True
-        mass = hit.glycan.mass + hit.peptide.mass
-        if self.operator == "<":
-            if mass < self.value:
-                return True
-            else:
-                return False
-        elif  self.operator == ">":
-            if mass > self.value:
-                return True
-            else:
-                return False
-        else:
-            if self.lowValue <= mass <= self.highValue:
-                return True
-            else:
-                return False
-
-
-class Fragmentmass_Filter(Filter):
-    def __init__(self):
-        super(Fragmentmass_Filter, self).__init__("Fragmentmass")
-        self.field1 = "0 - 1"
-        self.type1 = FieldTypes.ENTRY
-        self.field2 = "0 - 1"
-        self.type2 = FieldTypes.ENTRY
-        self.operatorChoices = ["=", "<", ">"]
-        self.operator = "="
-        self.lowIntensity = 0
-        self.highIntensity = 0
-        self.intensity = 0
-        
-        self.lowMass = 0
-        self.highMass = 0
-        
-    def parseField1(self,field1):
-        a, b = self.parseFloatRange(field1)
-        if a < b:
-            self.lowMass, self.highMass = a, b
-        else:
-             self.lowMass, self.highMass = b, a
-        self.field1 = str(self.lowMass) + " - " + str(self.highMass)
-        
-    def parseField2(self,field2):
-        if self.operator == "=":
-            a, b = self.parseFloatRange(field2)
-            if a < b:
-                self.lowIntensity, self.highIntensity = a, b
-            else:
-                 self.lowIntensity, self.highIntensity = b, a
-            self.field2 = str(self.lowIntensity) + " - " + str(self.highIntensity)
-        else:
-            self.intensity = self.parseFloat(field2)
-            self.field2 = str(self.intensity)
-
-    def evaluate(self, feature, typ):
-
-        if typ != "feature":
-            return True
-        intensity = 0
-        for peak in feature.consensus:
-            if self.lowMass <= peak.x <= self.highMass:
-                intensity += peak.y
-                
-        if self.operator == "<":
-            if intensity < self.intensity:
-                return True
-            else:
-                return False
-        elif  self.operator == ">":
-            if intensity > self.intensity:
-                return True
-            else:
-                return False
-        else:
-            if self.lowIntensity <= intensity <= self.highIntensity:
-                return True
-            else:
-                return False
-                
-                
-class Fragmentname_Filter(Filter):
-    def __init__(self, model):
-        super(Fragmentname_Filter, self).__init__("Fragmentname")
-        self.model = model
-        self.field1 = ""
-        self.type1 = FieldTypes.ASSISTED
-        self.field2 = "0 - 1"
-        self.choices1 = []
-        self.type2 = FieldTypes.INACTIVE
-        self.operatorChoices = ["exists", "exists not"]
-        self.operator = "exists"
-        self.collectNames()
-        
-    def reinitialize(self):
-        self.collectNames()
-        
-    def collectNames(self):
-        self.choices1 = set()
-        for projectName in self.model.projects:
-            project = self.model.projects[projectName]
-            for analysisName in project.analysisFiles:
-                analysis = project.analysisFiles[analysisName]
-                for hit in analysis.analysis.glycoModHits:
-                    self.choices1 = self.choices1.union(self.collectLabels(hit))
-        self.choices1 = list(self.choices1)
-        
-    def parseField1(self,field1):
-        self.field1 = field1
-        
-    def parseField2(self,field2):
-        return
-        
-    def collectLabels(self, hit):
-        labels = set()
-        for name in hit.fragments:
-            labels.add(name)
-        for spectrum in hit.feature.spectra:
-            for key in spectrum.ions:
-                for label in spectrum.ions[key]:
-                    labels.add(label)
-        return labels
-        
-    def existsLabel(self, label, hit):
-        if self.field1 in hit.fragments:
-            return True
-        # search spectra for glycan fragments
-        for spectrum in hit.feature.spectra:
-            for key in spectrum.ions:
-                if label in spectrum.ions[key]:
-                    return True
-        return False
-
-    def evaluate(self, hit, typ):
-        if typ != "hit":
-            return True
-                
-        if self.operator == "exists":
-            return self.existsLabel(self.field1, hit)
-        else:
-            return not self.existsLabel(self.field1, hit)
-
-class FilterEntry(ttk.Frame):
-    def __init__(self, master, model, definedFilter=None):
-        ttk.Frame.__init__(self, master=master)
+    def __init__(self, master, model):
+        Tkinter.Toplevel.__init__(self, master=master)
+        self.minsize(600,300)
         self.master = master
         self.model = model
+        
+        self.protocol("WM_DELETE_WINDOW", self._delete_window)
+        #self.bind("<Destroy>", self._destroy)
+
+        
+        self.title("Filter Options")
+        
+        #   ------- Identifications ------ #
+        self.N_Identification = 0
+        
+        frameIdentification = ttk.Labelframe(self, text="1. Identifications")
+        frameIdentification.grid(row=0, column=0, sticky="NWES")
+        
+        buttonIdentification = Tkinter.Button(frameIdentification,
+                                              text="add Filter",
+                                              command=self.addIdentificationFilter)
+        buttonIdentification.grid(row=0, column=0, sticky="NWES")
+        
+        
+        self.filterIdentification = ttk.Frame(frameIdentification)
+        self.filterIdentification.grid(row=1, column=0, columnspan=2, sticky="NWES")
+        
+        self.filterIdentification.columnconfigure(0, weight=1)
+        
+        frameIdentification.columnconfigure(0, weight=0)
+        frameIdentification.columnconfigure(1, weight=1)
+        
+        #   ------- Features ------ #
+        self.N_Features = 0
+
+        frameFeature = ttk.Labelframe(self, text="2. Features")
+        frameFeature.grid(row=1, column=0, sticky="NWES")
+        
+        buttonFeature = Tkinter.Button(frameFeature,
+                                       text="add Filter",
+                                       command=self.addFeatureFilter)
+        buttonFeature.grid(row=0, column=0, sticky="NWES")
+        
+        
+        self.filterFeature = ttk.Frame(frameFeature)
+        self.filterFeature.grid(row=1, column=0, columnspan=2, sticky="NWES")  
+
+        #   ------- Scoring ------ #        
+        self.N_Scoring = 0
+        
+        frameScoring = ttk.Labelframe(self, text="3. Scoring")
+        frameScoring.grid(row=2, column=0, sticky="NWES")
+        
+        buttonScoring = Tkinter.Button(frameScoring,
+                                       text="add Filter",
+                                       command=self.addScoringFilter)
+        buttonScoring.grid(row=0, column=0, sticky="NWES")
+        
+        
+        self.filterScoring = ttk.Frame(frameScoring)
+        self.filterScoring.grid(row=1, column=0, columnspan=2, sticky="NWES")
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
+        self.rowconfigure(2, weight=1)
+
+        # add predefined filters
+        for f in self.model.filters["Identification"]:
+            f.reinitialize()
+            self.addIdentificationFilter(f)
+            
+        for f in self.model.filters["Features"]:
+            f.reinitialize()
+            self.addFeatureFilter(f)
+            
+        for f in self.model.filters["Scoring"]:
+            f.reinitialize()
+            self.addScoringFilter(f)
+
+    def _delete_window(self):
+        try:
+            self.destroy()
+            self.model.runFilters()
+            self.model.classes["NotebookScoring"].updateTree()
+            self.model.classes["NotebookIdentification"].updateTree()
+            self.model.classes["NotebookFeature"].updateFeatureTree()
+            self.model.classes["TwoDView"].init()
+            
+        except:
+            pass
+
+
+        
+    def addIdentificationFilter(self, definedFilter=None):
+        filters = []
+        filters.append(EmptyFilter())
+        filters.append(GlycopeptideMass_Filter())
+        filters.append(Fragmentmass_Filter())
+        filters.append(Fragmentname_Filter(self.model))
+        
+        f = FilterEntry(self.filterIdentification,
+                        filters,
+                        self.model.filters["Identification"],
+                        definedFilter=definedFilter)
+        f.grid(row=self.N_Identification, column=0, sticky=("N", "W", "E", "S"))
+        self.N_Identification += 1
+        
+        
+    def addFeatureFilter(self, definedFilter=None):
+        filters = []
+        filters.append(EmptyFilter())
+        filters.append(Feature_RT_Filter())
+        f = FilterEntry(self.filterFeature,
+                        filters,
+                        self.model.filters["Features"],
+                        definedFilter=definedFilter)
+        f.grid(row=self.N_Features, column=0, sticky=("N", "W", "E", "S"))
+        self.N_Features += 1
+        
+    def addScoringFilter(self, definedFilter=None):
+        filters = []
+        filters.append(EmptyFilter())
+        
+        f = FilterEntry(self.filterScoring,
+                        filters,
+                        self.model.filters["Scoring"],
+                        definedFilter=definedFilter)
+        f.grid(row=self.N_Scoring, column=0, sticky=("N", "W", "E", "S"))
+        self.N_Scoring += 1
+        
+class FilterEntry(ttk.Frame):
+    def __init__(self, master, filters, source, definedFilter=None):
+        ttk.Frame.__init__(self, master=master)
+        
+        self.master = master
+        self.source = source
+        
         # | type | <Field1> | Operator | <Field2> |
         
         self.traceChanges = True
@@ -267,11 +153,7 @@ class FilterEntry(ttk.Frame):
         button.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
         
         # register new filters here
-        self.filters = []
-        self.filters.append(EmptyFilter())
-        self.filters.append(GlycopeptideMass_Filter())
-        self.filters.append(Fragmentmass_Filter())
-        self.filters.append(Fragmentname_Filter(self.model))
+        self.filters = filters
 
         self.var = Tkinter.StringVar(self)
         
@@ -333,10 +215,12 @@ class FilterEntry(ttk.Frame):
         try:
             self.currentFilter.parseField1(self.field1Var.get())
             self.entry1.config(bg="grey")
+            self.assisted1.config(bg="grey")
             self.options1.config(bg="grey")
         except:
             self.currentFilter.valid = False
             self.entry1.config(bg="red")
+            self.assisted1.config(bg="red")
             self.options1.config(bg="red")
             
         try:
@@ -349,10 +233,12 @@ class FilterEntry(ttk.Frame):
         try:
             self.currentFilter.parseField2(self.field2Var.get())
             self.entry2.config(bg="grey")
+            self.assisted2.config(bg="grey")
             self.options2.config(bg="grey")
         except:
             self.currentFilter.valid = False
             self.entry2.config(bg="red")
+            self.assisted2.config(bg="red")
             self.options2.config(bg="red")
  
     def filterChanged(self, *args):
@@ -362,8 +248,8 @@ class FilterEntry(ttk.Frame):
         if self.currentFilter.name == name:
             return
         # remove currentFilter from model
-        if self.currentFilter in self.model.filters["Identification"]:
-            self.model.filters["Identification"].remove(self.currentFilter)
+        if self.currentFilter in self.source:
+            self.source.remove(self.currentFilter)
         
         self.currentFilter = None
         for f in self.filters:
@@ -374,7 +260,7 @@ class FilterEntry(ttk.Frame):
                 
         self.paintCurrentFilter()
 
-        self.model.filters["Identification"].append(self.currentFilter)
+        self.source.append(self.currentFilter)
 
     def paintCurrentFilter(self):
         self.traceChanges = False
@@ -457,10 +343,10 @@ class FilterEntry(ttk.Frame):
 
     def delete(self):
         self.grid_forget()
-        if self.currentFilter in self.model.filters["Identification"]:
-            self.model.filters["Identification"].remove(self.currentFilter)
+        if self.currentFilter in self.source:
+            self.source.remove(self.currentFilter)
         return
-
+        
 class InteractiveEntry(Tkinter.Entry):
     def __init__(self, master, var):
         Tkinter.Entry.__init__(self, master=master, textvariable=var)
@@ -557,32 +443,293 @@ class InteractiveEntry(Tkinter.Entry):
         self.showOptions(None)
         self.keepTrace = True
 
+class FieldTypes:
+    INACTIVE=1
+    ENTRY=2
+    MENU=3
+    ASSISTED=4
 
-class FilterPanel(Tkinter.Toplevel):
+class Filter(object):
+    
+    def __init__(self, name):
+        self.name = name
+        self.field1 = ""
+        self.choices1 = []
+        self.type1 = FieldTypes.INACTIVE
+        self.operator = ""
+        self.operatorChoices = []
+        self.field2 = ""
+        self.choices2 = []
+        self.type2 = FieldTypes.INACTIVE
+        self.valid = False
+    
+    def reinitialize(self):
+        return
 
-    def __init__(self, master, model):
-        Tkinter.Toplevel.__init__(self, master=master)
-        self.master = master
-        self.model = model
-        self.title("Filter Options")
+    def parseValues(self, field1, operator, field2):
+        raise Exception("overwrite this function!")
         
-        button = Tkinter.Button(self, text="add Filter", command=self.addFilter)
-        button.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+    def parseField1(self, field1):
+        raise Exception("overwrite this function!")
         
-        self.N = 0
-        self.filters = []
-        self.filterFrame = ttk.Frame(self, width=100, height=30)
-        self.filterFrame.grid(row=1, column=0, sticky=("N", "W", "E", "S"))
+    def parseField2(self, field1):
+        raise Exception("overwrite this function!")
         
+    def parseOperator(self, operator):
+        assert operator in self.operatorChoices
+        self.operator = operator
+
+    def evaluate(self, obj, typ):
+        raise Exception("overwrite this function!")
+    
+    def parseFloatRange(self, string):
+        if not "-" in string:
+            raise Exception("please provide a range")
         
-        # add predefined filters
-        for f in self.model.filters["Identification"]:
-            f.reinitialize()
-            self.addFilter(f)
+        sp = string.replace(" ", "").split("-")
+        if len(sp) != 2:
+            raise Exception("use only one '-'")
+        a,b = sp
+        try:
+            a = float(a)
+            b = float(b)
+            return a,b
+        except:
+            raise Exception("cannot convert to number")
             
+    def parseFloat(self,string):
+        try:
+            return float(string)
+        except:
+            raise Exception("cannot convert to number")    
+    
+class EmptyFilter(Filter):
+    def __init__(self):
+        super(EmptyFilter, self).__init__("")
+        self.type1 = FieldTypes.INACTIVE
+        self.type2 = FieldTypes.INACTIVE
+        self.operatorChoices = [""]
         
-    def addFilter(self, definedFilter=None):
-        f = FilterEntry(self.filterFrame, self.model, definedFilter=definedFilter)
-        f.grid(row=self.N, column=0, sticky=("N", "W", "E", "S"))
-        self.N += 1
+    def parseField1(self,field1):
+        return
         
+    def parseField2(self,field2):
+        return
+
+    def evaluate(self, obj):
+        return True
+
+class GlycopeptideMass_Filter(Filter):
+    def __init__(self):
+        super(GlycopeptideMass_Filter, self).__init__("Glycopeptidemass")
+        self.type1 = FieldTypes.INACTIVE
+        self.field2 = "0 - 1"
+        self.type2 = FieldTypes.ENTRY
+        self.operatorChoices = ["=", "<", ">"]
+        self.operator = "="
+        self.lowValue = 0
+        self.highValue = 0
+        self.value = 0
+        
+    def parseField1(self,field1):
+        return
+        
+    def parseField2(self,field2):
+        if self.operator == "=":
+            a, b = self.parseFloatRange(field2)
+            if a < b:
+                self.lowValue, self.highValue = a, b
+            else:
+                 self.lowValue, self.highValue = b, a
+            self.field2 = str(self.lowValue) + " - " + str(self.highValue)
+        else:
+            self.value = self.parseFloat(field2)
+            self.field2 = str(self.value)
+            self.field2 = str(self.value)
+
+    def evaluate(self, hit):
+        mass = hit.glycan.mass + hit.peptide.mass
+        if self.operator == "<":
+            if mass < self.value:
+                return True
+            else:
+                return False
+        elif  self.operator == ">":
+            if mass > self.value:
+                return True
+            else:
+                return False
+        else:
+            if self.lowValue <= mass <= self.highValue:
+                return True
+            else:
+                return False
+
+
+class Fragmentmass_Filter(Filter):
+    def __init__(self):
+        super(Fragmentmass_Filter, self).__init__("Fragmentmass")
+        self.field1 = "0 - 1"
+        self.type1 = FieldTypes.ENTRY
+        self.field2 = "0 - 1"
+        self.type2 = FieldTypes.ENTRY
+        self.operatorChoices = ["=", "<", ">"]
+        self.operator = "="
+        self.lowIntensity = 0
+        self.highIntensity = 0
+        self.intensity = 0
+        
+        self.lowMass = 0
+        self.highMass = 0
+        
+    def parseField1(self,field1):
+        a, b = self.parseFloatRange(field1)
+        if a < b:
+            self.lowMass, self.highMass = a, b
+        else:
+             self.lowMass, self.highMass = b, a
+        self.field1 = str(self.lowMass) + " - " + str(self.highMass)
+        
+    def parseField2(self,field2):
+        if self.operator == "=":
+            a, b = self.parseFloatRange(field2)
+            if a < b:
+                self.lowIntensity, self.highIntensity = a, b
+            else:
+                 self.lowIntensity, self.highIntensity = b, a
+            self.field2 = str(self.lowIntensity) + " - " + str(self.highIntensity)
+        else:
+            self.intensity = self.parseFloat(field2)
+            self.field2 = str(self.intensity)
+
+    def evaluate(self, hit):
+        
+        intensity = 0
+        for peak in hit.feature.consensus:
+            if self.lowMass <= peak.x <= self.highMass:
+                intensity += peak.y
+                
+        if self.operator == "<":
+            if intensity < self.intensity:
+                return True
+            else:
+                return False
+        elif  self.operator == ">":
+            if intensity > self.intensity:
+                return True
+            else:
+                return False
+        else:
+            if self.lowIntensity <= intensity <= self.highIntensity:
+                return True
+            else:
+                return False
+                
+                
+class Fragmentname_Filter(Filter):
+    def __init__(self, model):
+        super(Fragmentname_Filter, self).__init__("Fragmentname")
+        self.model = model
+        self.field1 = ""
+        self.type1 = FieldTypes.ASSISTED
+        self.field2 = "0 - 1"
+        self.choices1 = []
+        self.type2 = FieldTypes.INACTIVE
+        self.operatorChoices = ["exists", "exists not"]
+        self.operator = "exists"
+        self.collectNames()
+        
+    def reinitialize(self):
+        self.collectNames()
+        
+    def collectNames(self):
+        self.choices1 = set()
+        for projectName in self.model.projects:
+            project = self.model.projects[projectName]
+            for analysisName in project.analysisFiles:
+                analysis = project.analysisFiles[analysisName]
+                for hit in analysis.analysis.glycoModHits:
+                    self.choices1 = self.choices1.union(self.collectLabels(hit))
+        self.choices1 = list(self.choices1)
+        
+    def parseField1(self, field1):
+        assert field1 in self.choices1
+        self.field1 = field1
+        
+    def parseField2(self, field2):
+        return
+        
+    def collectLabels(self, hit):
+        labels = set()
+        for name in hit.fragments:
+            labels.add(name)
+        for spectrum in hit.feature.spectra:
+            for key in spectrum.ions:
+                for label in spectrum.ions[key]:
+                    labels.add(label)
+        return labels
+        
+    def existsLabel(self, label, hit):
+        if self.field1 in hit.fragments:
+            return True
+        # search spectra for glycan fragments
+        for spectrum in hit.feature.spectra:
+            for key in spectrum.ions:
+                if label in spectrum.ions[key]:
+                    return True
+        return False
+
+    def evaluate(self, hit):
+        if self.operator == "exists":
+            return self.existsLabel(self.field1, hit)
+        else:
+            return not self.existsLabel(self.field1, hit)
+
+class Feature_RT_Filter(Filter):
+    def __init__(self):
+        super(Feature_RT_Filter, self).__init__("Retentiontime")
+        self.type1 = FieldTypes.INACTIVE
+        self.field2 = "0 - 1"
+        self.type2 = FieldTypes.ENTRY
+        self.operatorChoices = ["=", "<", ">"]
+        self.operator = "="
+        self.lowValue = 0
+        self.highValue = 0
+        self.value = 0
+        
+    def parseField1(self,field1):
+        return
+        
+    def parseField2(self,field2):
+        if self.operator == "=":
+            a, b = self.parseFloatRange(field2)
+            if a < b:
+                self.lowValue, self.highValue = a, b
+            else:
+                 self.lowValue, self.highValue = b, a
+            self.field2 = str(self.lowValue) + " - " + str(self.highValue)
+        else:
+            self.value = self.parseFloat(field2)
+            self.field2 = str(self.value)
+            self.field2 = str(self.value)
+
+    def evaluate(self, feature):
+        if self.operator == "<":
+            if feature.getRT() < self.value:
+                return True
+            else:
+                return False
+        elif  self.operator == ">":
+            if feature.getRT() > self.value:
+                return True
+            else:
+                return False
+        else:
+            if self.lowValue <= feature.getRT() <= self.highValue:
+                return True
+            else:
+                return False
+
+
+
+

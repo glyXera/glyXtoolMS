@@ -175,27 +175,12 @@ class NotebookIdentification(ttk.Frame):
 
         index = 0
         for hit in analysis.analysis.glycoModHits:
-
-                        
-            # check filters
-            passes = True
-            for f in self.model.filters["Identification"]:
-                if not f.evaluate(hit, "hit"):
-                    passes = False
-                    break
-            if not passes:
-                continue
-                
-            # get feature
-            feature = analysis.featureIds[hit.featureID]
-            for f in self.model.filters["Identification"]:
-                if not f.evaluate(feature, "feature"):
-                    passes = False
-                    break
-            if not passes:
+            
+            # check if hit passes filters
+            if hit.passesFilter == False:
                 continue
                         
-            #name = #str(index)
+            feature = hit.feature
             name = feature.index
             # mass
             mass = (feature.getMZ()-glyxsuite.masses.MASS["H+"])*feature.getCharge()

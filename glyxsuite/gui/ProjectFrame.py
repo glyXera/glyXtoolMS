@@ -302,6 +302,7 @@ class ProjectFrame(ttk.Frame):
             self.model.currentProject = obj.project
             self.b4.config(state=Tkinter.NORMAL)
             self.b5.config(state=Tkinter.NORMAL)
+            self.model.runFilters()
             self.model.classes["NotebookScoring"].updateTree()
             self.model.classes["NotebookIdentification"].updateTree()
             self.model.classes["NotebookFeature"].updateFeatureTree()
@@ -402,6 +403,7 @@ class ProjectFrame(ttk.Frame):
                 spectrum.chromatogramSpectra.append(spec)
 
         # update Notebooks
+        print "update"
         self.model.classes["NotebookScoring"].updateTree()
         self.model.classes["NotebookIdentification"].updateTree()
         self.model.classes["NotebookFeature"].updateFeatureTree()

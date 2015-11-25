@@ -216,7 +216,10 @@ class NotebookFeature(ttk.Frame):
         #("RT", "MZ", "Charge", "Best Score", "Nr Spectra")
         index = 0
         for feature in analysis.analysis.features:
-            
+            # check if hit passes filters
+            if feature.passesFilter == False:
+                continue
+
             if index%2 == 0:
                 taglist = ("even" + feature.status, "even", )
             else:

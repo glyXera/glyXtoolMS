@@ -34,6 +34,43 @@ class DataModel(object):
 
         # read settings
         self.readSettings()
+        
+    def runFilters(self): # check filters
+        if self.currentAnalysis == None:
+            return
+
+        for spectrum in self.currentAnalysis.analysis.spectra:
+            spectrum.passesFilter = True
+            for f in self.filters["Scoring"]:
+                if not f.evaluate(spectrum):
+                    spectrum.passesFilter = False
+                    break
+
+        for feature in self.currentAnalysis.analysis.features:
+            # remove features which have no MS2 spectra that pass the filter
+            feature.passesFilter = False
+            for spectrum in feature.spectra:
+                if spectrum.passesFilter == True:
+                    feature.passesFilter = True
+                    break
+                    
+            if feature.passesFilter == False:
+                continue
+
+            for f in self.filters["Features"]:
+                if not f.evaluate(feature):
+                    feature.passesFilter = False
+                    break
+
+        for hit in self.currentAnalysis.analysis.glycoModHits:
+            hit.passesFilter = True
+            if hit.feature.passesFilter == False:
+                hit.passesFilter = False
+                continue
+            for f in self.filters["Identification"]:
+                if not f.evaluate(hit):
+                    hit.passesFilter = False
+                    break
 
     def readSettings(self):
         home = os.path.expanduser("~")
