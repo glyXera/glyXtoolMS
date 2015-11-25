@@ -248,7 +248,10 @@ class TwoDView(FramePlot.FramePlot):
         #diam = int(min(self.slopeA, self.slopeB)*2)
         diam = int(min(self.slopeA, self.slopeB)*2)+1.5
         # plot msms spectra
-        colorGlyco = "green"
+        #colorGlyco = "olive"
+        colorGlycoNoHit = "dark khaki"
+        colorGlycoOneHit = "green"
+        colorGlycoMultipleHits = "cyan"
         colorNonGlyco = "blue"
         for specId in self.model.currentAnalysis.spectraInFeatures:
 
@@ -257,11 +260,14 @@ class TwoDView(FramePlot.FramePlot):
 
             # get charge state
             hasCharge = False
+            nrFeatureHits = {0}
             for featureId in features:
+                nrFeatureHits.add(len(self.model.currentAnalysis.featureHits.get(featureId,[])))
                 feature = self.model.currentAnalysis.featureIds[featureId]
                 if feature.charge == spectrum.precursorCharge:
                     hasCharge = True
                     break
+            nrFeatureHits = max(nrFeatureHits)
 
             nr = 1
             if spectrum.isGlycopeptide:
@@ -278,15 +284,30 @@ class TwoDView(FramePlot.FramePlot):
             if nr == 5:
                 if self.ov6.get() == 0:
                     continue
-                color = colorGlyco
+                if nrFeatureHits == 0:
+                    color = colorGlycoNoHit
+                elif nrFeatureHits == 1:
+                    color = colorGlycoOneHit
+                else:
+                    color = colorGlycoMultipleHits
             elif nr == 7:
                 if self.ov7.get() == 0:
                     continue
-                color = colorGlyco
+                if nrFeatureHits == 0:
+                    color = colorGlycoNoHit
+                elif nrFeatureHits == 1:
+                    color = colorGlycoOneHit
+                else:
+                    color = colorGlycoMultipleHits
             elif nr == 3:
                 if self.ov10.get() == 0:
                     continue
-                color = colorGlyco
+                if nrFeatureHits == 0:
+                    color = colorGlycoNoHit
+                elif nrFeatureHits == 1:
+                    color = colorGlycoOneHit
+                else:
+                    color = colorGlycoMultipleHits
             elif nr == 10:
                 if self.ov8.get() == 0:
                     continue
