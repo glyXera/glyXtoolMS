@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>FileConversion</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/glyxFilter.py --inMZML "%2" --inFeature "%3" --outGlyML "%4" --checkNGlycan "%5" --hasFucose "%6" --hasSial %7 --oxoniumions %8 --tolerance %9 --ionthreshold %10 --scorethreshold "%11"</cloptions>
+		  <cloptions> "%1"/glyxFilter.py --inMZML "%2" --inFeature "%3" --outGlyML "%4" --createFeatures "%5" --hasFucose "%6" --hasSial %7 --oxoniumions %8 --tolerance %9 --ionthreshold %10 --scorethreshold "%11"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -28,7 +28,7 @@
 			<mapping id="2" cl="%%inMZML" />
             <mapping id="3" cl="%%inFeature" />
 			<mapping id="4" cl="%%outGlyML" />
-			<mapping id="5" cl="%%checkNGlycan" />
+			<mapping id="5" cl="%%createFeatures" />
 			<mapping id="6" cl="%%hasFucose" />
 			<mapping id="7" cl="%%hasSial" />
 			<mapping id="8" cl="%%oxoniumions" />
@@ -41,7 +41,7 @@
 			<ITEM name="inMZML" value="" type="string" tags="input file" restrictions="*.mzML" />
             <ITEM name="inFeature" value="" type="string" tags="input file" restrictions="*.featureXML" />
 			<ITEM name="outGlyML" value="" type="string" tags="output file" restrictions="*.xml" />
-            <ITEM name="checkNGlycan" value="true" type="string" restrictions="true,false" description="Identify N-Glycan with presense of Oxoniumion 528 m/z"/>
+            <ITEM name="createFeatures" value="true" type="string" restrictions="true,false" description="Create features for featureless spectra"/>
             <ITEM name="hasFucose" value="true" type="string" restrictions="true,false" description="Check for oxonium ions containing fucose"/>
             <ITEM name="hasSial" value="true" type="string" restrictions="true,false" description="Check for oxonium ions containing sialic acid"/>
             <ITEM name="oxoniumions" value="" type="string" description="Check for additional oxonium ions"/>

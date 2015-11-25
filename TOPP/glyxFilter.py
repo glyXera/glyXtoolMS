@@ -365,7 +365,7 @@ def main(options):
     for key in collectedScores:
         score = collectedScores[key]
         glyxXMLFile.spectra.append(score)
-        if score.feature is None:
+        if score.feature is None and options.createFeatures == "true":
             # generate new feature
             f = glyxsuite.io.GlyxXMLFeature()
             featureNr += 1
@@ -420,8 +420,8 @@ def handle_args(argv=None):
                         help="feature file input")
     parser.add_argument("--outGlyML", dest="outGlyML",
                         help="glyML output")
-    parser.add_argument("--checkNGlycan", dest="checkNGlycan",
-                        help="Checks for oxoniumion 528 m/z indicative for N-Glycosylation")
+    parser.add_argument("--createFeatures", dest="createFeatures",
+                        help="Create features for featureless spectra")
     parser.add_argument("--hasFucose", dest="hasFucose",
                         help="include oxoniumions indicative for fucosylation")
     parser.add_argument("--hasSial", dest="hasSial",
@@ -438,6 +438,7 @@ def handle_args(argv=None):
     parser.add_argument("--scorethreshold", dest="scorethreshold",
                         help="Score threshold for identifying glycopeptide spectra",
                         type=float)
+
     
     if not argv:
         args = parser.parse_args(sys.argv[1:])
