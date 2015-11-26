@@ -4,6 +4,7 @@ Panel to set Filteroptions for all Data
 """ 
 import Tkinter
 import ttk
+import glyxsuite
 
 class FilterPanel(Tkinter.Toplevel):
 
@@ -107,6 +108,7 @@ class FilterPanel(Tkinter.Toplevel):
         filters.append(GlycopeptideMass_Filter())
         filters.append(Fragmentmass_Filter())
         filters.append(Fragmentname_Filter(self.model))
+        filters.append(StatusFilter())
         
         f = FilterEntry(self.filterIdentification,
                         filters,
@@ -120,6 +122,8 @@ class FilterPanel(Tkinter.Toplevel):
         filters = []
         filters.append(EmptyFilter())
         filters.append(Feature_RT_Filter())
+        filters.append(StatusFilter())
+        
         f = FilterEntry(self.filterFeature,
                         filters,
                         self.model.filters["Features"],
@@ -130,6 +134,7 @@ class FilterPanel(Tkinter.Toplevel):
     def addScoringFilter(self, definedFilter=None):
         filters = []
         filters.append(EmptyFilter())
+        filters.append(StatusFilter())
         
         f = FilterEntry(self.filterScoring,
                         filters,
@@ -203,7 +208,6 @@ class FilterEntry(ttk.Frame):
         
         if definedFilter != None:
             self.currentFilter = definedFilter
-            
         self.traceChanges = False
         self.paintCurrentFilter()
         self.traceChanges = True
@@ -265,7 +269,6 @@ class FilterEntry(ttk.Frame):
     def paintCurrentFilter(self):
         self.traceChanges = False
         self.var.set(self.currentFilter.name)
-        
         if self.currentFilter.type1 == FieldTypes.INACTIVE:
             self.entry1.grid_remove()
             self.options1.grid_remove()
@@ -294,10 +297,8 @@ class FilterEntry(ttk.Frame):
         else:
             raise Exception("Unknown FieldType!")
 
-        
         self.setMenuChoices(self.optionOperator, self.currentFilter.operatorChoices, self.operatorVar)
         self.operatorVar.set(self.currentFilter.operator)
-            
         if self.currentFilter.type2 == FieldTypes.INACTIVE:
             self.entry2.grid_remove()
             self.options2.grid_remove()
@@ -331,7 +332,6 @@ class FilterEntry(ttk.Frame):
         
         
     def setMenuChoices(self, menu, choices, var):
-        self.traceChanges = False
         menu['menu'].delete(0, 'end')
         if len(choices) == 0:
             var.set("")
@@ -339,7 +339,6 @@ class FilterEntry(ttk.Frame):
         var.set(choices[0])
         for choice in choices:
             menu['menu'].add_command(label=choice, command=Tkinter._setit(var, choice))
-        self.traceChanges = True
 
     def delete(self):
         self.grid_forget()
@@ -510,14 +509,40 @@ class EmptyFilter(Filter):
         self.type2 = FieldTypes.INACTIVE
         self.operatorChoices = [""]
         
-    def parseField1(self,field1):
+    def parseField1(self, field1):
         return
         
-    def parseField2(self,field2):
+    def parseField2(self, field2):
         return
 
     def evaluate(self, obj):
         return True
+
+class StatusFilter(Filter):
+    def __init__(self):
+        super(StatusFilter, self).__init__("Status")
+        self.type1 = FieldTypes.INACTIVE
+        self.type2 = FieldTypes.MENU
+        self.choices2 = glyxsuite.io.ConfirmationStatus._types
+        self.operatorChoices = ["is", "is not"]
+        self.operator = "is"
+        
+    def parseField1(self, field1):
+        return
+        
+    def parseField2(self, field2):
+        self.field2 = field2
+
+    def evaluate(self, obj):
+        if self.operator == "is":
+            if obj.status == self.field2:
+                return True
+            return False
+        else:
+            if obj.status == self.field2:
+                return False
+        return True
+
 
 class GlycopeptideMass_Filter(Filter):
     def __init__(self):

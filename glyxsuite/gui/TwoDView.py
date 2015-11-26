@@ -40,7 +40,7 @@ class TwoDView(FramePlot.FramePlot):
                           ('active', '#d9d9d9')])
 
         # Events
-        self.canvas.bind("<Button-1>", self.eventMouseClick)
+        self.canvas.bind("<Button-1>", self.eventMouseClick, "+")
         #self.canvas.bind("<Left>", self.setButtonValue)
         #self.canvas.bind("<Right>", self.setButtonValue)
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
