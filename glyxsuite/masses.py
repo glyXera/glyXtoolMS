@@ -165,7 +165,7 @@ def calcIonMass(name):
     Parsing of Monomer-Amount combinations consists of the follwing Regex:
     '\(.+?\)-?\d+'
     """
-
+    name = name.replace(" ", "")
     if re.match(r"^(\(.+?\)-?\d+)+$", name) == None:
         raise Exception(r"""Input string '{}' doesn't follow the
         regex  '^(\(.+?\)-?\d+)+$'

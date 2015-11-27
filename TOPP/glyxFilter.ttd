@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>FileConversion</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/glyxFilter.py --inMZML "%2" --inFeature "%3" --outGlyML "%4" --createFeatures "%5" --hasFucose "%6" --hasSial %7 --oxoniumions %8 --tolerance %9 --ionthreshold %10 --scorethreshold "%11"</cloptions>
+		  <cloptions> "%1"/glyxFilter.py --inMZML "%2" --inFeature "%3" --outGlyML "%4" --createFeatures "%5" --hasFucose "%6" --hasSial %7 --oxoniumions "%8" --tolerance %9 --ionthreshold %10 --scorethreshold "%11"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
