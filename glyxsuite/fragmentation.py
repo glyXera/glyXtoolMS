@@ -155,18 +155,28 @@ def generatePeptideFragments(peptide):
 
         bNH3 = b - {"N":1, "H":3}
         bH2O = b - {"O":1, "H":2}
+        bHEXNAC = b + glyxsuite.masses.COMPOSITION["HEXNAC"]
 
         if i < len(sequence)-1: # generate a,b and c ions
             key = str(i+1)
-            data["a"+key] = (a.mass(), peptidestring, 0, i+1)
-            data["a"+key+"-NH3"] = (aNH3.mass(), peptidestring+"-NH3", 0, i+1)
-            data["a"+key+"-H2O"] = (aH2O.mass(), peptidestring+"-H2O", 0, i+1)
+            #data["a"+key] = (a.mass(), peptidestring, 0, i+1)
+            #data["a"+key+"-NH3"] = (aNH3.mass(), peptidestring+"-NH3", 0, i+1)
+            #data["a"+key+"-H2O"] = (aH2O.mass(), peptidestring+"-H2O", 0, i+1)
 
             data["b"+key] = (b.mass(), peptidestring, 0, i+1)
-            data["b"+key+"-NH3"] = (bNH3.mass(), peptidestring+"-NH3", 0, i+1)
-            data["b"+key+"-H2O"] = (bH2O.mass(), peptidestring+"-H2O", 0, i+1)
+            data["b"+key+"+HexNAc"] = (bHEXNAC.mass(), peptidestring+"+HexNac", 0, i+1)
+            
+            if ("R" in sequence or
+                "K" in sequence or
+                "Q" in sequence or
+                "N" in sequence):
+                data["b"+key+"-NH3"] = (bNH3.mass(), peptidestring+"-NH3", 0, i+1)
+            if ("S" in sequence or
+                "T" in sequence or
+                sequence.startswith("E")):
+                data["b"+key+"-H2O"] = (bH2O.mass(), peptidestring+"-H2O", 0, i+1)
 
-            data["c"+key] = (c.mass(), peptidestring, 0, i+1)
+            #data["c"+key] = (c.mass(), peptidestring, 0, i+1)
 
         cTerm = Composition() + {"H":2, "O":1}
         peptidestring = ""
@@ -184,18 +194,27 @@ def generatePeptideFragments(peptide):
         y = cTerm + {"H":1}
         z = cTerm - {"H":2, "N":1}
 
-        #yNH3 = y - {"N":1, "H":3}
+        yNH3 = y - {"N":1, "H":3}
         yH2O = y - {"O":1, "H":2}
 
+        yHEXNAC = y + glyxsuite.masses.COMPOSITION["HEXNAC"]
 
         key = str(len(sequence)-i)
 
         if i > 0:
-            data["x"+key] = (x.mass(), peptidestring, i, len(sequence))
+            #data["x"+key] = (x.mass(), peptidestring, i, len(sequence))
             data["y"+key] = (y.mass(), peptidestring, i, len(sequence))
-            #data["y"+key+"-NH3"] = (yNH3.mass(), peptidestring+"-NH3", i, len(sequence)) # equals z ion
-            data["y"+key+"-H2O"] = (yH2O.mass(), peptidestring+"-H2O", i, len(sequence))
-            data["z"+key] = (z.mass(), peptidestring, i, len(sequence)) # equals y-NH3
+            data["y"+key+"+HexNAc"] = (yHEXNAC.mass(), peptidestring+"+HexNac", i, len(sequence))
+            if ("R" in sequence or
+                "K" in sequence or
+                "Q" in sequence or
+                "N" in sequence):
+                data["y"+key+"-NH3"] = (yNH3.mass(), peptidestring+"-NH3", i, len(sequence))
+            if ("S" in sequence or
+                "T" in sequence or
+                sequence.startswith("E")):
+                data["y"+key+"-H2O"] = (yH2O.mass(), peptidestring+"-H2O", i, len(sequence))
+            #data["z"+key] = (z.mass(), peptidestring, i, len(sequence)) # equals y-NH3
 
 
 
