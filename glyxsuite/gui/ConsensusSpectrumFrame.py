@@ -1,13 +1,13 @@
 import ttk
 import Tkinter
-from glyxsuite.gui import FramePlot
+from glyxsuite.gui import AnnotatedPlot
 from glyxsuite.gui import Appearance
 
 
-class ConsensusSpectrumFrame(FramePlot.FramePlot):
+class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
     def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height,
+        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
                                      width=width, xTitle="mz [Th]",
                                      yTitle="Intensity [counts]")
 
@@ -16,7 +16,14 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
         self.consensus = None
         self.selectedFragments = []
         self.NrXScales = 5.0
-
+        
+        self.referenceMass = 0
+        
+        self.annotationItems = {}
+        self.annotations = []
+        self.currentAnnotation = None
+        self.peaksByItem = {}
+        
         self.coord = Tkinter.StringVar()
         l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
@@ -31,6 +38,30 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
 
         # register class
         self.model.classes["ConsensusSpectrumFrame"] = self
+        
+        # register additional button bindings
+        self.canvas.bind("<Button-2>", self.button2, "+")
+        self.canvas.bind("<Button-3>", self.button3, "+")
+        
+    def button2(self, event):
+        overlap = set(self.canvas.find_overlapping(event.x-10,
+                                                   0,
+                                                   event.x+10,
+                                                   self.height))
+        hits = []
+        for item in overlap:
+            if item in self.peaksByItem:
+                hits.append(self.peaksByItem[item])
+        if len(hits) == 0:
+            self.referenceMass = 0
+            self.initCanvas(keepZoom=True)
+            return
+        peak = max(hits, key=lambda p: p.y)
+        self.referenceMass = peak.x
+        self.initCanvas(keepZoom=True)
+
+    def button3(self,*args):
+        return
 
     def setMaxValues(self):
         if self.consensus == None:
@@ -64,11 +95,12 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
                     glycanFragments[ionname] = ion["mass"]
         annotationText = []
         annotationMass = []
+        self.peaksByItem = {}
         for peak in self.consensus:
             pMZ = self.convAtoX(peak.x)
             pInt = self.convBtoY(peak.y)
 
-            masstext = str(round(peak.x, 4))
+            masstext = str(round(peak.x - self.referenceMass, 4))
             # check if a fragment exists for the peak
             foundGlycan = None
             for ionname in glycanFragments:
@@ -96,11 +128,15 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
                 annotationMass.append((pMZ, pInt, masstext))
                 color = "black"
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill=color)
+            self.peaksByItem[item] = peak
         items = self.plotText(annotationText, set(), 0)
         items = self.plotText(annotationMass, items, 5)
 
         self.plotSelectedFragments()
-
+        
+        # paint all available annotations
+        self.paintAllAnnotations()
+        
         self.allowZoom = True
 
     def init(self, hit):
@@ -120,6 +156,11 @@ class ConsensusSpectrumFrame(FramePlot.FramePlot):
         self.viewYMin = -1
         self.viewYMax = -1
         self.hit = hit
+        self.referenceMass = 0
+        self.annotationItems = {}
+        self.currentAnnotation = None
+        self.peaksByItem = {}
+        self.annotations = feature.annotations
         self.initCanvas(keepZoom=True)
 
     def identifier(self):

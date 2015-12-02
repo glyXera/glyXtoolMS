@@ -100,6 +100,8 @@ class PeptideCoverageFrame(ttk.Frame):
             y, b = parseInternalFragment(name, peptideLength)
             if y == None:
                 y, b = parseBFragment(name)
+            else: # ignore internal fragments
+                continue
             if y == None:
                 y, b = parseYFragment(name, peptideLength)
             if y == None:
@@ -108,9 +110,10 @@ class PeptideCoverageFrame(ttk.Frame):
             bHit = ySeries.get(b, False)
             self.fragmentCoverage[y] = self.fragmentCoverage.get(y, []) + [name]
             self.fragmentCoverage[b] = self.fragmentCoverage.get(b, []) + [name]
-
-            fragmentSequence = self.hit.fragments[name]["sequence"].split("-")[0]
-            fragmentSequence = re.sub(r"\(.+?\)", "", fragmentSequence)
+            
+            fragmentSequence = re.search(r"[A-Z]+", self.hit.fragments[name]["sequence"]).group()
+            #fragmentSequence = self.hit.fragments[name]["sequence"].split("-")[0]
+            #fragmentSequence = re.sub(r"\(.+?\)", "", fragmentSequence)
             key = "".join(sorted(fragmentSequence))
             if len(parts[key]) == 1:
                 yHit = True
@@ -175,11 +178,13 @@ class PeptideCoverageFrame(ttk.Frame):
                 item1 = self.canvas.create_line(x, yc,
                                                 x, 10,
                                                 tags=("site", ),
-                                                fill=color, dash=(3, 5))
+                                                fill=color)
+                                                #fill=color, dash=(3, 5))
                 item2 = self.canvas.create_line(x, 10,
                                                 x+10, 10,
                                                 tags=("site", ),
-                                                fill=color, dash=(3, 5))
+                                                fill=color)
+                                                #fill=color, dash=(3, 5))
             self.coverage[item1] = index
             self.coverage[item2] = index
 
@@ -200,11 +205,13 @@ class PeptideCoverageFrame(ttk.Frame):
                 item1 = self.canvas.create_line(x, yc,
                                                 x, self.height-10,
                                                 tags=("site", ),
-                                                fill=color, dash=(3, 5))
+                                                fill=color)
+                                                #fill=color, dash=(3, 5))
                 item2 = self.canvas.create_line(x, self.height-10,
                                                 x-10, self.height-10,
                                                 tags=("site", ),
-                                                fill=color, dash=(3, 5))
+                                                fill=color)
+                                                #fill=color, dash=(3, 5))
             self.coverage[item1] = index
             self.coverage[item2] = index
 

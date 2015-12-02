@@ -1,18 +1,43 @@
 import ttk
 import Tkinter
 
-from glyxsuite.gui import FramePlot
+from glyxsuite.gui import AnnotatedPlot
 from glyxsuite.gui import Appearance
+import glyxsuite
 
-class FeatureSpectrumView(FramePlot.FramePlot):
+"""
+class Annotation(object):
+    
+    def __init__(self):
+        self.x1 = 0
+        self.x2 = 0
+        self.y = 0
+        self.text = ""
+        self.items = {}
+        self.selected = ""
+"""
+class Peak:
+    
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
+
+class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
 
     def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height,
+        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
                                      width=width, xTitle="mz [Th]",
                                      yTitle="Intensity [counts]")
 
         self.master = master
-        self.spec = None
+        self.spec = None # Link to raw spectrum
+        self.spectrum = None # Link to current spectrum score
+
+        self.peaksByItem = {}
+        self.annotationItems = {}
+        self.annotations = []
+        self.currentAnnotation = None
+        self.referenceMass = 0
 
         self.coord = Tkinter.StringVar()
         l = ttk.Label(self, textvariable=self.coord)
@@ -28,7 +53,35 @@ class FeatureSpectrumView(FramePlot.FramePlot):
 
         # link function
         self.model.classes["FeatureSpectrumView"] = self
+        
+        self.canvas.bind("<Button-2>", self.button2, "+")
+        
+        #self.canvas.bind("<Button-1>", self.button1Pressed, "+")
+        #self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
+        #self.canvas.bind("<B1-Motion>", self.button3Motion, "+")
 
+        
+        #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
+        #self.canvas.bind("<ButtonRelease-3>", self.button3Released, "+")
+        #self.canvas.bind("<B3-Motion>", self.button3Motion, "+")
+        
+        #self.canvas.bind("<Delete>", self.deleteAnnotation, "+")
+
+    def identifier(self):
+        return "FeatureSpectrumView"
+
+    def initSpectrum(self, spec):
+        if spec == None:
+            return
+        if spec.getNativeID() in self.model.currentAnalysis.spectraIds:
+             self.annotations = self.model.currentAnalysis.spectraIds[spec.getNativeID()]._spectrum.annotations
+        self.spec = spec
+        self.referenceMass = 0
+        self.peaksByItem = {}
+        self.annotationItems = {}
+        self.currentAnnotation = None
+        self.initCanvas()
+        
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1
@@ -83,17 +136,19 @@ class FeatureSpectrumView(FramePlot.FramePlot):
         scoredPeaks = []
         annotationText = []
         annotationMass = []
+        self.peaksByItem = {}
         for intens, mz in peaks:
             # check if peak is a scored peak
             pMZ = self.convAtoX(mz)
             pInt = self.convBtoY(intens)
-            masstext = str(round(mz, 4))
+            masstext = str(round(mz - self.referenceMass, 4))
             if mz in scored:
                 scoredPeaks.append((intens, mz))
                 sugar, fragment = scored[mz]
                 annotationText.append((pMZ, pInt, fragment+"\n"+masstext))
             else:
                 item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="black")
+                self.peaksByItem[item] = (intens, mz)
                 annotationMass.append((pMZ, pInt, masstext))
 
             self.allowZoom = True
@@ -104,9 +159,13 @@ class FeatureSpectrumView(FramePlot.FramePlot):
             pMZ = self.convAtoX(mz)
             pInt = self.convBtoY(intens)
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="red")
+            self.peaksByItem[item] = (intens, mz)
 
         items = self.plotText(annotationText, set(), 0)
         items = self.plotText(annotationMass, items, 5)
+        
+        # paint all available annotations
+        self.paintAllAnnotations()
 
     def plotText(self, collectedText, items=set(), N=0):
         # remove text which is outside of view
@@ -141,11 +200,13 @@ class FeatureSpectrumView(FramePlot.FramePlot):
                 self.canvas.delete(item)
         return items
 
-    def initSpectrum(self, spec):
-        if spec == None:
+    def button2(self, event):
+        if self.spec == None:
             return
-        self.spec = spec
-        self.initCanvas()
-
-    def identifier(self):
-        return "FeatureSpectrumView"
+        peak = self.findPeakAt(event.x)
+        if peak == None:
+            self.referenceMass = 0
+            self.initCanvas(keepZoom=True)
+            return
+        self.referenceMass = peak[1]
+        self.initCanvas(keepZoom=True)
