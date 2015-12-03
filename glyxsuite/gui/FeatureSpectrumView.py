@@ -111,10 +111,10 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
                 continue
             if intens < self.viewYMin:
                 continue
-            peaks.append((intens, mz))
+            peaks.append(Peak(mz,intens))
 
         # sort peaks after highest intensity
-        peaks.sort(reverse=True)
+        peaks.sort(reverse=True, key=lambda p: p.y)
 
         # get scored peaks
         scored = {}
@@ -124,9 +124,9 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
                 for fragment in ions[sugar]:
                     mass = ions[sugar][fragment]["mass"]
                     l = []
-                    for intens, mz in peaks:
-                        if abs(mz-mass) < 1.0:
-                            l.append((abs(mz-mass), mz, sugar, fragment))
+                    for p in peaks:
+                        if abs(p.x-mass) < 1.0:
+                            l.append((abs(p.x-mass), p.x, sugar, fragment))
 
                     l.sort()
                     if len(l) > 0:
@@ -137,29 +137,29 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
         annotationText = []
         annotationMass = []
         self.peaksByItem = {}
-        for intens, mz in peaks:
+        for p in peaks:
             # check if peak is a scored peak
-            pMZ = self.convAtoX(mz)
-            pInt = self.convBtoY(intens)
-            masstext = str(round(mz - self.referenceMass, 4))
-            if mz in scored:
-                scoredPeaks.append((intens, mz))
-                sugar, fragment = scored[mz]
+            pMZ = self.convAtoX(p.x)
+            pInt = self.convBtoY(p.y)
+            masstext = str(round(p.x - self.referenceMass, 4))
+            if p.x in scored:
+                scoredPeaks.append(p)
+                sugar, fragment = scored[p.x]
                 annotationText.append((pMZ, pInt, fragment+"\n"+masstext))
             else:
                 item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="black")
-                self.peaksByItem[item] = (intens, mz)
+                self.peaksByItem[item] = p
                 annotationMass.append((pMZ, pInt, masstext))
 
             self.allowZoom = True
 
         # plot scored peaks last
         scoredPeaks.sort(reverse=True)
-        for intens, mz in scoredPeaks:
-            pMZ = self.convAtoX(mz)
-            pInt = self.convBtoY(intens)
+        for p in scoredPeaks:
+            pMZ = self.convAtoX(p.x)
+            pInt = self.convBtoY(p.y)
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="red")
-            self.peaksByItem[item] = (intens, mz)
+            self.peaksByItem[item] = p
 
         items = self.plotText(annotationText, set(), 0)
         items = self.plotText(annotationMass, items, 5)
@@ -208,5 +208,5 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
             self.referenceMass = 0
             self.initCanvas(keepZoom=True)
             return
-        self.referenceMass = peak[1]
+        self.referenceMass = peak.x
         self.initCanvas(keepZoom=True)

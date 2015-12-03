@@ -73,9 +73,9 @@ class AnnotatedPlot(FramePlot.FramePlot):
 
         if peak is not None:
             if self.currentAnnotation.selected == "x1":
-                self.currentAnnotation.x1 = peak[1]
+                self.currentAnnotation.x1 = peak.x
             elif self.currentAnnotation.selected == "x2":
-                self.currentAnnotation.x2 = peak[1]
+                self.currentAnnotation.x2 = peak.x
             self.currentAnnotation.text = str(round(abs(self.currentAnnotation.x1-self.currentAnnotation.x2),4))
         self.paintAllAnnotations()
 
@@ -85,8 +85,8 @@ class AnnotatedPlot(FramePlot.FramePlot):
         
         if peak is not None:
             self.currentAnnotation = glyxsuite.io.Annotation()
-            self.currentAnnotation.x1 = peak[1]
-            self.currentAnnotation.x2 = peak[1]
+            self.currentAnnotation.x1 = peak.x
+            self.currentAnnotation.x2 = peak.x
             self.currentAnnotation.selected = "x2"
             self.currentAnnotation.y = y
         else:
@@ -99,12 +99,10 @@ class AnnotatedPlot(FramePlot.FramePlot):
             return
         peak = self.findPeakAt(event.x)
             
-        if peak is not None:
-            x = peak[1]
-            
-        else:
+        if peak is  None:
             return
-            
+        x = peak.x
+
         if self.currentAnnotation.selected == "x1":
             self.currentAnnotation.x1 = x
         elif self.currentAnnotation.selected == "x2":
@@ -121,9 +119,9 @@ class AnnotatedPlot(FramePlot.FramePlot):
         peak = self.findPeakAt(event.x)
         if peak is not None:
             if self.currentAnnotation.selected == "x1":
-                self.currentAnnotation.x1 = peak[1]
+                self.currentAnnotation.x1 = peak.x
             elif self.currentAnnotation.selected == "x2":
-                self.currentAnnotation.x2 = peak[1]
+                self.currentAnnotation.x2 = peak.x
             self.currentAnnotation.text = str(round(abs(self.currentAnnotation.x1-self.currentAnnotation.x2),4))
             self.annotations.append(self.currentAnnotation)
         self.currentAnnotation = None

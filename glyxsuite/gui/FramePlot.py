@@ -71,7 +71,8 @@ class FramePlot(ttk.Frame):
         self.grid_columnconfigure(0, weight=1)
 
         self.canvas.bind("<Button-1>", self.eventTakeFokus, "+")
-        self.canvas.bind("<B1-Motion>", self.eventMouseMotion, "+")
+        self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
+        self.canvas.bind("<B1-Motion>", self.eventMouseMotionB1, "+")
         self.canvas.bind("<Control-Button-1>", self.eventStartZoom, "+")
         self.canvas.bind("<ButtonRelease-1>", self.eventButtonRelease, "+")
         self.canvas.bind("<BackSpace>", self.zoomBack, "+")
@@ -140,6 +141,8 @@ class FramePlot(ttk.Frame):
 
     def eventMouseMotion(self, event):
         self.coord.set(self.identifier()+"/"+str(round(self.convXtoA(event.x), 2))+"/"+str(round(self.convYtoB(event.y), 0)))
+
+    def eventMouseMotionB1(self, event):
         if self.action == None:
             return
         if not hasattr(self.action, "onMotion"):
