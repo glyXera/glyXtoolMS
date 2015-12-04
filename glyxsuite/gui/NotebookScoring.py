@@ -122,23 +122,23 @@ class NotebookScoring(ttk.Frame):
         selection = self.tree.selection()
         if len(selection) == 0:
             return
-        item = selection[0]
-        spec, spectrum = self.treeIds[item]
-        
-        if status == "Accepted":
-            spectrum.status = glyxsuite.io.ConfirmationStatus.Accepted
-        elif status == "Rejected":
-            spectrum.status = glyxsuite.io.ConfirmationStatus.Rejected
-        elif status == "Deleted":
-            spectrum.status = glyxsuite.io.ConfirmationStatus.Deleted
-        # Update on Treeview
-        values = self.tree.item(item)["values"]
-        values[5] = spectrum.status
-        self.tree.item(item, values=values)
-        
-        taglist = list(self.tree.item(item, "tags"))
-        taglist = self.setHighlightingTag(taglist, spectrum.status)
-        self.tree.item(item, tags=taglist)
+        for item in selection:
+            spec, spectrum = self.treeIds[item]
+            
+            if status == "Accepted":
+                spectrum.status = glyxsuite.io.ConfirmationStatus.Accepted
+            elif status == "Rejected":
+                spectrum.status = glyxsuite.io.ConfirmationStatus.Rejected
+            elif status == "Deleted":
+                spectrum.status = glyxsuite.io.ConfirmationStatus.Deleted
+            # Update on Treeview
+            values = self.tree.item(item)["values"]
+            values[5] = spectrum.status
+            self.tree.item(item, values=values)
+            
+            taglist = list(self.tree.item(item, "tags"))
+            taglist = self.setHighlightingTag(taglist, spectrum.status)
+            self.tree.item(item, tags=taglist)
         
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)
@@ -251,7 +251,7 @@ class NotebookScoring(ttk.Frame):
 
     def clickedTree(self, event):
         selection = self.tree.selection()
-        if len(selection) == 0:
+        if len(selection) != 1:
             return
         item = selection[0]
         spec, spectrum = self.treeIds[item]

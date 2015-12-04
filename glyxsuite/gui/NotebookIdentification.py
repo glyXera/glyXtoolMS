@@ -67,23 +67,23 @@ class NotebookIdentification(ttk.Frame):
         selection = self.tree.selection()
         if len(selection) == 0:
             return
-        item = selection[0]
-        hit = self.treeIds[item]
-        
-        if status == "Accepted":
-            hit.status = glyxsuite.io.ConfirmationStatus.Accepted
-        elif status == "Rejected":
-            hit.status = glyxsuite.io.ConfirmationStatus.Rejected
-        elif status == "Deleted":
-            hit.status = glyxsuite.io.ConfirmationStatus.Deleted
-        # Update on Treeview
-        values = self.tree.item(item)["values"]
-        values[4] = hit.status
-        self.tree.item(item, values=values)
-        
-        taglist = list(self.tree.item(item, "tags"))
-        taglist = self.setHighlightingTag(taglist, hit.status)
-        self.tree.item(item, tags=taglist)
+        for item in selection:
+            hit = self.treeIds[item]
+            
+            if status == "Accepted":
+                hit.status = glyxsuite.io.ConfirmationStatus.Accepted
+            elif status == "Rejected":
+                hit.status = glyxsuite.io.ConfirmationStatus.Rejected
+            elif status == "Deleted":
+                hit.status = glyxsuite.io.ConfirmationStatus.Deleted
+            # Update on Treeview
+            values = self.tree.item(item)["values"]
+            values[4] = hit.status
+            self.tree.item(item, values=values)
+            
+            taglist = list(self.tree.item(item, "tags"))
+            taglist = self.setHighlightingTag(taglist, hit.status)
+            self.tree.item(item, tags=taglist)
         
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)
@@ -208,30 +208,30 @@ class NotebookIdentification(ttk.Frame):
         selection = self.tree.selection()
         if len(selection) == 0:
             return
-        item = selection[0]
-        self.model.classes["NotebookFeature"].setSelectedFeature(self.tree.item(item, "text"))
-        self.model.classes["ConsensusSpectrumFrame"].init(self.treeIds[item])
-        self.model.classes["PeptideCoverageFrame"].init(self.treeIds[item])
+        elif len(selection) == 1:
+            item = selection[0]
+            self.model.classes["NotebookFeature"].setSelectedFeature(self.tree.item(item, "text"))
+            self.model.classes["ConsensusSpectrumFrame"].init(self.treeIds[item])
+            self.model.classes["PeptideCoverageFrame"].init(self.treeIds[item])
 
     def deleteIdentification(self, event):
         selection = self.tree.selection()
         if len(selection) == 0:
             return
-        item = selection[0]
+        for item in selection:
+            hit = self.treeIds[item]
 
-        hit = self.treeIds[item]
+            nextItem = self.tree.next(item)
+            self.tree.delete(item)
+            self.treeIds.pop(item)
+            if nextItem != {}:
+                self.tree.selection_set(nextItem)
+            elif len(self.tree.get_children('')) > 0:
+                nextItem = self.tree.get_children('')[-1]
+                self.tree.selection_set(nextItem)
 
-        nextItem = self.tree.next(item)
-        self.tree.delete(item)
-        self.treeIds.pop(item)
-        if nextItem != {}:
-            self.tree.selection_set(nextItem)
-        elif len(self.tree.get_children('')) > 0:
-            nextItem = self.tree.get_children('')[-1]
-            self.tree.selection_set(nextItem)
-
-        analysis = self.model.currentAnalysis
-        analysis.removeIdentification(hit)
+            analysis = self.model.currentAnalysis
+            analysis.removeIdentification(hit)
         
         # update NotebookFeature
         self.model.classes["NotebookFeature"].updateFeatureTree()

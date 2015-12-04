@@ -116,23 +116,23 @@ class NotebookFeature(ttk.Frame):
         selection = self.featureTree.selection()
         if len(selection) == 0:
             return
-        item = selection[0]
-        feature = self.featureTreeIds[item]
-        
-        if status == "Accepted":
-            feature.status = glyxsuite.io.ConfirmationStatus.Accepted
-        elif status == "Rejected":
-            feature.status = glyxsuite.io.ConfirmationStatus.Rejected
-        elif status == "Deleted":
-            feature.status = glyxsuite.io.ConfirmationStatus.Deleted
-        # Update on Treeview
-        values = self.featureTree.item(item)["values"]
-        values[5] = feature.status
-        self.featureTree.item(item, values=values)
-        
-        taglist = list(self.featureTree.item(item, "tags"))
-        taglist = self.setHighlightingTag(taglist, feature.status)
-        self.featureTree.item(item, tags=taglist)
+        for item in selection:
+            feature = self.featureTreeIds[item]
+            
+            if status == "Accepted":
+                feature.status = glyxsuite.io.ConfirmationStatus.Accepted
+            elif status == "Rejected":
+                feature.status = glyxsuite.io.ConfirmationStatus.Rejected
+            elif status == "Deleted":
+                feature.status = glyxsuite.io.ConfirmationStatus.Deleted
+            # Update on Treeview
+            values = self.featureTree.item(item)["values"]
+            values[5] = feature.status
+            self.featureTree.item(item, values=values)
+            
+            taglist = list(self.featureTree.item(item, "tags"))
+            taglist = self.setHighlightingTag(taglist, feature.status)
+            self.featureTree.item(item, tags=taglist)
 
     def sortFeatureColumn(self, col):
 
@@ -437,26 +437,26 @@ class NotebookFeature(ttk.Frame):
         selection = self.featureTree.selection()
         if len(selection) == 0:
             return
-        item = selection[0]
+        for item in selection:
 
-        feature = self.featureTreeIds[item]
-        nextItem = self.featureTree.next(item)
-        self.featureTree.delete(item)
-        self.featureTreeIds.pop(item)
-        #print self.featureItems
-        self.featureItems.pop(feature.getId())
+            feature = self.featureTreeIds[item]
+            nextItem = self.featureTree.next(item)
+            self.featureTree.delete(item)
+            self.featureTreeIds.pop(item)
+            self.featureItems.pop(feature.getId())
+            
+            if nextItem != {}:
+                self.featureTree.selection_set(nextItem)
+                self.featureTree.see(nextItem)
+            elif len(self.featureTree.get_children('')) > 0:
+                nextItem = self.featureTree.get_children('')[-1]
+                self.featureTree.selection_set(nextItem)
+                self.featureTree.see(nextItem)
+
+            # remove feature from analysis file
+            analysis = self.model.currentAnalysis
+            analysis.removeFeature(feature)
         
-        if nextItem != {}:
-            self.featureTree.selection_set(nextItem)
-            self.featureTree.see(nextItem)
-        elif len(self.featureTree.get_children('')) > 0:
-            nextItem = self.featureTree.get_children('')[-1]
-            self.featureTree.selection_set(nextItem)
-            self.featureTree.see(nextItem)
-
-        # remove feature from analysis file
-        analysis = self.model.currentAnalysis
-        analysis.removeFeature(feature)
         self.model.classes["NotebookIdentification"].updateTree()
 
         # adjust tags
