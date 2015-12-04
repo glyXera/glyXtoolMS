@@ -39,6 +39,8 @@ class FramePlot(ttk.Frame):
 
         self.NrXScales = 5.0
         self.NrYScales = 5.0
+        
+        self.xTypeTime = False
 
         # add canvas
         self.aMax = -1
@@ -140,7 +142,10 @@ class FramePlot(ttk.Frame):
         self.canvas.focus_set()
 
     def eventMouseMotion(self, event):
-        self.coord.set(self.identifier()+"/"+str(round(self.convXtoA(event.x), 2))+"/"+str(round(self.convYtoB(event.y), 0)))
+        x = self.convXtoA(event.x)
+        if self.xTypeTime == True and self.model.timescale == "minutes":
+            x = x/60.0
+        self.coord.set(self.identifier()+"/"+str(round(x, 2))+"/"+str(round(self.convYtoB(event.y), 0)))
 
     def eventMouseMotionB1(self, event):
         if self.action == None:
@@ -188,9 +193,17 @@ class FramePlot(ttk.Frame):
             self.viewYMax = self.viewYMin+1
         self.slopeA = (self.width-self.borderLeft-self.borderRight)/baseX
         self.slopeB = (self.height-self.borderTop-self.borderBottom)/baseY
+        
+        self.slopeA = self.slopeA
 
     def convAtoX(self, A):
         return self.borderLeft+self.slopeA*(A-self.viewXMin)
+            
+    def timeConversion(self):
+        if self.xTypeTime == True and self.model.timescale == "minutes":
+            return 60.0
+        else:
+            return 1.0
 
     def convBtoY(self, B):
         return self.height-self.borderBottom-self.slopeB*(B-self.viewYMin)
@@ -268,9 +281,14 @@ class FramePlot(ttk.Frame):
             if start > self.viewXMin and start < self.viewXMax:
                 x = self.convAtoX(start)
                 y = self.convBtoY(self.viewYMin)
-                self.canvas.create_text((x, y+5),
-                                        text=shortNr(start, exp),
-                                        anchor="n")
+                if self.xTypeTime == True and self.model.timescale == "minutes":
+                    self.canvas.create_text((x, y+5),
+                                            text=shortNr(start/60.0, exp-2),
+                                            anchor="n")
+                else:
+                    self.canvas.create_text((x, y+5),
+                                            text=shortNr(start, exp),
+                                            anchor="n")
                 self.canvas.create_line(x, y, x, y+4)
             start += diff
 
@@ -288,9 +306,16 @@ class FramePlot(ttk.Frame):
             start += diff
 
         # write axis description
+        
+        xText = self.xTitle
+        if self.xTypeTime == True:
+            if self.model.timescale == "minutes":
+                xText = "rt [min]"
+            else:
+                xText = "rt [s]"
         item = self.canvas.create_text(self.convAtoX((self.viewXMin+self.viewXMax)/2.0),
                                        self.height-self.borderBottom/3.0,
-                                       text=self.xTitle)
+                                       text=xText)
 
         item = self.canvas.create_text(self.borderLeft,
                                        self.borderTop/2.0,

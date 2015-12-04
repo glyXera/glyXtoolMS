@@ -24,6 +24,7 @@ class DataModel(object):
         #    print s, font.measure(" ")
 
         self.workingdir = ""
+        self.timescale = "seconds"
         self.debug = None
         self.root = None
         self.projects = {}
@@ -84,6 +85,9 @@ class DataModel(object):
         config = configparser.ConfigParser()
         config.read(os.path.join(settingspath))
         self.workingdir = config["DEFAULT"]["workingdir"]
+        if "timescale" in config["DEFAULT"]:
+            self.timescale = config["DEFAULT"]["timescale"]
+            
 
     def saveSettings(self):
         home = os.path.expanduser("~")
@@ -91,6 +95,7 @@ class DataModel(object):
         config = configparser.ConfigParser()
         config["DEFAULT"] = {}
         config["DEFAULT"]["workingdir"] = self.workingdir
+        config["DEFAULT"]["timescale"] = self.timescale
         with open(settingspath, 'w') as configfile:
             config.write(configfile)
 

@@ -12,6 +12,9 @@ class TwoDView(FramePlot.FramePlot):
                                      yTitle="mz [Th]")
 
         self.master = master
+        
+        self.xTypeTime = True
+        
         self.featureItems = {}
 
         self.coord = Tkinter.StringVar()

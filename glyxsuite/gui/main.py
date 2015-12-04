@@ -54,7 +54,8 @@ class App(ttk.Frame):
         self.model.root = master
 
         filemenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
-        filemenu.add_command(label="Set workspace", command=self.setWorkspace)
+        #filemenu.add_command(label="Set workspace", command=self.setWorkspace)
+        filemenu.add_command(label="Options", command=self.setOptions)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.master.destroy)
         menubar.add_cascade(label="Program", menu=filemenu)
@@ -170,6 +171,10 @@ class App(ttk.Frame):
         
     def showFilterOptions(self):
         FilterPanel.FilterPanel(self.master, self.model)
+        
+    def setOptions(self):
+        OptionsFrame(self.master, self.model)
+        
 
     def setWorkspace(self):
         options = {}
@@ -191,6 +196,65 @@ def run():
     root.mainloop()
     return app
 
+class OptionsFrame(Tkinter.Toplevel):
+
+    def __init__(self, master, model):
+        Tkinter.Toplevel.__init__(self, master=master)
+        self.minsize(600, 300)
+        self.master = master
+        self.title("Options")
+        self.config(bg="#d9d9d9")
+        self.model = model
+        
+        self.columnconfigure(0, weight=0)
+        self.columnconfigure(1, weight=0)
+        self.columnconfigure(2, weight=1)
+        
+        buttonWorkspace = Tkinter.Button(self, text="Set workspace", command=self.setWorkspace)
+        
+        self.workspaceVar = Tkinter.StringVar()
+        self.workspaceVar.set(self.model.workingdir)
+        entryWorkspace = Tkinter.Entry(self, textvariable=self.workspaceVar)
+        
+        buttonWorkspace.grid(row=0, column=0, sticky="NWES")
+        entryWorkspace.grid(row=0, column=1, columnspan=2, sticky="NWES")
+        
+        self.timeAxisVar = Tkinter.StringVar()
+        self.timeAxisVar.set(self.model.timescale)
+        
+        rbutton1 = Tkinter.Radiobutton(self, text="Timeaxis in seconds", variable=self.timeAxisVar, value="seconds")
+        rbutton2 = Tkinter.Radiobutton(self, text="Timeaxis in minutes", variable=self.timeAxisVar, value="minutes")
+        
+        rbutton1.grid(row=1, column=1, sticky="NWES")
+        rbutton2.grid(row=2, column=1, sticky="NWES")
+        
+        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)        
+        saveButton = Tkinter.Button(self, text="Save options", command=self.save)
+
+        cancelButton.grid(row=10, column=0, sticky="NWES")
+        saveButton.grid(row=10, column=1, sticky="NWES")
+
+        
+    def setWorkspace(self):
+        options = {}
+        options['initialdir'] = self.workspaceVar.get()
+        options['title'] = 'Set Workspace'
+        options['mustexist'] = True
+        path = tkFileDialog.askdirectory(**options)
+        if path == "" or path == ():
+            return
+        self.workspaceVar.set(path)
+        
+    def cancel(self):
+        self.destroy()
+    
+    def save(self):
+        self.model.workingdir = self.workspaceVar.get()
+        self.model.timescale = self.timeAxisVar.get()
+        self.model.saveSettings()
+        self.destroy()
+        
+        
 
 class HistogramFrame(Tkinter.Toplevel):
 

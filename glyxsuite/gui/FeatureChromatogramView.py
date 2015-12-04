@@ -22,6 +22,8 @@ class ChromatogramView(FramePlot.FramePlot):
         self.maxMZView = 0
         self.index = 0
         
+        self.xTypeTime = True
+        
 
         self.coord = Tkinter.StringVar()
         l = ttk.Label(self, textvariable=self.coord)
