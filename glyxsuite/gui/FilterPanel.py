@@ -106,7 +106,7 @@ class FilterPanel(Tkinter.Toplevel):
         filters = []
         filters.append(EmptyFilter())
         filters.append(GlycopeptideMass_Filter())
-        filters.append(Fragmentmass_Filter())
+        filters.append(Fragmentmass_Filter_Identification())
         filters.append(Fragmentname_Filter(self.model))
         filters.append(StatusFilter())
         
@@ -122,6 +122,7 @@ class FilterPanel(Tkinter.Toplevel):
         filters = []
         filters.append(EmptyFilter())
         filters.append(Feature_RT_Filter())
+        filters.append(Fragmentmass_Filter_Feature())
         filters.append(StatusFilter())
         
         f = FilterEntry(self.filterFeature,
@@ -591,9 +592,9 @@ class GlycopeptideMass_Filter(Filter):
                 return False
 
 
-class Fragmentmass_Filter(Filter):
+class Fragmentmass_Filter_Identification(Filter):
     def __init__(self):
-        super(Fragmentmass_Filter, self).__init__("Fragmentmass")
+        super(Fragmentmass_Filter_Identification, self).__init__("Fragmentmass")
         self.field1 = "0 - 1"
         self.type1 = FieldTypes.ENTRY
         self.field2 = "0 - 1"
@@ -649,7 +650,66 @@ class Fragmentmass_Filter(Filter):
                 return True
             else:
                 return False
+              
+              
+class Fragmentmass_Filter_Feature(Filter):
+    def __init__(self):
+        super(Fragmentmass_Filter_Feature, self).__init__("Fragmentmass")
+        self.field1 = "0 - 1"
+        self.type1 = FieldTypes.ENTRY
+        self.field2 = "0 - 1"
+        self.type2 = FieldTypes.ENTRY
+        self.operatorChoices = ["=", "<", ">"]
+        self.operator = "="
+        self.lowIntensity = 0
+        self.highIntensity = 0
+        self.intensity = 0
+        
+        self.lowMass = 0
+        self.highMass = 0
+        
+    def parseField1(self,field1):
+        a, b = self.parseFloatRange(field1)
+        if a < b:
+            self.lowMass, self.highMass = a, b
+        else:
+             self.lowMass, self.highMass = b, a
+        self.field1 = str(self.lowMass) + " - " + str(self.highMass)
+        
+    def parseField2(self,field2):
+        if self.operator == "=":
+            a, b = self.parseFloatRange(field2)
+            if a < b:
+                self.lowIntensity, self.highIntensity = a, b
+            else:
+                 self.lowIntensity, self.highIntensity = b, a
+            self.field2 = str(self.lowIntensity) + " - " + str(self.highIntensity)
+        else:
+            self.intensity = self.parseFloat(field2)
+            self.field2 = str(self.intensity)
+
+    def evaluate(self, feature):
+        
+        intensity = 0
+        for peak in feature.consensus:
+            if self.lowMass <= peak.x <= self.highMass:
+                intensity += peak.y
                 
+        if self.operator == "<":
+            if intensity < self.intensity:
+                return True
+            else:
+                return False
+        elif  self.operator == ">":
+            if intensity > self.intensity:
+                return True
+            else:
+                return False
+        else:
+            if self.lowIntensity <= intensity <= self.highIntensity:
+                return True
+            else:
+                return False
                 
 class Fragmentname_Filter(Filter):
     def __init__(self, model):
