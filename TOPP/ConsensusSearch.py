@@ -47,17 +47,23 @@ def main(options):
             pepIon = hit.peptide.mass+glyxsuite.masses.MASS["H+"]
             pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEXNAC"]
             pepNH3 = pepIon-glyxsuite.masses.MASS["N"] - 3*glyxsuite.masses.MASS["H"]
+            pep83 = pepIon + (glyxsuite.masses.MASS["C"]*4 +
+                              glyxsuite.masses.MASS["H"]*5 +
+                              glyxsuite.masses.MASS["N"]*1 +
+                              glyxsuite.masses.MASS["O"]*1)
             
             # calc charged mass
             pepIon = calcChargedMass(pepIon,charge)
             pepGlcNAcIon = calcChargedMass(pepGlcNAcIon,charge)
             pepNH3 = calcChargedMass(pepNH3,charge)
+            pep83 = calcChargedMass(pep83,charge)
 
             # search for hits in spectra
             consensusSpectrum = feature.consensus
             foundA = searchMassInSpectrum(pepIon,tolerance,consensusSpectrum)
             foundB = searchMassInSpectrum(pepGlcNAcIon,tolerance,consensusSpectrum)
             foundC = searchMassInSpectrum(pepNH3,tolerance,consensusSpectrum)
+            foundD = searchMassInSpectrum(pep83,tolerance,consensusSpectrum)
 
             chargeName = "+("+str(charge)+"H+)"
             if foundA > 0:
@@ -78,6 +84,12 @@ def main(options):
                 fragment["sequence"] = hit.peptide.sequence+"-NH3"+chargeName
                 fragment["counts"] = foundC
                 hit.fragments["peptide-NH3"+chargeName] = fragment
+            if foundD > 0:
+                fragment = {}
+                fragment["mass"] = pep83
+                fragment["sequence"] = hit.peptide.sequence+"+HexNAC0.2X"+chargeName
+                fragment["counts"] = foundD
+                hit.fragments["peptide+HexNAC0.2X"+chargeName] = fragment
         # search for peptide fragments
         p = hit.peptide
         fragmenthits = (None,{})
