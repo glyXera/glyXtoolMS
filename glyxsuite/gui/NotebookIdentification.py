@@ -98,11 +98,13 @@ class NotebookIdentification(ttk.Frame):
         if self.model == None or self.model.currentAnalysis == None:
             return
 
-        if col == self.model.currentAnalysis.sortedColumn:
-            self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
+        sortingColumn, reverse = self.model.currentAnalysis.sorting["NotebookIdentification"]
+        if col == sortingColumn:
+            reverse = not reverse
         else:
-            self.model.currentAnalysis.sortedColumn = col
-            self.model.currentAnalysis.reverse = False
+            sortingColumn = col
+            reverse = False
+        self.model.currentAnalysis.sorting["NotebookIdentification"] = (sortingColumn, reverse)
 
         if col == "Peptide" or col == "Glycan" or col == "Status":
             l = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
@@ -114,7 +116,7 @@ class NotebookIdentification(ttk.Frame):
             l = [(int(self.tree.item(k, "text")), k) for k in self.tree.get_children('')]
         else:
             return
-        l.sort(reverse=self.model.currentAnalysis.reverse)
+        l.sort(reverse=reverse)
 
 
         # rearrange items in sorted positions
@@ -201,6 +203,15 @@ class NotebookIdentification(ttk.Frame):
                                                    hit.status),
                                            tags=taglist)
             self.treeIds[itemSpectra] = hit
+
+        # apply possible sorting
+        if not "NotebookIdentification" in analysis.sorting:
+            analysis.sorting["NotebookIdentification"] = ("#0", False)
+        
+        sortingColumn, reverse = analysis.sorting["NotebookIdentification"]
+        analysis.sorting["NotebookIdentification"] = (sortingColumn, not reverse)
+        self.sortColumn(sortingColumn)
+
         # update Extention
         self.model.classes["IdentificationStatsFrame"].init()
 

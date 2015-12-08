@@ -195,7 +195,6 @@ class ContainerMZMLFile(object):
         self.project = project
         self.experimentIds = {}
 
-
     def createIds(self):
         self.experimentIds = {}
         ms1 = None
@@ -219,8 +218,7 @@ class ContainerAnalysisFile(object):
         self.featureIds = {}
         self.spectraInFeatures = {}
         self.data = []
-        self.sortedColumn = ""
-        self.reverse = False
+        self.sorting = {}
         self.chromatograms = {}
         self.selectedChromatogram = None
         self.currentFeature = None

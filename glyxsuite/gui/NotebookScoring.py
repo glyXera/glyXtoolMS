@@ -168,12 +168,15 @@ class NotebookScoring(ttk.Frame):
 
         if self.model == None or self.model.currentAnalysis == None:
             return
-
-        if col == self.model.currentAnalysis.sortedColumn:
-            self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
+        sortingColumn, reverse = self.model.currentAnalysis.sorting["NotebookScoring"]
+        
+        if col == sortingColumn:
+            reverse = not reverse
         else:
-            self.model.currentAnalysis.sortedColumn = col
-            self.model.currentAnalysis.reverse = False
+            sortingColumn = col
+            reverse = False
+        self.model.currentAnalysis.sorting["NotebookScoring"] = (sortingColumn, reverse)
+
         if col == "Is Glyco" or col == "Status":
             l = [(self.tree.set(k, col), k) for k in self.tree.get_children('')]
         elif col == "#0":
@@ -181,7 +184,7 @@ class NotebookScoring(ttk.Frame):
         else:
             l = [(float(self.tree.set(k, col)), k) for k in self.tree.get_children('')]
 
-        l.sort(reverse=self.model.currentAnalysis.reverse)
+        l.sort(reverse=reverse)
 
 
         # rearrange items in sorted positions
@@ -247,7 +250,13 @@ class NotebookScoring(ttk.Frame):
                                                    spectrum.status),
                                            tags=taglist)
             self.treeIds[itemSpectra] = (spec, spectrum)
-
+        # apply possible sorting
+        if not "NotebookScoring" in analysis.sorting:
+            analysis.sorting["NotebookScoring"] = ("#0", False)
+        
+        sortingColumn, reverse = analysis.sorting["NotebookScoring"]
+        analysis.sorting["NotebookScoring"] = (sortingColumn, not reverse)
+        self.sortColumn(sortingColumn)
 
     def clickedTree(self, event):
         selection = self.tree.selection()

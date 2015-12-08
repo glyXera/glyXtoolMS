@@ -138,12 +138,13 @@ class NotebookFeature(ttk.Frame):
 
         if self.model == None or self.model.currentAnalysis == None:
             return
-
-        if col == self.model.currentAnalysis.sortedColumn:
-            self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
+        sortingColumn, reverse = self.model.currentAnalysis.sorting["NotebookFeature"]
+        if col == sortingColumn:
+            reverse = not reverse
         else:
-            self.model.currentAnalysis.sortedColumn = col
-            self.model.currentAnalysis.reverse = False
+            sortingColumn = col
+            reverse = False
+        self.model.currentAnalysis.sorting["NotebookFeature"] = (sortingColumn, reverse)
 
         children = self.featureTree.get_children('')
         if col == "isGlycopeptide" or col == "Status":
@@ -155,7 +156,7 @@ class NotebookFeature(ttk.Frame):
         else:
             l = [(float(self.featureTree.set(k, col)), k) for k in children]
 
-        l.sort(reverse=self.model.currentAnalysis.reverse)
+        l.sort(reverse=reverse)
 
 
         # rearrange items in sorted positions
@@ -250,6 +251,14 @@ class NotebookFeature(ttk.Frame):
             self.featureTreeIds[item] = feature
             self.featureItems[feature.getId()] = item
 
+        # apply possible sorting
+        if not "NotebookFeature" in analysis.sorting:
+            analysis.sorting["NotebookFeature"] = ("#0", False)
+        
+        sortingColumn, reverse = analysis.sorting["NotebookFeature"]
+        analysis.sorting["NotebookFeature"] = (sortingColumn, not reverse)
+        self.sortFeatureColumn(sortingColumn)
+
     def selectFeature(self, feature):
         item = self.featureItems.get(feature.getId(), False)
         if item == False:
@@ -327,13 +336,14 @@ class NotebookFeature(ttk.Frame):
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
             return
-
-        if col == self.model.currentAnalysis.sortedColumn:
-            self.model.currentAnalysis.reverse = not self.model.currentAnalysis.reverse
+        sortingColumn, reverse = self.model.currentAnalysis.sorting["NotebookFeatureSpectra"]
+        if col == sortingColumn:
+            reverse = not reverse
         else:
-            self.model.currentAnalysis.sortedColumn = col
-            self.model.currentAnalysis.reverse = False
-
+            sortingColumn = col
+            reverse = False
+        self.model.currentAnalysis.sorting["NotebookFeatureSpectra"] = (sortingColumn, reverse)
+        
         children = self.spectrumTree.get_children('')
         if col == "Is Glyco":
             l = [(self.spectrumTree.set(k, col), k) for k in children]
@@ -342,7 +352,7 @@ class NotebookFeature(ttk.Frame):
         else:
             l = [(float(self.spectrumTree.set(k, col)), k) for k in children]
 
-        l.sort(reverse=self.model.currentAnalysis.reverse)
+        l.sort(reverse=reverse)
 
 
         # rearrange items in sorted positions
@@ -361,6 +371,7 @@ class NotebookFeature(ttk.Frame):
             else:
                 taglist.append("oddrowFeature")
             self.spectrumTree.item(k, tags=taglist)
+            
 
     def updateSpectrumTree(self):
         # clear tree
@@ -410,10 +421,19 @@ class NotebookFeature(ttk.Frame):
                                                            isGlycopeptide),
                                                    tags=tag)
             self.spectrumTreeIds[itemSpectra] = (spec, spectrum)
-            # set first spectrum as selected
-            if index == 1:
-                self.spectrumTree.selection_set(itemSpectra)
-                self.spectrumTree.see(itemSpectra)
+
+        # apply possible sorting
+        if not "NotebookFeatureSpectra" in analysis.sorting:
+            analysis.sorting["NotebookFeatureSpectra"] = ("#0", False)
+        sortingColumn, reverse = analysis.sorting["NotebookFeatureSpectra"]
+        analysis.sorting["NotebookFeatureSpectra"] = (sortingColumn, not reverse)
+        self.sortSpectrumColumn(sortingColumn)
+        
+        children = self.spectrumTree.get_children('')
+        if len(children) > 0:
+            item = children[0]
+            self.spectrumTree.selection_set(item)
+            self.spectrumTree.see(item)
 
     def clickedSpectrumTree(self, event):
         selection = self.spectrumTree.selection()
