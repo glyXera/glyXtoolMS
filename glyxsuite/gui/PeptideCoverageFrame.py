@@ -62,7 +62,7 @@ class PeptideCoverageFrame(ttk.Frame):
         self.canvas.bind("<Configure>", self.on_resize)
 
         self.menuVar = Tkinter.StringVar(self)
-        self.menuVar.trace("w", self.foo)
+        self.menuVar.trace("w", self.plotSingleFragment)
 
         self.aMenu = Tkinter.OptionMenu(self, self.menuVar, [])
         self.aMenu.grid(row=0, column=0)
@@ -71,7 +71,9 @@ class PeptideCoverageFrame(ttk.Frame):
         # link function
         self.model.classes["PeptideCoverageFrame"] = self
         
-    def foo(self, *args):
+    def plotSingleFragment(self, *args):
+        if self.hit == None:
+            return
         name = self.menuVar.get()
         if name in self.hit.fragments:
             self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([name])
