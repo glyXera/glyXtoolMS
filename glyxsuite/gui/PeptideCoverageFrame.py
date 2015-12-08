@@ -45,21 +45,45 @@ class PeptideCoverageFrame(ttk.Frame):
 
         self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height)
         self.canvas.config(bg="white")
-        self.canvas.pack(expand=True, fill="both")
+        self.canvas.grid(row=1, column=0, sticky="NSEW")
+        #self.canvas.pack(expand=True, fill="both")
+        
         self.canvas.config(highlightthickness=0)
-        self.canvas.bind("<Configure>", self.on_resize)
+        
         #self.canvas.grid(row=0, column=0, sticky="NSEW")
 
-        #self.grid_rowconfigure(0, weight=1)
-        #self.grid_columnconfigure(0, weight=1)
-
-        #self.grid_columnconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=0)
 
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)
+        self.canvas.bind("<Configure>", self.on_resize)
+
+        self.menuVar = Tkinter.StringVar(self)
+        self.menuVar.trace("w", self.foo)
+
+        self.aMenu = Tkinter.OptionMenu(self, self.menuVar, [])
+        self.aMenu.grid(row=0, column=0)
+        self.setMenuChoices([])
 
         # link function
         self.model.classes["PeptideCoverageFrame"] = self
+        
+    def foo(self, *args):
+        name = self.menuVar.get()
+        if name in self.hit.fragments:
+            self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([name])
+        
+    def setMenuChoices(self, choices):
+        self.aMenu['menu'].delete(0, 'end')
+        if len(choices) == 0:
+            self.menuVar.set("no further peptide ions")
+            return
+        self.menuVar.set(choices[0])
+        for choice in choices:
+            self.aMenu['menu'].add_command(label=choice, command=Tkinter._setit(self.menuVar, choice))
 
     def on_resize(self,event):
         self.width = event.width
@@ -93,9 +117,11 @@ class PeptideCoverageFrame(ttk.Frame):
                 key = "".join(sorted(name))
                 parts[key] = parts.get(key, []) + [name]
 
-        ySeries = {}
-        bSeries = {}
+        ySeries = set()
+        bSeries = set()
         self.fragmentCoverage = {}
+        
+        restNames = []
         for name in self.hit.fragments:
             y, b = parseInternalFragment(name, peptideLength)
             if y == None:
@@ -105,33 +131,26 @@ class PeptideCoverageFrame(ttk.Frame):
             if y == None:
                 y, b = parseYFragment(name, peptideLength)
             if y == None:
+                restNames.append(name)
                 continue
-            yHit = ySeries.get(y, False)
-            bHit = ySeries.get(b, False)
+            ySeries.add(y)
+            bSeries.add(b)
+            
             self.fragmentCoverage[y] = self.fragmentCoverage.get(y, []) + [name]
             self.fragmentCoverage[b] = self.fragmentCoverage.get(b, []) + [name]
-            
-            fragmentSequence = re.search(r"[A-Z]+", self.hit.fragments[name]["sequence"]).group()
-            #fragmentSequence = self.hit.fragments[name]["sequence"].split("-")[0]
-            #fragmentSequence = re.sub(r"\(.+?\)", "", fragmentSequence)
-            key = "".join(sorted(fragmentSequence))
-            if len(parts[key]) == 1:
-                yHit = True
-                bHit = True
-
-            ySeries[y] = yHit
-            bSeries[b] = bHit
-
+        
+        self.setMenuChoices(restNames)
+        
         # remove 0 and len
         if 0 in ySeries:
-            ySeries.pop(0)
+            ySeries.remove(0)
         if 0 in bSeries:
-            bSeries.pop(0)
+            bSeries.remove(0)
 
         if peptideLength in ySeries:
-            ySeries.pop(peptideLength)
+            ySeries.remove(peptideLength)
         if peptideLength in bSeries:
-            bSeries.pop(peptideLength)
+            bSeries.remove(peptideLength)
 
         self.canvas.delete(Tkinter.ALL)
 
@@ -165,53 +184,43 @@ class PeptideCoverageFrame(ttk.Frame):
         for index in ySeries:
             x = start + (index-0.5)*letterSize
             color = "black"
-            if ySeries[index] == True:
-                item1 = self.canvas.create_line(x, yc,
-                                                x, 10,
-                                                tags=("site", ),
-                                                fill=color)
-                item2 = self.canvas.create_line(x, 10,
-                                                x+10, 10,
-                                                tags=("site", ),
-                                                fill=color)
-            else:
-                item1 = self.canvas.create_line(x, yc,
-                                                x, 10,
-                                                tags=("site", ),
-                                                fill=color)
-                                                #fill=color, dash=(3, 5))
-                item2 = self.canvas.create_line(x, 10,
-                                                x+10, 10,
-                                                tags=("site", ),
-                                                fill=color)
-                                                #fill=color, dash=(3, 5))
+            
+            item1 = self.canvas.create_line(x, yc,
+                                            x, 20,
+                                            tags=("site", ),
+                                            fill=color)
+            item2 = self.canvas.create_line(x, 20,
+                                            x+10, 20,
+                                            tags=("site", ),
+                                            fill=color)
+            item3 = self.canvas.create_text((x+5, 10),
+                                            text="y"+str(len(text)-index), 
+                                            tags=("site", ),
+                                            fill=color,
+                                            anchor="center",
+                                            justify="center")
             self.coverage[item1] = index
             self.coverage[item2] = index
+            self.coverage[item3] = index
 
 
         for index in bSeries:
             x = start + (index-0.5)*letterSize
             color = "black"
-            if bSeries[index] == True:
-                item1 = self.canvas.create_line(x, yc,
-                                                x, self.height-10,
-                                                tags=("site", ),
-                                                fill=color)
-                item2 = self.canvas.create_line(x, self.height-10,
-                                                x-10, self.height-10,
-                                                tags=("site", ),
-                                                fill=color)
-            else:
-                item1 = self.canvas.create_line(x, yc,
-                                                x, self.height-10,
-                                                tags=("site", ),
-                                                fill=color)
-                                                #fill=color, dash=(3, 5))
-                item2 = self.canvas.create_line(x, self.height-10,
-                                                x-10, self.height-10,
-                                                tags=("site", ),
-                                                fill=color)
-                                                #fill=color, dash=(3, 5))
+            item1 = self.canvas.create_line(x, yc,
+                                            x, self.height-20,
+                                            tags=("site", ),
+                                            fill=color)
+            item2 = self.canvas.create_line(x, self.height-20,
+                                            x-10, self.height-20,
+                                            tags=("site", ),
+                                            fill=color)
+            item3 = self.canvas.create_text((x-5, self.height-10),
+                                            text="b"+str(index), 
+                                            tags=("site", ),
+                                            fill=color,
+                                            anchor="center",
+                                            justify="center")
             self.coverage[item1] = index
             self.coverage[item2] = index
 
