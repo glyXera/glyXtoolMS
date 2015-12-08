@@ -225,6 +225,7 @@ class PeptideCoverageFrame(ttk.Frame):
                                             justify="center")
             self.coverage[item1] = index
             self.coverage[item2] = index
+            self.coverage[item3] = index
 
     def identifier(self):
         return "PeptideCoverageFrame"
