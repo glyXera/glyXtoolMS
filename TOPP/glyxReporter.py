@@ -145,7 +145,7 @@ def main(options):
     ws3 = wb.add_sheet("Identifications")
 
     # write header
-    for col,comp in enumerate(["GlycoSite", "Peptide", "Peptidemass"]+[parseComposition(comp) for comp in compsHeader]):
+    for col,comp in enumerate(["GlycoSite", "Peptide", "Peptidemass"]+compsHeader):
         ws3.write(1, col, comp)
     
     for col,comp in enumerate(compsHeader):

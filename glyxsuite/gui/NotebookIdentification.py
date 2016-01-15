@@ -199,7 +199,7 @@ class NotebookIdentification(ttk.Frame):
                                            values=(round(mass, 4),
                                                    round(hit.error, 4),
                                                    peptide,
-                                                   glycan.getShortName(),
+                                                   glycan.toString(),
                                                    hit.status),
                                            tags=taglist)
             self.treeIds[itemSpectra] = hit

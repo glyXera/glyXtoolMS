@@ -318,6 +318,36 @@ class ProteinDigest(object):
         return glycopeptides
 
 # --------------------------------------- Glycan -----------------------
+twoLetterCode = {
+"GN":"HEXNAC",  # GlcNAc
+"M": "HEX",     # Mannose
+"G": "HEX",     # Galactose
+"GC": "HEX",    # Glucose
+"AN": "HEXNAC", # GalNAc
+"NA": "NEUAC",  # NEUAC
+"NG": "NEUGC",  # NEUGC
+"F": "DHEX",    # Fucose
+"AG": "HEX",    # alpha-Gal
+"HN": "HEXNAC", # Hexnac
+"H": "HEX",     # Hex
+}
+
+msComposition = {
+"HEXNAC": "HN",
+"HEX": "H",
+"DHEX": "F",
+"NEUAC": "NA",
+"NEUGC": "NG"
+}
+
+msCompositionOrder = [
+"HEXNAC",
+"HEX",
+"DHEX",
+"NEUAC",
+"NEUGC"
+]
+
 class Glycan(glyxsuite.io.XMLGlycan):
 
     def __init__(self, composition=None):
@@ -327,17 +357,18 @@ class Glycan(glyxsuite.io.XMLGlycan):
         self.glycosylationSite = None
         self.linearCode = ""
         self.structure = None
-        self.sugar = {'DHEX': 0, 'HEX': 0, 'HEXNAC': 0, 'NEUAC': 0}
+        self.sugar = {'DHEX': 0, 'HEX': 0, 'HEXNAC': 0, 'NEUAC': 0, 'NEUGC':0}
         self.mass = 0
         if composition is not None:
             self._splitComposition(composition)
 
-    def setComposition(self, S=0, F=0, H=0, N=0):
+    def setComposition(self, NEUAC=0, NEUGC=0, DHEX=0, HEX=0, HEXNAC=0):
 
-        self.sugar["NEUAC"] = S
-        self.sugar["DHEX"] = F
-        self.sugar["HEX"] = H
-        self.sugar["HEXNAC"] = N
+        self.sugar["NEUGC"] = NEUGC
+        self.sugar["NEUAC"] = NEUAC
+        self.sugar["DHEX"] = DHEX
+        self.sugar["HEX"] = HEX
+        self.sugar["HEXNAC"] = HEXNAC
 
         self.mass = 0
         for unit in self.sugar:
@@ -348,6 +379,8 @@ class Glycan(glyxsuite.io.XMLGlycan):
         HEXNAC = self.sugar["HEXNAC"]
         DHEX = self.sugar["DHEX"]
         NEUAC = self.sugar["NEUAC"]
+        NEUGC = self.sugar["NEUGC"]
+
 
         if HEX+HEXNAC == 0:
             return False
@@ -360,15 +393,31 @@ class Glycan(glyxsuite.io.XMLGlycan):
         # then the number of NeuAc and NeuGc residues must be zero.
         if HEXNAC <= 2 and HEX > 2 and NEUAC > 0:
             return False
+        if HEXNAC <= 2 and HEX > 2 and NEUGC > 0:
+            return False
         return True
 
     def _splitComposition(self, composition):
+        """
+        Split composition using twoLetterCode
+        
+        "GN":"HEXNAC",  # GlcNAc
+        "M": "HEX",     # Mannose
+        "G": "HEX",     # Galactose
+        "GC": "HEX",    # Glucose
+        "AN": "HEXNAC", # GalNAc
+        "NA": "NEUAC",  # NEUAC
+        "NG": "NEUGC",  # NEUGC
+        "F": "DHEX",    # Fucose
+        "AG": "HEX",    # alpha-Gal
+        "HN": "HEXNAC", # Hexnac
+        "H": "HEX",     # Hex
+        
+        """
         self.mass = 0
         for comp in re.findall(r"[A-z]+\d+", composition):
-            unit = re.search(r"[A-z]+", comp).group()
-            keys = {"S":"NEUAC", "F":"DHEX", "H":"HEX", "N":"HEXNAC"}
-            if unit in keys:
-                unit = keys[unit]
+            name = re.search(r"[A-z]+", comp).group()
+            unit = twoLetterCode[name]
             amount = int(re.search(r"\d+", comp).group())
             self.sugar[unit] = amount
             self.mass += glyxsuite.masses.GLYCAN[unit]*amount
@@ -387,23 +436,13 @@ class Glycan(glyxsuite.io.XMLGlycan):
                 composition += sugar+str(comp[sugar])
         return composition
 
-    def getShortName(self):
-        shortName = ""
-        short = {'DHEX': "F", 'HEX': "H", 'HEXNAC': "HN", 'NEUAC': "NA", 'NEUGC': "NG"}
-        for name in sorted(self.sugar.keys()):
-            amount = self.sugar[name]
-            if amount == 0:
-                continue
-            shortName += short[name]+str(amount)
-        return shortName
-
     def toString(self):
         result = ""
-        for name in sorted(self.sugar.keys()):
+        for name in msCompositionOrder:
             amount = self.sugar[name]
             if amount == 0:
                 continue
-            result += name + str(amount)
+            result += msComposition[name] + str(amount)
         return result
 
 

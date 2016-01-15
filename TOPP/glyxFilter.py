@@ -319,7 +319,8 @@ def main(options):
                 continue
             if minMZ > precursor.getMZ() or precursor.getMZ() > maxMZ+tolerance:
                 continue
-            rt = feature.getRT()
+            #rt = feature.getRT()
+            rt = spec.getRT()
             mz = feature.getMZ()
             charge = feature.getCharge()
             if charge != 1:

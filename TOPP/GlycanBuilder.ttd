@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>GlycanCompositionBuilder</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/GlycanBuilder.py --out "%2" --in "%3" --useinfile "%4" --rangeHex "%5" --rangeHexNAc "%6" --rangeFuc "%7" --rangeNeuAc "%8"</cloptions>
+		  <cloptions> "%1"/GlycanBuilder.py --out "%2" --in "%3" --useinfile "%4" --rangeHex "%5" --rangeHexNAc "%6" --rangeFuc "%7" --rangeNeuAc "%8" --rangeNeuGc "%9"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -32,16 +32,18 @@
 			<mapping id="6" cl="%%rangeHexNAc" />
             <mapping id="7" cl="%%rangeFuc" />
             <mapping id="8" cl="%%rangeNeuAc" />                                            			
+            <mapping id="9" cl="%%rangeNeuGc" />     
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
             <ITEM name="in" value="" type="string" tags="input file" description="dummy input file"/>
 			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.txt" description="File output glycan composition file .txt"/>
             <ITEM name="useinfile" value="true" type="string" restrictions="true,false" description="Use file input as basis and filter with the given ranges (true)"/>
-            <ITEM name="rangeHex" value="0:0" type="string" description="Range of Hex within the glycan, use min:max as input"/>
-            <ITEM name="rangeHexNAc" value="0:0" type="string" description="Range of HexNAc within the glycan, use min:max as input"/>
-            <ITEM name="rangeFuc" value="0:0" type="string" description="Range of Fucose within the glycan, use min:max as input"/>
-            <ITEM name="rangeNeuAc" value="0:0" type="string" description="Range of NeuAc within the glycan, use min:max as input"/>            
+            <ITEM name="rangeHex" value="3:16" type="string" description="Range of Hex within the glycan, use min:max as input"/>
+            <ITEM name="rangeHexNAc" value="2:14" type="string" description="Range of HexNAc within the glycan, use min:max as input"/>
+            <ITEM name="rangeFuc" value="0:6" type="string" description="Range of Fucose within the glycan, use min:max as input"/>
+            <ITEM name="rangeNeuAc" value="0:5" type="string" description="Range of NeuAc within the glycan, use min:max as input"/>     
+            <ITEM name="rangeNeuGc" value="0:3" type="string" description="Range of NeuAc within the glycan, use min:max as input"/>
 		  </ini_param>
 		</external>
 	</tool>

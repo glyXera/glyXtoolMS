@@ -17,7 +17,8 @@ def handle_args(argv=None):
     parser.add_argument("--rangeHex", dest="rangeHex",help="Range of Hexoses in the glycan structure min:max")
     parser.add_argument("--rangeHexNAc", dest="rangeHexNAc",help="Range of HexNAc in the glycan structure min:max")
     parser.add_argument("--rangeFuc", dest="rangeDHex",help="Range of Fucose in the glycan structure min:max")
-    parser.add_argument("--rangeNeuAc", dest="rangeNeuAc",help="Range of Fucose in the glycan structure min:max")
+    parser.add_argument("--rangeNeuAc", dest="rangeNeuAc",help="Range of NANA in the glycan structure min:max")
+    parser.add_argument("--rangeNeuGc", dest="rangeNeuGc",help="Range of NGNA in the glycan structure min:max")
                 
     if not argv:
         args = parser.parse_args(sys.argv[1:])
@@ -32,6 +33,8 @@ def main(options):
     minHexNAc,maxHexNAc = map(int,options.rangeHexNAc.split(":"))
     minDHex,maxDHex = map(int,options.rangeDHex.split(":"))
     minNeuAc,maxNeuAc = map(int,options.rangeNeuAc.split(":"))
+    minNeuGc,maxNeuGc = map(int,options.rangeNeuGc.split(":"))
+    
     print minHex,maxHex
     print minHexNAc,maxHexNAc
     print minDHex,maxDHex
@@ -66,14 +69,18 @@ def main(options):
         fin.close()
     else:
         print "generating glycan compositions"
-        for NEUAC,DHEX,HEX,HEXNAC in product(
-                                        rangeNeuAc,
-                                        rangeDHex,
-                                        rangeHex,
-                                        rangeHexNAc):
+        for NEUGC, NEUAC, DHEX, HEX, HEXNAC in product(rangeNeugGc,
+                                                       rangeNeuAc,
+                                                       rangeDHex,
+                                                       rangeHex,
+                                                       rangeHexNAc):
             # calc mass
             glycan = glyxsuite.lib.Glycan()
-            glycan.setComposition(NEUAC,DHEX,HEX,HEXNAC)
+            glycan.setComposition(NEUGC=NEUGC, 
+                                  NEUAC=NEUAC,
+                                  DHEX=DHEX,
+                                  HEX=HEX,
+                                  HEXNAC=HEXNAC)
             if not glycan.checkComposition():
                 continue
             if glycan.mass > 8000:

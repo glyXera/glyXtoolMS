@@ -57,6 +57,7 @@ GLYCAN["DHEX"] = 146.0579
 GLYCAN["HEX"] = 162.0528
 GLYCAN["HEXNAC"] = 203.0794
 GLYCAN["NEUAC"] = 291.0954
+GLYCAN["NEUGC"] = 307.0903
 
 
 # --------------------------- Other masses ----------------------------#
@@ -115,6 +116,7 @@ COMPOSITION["HEX"] = {'C': 6, 'H': 12, 'N': 0, 'O': 6}
 COMPOSITION["DHEX"] = {'C': 6, 'H': 12, 'N': 0, 'O': 5}
 COMPOSITION["HEXNAC"] = {'C': 8, 'H': 15, 'N': 1, 'O': 6}
 COMPOSITION["NEUAC"] = {'C': 11, 'H': 19, 'N': 1, 'O': 9}
+COMPOSITION["NEUGC"] = {'C': 11, 'H': 19, 'N': 1, 'O': 10}
 COMPOSITION["H2O"] = {'H': 2, 'O': 1}
 
 
