@@ -1,0 +1,47 @@
+<ttd>
+	<tool status="external">
+		<category>GlyxBox</category>
+		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
+		<type>FeatureFinderMS</type>
+		// description of the wrapper
+		<external>
+      <text>
+        <onstartup>Startig FeatureFinderMS</onstartup>
+        <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
+        <onfinish>FeatureFinderMS sucessful</onfinish>
+      </text>    
+		  // currently disregarded by TOPPAS, but might become useful
+		  <e_category>FileConversion</e_category>
+		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
+		  <cloptions> "%1"/FeatureFinderMS.py --inMZML "%2" --outFeature "%3" --tolerance "%4" --mswindow "%5" --shift "%6" --rtwindow "%7" </cloptions>
+		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
+		  <path>{pythonpath}</path>
+      // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
+      // and thus starting the tool from somewhere else might actually lead to trouble
+      // use only real paths here (no placeholders like %TMP)
+      // (workingdirectory).(/workingdirectory)
+		  // these mappings connect input parameters (from the 'ini_param' section below) and the command line options of your tool
+		  // any INI parameter can be referenced using %%'param_name', e.g. %%in
+		  // additionally you can use %TMP and %BASENAME[X] to get the current temp directory to store data, or the basename of X
+          
+		  <mappings>
+			<mapping id="1" cl="%%scriptpath" />
+			<mapping id="2" cl="%%inMZML" />
+            <mapping id="3" cl="%%outFeature" />
+            <mapping id="4" cl="%%tolerance" />
+            <mapping id="5" cl="%%mswindow" />
+            <mapping id="6" cl="%%shift" />
+            <mapping id="7" cl="%%rtwindow" />
+		  </mappings>
+		  <ini_param>
+			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
+			<ITEM name="inMZML" value="" type="string" tags="input file" restrictions="*.mzML"/>
+            <ITEM name="outFeature" value="" type="string" tags="output file" restrictions="*.featureXML"/>
+            <ITEM name="tolerance" value="0.1" type="float" description="Mass tolerance in Da"/>
+            <ITEM name="mswindow" value="10" type="float" description="Precursor mass window in Da"/>
+            <ITEM name="shift" value="10" type="float" description="Allowed precursor mass shift to search best precurosr candidate"/>
+            <ITEM name="rtwindow" value="30" type="float" description="RT range of an eluting peak in seconds"/>
+		  </ini_param>
+		</external>
+	</tool>
+</ttd>
