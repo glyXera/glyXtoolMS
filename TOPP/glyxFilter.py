@@ -48,13 +48,14 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
     Result: after scoring the score value can be read via the function
                 getLogScore()
     """
-    def __init__(self, nativeId, spectrumRT, precursorMass, precursorCharge, precursorIntensity, feature):
+    def __init__(self, nativeId, spectrumRT, monoisotopicMass, precursorMass, precursorCharge, precursorIntensity, feature):
         """ initialize Score with information about the spectrum
             Input: id, rt, precursor mass and charge """
 
         super(Score, self).__init__()
         self.nativeId = nativeId
         self.rt = spectrumRT
+        self.monoisotopicMass = monoisotopicMass
         self.precursorCharge = precursorCharge
         self.precursorMass = precursorMass
         self.precursorIntensity = precursorIntensity
@@ -151,7 +152,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
             if chargeOx >= self.precursorCharge:
                 continue
 
-            mz_loss = ((self.precursorMass*self.precursorCharge-mzOx*chargeOx)/
+            mz_loss = ((self.monoisotopicMass*self.precursorCharge-mzOx*chargeOx)/
                        (self.precursorCharge-chargeOx))
 
             if abs(mz_loss - peak.mass) < tolerance:
@@ -303,7 +304,7 @@ def main(options):
 
         singleCharged = True # check if only single charges would be possible
         if charge != 1:
-            score = Score(spec.getNativeID(), rt, mz, charge, intensity, None)
+            score = Score(spec.getNativeID(), rt, mz, mz, charge, intensity, None)
             scores.append(score)
             singleCharged = False
 
@@ -324,7 +325,7 @@ def main(options):
             mz = feature.getMZ()
             charge = feature.getCharge()
             if charge != 1:
-                score = Score(spec.getNativeID(), rt, mz, charge, intensity, feature)
+                score = Score(spec.getNativeID(), rt, mz, precursor.getMZ(), charge, intensity, feature)
                 scores.append(score)
                 singleCharged = False
         
@@ -382,10 +383,10 @@ def main(options):
             f.setCharge(score.precursorCharge)
             score.feature = f
             allFeatures[f.getId()] = f
-            
-        score.feature.spectraIds.append(score.getNativeId())
-        if score.getLogScore() < scorethreshold:
-            keepFeatures.add(score.feature.getId())
+        if score.feature != None:
+            score.feature.spectraIds.append(score.getNativeId())
+            if score.getLogScore() < scorethreshold:
+                keepFeatures.add(score.feature.getId())
 
     # write features
     for key in keepFeatures:
