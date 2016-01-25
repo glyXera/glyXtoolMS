@@ -112,73 +112,6 @@ class Chromatogram(object):
         self.msLevel = 0
         self.selected = False
 
-class ContainerSpectrum(object):
-
-    def __init__(self, spectrum):
-        self._spectrum = spectrum
-        self.index = ""
-        self.chromatogramSpectra = []
-
-    @property
-    def nativeId(self):
-        return self._spectrum.nativeId
-
-    @nativeId.setter
-    def nativeId(self, value):
-        self._spectrum.nativeId = value
-        
-    @property
-    def status(self):
-        return self._spectrum.status
-
-    @status.setter
-    def status(self, value):
-        self._spectrum.status = value
-
-    @property
-    def rt(self):
-        return self._spectrum.rt
-
-    @rt.setter
-    def rt(self, value):
-        self._spectrum.rt = value
-
-    @property
-    def precursorMass(self):
-        return self._spectrum.precursorMass
-
-    @precursorMass.setter
-    def precursorMass(self, value):
-        self._spectrum.precursorMass = value
-
-    @property
-    def precursorCharge(self):
-        return self._spectrum.precursorCharge
-
-    @precursorCharge.setter
-    def precursorCharge(self, value):
-        self._spectrum.precursorCharge = value
-
-    @property
-    def logScore(self):
-        return self._spectrum.logScore
-
-    @logScore.setter
-    def logScore(self, value):
-        self._spectrum.logScore = value
-
-    @property
-    def ions(self):
-        return self._spectrum.ions
-
-    @property
-    def isGlycopeptide(self):
-        return self._spectrum.isGlycopeptide
-
-    @isGlycopeptide.setter
-    def isGlycopeptide(self, value):
-        self._spectrum.isGlycopeptide = value
-
 class Project(object):
 
     def __init__(self, name, path):
@@ -231,9 +164,10 @@ class ContainerAnalysisFile(object):
         i = 0
         for spectrum in self.analysis.spectra:
             i += 1
-            c = ContainerSpectrum(spectrum)
-            c.index = str(i)
-            self.spectraIds[spectrum.nativeId] = c
+            #c = ContainerSpectrum(spectrum)
+            spectrum.chromatogramSpectra = []
+            spectrum.index = str(i)
+            self.spectraIds[spectrum.nativeId] = spectrum
             self.spectraInFeatures[spectrum.nativeId] = []
 
         # create featureIds

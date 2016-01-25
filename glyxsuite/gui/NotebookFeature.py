@@ -292,6 +292,7 @@ class NotebookFeature(ttk.Frame):
         c = glyxsuite.gui.DataModel.Chromatogram()
         c.rt = []
         c.intensity = []
+        highest = []
 
         for spec in self.model.currentAnalysis.featureSpectra[feature.getId()]:
             if spec.getMSLevel() != 1:
@@ -307,16 +308,24 @@ class NotebookFeature(ttk.Frame):
                 mzArray, intensArray = peaks
                 
             # get intensity in range
-            choice_Chrom = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
+            #choice_Chrom = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
+            choice_Chrom = np.logical_and(np.greater(mzArray, minMZ-0.1), np.less(mzArray, minMZ+0.1))
             arr_intens_Chrom = np.extract(choice_Chrom, intensArray)
-            c.intensity.append(arr_intens_Chrom.sum())
+            sumIntensity = arr_intens_Chrom.sum()
+            c.intensity.append(sumIntensity)
+            highest.append((sumIntensity, spec.getNativeID()))
 
                 
         # find spectrum index in the middle of the feature
         rt = (minRT+maxRT)/2.0
         index = -1
+        id = ""
+        if len(highest) > 0:
+            id = max(highest)[1]
         for spec in self.model.currentAnalysis.project.mzMLFile.exp:
             index += 1
+            if spec.getNativeID() == id:
+                break
             if spec.getMSLevel() != 1:
                 continue
             if spec.getRT() > rt:

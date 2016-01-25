@@ -74,7 +74,7 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
         if spec == None:
             return
         if spec.getNativeID() in self.model.currentAnalysis.spectraIds:
-             self.annotations = self.model.currentAnalysis.spectraIds[spec.getNativeID()]._spectrum.annotations
+             self.annotations = self.model.currentAnalysis.spectraIds[spec.getNativeID()].annotations
         self.spec = spec
         self.referenceMass = 0
         self.peaksByItem = {}

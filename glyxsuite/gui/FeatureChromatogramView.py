@@ -5,6 +5,7 @@ import numpy as np
 
 from glyxsuite.gui import FramePlot
 from glyxsuite.gui import Appearance
+import glyxsuite
 
 
 class ChromatogramView(FramePlot.FramePlot):
@@ -113,6 +114,7 @@ class ChromatogramView(FramePlot.FramePlot):
         self.allowZoom = True
         
     def init(self,chrom, feature, minMZView, maxMZView, index):
+        
         self.chrom = chrom
         self.feature = feature
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
@@ -149,7 +151,7 @@ class ChromatogramView(FramePlot.FramePlot):
             intensArray = peaks[:, 1]
         else:
             mzArray, intensArray = peaks
-        
+
         choice_MZ = np.logical_and(np.greater(mzArray, self.minMZView),
                                    np.less(mzArray, self.maxMZView))
         mz_array = np.extract(choice_MZ, mzArray)
