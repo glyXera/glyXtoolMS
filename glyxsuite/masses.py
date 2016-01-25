@@ -7,6 +7,7 @@ http://web.expasy.org/findmod/findmod_masses.html
 import re
 import math
 import itertools
+import numpy as np
 # --------------------------- Aminoacids ------------------------------#
 
 AMINOACID = {}
@@ -150,7 +151,6 @@ def calcPeptideMass(peptide):
             print "Unknown Proteinmodification '"+mod+"'!"
             raise
     return mass
-
 
 def calcIonMass(name):
     r"""
@@ -348,3 +348,101 @@ def calcGlycopeptidePattern(peptide, glycan):
         O=elements.get("O", 0),
         S=elements.get("S", 0))
     return res
+
+
+def calcIsotopicPatternFromMass(mass, N_isotopes):
+
+    def binominal(n, k, p):
+        return math.factorial(n)/(math.factorial(k)*math.factorial(n-k))*(p**k)*((1-p)**(n-k))
+
+    # parameters
+    # estimate of N_carbon from mass
+    #est_NCarbon_m = 0.0694521806
+    #est_NCarbon_b = -1.4759043747
+    est_NHydrogen_m = 0.0694521806
+    est_NHydrogen_b = -1.4759043747
+    
+    est_NCarbon_m = 0.0456772594
+    est_NCarbon_b = -3.4971107586
+
+    # isotopic probability (chosen after best fit)
+    #p_Carbon = 0.9916213
+    p_Hydrogen =  0.98884015
+    p_Carbon = 0.99052649
+
+    # calculate approximate amount of carbon from mass
+    N_carbon = round(est_NCarbon_m*mass+est_NCarbon_b)
+    N_hydrogen = round(est_NHydrogen_m*mass+est_NHydrogen_b)
+
+
+    # calculate isotopic distribution of isotopes
+    #pattern = [binominal(N_carbon,N_carbon-i,p_Carbon) for i in range(0,N_isotopes)]
+    pattern = []
+    for i in range(0,N_isotopes):
+        p = 0
+        if N_hydrogen >= i:
+            p += binominal(N_hydrogen,N_hydrogen-i,p_Hydrogen)
+        if N_carbon >= i:
+            p += binominal(N_carbon,N_carbon-i,p_Carbon)
+        pattern.append(p)
+    # normalize pattern after sum of all 4 probabilities
+    summP = sum(pattern)
+    return zip(range(0,N_isotopes),[p/summP for p in pattern])
+
+def findBestFittingMass(x, y, max_charge=5, N_isotopes=4, intensityCutoff=0.2):
+    best = None
+    if len(x) == 0:
+        return None
+
+    assert len(x) == len(y)
+    
+    highestPeak = max(y)
+    assert highestPeak > 0
+
+    for mass in x:
+        for charge in range(1,max_charge):
+            # calculate mass array for peaks
+            masses_raw = [mass+i*MASS["H+"]/charge for i in range(0,N_isotopes)]
+
+            # interpolate intensities from measurement
+            intensities_raw = list(np.interp(masses_raw, x, y))
+            
+            masses = []
+            intensities = []
+            for a, b in zip(masses_raw, intensities_raw):
+                if b < highestPeak*intensityCutoff:
+                    break
+                masses.append(a)
+                intensities.append(b)
+
+            # calculate intensitySum
+            intensitySum = float(sum(intensities))
+            
+            # if intensitySum < 20% of highest peak, continue
+            #if intensitySum < highestPeak*intensityCutoff:
+            #    continue
+            
+            if len(masses) < 3:
+                continue
+
+            # calculate theoretical pattern
+            pattern = calcIsotopicPatternFromMass(mass*charge, len(masses))
+
+            estimate = [b*intensitySum for a,b in pattern]
+
+            # calculate error
+            try:
+                error = [abs(b*intensitySum-intensities[a]) for a,b in pattern]
+                error = sum(error)/intensitySum*100
+            except:
+                print masses, intensities
+                raise
+            
+            if best == None or error < best["error"]:
+                best = {}
+                best["error"] = error
+                best["charge"] = charge
+                best["masses"] = masses
+                best["intensities"] = intensities
+                best["estimate"] = estimate
+    return best
