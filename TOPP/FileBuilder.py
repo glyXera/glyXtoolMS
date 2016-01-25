@@ -16,7 +16,7 @@ def handle_args(argv=None):
     parser.add_argument("--inOriginal", dest="infileOriginal",help="File input - Original file")
     parser.add_argument("--inReplace", dest="infileReplace",help="File input with spectra that replace alle original spectra with the given MS Level")
     parser.add_argument("--out", dest="outfile",help="File output")
-    parser.add_argument("--MSLevel", dest="MSLevel",help="File output")
+    parser.add_argument("--MSLevel", dest="MSLevel",help="MS Level to replace")
     if not argv:
         args = parser.parse_args(sys.argv[1:])
     else:
