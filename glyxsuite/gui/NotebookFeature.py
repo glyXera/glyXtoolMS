@@ -315,8 +315,8 @@ class NotebookFeature(ttk.Frame):
             c.intensity.append(sumIntensity)
             highest.append((sumIntensity, spec.getNativeID()))
 
-                
-        # find spectrum index in the middle of the feature
+        
+        """# find spectrum index in the middle of the feature
         rt = (minRT+maxRT)/2.0
         index = -1
         id = ""
@@ -329,7 +329,20 @@ class NotebookFeature(ttk.Frame):
             if spec.getMSLevel() != 1:
                 continue
             if spec.getRT() > rt:
+                break"""
+        # find ms1 spectrum nearest to feature rt
+        index = -1
+        minDiff = None
+        for spec in self.model.currentAnalysis.project.mzMLFile.exp:
+            index += 1
+            if spec.getMSLevel() != 1:
+                continue
+            diff = spec.getRT() - feature.rt
+            if diff > 0:
                 break
+            if minDiff == None or abs(diff) < minDiff:
+                minDiff = abs(diff)
+            
 
         c.plot = True
         c.name = "test"

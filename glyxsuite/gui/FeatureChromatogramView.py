@@ -8,7 +8,7 @@ from glyxsuite.gui import Appearance
 import glyxsuite
 
 
-class ChromatogramView(FramePlot.FramePlot):
+class FeatureChromatogramView(FramePlot.FramePlot):
 
     def __init__(self, master, model, height=300, width=800):
         FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="rt [s]", yTitle="Intensity [counts]")

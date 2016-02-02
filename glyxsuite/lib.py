@@ -54,7 +54,7 @@ class Histogram(object):
         if not order:
             order = self.bins.keys()
         bottomStart = {}
-        bars = []
+        bars = {}
         for label in order:
             bottom = []
             height = []
@@ -70,7 +70,7 @@ class Histogram(object):
                 bottomStart[b] += self.bins[label][b]
             if axis:
                 bar = axis.bar(left, height, width=self.binwidth, bottom=bottom, label=label, color=self.colors[label])
-                bars.append(bar)
+                bars[label] = bar
             else:
                 raise Exception("Please provide a plot axis, eg 'axis=plt'")
         return bars

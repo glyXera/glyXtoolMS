@@ -19,7 +19,7 @@ class Notebook1(ttk.Frame):
 
         chromFrame = ttk.Labelframe(self, text="Precursor Chromatogram")
         chromFrame.grid(row=0, column=0, sticky="NWES")
-        chromView = FeatureChromatogramView.ChromatogramView(chromFrame, model, height=300, width=400)
+        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, model, height=300, width=400)
         chromView.grid(row=0, column=0, sticky="NWES")
         chromFrame.columnconfigure(0, weight=1)
         chromFrame.rowconfigure(0, weight=1)
