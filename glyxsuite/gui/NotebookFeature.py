@@ -35,6 +35,8 @@ class NotebookFeature(ttk.Frame):
                                command=lambda x="Rejected": self.setStatus(x))
         self.aMenu.add_command(label="Deleted",
                                command=lambda x="Deleted": self.setStatus(x))
+        self.aMenu.add_command(label="Change Feature",
+                               command=self.changeFeature)
 
         # show treeview of mzML file MS/MS and MS
         # ------------------- Feature Tree ----------------------------#
@@ -133,6 +135,13 @@ class NotebookFeature(ttk.Frame):
             taglist = list(self.featureTree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, feature.status)
             self.featureTree.item(item, tags=taglist)
+    
+    def changeFeature(self):
+        selection = self.featureTree.selection()
+        if len(selection) != 1:
+            return
+        feature = self.featureTreeIds[selection[0]]
+        ChangeFeatureFrame(self.master, self.model, feature)
 
     def sortFeatureColumn(self, col):
 
@@ -516,3 +525,70 @@ class NotebookFeature(ttk.Frame):
                 taglist.append("odd")
                 taglist = self.setHighlightingTag(taglist, status)
             self.featureTree.item(k, tags=taglist)
+
+
+class ChangeFeatureFrame(Tkinter.Toplevel):
+
+    def __init__(self, master, model, feature):
+        Tkinter.Toplevel.__init__(self, master=master)
+        #self.minsize(600, 300)
+        self.master = master
+        self.feature = feature
+        self.title("Change Feature")
+        self.config(bg="#d9d9d9")
+        self.model = model
+        self.mass = 0
+        self.charge = 0
+        
+        labelCharge = Tkinter.Label(self, text="Charge")
+        self.chargeVar = Tkinter.StringVar()
+        self.chargeVar.trace("w", self.valuesChanged)
+        self.entryCharge = Tkinter.Entry(self, textvariable=self.chargeVar)
+        labelCharge.grid(row=0, column=0, sticky="NWES")
+        self.entryCharge.grid(row=0, column=1, columnspan=2, sticky="NWES")
+        
+        labelMass = Tkinter.Label(self, text="Mass")
+        self.massVar = Tkinter.StringVar()
+        self.massVar.trace("w", self.valuesChanged)
+        self.entryMass = Tkinter.Entry(self, textvariable=self.massVar)
+        labelMass.grid(row=1, column=0, sticky="NWES")
+        self.entryMass.grid(row=1, column=1, columnspan=2, sticky="NWES")
+        
+        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)        
+        saveButton = Tkinter.Button(self, text="Save", command=self.save)
+
+        cancelButton.grid(row=10, column=0, sticky="NWES")
+        saveButton.grid(row=10, column=1, sticky="NWES")
+        
+        # set values
+        self.chargeVar.set(feature.getCharge())
+        self.massVar.set(feature.getMZ())
+                                                   
+        
+    def valuesChanged(self, *args):
+        # check entries for validity
+        self.valid = True
+        try:
+            self.charge = int(self.chargeVar.get())
+            self.entryCharge.config(bg="grey")
+        except:
+            self.valid = False
+            self.entryCharge.config(bg="red")
+            
+        try:
+            self.mass = float(self.massVar.get())
+            self.entryMass.config(bg="grey")
+        except:
+            self.valid = False
+            self.entryMass.config(bg="red")
+    
+    def save(self):
+        if self.valid == False:
+            return
+        self.feature.setCharge(self.charge)
+        self.feature.setMZ(self.mass)
+        self.destroy()
+        self.model.classes["NotebookFeature"].updateFeatureTree()
+
+    def cancel(self):
+        self.destroy()
