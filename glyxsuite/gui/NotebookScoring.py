@@ -110,7 +110,10 @@ class NotebookScoring(ttk.Frame):
         
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
         self.tree.bind("<Button-3>", self.popup)
-
+        
+        self.tree.bind("a", lambda e: self.setStatus("Accepted"))
+        self.tree.bind("d", lambda e: self.setStatus("Deleted"))
+        self.tree.bind("r", lambda e: self.setStatus("Rejected"))
 
         self.model.classes["NotebookScoring"] = self
         
@@ -239,10 +242,13 @@ class NotebookScoring(ttk.Frame):
             if spectrum.isGlycopeptide:
                 isGlycopeptide = "yes"
             name = spectrum.nativeId
-
+            if self.model.timescale == "minutes":
+                rt = round(spectrum.rt/60.0, 2)
+            else:
+                rt = round(spectrum.rt, 1)
             #itemSpectra = self.tree.insert("" , "end", text=name,
             itemSpectra = self.tree.insert("", "end", text=spectrum.index,
-                                           values=(round(spectrum.rt, 1),
+                                           values=(rt,
                                                    round(spectrum.precursorMass, 4),
                                                    spectrum.precursorCharge,
                                                    round(spectrum.logScore, 2),

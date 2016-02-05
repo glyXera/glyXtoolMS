@@ -59,7 +59,7 @@ class DataModel(object):
                 continue
 
             for f in self.filters["Features"]:
-                if not f.evaluate(feature):
+                if not f.evaluate(feature, self.timescale):
                     feature.passesFilter = False
                     break
 

@@ -53,8 +53,11 @@ class NotebookIdentification(ttk.Frame):
         self.tree.tag_configure('evenRejected', background='SkyBlue')
 
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
-        self.tree.bind("<Delete>", self.deleteIdentification)
         self.tree.bind("<Button-3>", self.popup)
+        
+        self.tree.bind("a", lambda e: self.setStatus("Accepted"))
+        self.tree.bind("d", lambda e: self.setStatus("Deleted"))
+        self.tree.bind("r", lambda e: self.setStatus("Rejected"))
 
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)

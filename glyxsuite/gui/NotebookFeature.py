@@ -77,7 +77,9 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.tag_configure('evenRejected', background='SkyBlue')
         
         self.featureTree.bind("<<TreeviewSelect>>", self.clickedFeatureTree)
-        self.featureTree.bind("<Delete>", self.deleteFeature)
+        self.featureTree.bind("a", lambda e: self.setStatus("Accepted"))
+        self.featureTree.bind("d", lambda e: self.setStatus("Deleted"))
+        self.featureTree.bind("r", lambda e: self.setStatus("Rejected"))
         self.featureTree.bind("<Button-3>", self.popup)
 
         self.model.classes["NotebookFeature"] = self
@@ -103,7 +105,7 @@ class NotebookFeature(ttk.Frame):
 
         scrollbar.config(command=self.spectrumTree.yview)
         self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree)
-        
+    
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
@@ -113,7 +115,7 @@ class NotebookFeature(ttk.Frame):
         if self.focus_get() != self.aMenu:
             self.aMenu.unpost()
             
-    def setStatus(self,status):
+    def setStatus(self, status):
         # get currently active hit
         selection = self.featureTree.selection()
         if len(selection) == 0:
@@ -443,9 +445,12 @@ class NotebookFeature(ttk.Frame):
             if spectrum.isGlycopeptide:
                 isGlycopeptide = "yes"
             name = spectrum.index
-
+            if self.model.timescale == "minutes":
+                rt = round(spectrum.rt/60.0, 2)
+            else:
+                rt = round(spectrum.rt, 1)
             itemSpectra = self.spectrumTree.insert("", "end", text=name,
-                                                   values=(round(spectrum.rt, 1),
+                                                   values=(rt,
                                                            round(spectrum.precursorMass, 4),
                                                            spectrum.precursorCharge,
                                                            round(spectrum.logScore, 2),

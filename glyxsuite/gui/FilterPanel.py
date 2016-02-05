@@ -798,19 +798,24 @@ class Feature_RT_Filter(Filter):
             self.field2 = str(self.value)
             self.field2 = str(self.value)
 
-    def evaluate(self, feature):
+    def evaluate(self, feature, timescale):
+        # change rt according to setting 
+        if timescale == "minutes":
+            rt = round(feature.getRT()/60.0, 2)
+        else:
+            rt = round(feature.getRT(), 1)
         if self.operator == "<":
-            if feature.getRT() < self.value:
+            if rt < self.value:
                 return True
             else:
                 return False
         elif  self.operator == ">":
-            if feature.getRT() > self.value:
+            if rt > self.value:
                 return True
             else:
                 return False
         else:
-            if self.lowValue <= feature.getRT() <= self.highValue:
+            if self.lowValue <= rt <= self.highValue:
                 return True
             else:
                 return False
