@@ -50,8 +50,15 @@ def main(options):
     glycoSites = {}
     peptideMasses = {}
     for h in fin.glycoModHits:
-       
+        if h.status == "Rejected":
+            continue
+        if h.status == "Deleted":
+            continue       
         feature = features[h.featureID]
+        if feature.status == "Rejected":
+            continue
+        if feature.status == "Deleted":
+            continue
         peptide = h.peptide
         glycan = h.glycan
         charge = feature.getCharge()
