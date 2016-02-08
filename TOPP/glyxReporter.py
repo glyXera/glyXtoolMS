@@ -50,15 +50,17 @@ def main(options):
     glycoSites = {}
     peptideMasses = {}
     for h in fin.glycoModHits:
-        if h.status == "Rejected":
-            continue
-        if h.status == "Deleted":
-            continue       
+        if not h.status in data:
+            data[h.status] = {}
+        #if h.status == "Rejected":
+        #    continue
+        #if h.status == "Deleted":
+        #    continue       
         feature = features[h.featureID]
-        if feature.status == "Rejected":
-            continue
-        if feature.status == "Deleted":
-            continue
+        #if feature.status == "Rejected":
+        #    continue
+        #if feature.status == "Deleted":
+        #    continue
         peptide = h.peptide
         glycan = h.glycan
         charge = feature.getCharge()
@@ -78,11 +80,11 @@ def main(options):
         glycoSiteKey = generateGlycoylationSiteKey(peptide)
         glycoSites[seq] = glycoSiteKey
         
-        if not seq in data:
-            data[seq] = {}
-        if not comp in data[seq]:
-            data[seq][comp] = set()
-        data[seq][comp].add("{}({})[{}]".format(str(round(mass,1)),str(charge),str(round(rt/60.0,1))))
+        if not seq in data[h.status]:
+            data[h.status][seq] = {}
+        if not comp in data[h.status][seq]:
+            data[h.status][seq][comp] = set()
+        data[h.status][seq][comp].add("{}({})[{}]".format(str(round(mass,1)),str(charge),str(round(rt/60.0,1))))
         
 
     # write output
@@ -150,28 +152,30 @@ def main(options):
     # ---------------------- Identifications --------------------------#
     
     ws3 = wb.add_sheet("Identifications")
-
-    # write header
-    for col,comp in enumerate(["GlycoSite", "Peptide", "Peptidemass"]+compsHeader):
-        ws3.write(1, col, comp)
-    
-    for col,comp in enumerate(compsHeader):
-        ws3.write(0, col+3, round(comps[comp], 1))
-    
-    row = 1
-    for seq in data:
-        row += 1
-        # write sequence
-        ws3.write(row, 0, glycoSites[seq])
-        ws3.write(row, 1, seq)
-        ws3.write(row, 2, round(peptideMasses[seq], 2))
-        col = 2
-        for comp in compsHeader:
-            col += 1
-            print 
-            if comp in data[seq]:
-                ws3.write(row, col, ";".join(data[seq][comp]))
-                
+    row = 0
+    for status in data:
+        # write header
+        ws3.write(row, 0, status)
+        for col,comp in enumerate(["GlycoSite", "Peptide", "Peptidemass"]+compsHeader):
+            ws3.write(row+1, col, comp)
+        
+        for col,comp in enumerate(compsHeader):
+            ws3.write(row, col+3, round(comps[comp], 1))
+        
+        row +=1
+        for seq in data[status]:
+            row += 1
+            # write sequence
+            ws3.write(row, 0, glycoSites[seq])
+            ws3.write(row, 1, seq)
+            ws3.write(row, 2, round(peptideMasses[seq], 2))
+            col = 2
+            for comp in compsHeader:
+                col += 1
+                print 
+                if comp in data[status][seq]:
+                    ws3.write(row, col, ";".join(data[status][seq][comp]))
+        row += 3
     wb.save(options.outfile)
 
 
