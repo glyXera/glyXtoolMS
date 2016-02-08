@@ -46,37 +46,37 @@ class App(ttk.Frame):
         ttk.Frame.__init__(self)
 
         self.master = master
-        menubar = Tkinter.Menu(self.master, bg="#d9d9d9")
-        self.master.config(menu=menubar)
+        self.menubar = Tkinter.Menu(self.master, bg="#d9d9d9")
+        self.master.config(menu=self.menubar)
         self.master.config(bg="#d9d9d9")
         self.model = DataModel.DataModel()
 
         self.model.root = master
 
-        filemenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
+        filemenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         #filemenu.add_command(label="Set workspace", command=self.setWorkspace)
         filemenu.add_command(label="Options", command=self.setOptions)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.master.destroy)
-        menubar.add_cascade(label="Program", menu=filemenu)
+        self.menubar.add_cascade(label="Program", menu=filemenu)
 
-        projectMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
+        projectMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         projectMenu.add_command(label="New Project")
         projectMenu.add_command(label="Open Analysis")
         projectMenu.add_command(label="Save Analysis")
         projectMenu.add_separator()
         projectMenu.add_command(label="Close Project")
         projectMenu.add_command(label="Close Analysis")
-        menubar.add_cascade(label="Project", menu=projectMenu)
+        self.menubar.add_cascade(label="Project", menu=projectMenu)
 
-        statisticsMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
+        statisticsMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         statisticsMenu.add_command(label="Scorehistogram", command=self.showHistogram)
-        menubar.add_cascade(label="Statistics", menu=statisticsMenu)
+        self.menubar.add_cascade(label="Statistics", menu=statisticsMenu)
 
-        filterMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
+        filterMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         filterMenu.add_command(label="Set Filter Options", command=self.showFilterOptions)
-        menubar.add_cascade(label="Filter", menu=filterMenu)   
-
+        self.menubar.add_cascade(label="Filter", menu=filterMenu) # Index 4 in menubar
+        
         #toolMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
         #menubar.add_cascade(label="Tool", menu=toolMenu)
         
@@ -144,6 +144,17 @@ class App(ttk.Frame):
         left.rowconfigure(1, weight=1)
         right.columnconfigure(0, weight=1)
         right.rowconfigure(0, weight=1)
+        
+        # register class in Datamodel
+        self.model.classes["main"] = self
+        
+    def setActiveFilterHint(self, hasActiveFilter):
+        if hasActiveFilter == True:
+            self.menubar.entryconfig(4, background="#e60000")
+            self.menubar.entryconfig(4, activebackground="#b30000")
+        else:
+            self.menubar.entryconfig(4, background="#d9d9d9")
+            self.menubar.entryconfig(4, activebackground="#d6d2d0")
 
 
     def changedNotebook(self, event):

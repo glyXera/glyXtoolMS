@@ -37,15 +37,25 @@ class DataModel(object):
         self.readSettings()
         
     def runFilters(self): # check filters
+        hasActiveFilter = False
+        for key in self.filters:
+            if len(self.filters[key]) > 0:
+                hasActiveFilter = True
+                break
+  
+        self.classes["main"].setActiveFilterHint(hasActiveFilter)
         if self.currentAnalysis == None:
             return
 
         for spectrum in self.currentAnalysis.analysis.spectra:
             spectrum.passesFilter = True
             for f in self.filters["Scoring"]:
-                if not f.evaluate(spectrum):
-                    spectrum.passesFilter = False
-                    break
+                try:
+                    if not f.evaluate(spectrum):
+                        spectrum.passesFilter = False
+                        break
+                except:
+                    raise Exception("Cannot evaluate Filter", f)
 
         for feature in self.currentAnalysis.analysis.features:
             # remove features which have no MS2 spectra that pass the filter
@@ -59,19 +69,24 @@ class DataModel(object):
                 continue
 
             for f in self.filters["Features"]:
-                if not f.evaluate(feature, self.timescale):
-                    feature.passesFilter = False
-                    break
-
+                try:
+                    if not f.evaluate(feature, timescale=self.timescale):
+                        feature.passesFilter = False
+                        break
+                except:
+                    raise Exception("Cannot evaluate Filter", f)
         for hit in self.currentAnalysis.analysis.glycoModHits:
             hit.passesFilter = True
             if hit.feature.passesFilter == False:
                 hit.passesFilter = False
                 continue
             for f in self.filters["Identification"]:
-                if not f.evaluate(hit):
-                    hit.passesFilter = False
-                    break
+                try:
+                    if not f.evaluate(hit):
+                        hit.passesFilter = False
+                        break
+                except:
+                    raise Exception("Cannot evaluate Filter", f)
 
     def readSettings(self):
         home = os.path.expanduser("~")

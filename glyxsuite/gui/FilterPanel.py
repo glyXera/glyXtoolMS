@@ -496,7 +496,7 @@ class Filter(object):
         assert operator in self.operatorChoices
         self.operator = operator
 
-    def evaluate(self, obj, typ):
+    def evaluate(self, obj, **args):
         raise Exception("overwrite this function!")
     
     def parseFloatRange(self, string):
@@ -533,7 +533,7 @@ class EmptyFilter(Filter):
     def parseField2(self, field2):
         return
 
-    def evaluate(self, obj):
+    def evaluate(self, obj, **args):
         return True
 
 class StatusFilter(Filter):
@@ -551,7 +551,7 @@ class StatusFilter(Filter):
     def parseField2(self, field2):
         self.field2 = field2
 
-    def evaluate(self, obj):
+    def evaluate(self, obj, **args):
         if self.operator == "is":
             if obj.status == self.field2:
                 return True
@@ -576,7 +576,7 @@ class FeatureStatusFilter(Filter):
     def parseField2(self, field2):
         self.field2 = field2
 
-    def evaluate(self, hit):
+    def evaluate(self, hit, **args):
         if self.operator == "is":
             if hit.feature.status == self.field2:
                 return True
@@ -614,7 +614,7 @@ class GlycopeptideMass_Filter(Filter):
             self.field2 = str(self.value)
             self.field2 = str(self.value)
 
-    def evaluate(self, hit):
+    def evaluate(self, hit, **args):
         mass = hit.glycan.mass + hit.peptide.mass
         if self.operator == "<":
             if mass < self.value:
@@ -669,7 +669,7 @@ class Fragmentmass_Filter_Identification(Filter):
             self.intensity = self.parseFloat(field2)
             self.field2 = str(self.intensity)
 
-    def evaluate(self, hit):
+    def evaluate(self, hit, **args):
         
         intensity = 0
         for peak in hit.feature.consensus:
@@ -729,7 +729,7 @@ class Fragmentmass_Filter_Feature(Filter):
             self.intensity = self.parseFloat(field2)
             self.field2 = str(self.intensity)
 
-    def evaluate(self, feature):
+    def evaluate(self, feature, **args):
         
         intensity = 0
         for peak in feature.consensus:
@@ -805,7 +805,7 @@ class Fragmentname_Filter(Filter):
                     return True
         return False
 
-    def evaluate(self, hit):
+    def evaluate(self, hit, **args):
         if self.operator == "exists":
             return self.existsLabel(self.field1, hit)
         else:
@@ -839,7 +839,7 @@ class Feature_RT_Filter(Filter):
             self.field2 = str(self.value)
             self.field2 = str(self.value)
 
-    def evaluate(self, feature, timescale):
+    def evaluate(self, feature, timescale, **args):
         # change rt according to setting 
         if timescale == "minutes":
             rt = round(feature.getRT()/60.0, 2)
