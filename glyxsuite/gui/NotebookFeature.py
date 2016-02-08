@@ -568,6 +568,22 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
         # set values
         self.chargeVar.set(feature.getCharge())
         self.massVar.set(feature.getMZ())
+        
+        # get window size
+        self.update()
+        h = self.winfo_height()
+        w = self.winfo_width()
+
+        # get screen width and height
+        ws = master.winfo_screenwidth() # width of the screen
+        hs = master.winfo_screenheight() # height of the screen
+
+        # calculate x and y coordinates for the Tk window
+        x = (ws/2) - (w/2)
+        y = (hs/2) - (h/2)
+        # set the dimensions of the screen 
+        # and where it is placed
+        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
                                                    
         
     def valuesChanged(self, *args):

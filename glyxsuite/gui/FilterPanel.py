@@ -10,9 +10,25 @@ class FilterPanel(Tkinter.Toplevel):
 
     def __init__(self, master, model):
         Tkinter.Toplevel.__init__(self, master=master)
-        self.minsize(600,300)
+        w = 600
+        h = 300
+        self.minsize(w,h)
         self.master = master
         self.model = model
+        
+        # center window
+        # get screen width and height
+        ws = master.winfo_screenwidth() # width of the screen
+        hs = master.winfo_screenheight() # height of the screen
+
+        # calculate x and y coordinates for the Tk root window
+        x = (ws/2) - (w/2)
+        y = (hs/2) - (h/2)
+
+        # set the dimensions of the screen 
+        # and where it is placed
+        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
+        
         
         self.protocol("WM_DELETE_WINDOW", self._delete_window)
         #self.bind("<Destroy>", self._destroy)
