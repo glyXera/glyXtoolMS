@@ -409,7 +409,7 @@ class GlyxXMLFile(object):
             xmlSpectrumRT.text = str(spectrum.getRT())
             xmlSpectrumIonCount = ET.SubElement(xmlSpectrum, "ionCount")
             xmlSpectrumIonCount.text = str(spectrum.getIonCount())
-            if self.version > "0.0.8":
+            if self._version > "0.0.8":
                 xmlMonoMass = ET.SubElement(xmlSpectrum, "monoisotopicMass")
                 xmlMonoMass.text = str(spectrum.monoisotopicMass)
                 xmlPreMass = ET.SubElement(xmlSpectrum, "precursorMass")
