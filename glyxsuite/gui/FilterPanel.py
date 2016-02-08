@@ -125,6 +125,7 @@ class FilterPanel(Tkinter.Toplevel):
         filters.append(Fragmentmass_Filter_Identification())
         filters.append(Fragmentname_Filter(self.model))
         filters.append(StatusFilter())
+        filters.append(FeatureStatusFilter())
         
         f = FilterEntry(self.filterIdentification,
                         filters,
@@ -560,6 +561,30 @@ class StatusFilter(Filter):
                 return False
         return True
 
+class FeatureStatusFilter(Filter):
+    def __init__(self):
+        super(FeatureStatusFilter, self).__init__("FeatureStatus")
+        self.type1 = FieldTypes.INACTIVE
+        self.type2 = FieldTypes.MENU
+        self.choices2 = glyxsuite.io.ConfirmationStatus._types
+        self.operatorChoices = ["is", "is not"]
+        self.operator = "is"
+        
+    def parseField1(self, field1):
+        return
+        
+    def parseField2(self, field2):
+        self.field2 = field2
+
+    def evaluate(self, hit):
+        if self.operator == "is":
+            if hit.feature.status == self.field2:
+                return True
+            return False
+        else:
+            if hit.feature.status == self.field2:
+                return False
+        return True
 
 class GlycopeptideMass_Filter(Filter):
     def __init__(self):
