@@ -81,7 +81,9 @@ class PeptideCoverageFrame(ttk.Frame):
     def setMenuChoices(self, choices):
         self.aMenu['menu'].delete(0, 'end')
         if len(choices) == 0:
-            self.menuVar.set("no further peptide ions")
+            choice = "no further peptide ions"
+            self.menuVar.set(choice)
+            self.aMenu['menu'].add_command(label=choice, command=Tkinter._setit(self.menuVar, choice))
             return
         self.menuVar.set(choices[0])
         for choice in choices:
