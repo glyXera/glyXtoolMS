@@ -87,6 +87,8 @@ def main(options):
             digests.append(proteinDigest.add_AspN_digest_2)
         elif digest == "Unspecific":
             digests.append(proteinDigest.add_Unspecific_digest)
+        elif digest == "NoDigest":
+            pass
         else:
             raise Exception("Unknown digestion enzyme used!")
             
