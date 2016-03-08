@@ -47,7 +47,11 @@ def findPattern(monomass, charge, peaks, tolerance):
     estimate = []
     for a,b in pattern:
         intensity_est = b*sumIntensity
-        intensity_exp = candidates[a].getIntensity()
+        try:
+            intensity_exp = candidates[a].getIntensity()
+        except:
+            print pattern, candidates
+            raise Exception("foo")
         x.append(candidates[a].getMZ())
         y.append(intensity_exp)
         estimate.append(intensity_est)

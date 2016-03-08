@@ -14,7 +14,7 @@ def handle_args(argv=None):
     usage = "\nFile Glycopeptide Digestor tool"
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--inFasta", dest="infile",help="File input - Protein sequences as .fasta file")
-    parser.add_argument("--out", dest="outfile",help="File output Glycopeptide file .glycopep")
+    parser.add_argument("--out", dest="outfile",help="File output Glycopeptide file .xml")
     parser.add_argument("--enzymes", dest="enzymes",help="Digestion enzymes: Comma separated list of [Trypsin, AspN]")
     parser.add_argument("--cystTreatment", dest="cystTreatment",help="Cystein treatment (C): Either None, Iodacetic acid or Iodoacetamide")
     parser.add_argument("--modifications", dest="modifications",help="variable modifications: List of [Oxidation(M), AcrylamideAdduct(C)], Carbamylation(N-Term)")
