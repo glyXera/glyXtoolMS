@@ -52,7 +52,7 @@ def main(options):
         print "checking glycans in file"
         fin = file(options.infile,"r")
         for line in fin:
-            glycan = glyxsuite.lib.Glycan(line[:-1])
+            glycan = glyxsuite.lib.Glycan(line.strip())
             if not glycan.checkComposition():
                 continue
             if not minHex <= glycan.sugar["HEX"] <= maxHex:

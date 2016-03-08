@@ -420,7 +420,10 @@ class Glycan(glyxsuite.io.XMLGlycan):
         "H": "HEX",     # Hex
         
         """
-        assert re.match('^([A-z]+\d+)+$', composition) != None
+        try:
+            assert re.match('^([A-z]+\d+)+$', composition) != None
+        except:
+            raise Exception("Cannot parse composition '"+composition+"'!")
         self.mass = 0
         for comp in re.findall(r"[A-z]+\d+", composition):
             name = re.search(r"[A-z]+", comp).group()
