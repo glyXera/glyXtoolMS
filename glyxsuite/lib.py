@@ -373,6 +373,12 @@ class Glycan(glyxsuite.io.XMLGlycan):
         self.mass = 0
         for unit in self.sugar:
             self.mass += glyxsuite.masses.GLYCAN[unit]*self.sugar[unit]
+        self.composition = ""
+        for unit in msCompositionOrder:
+            amount = self.sugar.get(unit, 0)
+            if amount == 0:
+                continue
+            self.composition += msComposition[unit]+str(amount)
 
     def checkComposition(self):
         HEX = self.sugar["HEX"]
@@ -414,10 +420,16 @@ class Glycan(glyxsuite.io.XMLGlycan):
         "H": "HEX",     # Hex
         
         """
+        assert re.match('^([A-z]+\d+)+$', composition) != None
         self.mass = 0
         for comp in re.findall(r"[A-z]+\d+", composition):
             name = re.search(r"[A-z]+", comp).group()
-            unit = twoLetterCode[name]
+            if name in msComposition:
+                unit = name
+            elif name in twoLetterCode:
+                unit = twoLetterCode[name]
+            else:
+                raise Exception("Unknown modificaiton "+ name)
             amount = int(re.search(r"\d+", comp).group())
             self.sugar[unit] = amount
             self.mass += glyxsuite.masses.GLYCAN[unit]*amount

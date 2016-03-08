@@ -228,7 +228,7 @@ def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
                 raise Exception("Unknown type of k, please supply an integer or a list")
             # check if k sums up to n
             if sum(newK) != n:
-                raise Exception("The sum of k has to equal n!")
+                raise Exception("The sum of k has to be equal n!")
             divisor = 1
             for k in newK:
                 divisor *= math.factorial(k)
@@ -307,10 +307,7 @@ def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
         #print shift, masses[shift]/maxProb*100
     return sumProb, monoMass, trans
 
-
-
-def calcGlycopeptidePattern(peptide, glycan):
-
+def getElementComposition(peptide, glycan):
     # calculate element composition
     elements = {}
     def addElements(elements, name, amount):
@@ -340,7 +337,12 @@ def calcGlycopeptidePattern(peptide, glycan):
         amount = int(re.sub(r"[A-z]+", "", match))
         addElements(elements, glycanname, amount)
         addElements(elements, "H2O", -1*amount)
+    
+    return elements
+    
+def calcGlycopeptidePattern(peptide, glycan):
 
+    elements = getElementComposition(peptide, glycan)
     res = calculateIsotopicPattern(
         C=elements.get("C", 0),
         H=elements.get("H", 0),
@@ -349,8 +351,35 @@ def calcGlycopeptidePattern(peptide, glycan):
         S=elements.get("S", 0))
     return res
 
+def calcIsotopicPatternFromMass(mass, N_isotopes, maxS=10):
+    m_H = 0.068832626663784202
+    b_H = -0.2237949069434535
+    
+    m_C = 0.045560761070855264
+    b_C = -3.4169101305187581
+    
+    m_S = 0.00076944265205870766
+    b_S = 0.071713743069281355
+    
+    m_O = 0.013186649782530958
+    b_O = 0.8063769593231811
+    
+    m_N = 0.010596216778823579
+    b_N = 1.8594274272131806
+    
+    N_H = int(round(m_H*mass+b_H))
+    N_C = int(round(m_C*mass+b_C))
+    N_S = int(round(m_S*mass+b_S))
+    N_O = int(round(m_O*mass+b_O))
+    N_N = int(round(m_N*mass+b_N))
+    if N_S > maxS:
+        N_S = maxS
+    
+    pattern = calculateIsotopicPattern(C=N_C, H=N_H, N=N_N, O=N_O, S=N_S, maxShift=N_isotopes-1)[2]
+    summP = sum([b for a,b in pattern])
+    return zip(range(0,len(pattern)),[b/summP for a,b in pattern])
 
-def calcIsotopicPatternFromMass(mass, N_isotopes):
+def calcIsotopicPatternFromMass_Old(mass, N_isotopes):
 
     def binominal(n, k, p):
         return math.factorial(n)/(math.factorial(k)*math.factorial(n-k))*(p**k)*((1-p)**(n-k))

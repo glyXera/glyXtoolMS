@@ -2,6 +2,8 @@ import ttk
 import tkFont
 import Tkinter
 import re
+import os
+import tkFileDialog
 
 def parseInternalFragment(name, length):
     match = re.match(r"^y\d+b\d+", name)
@@ -60,6 +62,8 @@ class PeptideCoverageFrame(ttk.Frame):
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)
         self.canvas.bind("<Configure>", self.on_resize)
+        self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
+        self.canvas.bind("<Control-s>", self.savePlot, "+")
 
         self.menuVar = Tkinter.StringVar(self)
         self.menuVar.trace("w", self.plotSingleFragment)
@@ -88,6 +92,22 @@ class PeptideCoverageFrame(ttk.Frame):
         self.menuVar.set(choices[0])
         for choice in choices:
             self.aMenu['menu'].add_command(label=choice, command=Tkinter._setit(self.menuVar, choice))
+    
+    def eventMouseMotion(self, event):
+        self.canvas.focus_set()
+    
+    def savePlot(self, event):
+        if self.model.currentAnalysis == None:
+            return
+        options = {}
+        options['filetypes'] = [('post script', '.eps'), ]
+        workingdir = os.path.dirname(self.model.currentAnalysis.path)
+        options['initialdir'] = workingdir
+        options['parent'] = self
+        filename = tkFileDialog.asksaveasfilename(**options)
+        if filename == "":
+            return
+        self.canvas.postscript(file=filename, height=self.height, width=self.width)
 
     def on_resize(self,event):
         self.width = event.width

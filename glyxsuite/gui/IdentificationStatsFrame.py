@@ -3,7 +3,7 @@ import Tkinter
 
 from glyxsuite.gui import FramePlot
 from glyxsuite.gui import Appearance
-
+import glyxsuite
 
 class IdentificationStatsFrame(FramePlot.FramePlot):
 
@@ -33,6 +33,7 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
 
     def setMaxValues(self):
         self.aMax = -1
+        #self.aMin = -1
         self.bMax = -1
         self.bMin = -1
         analysis = self.model.currentAnalysis
@@ -44,13 +45,19 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         for hit in analysis.analysis.glycoModHits:
             feature = analysis.featureIds[hit.featureID]
             featureNr = int(feature.index)
+            #mass = (feature.mz-glyxsuite.masses.MASS["H+"])*feature.charge
             error = hit.error
             if self.aMax == -1 or featureNr > self.aMax:
                 self.aMax = featureNr
+            #if self.aMax == -1 or mass > self.aMax:
+            #    self.aMax = mass
+            #if self.aMin == -1 or mass < self.aMin:
+            #    self.aMin = mass
             if self.bMax == -1 or error > self.bMax:
                 self.bMax = error
             if self.bMin == -1 or error < self.bMin:
                 self.bMin = error
+        #self.aMin = self.aMin-self.aMax*0.1
         self.aMax = self.aMax*1.1
         self.bMax = self.bMax+0.1
         self.bMin = self.bMin-0.1
@@ -76,10 +83,12 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         for hit in analysis.analysis.glycoModHits:
             feature = analysis.featureIds[hit.featureID]
             featureNr = int(feature.index)
+            #mass = (feature.mz-glyxsuite.masses.MASS["H+"])*feature.charge
             error = hit.error
 
             diam = 3
             x = self.convAtoX(featureNr)
+            #x = self.convAtoX(mass)
             y = self.convBtoY(error)
             self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill="green")
         self.allowZoom = True

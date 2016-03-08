@@ -14,6 +14,8 @@ f.writeToFile(path)
 """
 
 from lxml import etree as ET
+import re
+import glyxsuite
 
 class Annotation(object):
     
@@ -766,6 +768,21 @@ class XMLPeptide(object):
             modi[mod].sort()
             s += " " + mod + "("+", ".join([str(i) for i in modi[mod]])+")"
         return s
+        
+    def fromString(self, string):
+        string = string.strip()
+        sequence = string.split(" ")[0]
+        self.sequence = sequence
+        self.modifications = []
+        for match in re.findall("[A-z]+?\(.+?\)", string):
+            mod = re.search("[A-z]+\(", match).group()[:-1]
+            assert mod in glyxsuite.masses.PROTEINMODIFICATION
+            for posstring in re.search("\(.+\)", match).group()[1:-1].split(","):
+                pos = int(posstring)
+                assert -1 < pos < len(sequence) 
+                amino = sequence[pos]
+                self.modifications.append((mod, amino, pos))
+        self.mass = glyxsuite.masses.calcPeptideMass(self)
 
     def _parse(self, xmlPeptide, peptide):
         peptide.proteinID = xmlPeptide.find("./proteinId").text

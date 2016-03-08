@@ -37,6 +37,11 @@ class NotebookFeature(ttk.Frame):
                                command=lambda x="Deleted": self.setStatus(x))
         self.aMenu.add_command(label="Change Feature",
                                command=self.changeFeature)
+        self.aMenu.add_command(label="Add Identification",
+                               command=self.addIdentification)
+                                                      
+                               
+                               
 
         # show treeview of mzML file MS/MS and MS
         # ------------------- Feature Tree ----------------------------#
@@ -144,6 +149,14 @@ class NotebookFeature(ttk.Frame):
             return
         feature = self.featureTreeIds[selection[0]]
         ChangeFeatureFrame(self.master, self.model, feature)
+        
+    def addIdentification(self):
+        #selection = self.featureTree.selection()
+        #if len(selection) != 1:
+        #    return
+        #feature = self.featureTreeIds[selection[0]]
+        feature = None
+        AddIdentificationFrame(self.master, self.model, feature)
 
     def sortFeatureColumn(self, col):
 
@@ -610,6 +623,137 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
         self.feature.setMZ(self.mass)
         self.destroy()
         self.model.classes["NotebookFeature"].updateFeatureTree()
+
+    def cancel(self):
+        self.destroy()
+
+
+class AddIdentificationFrame(Tkinter.Toplevel):
+
+    def __init__(self, master, model, feature):
+        Tkinter.Toplevel.__init__(self, master=master)
+        feature = glyxsuite.io.GlyxXMLFeature()
+        #self.minsize(600, 300)
+        self.master = master
+        self.feature = feature 
+        self.title("Add Identification")
+        self.config(bg="#d9d9d9")
+        self.model = model
+        self.glycan = None
+        self.peptide = None
+        
+        labelCharge = Tkinter.Label(self, text="Feature Charge")
+        labelChargeValue = Tkinter.Label(self, text=feature.getCharge())
+        labelCharge.grid(row=0, column=0, sticky="NWES")
+        labelChargeValue.grid(row=0, column=1, columnspan=2, sticky="NWES")
+
+        
+        labelMass = Tkinter.Label(self, text="Feature Mass")
+        labelMassValue = Tkinter.Label(self, text=feature.getMZ())
+        labelMass.grid(row=1, column=0, sticky="NWES")
+        labelMassValue.grid(row=1, column=1, columnspan=2, sticky="NWES")
+
+
+        labelGlycan = Tkinter.Label(self, text="Glycan")
+        self.glycanVar = Tkinter.StringVar()
+        self.glycanVar.trace("w", self.valuesChanged)
+        self.entryGlycan = Tkinter.Entry(self, textvariable=self.glycanVar)
+        labelGlycanMassLabel = Tkinter.Label(self, text="Glycan Mass")
+        self.labelGlycanMass = Tkinter.Label(self, text="")
+        
+        labelGlycan.grid(row=2, column=0, sticky="NWES")
+        self.entryGlycan.grid(row=2, column=1, columnspan=2, sticky="NWES")
+        labelGlycanMassLabel.grid(row=3, column=0, sticky="NWES")
+        self.labelGlycanMass.grid(row=3, column=1, columnspan=2, sticky="NWES")
+        
+        
+        labelPeptide = Tkinter.Label(self, text="Peptide")
+        self.peptideVar = Tkinter.StringVar()
+        self.peptideVar.trace("w", self.valuesChanged)
+        self.entryPeptide = Tkinter.Entry(self, textvariable=self.peptideVar)
+        labelPeptideMassLabel = Tkinter.Label(self, text="Peptide Mass")
+        self.labelPeptideMass = Tkinter.Label(self, text="")
+        
+        labelPeptide.grid(row=4, column=0, sticky="NWES")
+        self.entryPeptide.grid(row=4, column=1, columnspan=2, sticky="NWES")
+        labelPeptideMassLabel.grid(row=5, column=0, sticky="NWES")
+        self.labelPeptideMass.grid(row=5, column=1, columnspan=2, sticky="NWES")
+        
+        
+        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)        
+        saveButton = Tkinter.Button(self, text="Add Identification", command=self.addIdentification)
+
+        cancelButton.grid(row=10, column=0, sticky="NWES")
+        saveButton.grid(row=10, column=1, sticky="NWES")
+        
+        # set values
+        #self.chargeVar.set(feature.getCharge())
+        #self.massVar.set(feature.getMZ())
+        
+        # get window size
+        self.update()
+        h = self.winfo_height()
+        w = self.winfo_width()
+
+        # get screen width and height
+        ws = master.winfo_screenwidth() # width of the screen
+        hs = master.winfo_screenheight() # height of the screen
+
+        # calculate x and y coordinates for the Tk window
+        x = (ws/2) - (w/2)
+        y = (hs/2) - (h/2)
+        # set the dimensions of the screen 
+        # and where it is placed
+        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
+                                                   
+        
+    def valuesChanged(self, *args):
+        # check entries for validity
+        
+        self.valid = True
+        try:
+            self.glycan = glyxsuite.lib.Glycan(self.glycanVar.get())
+            self.labelGlycanMass.config(text=str(self.glycan.mass) +" Da")
+            self.glycanVar.set(self.glycan.toString())
+            self.entryGlycan.config(bg="grey")
+            
+        except:
+            self.valid = False
+            self.glycan = None
+            self.labelGlycanMass.config(text=" - Da")
+            self.entryGlycan.config(bg="red")
+
+        try:
+            self.peptide = glyxsuite.io.XMLPeptide()
+            self.peptide.fromString(self.peptideVar.get())
+            self.labelPeptideMass.config(text=str(self.peptide.mass) +" Da")
+            self.entryPeptide.config(bg="grey")
+        except:
+            self.valid = False
+            self.peptide = None
+            self.labelPeptideMass.config(text=" - Da")
+            self.entryPeptide.config(bg="red")
+    
+    def addIdentification(self):
+        if self.valid == False:
+            return
+            
+        precursorMass = self.feature.getMZ()*self.feature.getCharge()-glyxsuite.masses.MASS["H+"]*(self.feature.getCharge()-1)
+        mass = self.peptide.mass+self.glycan.mass+glyxsuite.masses.MASS["H+"]
+        diff = mass-precursorMass
+        hit = glyxsuite.io.GlyxXMLGlycoModHit()
+        hit.featureID = self.feature.getId()
+        hit.glycan = self.glycan
+        hit.peptide = self.peptide
+        hit.error = diff
+        hit.feature = self.feature
+            
+        self.model.currentAnalysis.analysis.glycoModHits.append(hit)
+        
+        self.destroy()
+        self.model.runFilters()
+        self.model.classes["NotebookFeature"].updateFeatureTree()
+        self.model.classes["NotebookIdentification"].updateTree()
 
     def cancel(self):
         self.destroy()

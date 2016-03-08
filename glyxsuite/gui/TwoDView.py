@@ -194,6 +194,8 @@ class TwoDView(FramePlot.FramePlot):
         feature = self.model.currentAnalysis.currentFeature
         if feature == None:
             return
+        if feature.passesFilter == False:
+                return
         rt1, rt2, mz1, mz2 = feature.getBoundingBox()
         rt1 = self.convAtoX(rt1)
         rt2 = self.convAtoX(rt2)
@@ -217,6 +219,8 @@ class TwoDView(FramePlot.FramePlot):
         self.featureItems = {}
         self.plotFeatureLine()
         for feature in self.model.currentAnalysis.analysis.features:
+            if feature.passesFilter == False:
+                continue
             rt1, rt2, mz1, mz2 = feature.getBoundingBox()
             rt1 = self.convAtoX(rt1)
             rt2 = self.convAtoX(rt2)
@@ -260,13 +264,17 @@ class TwoDView(FramePlot.FramePlot):
 
             features = self.model.currentAnalysis.spectraInFeatures[specId]
             spectrum = self.model.currentAnalysis.spectraIds[specId]
-
+            if spectrum.passesFilter == False:
+                continue
             # get charge state
             hasCharge = False
             nrFeatureHits = {0}
             for featureId in features:
-                nrFeatureHits.add(len(self.model.currentAnalysis.featureHits.get(featureId,[])))
                 feature = self.model.currentAnalysis.featureIds[featureId]
+                if feature.passesFilter == False:
+                    continue
+                nrFeatureHits.add(len(self.model.currentAnalysis.featureHits.get(featureId,[])))
+                
                 if feature.charge == spectrum.precursorCharge:
                     hasCharge = True
                     break
