@@ -7,11 +7,15 @@ import glyxsuite
 import math
 import pyopenms
 import sys
+import time
+
+# precalculate patterns
+
 
 def findPattern(monomass, charge, peaks, tolerance):
     # make assumtion about Nr of peaks that should occour
     sumP = 0
-    pattern = glyxsuite.masses.calcIsotopicPatternFromMass(monomass*charge,15)
+    pattern = glyxsuite.masses.calcIsotopicPatternFromMass(monomass*charge,10)
     for N,p in pattern:
         if sumP > 0.99:
             break
@@ -40,7 +44,11 @@ def findPattern(monomass, charge, peaks, tolerance):
     if sumIntensity == 0:
         return None
     # calculate pattern
-    pattern = glyxsuite.masses.calcIsotopicPatternFromMass(monomass*charge,len(candidates))
+    #pattern = glyxsuite.masses.calcIsotopicPatternFromMass(monomass*charge,len(candidates))
+    pattern = pattern[:len(candidates)]
+    sumP = sum([b for a,b in pattern])
+    
+    
     error = 0
     x = []
     y = []
@@ -125,7 +133,7 @@ class Feature:
         self.mzHigh = 0.0
         self.pattern = {}
                 
-    def extendRTDomain(self, ms1, tolerance, cutoff=20.0, maxRTspan=100):
+    def extendRTDomain(self, ms1, tolerance, cutoff=20.0, maxRTspan=10000):
         # get highest spectrum as origin
         msBest = max(self.ms2, key = lambda ms: ms.result["sum"])
         self.rt = msBest.rt
@@ -133,7 +141,12 @@ class Feature:
         sumIntensityBest = sum(msBest.result["y"])
         for mz, signal in zip(msBest.result["x"], msBest.result["y"]):
             normedIntensities.append(signal/sumIntensityBest)
-
+        # get minimum and maximum rt from linked precursors
+        minRT = min([link.rt for link in self.ms2])
+        self.rtLow = minRT
+        maxRT = max([link.rt for link in self.ms2])
+        self.rtHigh = maxRT
+        
         # find starting index
         for start,spec in enumerate(ms1):
             if spec.getNativeID() == msBest.nativeId:
@@ -144,6 +157,8 @@ class Feature:
         while i > 0:
             i -= 1
             spec = ms1[i]
+            if spec.getRT() > minRT:
+                continue
             intensities = []
             for e, mz in enumerate(msBest.result["x"]):
                 sumInt = 0
@@ -175,10 +190,12 @@ class Feature:
             if err > 35: # TODO: Handle spray loss spectra
                 break
         
-        i = start
-        while i < len(ms1):
-            
+        i = start-1
+        while i < len(ms1)-1:
+            i += 1
             spec = ms1[i]
+            if spec.getRT() < maxRT:
+                continue
             intensities = []
             for e, mz in enumerate(msBest.result["x"]):
                 sumInt = 0
@@ -208,7 +225,8 @@ class Feature:
                 break
             if err > 35:
                 break
-            i += 1
+        
+            
 
 def sortSpectra(exp):
     """ Sort MS1 and MS2 spectra into separate lists"""
@@ -241,35 +259,47 @@ def handle_args(argv=None):
         args = parser.parse_args(argv)
     return args
 
+def timed(s, starttime):
+    print "["+str(int(time.time()-starttime))+" sec] " + s
+
 def main(options):
-    
+    starttime = time.time()
     tolerance = float(options.tolerance)
     precursorshift = float(options.shift)
     mswindow = float(options.mswindow)
     rtwindow = float(options.rtwindow)
     
     # load file
+    timed("loading experiment",starttime)
     exp = glyxsuite.lib.openOpenMSExperiment(options.infile)
     # assure sorted spectra
     exp.sortSpectra()
+    timed("sort spectra",starttime)
     ms1, ms2 = sortSpectra(exp)
 
     links = []
     noresult = 0
+    
+    timed("finding precursors " + str(len(ms2)),starttime)
     for mz, spec2, spec1 in ms2:
         charge = spec2.getPrecursors()[0].getCharge()
         peaks, results = findMonoIsotopicPeak(mz, charge, spec1, tolerance, precursorshift, mswindow)
         if len(results) == 0:
             noresult += 1
             continue
+        
         best = min(results, key = lambda r: r["mass"]*r["error"]/r["sum"]**2)
         rt = spec2.getRT()
         link = Link(rt, best)
         link.nativeId = spec1.getNativeID()
         link.peaks = peaks
         links.append(link)
-    print "could not find suitable starting pattern for ", noresult, "spectra from ", len(ms2) 
+        if spec1.getNativeID() == "controllerType=0 controllerNumber=1 scan=2223" and abs(link.mz - 659.8337402) < 0.1:
+            print mz, link.mz, link.charge
+            foolink = link
     
+    print "could not find suitable starting pattern for ", noresult, "spectra from ", len(ms2) 
+    timed("group precursors",starttime)
     # group precursors
     for l1 in links:
         for l2 in links:
@@ -280,7 +310,7 @@ def main(options):
             if abs(l1.rt - l2.rt) > rtwindow:
                 continue
             l1.near.add(l2)
-
+    timed("group into features",starttime)
     # group into features
     features = []
     while True:
@@ -301,7 +331,11 @@ def main(options):
             for link in current.near:
                 if link.feature == None:
                     working.add(link)
-        
+                    if foolink == link:
+                        print "feature found", feature
+                        foofeature = feature
+
+    timed("calculate precursor positions",starttime)
     # calculate mz and charge of feature
     for feature in features:
         feature.mz = sum([l.mz for l in feature.ms2])/len(feature.ms2)
@@ -314,7 +348,7 @@ def main(options):
         feature.mzLow = feature.mz
         feature.mzHigh = max(masses)
         
-
+    timed("merge features",starttime)
     # check features against each other
     # remove feature if mzLow is within other feature and rtLow and rtHigh within too
     todelete = set()
@@ -329,13 +363,15 @@ def main(options):
             if not (f1.rtLow <= f2.rtHigh <= f1.rtHigh):
                 continue
             todelete.add(f2)
-
+    print "foofeature", foofeature.ms2
     for f in todelete:
         features.remove(f)
 
     newfeatures = set()
     # merge features
     for f1 in features:
+        if f1.rtHigh == 0.0:
+            print "zero", "f1" ,[ms.rt for ms in f1.ms2]
         for f2 in features:
             if f1 == f2:
                 continue
@@ -356,12 +392,27 @@ def main(options):
             newf.mzHigh= max((f1.mzHigh, f2.mzHigh))
             newf.rtLow = min((f1.rtLow, f2.rtLow))
             newf.rtHigh= max((f1.rtHigh, f2.rtHigh))
+            if newf.rtHigh == 0.0:
+                print "zero", "newf"
             newf.ms2 = sorted(set(f1.ms2).union(set(f2.ms2)),key=lambda ms: ms.rt)
             newf.rt = (f1.rt+ f2.rt)/2.0
             newfeatures.add(newf)
 
     features += list(newfeatures)
+    """
+    timed("check features",starttime)
+    invalid = 0
+    for feature in features:
+        for ms in feature.ms2:
+            invalid += 1
+            if not(feature.mzLow <= ms.mz <= feature.mzHigh):
+                print invalid, "mz", feature.mzLow, ms.mz, feature.mzHigh
+            if not(feature.rtLow <= ms.rt <= feature.rtHigh):
+                print invalid, "rt", feature.rtLow, ms.rt, feature.rtHigh
+    """
+                
     
+    timed("write featuremap",starttime)
     fm = pyopenms.FeatureMap()
     for feature in features:
         # calc bounding boxes from pattern
