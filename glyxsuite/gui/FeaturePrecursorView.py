@@ -44,6 +44,8 @@ class PrecursorView(FramePlot.FramePlot):
     def paintObject(self):
         if self.spectrum == None:
             return
+        if self.feature == None:
+            return
 
         # continuous spectrum
         xy = []
@@ -57,39 +59,25 @@ class PrecursorView(FramePlot.FramePlot):
         if len(xy) > 0:
             self.canvas.create_line(xy, tags=("peak", ))
         
-        pMZ = self.convAtoX(self.monoisotope)
+        
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         
-        self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="red")
-
-        self.allowZoom = True
-        
-    """
-    def paintObject(self):
-        if self.specArray == None:
-            return
-        # continuous spectrum
-        xy = []
-        for mz, intensity in self.specArray:
-            if mz < self.viewXMin or mz > self.viewXMax:
-                continue
-            pMZ = self.convAtoX(mz)
-            pInt = self.convBtoY(intensity)
-            xy.append(pMZ)
-            xy.append(pInt)
-        if len(xy) > 0:
-            self.canvas.create_line(xy, tags=("peak", ))
-        
+        # paint monoisotopic mass
         pMZ = self.convAtoX(self.monoisotope)
-        pIntMin = self.convBtoY(self.viewYMin)
-        pIntMax = self.convBtoY(self.viewYMax)
+        self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="blue")
         
-        self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="red")
+        minRT, maxRT, minMZ, maxMZ = self.feature.getBoundingBox()
+        # paint monoisotopic mass
+        pMZ = self.convAtoX(minMZ)
+        self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("featureborder", ),fill="red")
+        
+        pMZ = self.convAtoX(maxMZ)
+        self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("featureborder", ),fill="red")
+        #self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="blue")
 
         self.allowZoom = True
-    """        
-
+        
     def initSpectrum(self, specArray, monoisotope, minMZ, maxMZ):
         if specArray == None:
             return
@@ -102,10 +90,11 @@ class PrecursorView(FramePlot.FramePlot):
         self.initCanvas(keepZoom=True)
         
         
-    def init(self, spectrumXArray, spectrumYArray, monoisotope, minMZ, maxMZ):
+    def init(self, spectrumXArray, spectrumYArray, feature, minMZ, maxMZ):
         self.spectrum = spectrumYArray
         self.base = spectrumXArray
-        self.monoisotope = monoisotope
+        self.feature = feature
+        self.monoisotope = feature.getMZ()
         self.viewXMin = minMZ
         self.viewXMax = maxMZ
         self.viewYMin = 0

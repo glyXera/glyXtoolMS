@@ -55,6 +55,10 @@ class FramePlot(ttk.Frame):
 
         self.slopeA = 1
         self.slopeB = 1
+        
+        # currentMousePositions in plot coordinates
+        self.currentX = 0
+        self.currentY = 0
 
         self.height = height
         self.width = width
@@ -145,7 +149,10 @@ class FramePlot(ttk.Frame):
         x = self.convXtoA(event.x)
         if self.xTypeTime == True and self.model.timescale == "minutes":
             x = x/60.0
-        self.coord.set(self.identifier()+"/"+str(round(x, 2))+"/"+str(round(self.convYtoB(event.y), 0)))
+        y = self.convYtoB(event.y)
+        self.currentX = x
+        self.currentY = y
+        self.coord.set(self.identifier()+"/"+str(round(x, 4))+"/"+str(round(y, 0)))
 
     def eventMouseMotionB1(self, event):
         if self.action == None:

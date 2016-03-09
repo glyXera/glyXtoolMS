@@ -1,5 +1,6 @@
 import ttk
 import Tkinter
+import tkMessageBox
 
 import numpy as np
 
@@ -22,6 +23,7 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         self.minMZView = 0
         self.maxMZView = 0
         self.index = 0
+        self.feature = None
         
         self.xTypeTime = True
         
@@ -45,11 +47,63 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         # Events
         self.canvas.bind("<Left>", self.goLeft)
         self.canvas.bind("<Right>", self.goRight)
+        self.canvas.bind("<ButtonRelease-3>", self.popup)
+        
+        self.aMenu = Tkinter.Menu(self.canvas, tearoff=0)
+        self.aMenu.add_command(label="Set Left Retention Border", 
+                               command=lambda x="leftborder": self.setBorder(x))
+        self.aMenu.add_command(label="Set Right Retention Border",
+                               command=lambda x="rightborder": self.setBorder(x))
+        self.aMenu.add_command(label="Cancel",
+                               command=lambda x="Cancel": self.setBorder(x))
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
 
         self.spectrumPointer = None
 
-
+    def setBorder(self,status):
+        self.aMenu.unpost()
+        self.aMenu.grab_release()
+        if self.feature == None:
+            return
+        self.canvas.delete("tempborder")
+        if status == "Cancel":
+            return
+        minRT, maxRT, minMZ, maxMZ = self.feature.getBoundingBox()
+        pMZ = self.convAtoX(self.currentX)
+        pIntMin = self.convBtoY(self.viewYMin)
+        pIntMax = self.convBtoY(self.viewYMax)
+        if status == "leftborder":
+            if self.currentX >= maxRT:
+                return
+            self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("tempborder", ),fill="red", dash=(2, 4))
+            if tkMessageBox.askyesno('Keep new Retention Border?',
+                                     'Do you want to keep the new retention border?'):
+                self.feature.minRT = self.currentX
+        if status == "rightborder":
+            if self.currentX <= minRT:
+                return
+            self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("tempborder", ),fill="red", dash=(2, 4))
+            if tkMessageBox.askyesno('Keep new Retention Border?',
+                                     'Do you want to keep the new retention border?'):
+                self.feature.maxRT = self.currentX
+        self.canvas.delete("tempborder")
+    
+    
+    def popup(self, event):
+        self.aMenu.post(event.x_root, event.y_root)
+        self.mouse_position = event.x_root
+        self.aMenu.grab_set()
+        self.aMenu.focus_set()
+        self.aMenu.bind("<FocusOut>", self.removePopup)
+        
+        
+    def removePopup(self,event):
+        try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
+            if self.focus_get() != self.aMenu:
+                self.aMenu.unpost()
+                self.aMenu.grab_release()
+        except:
+            pass
 
     def setSpectrumPointer(self, event):
         if self.model.exp == None:
@@ -108,8 +162,8 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         
-        self.canvas.create_line(lowMZ, pIntMin, lowMZ, pIntMax, tags=("border", ),fill="red")
-        self.canvas.create_line(highMZ, pIntMin, highMZ, pIntMax, tags=("border", ),fill="red")
+        self.canvas.create_line(lowMZ, pIntMin, lowMZ, pIntMax, tags=("leftborder", ),fill="red")
+        self.canvas.create_line(highMZ, pIntMin, highMZ, pIntMax, tags=("rightborder", ),fill="red")
         
         self.allowZoom = True
         
@@ -163,7 +217,7 @@ class FeatureChromatogramView(FramePlot.FramePlot):
 
         self.model.classes["FeaturePrecursorView"].init(mz_array,
                                                         intens_array,
-                                                        self.feature.getMZ(),
+                                                        self.feature,
                                                         self.minMZView,
                                                         self.maxMZView)
         #return rt, arr_mz_MZ, arr_intens_MZ
