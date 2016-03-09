@@ -260,20 +260,16 @@ class TwoDView(FramePlot.FramePlot):
         colorGlycoOneHit = "green"
         colorGlycoMultipleHits = "cyan"
         colorNonGlyco = "blue"
-        for specId in self.model.currentAnalysis.spectraInFeatures:
-
-            features = self.model.currentAnalysis.spectraInFeatures[specId]
-            spectrum = self.model.currentAnalysis.spectraIds[specId]
+        for spectrum in self.model.currentAnalysis.analysis.spectra:
             if spectrum.passesFilter == False:
                 continue
             # get charge state
             hasCharge = False
-            nrFeatureHits = {0}
-            for featureId in features:
-                feature = self.model.currentAnalysis.featureIds[featureId]
+            nrFeatureHits = {0} # find out how many hits the spectrum belongs to
+            for feature in spectrum.features:
                 if feature.passesFilter == False:
                     continue
-                nrFeatureHits.add(len(self.model.currentAnalysis.featureHits.get(featureId,[])))
+                nrFeatureHits.add(len(feature.hits))
                 
                 if feature.charge == spectrum.precursorCharge:
                     hasCharge = True
@@ -286,7 +282,7 @@ class TwoDView(FramePlot.FramePlot):
             else:
                 nr *= 2
 
-            if len(features) == 0:
+            if len(spectrum.features) == 0:
                 nr *= 3
             elif hasCharge == True:
                 nr *= 5

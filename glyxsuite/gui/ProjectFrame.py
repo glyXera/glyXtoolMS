@@ -361,6 +361,9 @@ class ProjectFrame(ttk.Frame):
 
         # update internal ids
         analysis.createIds()
+        
+        # collect specta within features
+        analysis.collectFeatureSpectra()
 
         # merge data
         # insert all ms2 spectra

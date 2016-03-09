@@ -88,6 +88,8 @@ class FeatureChromatogramView(FramePlot.FramePlot):
                 self.feature.maxRT = self.currentX
         self.canvas.delete("tempborder")
     
+    def featureEdited(self):
+        pass
     
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)

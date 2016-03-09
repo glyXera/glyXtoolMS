@@ -164,38 +164,32 @@ class ContainerAnalysisFile(object):
         self.projectItem = None
         self.spectraIds = {}
         self.featureIds = {}
-        self.spectraInFeatures = {}
         self.data = []
         self.sorting = {}
         self.chromatograms = {}
         self.selectedChromatogram = None
         self.currentFeature = None
         self.featureSpectra = {} # Container for MS1 spectra within the feature, for faster chromatogram / Sum spectra generation
-        self.featureHits = {} #feature -> hit link
 
     def createIds(self):
         self.spectraIds = {}
-        self.spectraInFeatures = {}
         i = 0
         for spectrum in self.analysis.spectra:
             i += 1
-            #c = ContainerSpectrum(spectrum)
             spectrum.chromatogramSpectra = []
             spectrum.index = str(i)
             self.spectraIds[spectrum.nativeId] = spectrum
-            self.spectraInFeatures[spectrum.nativeId] = []
 
         # create featureIds
-        # create feature - spectra link
         self.featureIds = {}
         i = 0
         for feature in self.analysis.features:
             i += 1
             feature.index = str(i) # TODO: Warp feature
             self.featureIds[feature.getId()] = feature
-            for specID in feature.getSpectraIds():
-                self.spectraInFeatures[specID].append(feature.getId())
-        
+
+    def collectFeatureSpectra(self):
+        # collect spectra within feature
         self.featureSpectra = {}
         for spec in self.project.mzMLFile.exp:
             if spec.getMSLevel() != 1:
@@ -211,20 +205,7 @@ class ContainerAnalysisFile(object):
                 if not featureID in self.featureSpectra:
                     self.featureSpectra[featureID] = []
                 self.featureSpectra[featureID].append(spec)
-                
-        # create feature -> hit link
-        self.featureHits = {}
-        for hit in self.analysis.glycoModHits:
-            if not hit.featureID in self.featureHits:
-                self.featureHits[hit.featureID] = []
-            self.featureHits[hit.featureID].append(hit)
 
-    def addNewSpectrum(self, nativeID):
-        spectrum = glyxsuite.io.GlyxXMLSpectrum()
-        spectrum.setNativeId(nativeID)
-        self.spectraIds[nativeID] = spectrum
-        self.analysis.spectra.append(spectrum)
-        return spectrum
 
     def removeFeature(self, feature):
         if feature in self.analysis.features:
@@ -233,19 +214,16 @@ class ContainerAnalysisFile(object):
             self.featureSpectra.pop(feature.getId())
         if feature.getId() in self.featureIds:
             self.featureIds.pop(feature.getId())
-        for specId in  self.spectraInFeatures:
-            if feature.getId() in  self.spectraInFeatures[specId]:
-                self.spectraInFeatures[specId].remove(feature.getId())
+        #remove from spectra
+        for spectrum in feature.spectra:
+            spectrum.remove(feature)
         # remove corresponding hits
-        for hit in self.featureHits.get(feature.getId(),[]):
+        for hit in feature.hits:
             self.analysis.glycoModHits.remove(hit)
-        if feature.getId() in self.featureHits:
-            self.featureHits.pop(feature.getId())
 
     def removeIdentification(self, hit):
         if hit in self.analysis.glycoModHits:
             self.analysis.glycoModHits.remove(hit)
-        self.featureHits[hit.featureID].remove(hit)
 
 
 

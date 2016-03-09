@@ -256,7 +256,7 @@ class NotebookFeature(ttk.Frame):
                 spectrum = analysis.spectraIds[specId]
                 if spectrum.logScore < bestScore:
                     bestScore = spectrum.logScore
-            nrFeatureHits = len(analysis.featureHits.get(feature.getId(),[]))
+            nrFeatureHits = len(feature.hits)
 
             if self.model.timescale == "minutes":
                 rt = round(feature.getRT()/60.0, 2)

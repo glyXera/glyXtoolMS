@@ -40,6 +40,7 @@ class GlyxXMLSpectrum(object):
         self.isGlycopeptide = False
         self.status = ConfirmationStatus.Unknown
         self.annotations = []
+        self.features = set() # convinience accessor for features
 
     def setNativeId(self, nativeId):
         """ Set the native spectrum ID """
@@ -208,6 +209,7 @@ class GlyxXMLFeature(object):
         self.spectra = []
         self.annotations = []
         self.consensus = []
+        self.hits = set()
 
     def setId(self, id):
         self.id = id
@@ -712,9 +714,12 @@ class GlyxXMLFile(object):
             featureIDs[feature.id] = feature
             feature.spectra = []
             for specID in feature.spectraIds:
-                feature.spectra.append(specIDs[specID])
+                spectrum = specIDs[specID]
+                feature.spectra.append(spectrum)
+                spectrum.features.add(feature)
         for hit in glycoMod:
             hit.feature = featureIDs[hit.featureID]
+            hit.feature.hits.add(hit)
         
         # assign data to object
         self.parameters = parameters
