@@ -47,9 +47,18 @@ def main(options):
     # sort glycan file for faster comparison
     glycans.sort()
 
-    print "starting comparison"
-    glyML.glycoModHits = []
+    
+    # remove old hits
+    keepHits = []
+    for hit in glyML.glycoModHits:
+        if hit.status == glyxsuite.io.ConfirmationStatus.Accepted:
+            keepHits.append(hit)
+    glyML.glycoModHits = keepHits
+    print "keeping " + str(len(keepHits)) + " nr of manual accepted identifications"
+    print "starting search for new identifcation hits"
     for feature in glyML.features:
+        if feature.status == glyxsuite.io.ConfirmationStatus.Rejected:
+            continue
         precursorMass = feature.getMZ()*feature.getCharge()-glyxsuite.masses.MASS["H+"]*(feature.getCharge()-1)
         found = False
         for peptide in pepFile.peptides:

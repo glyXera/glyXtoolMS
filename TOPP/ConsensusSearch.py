@@ -32,16 +32,11 @@ def main(options):
     scoredSpectra = {}
     for spectrum in glyxXMLFile.spectra:
         scoredSpectra[spectrum.getNativeId()] = spectrum
-    
-    features = {}
-    for feature in glyxXMLFile.features:
-        features[feature.getId()] = feature
 
     keep = []
-
     for hit in glyxXMLFile.glycoModHits:
-
-        feature = features[hit.featureID]
+        # TODO: handle status settings
+        feature = hit.feature
         hit.fragments = {}
         for charge in range(1,feature.getCharge()):
             pepIon = hit.peptide.mass+glyxsuite.masses.MASS["H+"]
