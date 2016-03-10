@@ -309,6 +309,9 @@ class NotebookScoring(ttk.Frame):
         c.intensity = []
         c.msLevel = 1
         c.selected = True
+        if len(spectrum.chromatogramSpectra) == 0:
+            print "no chromatogram spectra", spectrum
+            return
         rtLow = spectrum.chromatogramSpectra[0].getRT()
         rtHigh = spectrum.chromatogramSpectra[-1].getRT()
 

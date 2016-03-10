@@ -173,6 +173,10 @@ class ContainerAnalysisFile(object):
         self.featureSpectra = {} # Container for MS1 spectra within the feature, for faster chromatogram / Sum spectra generation
 
     def createIds(self):
+        self.createSpectraIds()
+        self.createFeatureIds()
+
+    def createSpectraIds(self):
         self.spectraIds = {}
         i = 0
         for spectrum in self.analysis.spectra:
@@ -181,7 +185,7 @@ class ContainerAnalysisFile(object):
             spectrum.index = str(i)
             self.spectraIds[spectrum.nativeId] = spectrum
 
-        # create featureIds
+    def createFeatureIds(self):
         self.featureIds = {}
         i = 0
         for feature in self.analysis.features:

@@ -1,5 +1,7 @@
 import ttk
 import Tkinter
+import tkMessageBox
+import random
 
 import numpy as np
 
@@ -37,6 +39,8 @@ class NotebookFeature(ttk.Frame):
                                command=lambda x="Unknown": self.setStatus(x))
         self.aMenu.add_command(label="Change Feature",
                                command=self.changeFeature)
+        self.aMenu.add_command(label="Copy Feature",
+                               command=self.copyFeature)
         self.aMenu.add_command(label="Add Identification",
                                command=self.addIdentification)
                                                       
@@ -120,8 +124,11 @@ class NotebookFeature(ttk.Frame):
         self.aMenu.bind("<FocusOut>", self.removePopup)
         
     def removePopup(self,event):
-        if self.focus_get() != self.aMenu:
-            self.aMenu.unpost()
+        try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
+            if self.focus_get() != self.aMenu:
+                self.aMenu.unpost()
+        except:
+            pass
             
     def goLeft(self, event):
         self.model.classes["FeatureChromatogramView"].goLeft(event)
@@ -160,6 +167,40 @@ class NotebookFeature(ttk.Frame):
             return
         feature = self.featureTreeIds[selection[0]]
         ChangeFeatureFrame(self.master, self.model, feature)
+        
+    def copyFeature(self):
+        analysis = self.model.currentAnalysis
+        if analysis == None:
+            return
+        selection = self.featureTree.selection()
+        if len(selection) != 1:
+            return
+        feature = self.featureTreeIds[selection[0]]
+        new = feature.copy()
+        # generate new feature id, check that id is unique
+        while True:
+            newid = "".join([str(random.randint(0,9)) for i in range(0,20)])
+            found = False
+            for feat in analysis.analysis.features:
+                if newid == feat.id:
+                    found = True
+                    break
+            if found == False:
+                break
+        new.id = newid
+        new.annotations = []
+        new.hits = []
+        new.passesFilter = feature.passesFilter
+        new.status = glyxsuite.io.ConfirmationStatus.Unknown
+        analysis.analysis.features.append(new)
+        # update internal ids
+        analysis.createFeatureIds()
+        # collect specta within features
+        analysis.collectFeatureSpectra()
+        self.updateFeatureTree()
+        self.model.classes["NotebookScoring"].updateTree()
+        tkMessageBox.showinfo("Feature Copied", "The feature has been copied!")
+        
         
     def addIdentification(self):
         selection = self.featureTree.selection()

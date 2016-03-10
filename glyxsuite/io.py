@@ -272,6 +272,25 @@ class GlyxXMLFeature(object):
 
     def getSpectraIds(self):
         return self.spectraIds
+        
+    def copy(self):
+        new = GlyxXMLFeature()
+        new.id = self.id
+        new.mz = self.mz
+        new.rt = self.rt
+        new.intensity = self.intensity
+        new.charge = self.charge
+        new.minRT = self.minRT
+        new.maxRT = self.maxRT
+        new.minMZ = self.minMZ
+        new.maxMZ = self.maxMZ
+        new.status = self.status
+        new.spectraIds = list(self.spectraIds)
+        new.spectra = list(self.spectra)
+        new.annotations = list(self.annotations)
+        new.consensus = list(self.consensus)
+        new.hits = set(self.hits)
+        return new
 
 class XMLGlycan(object):
 
