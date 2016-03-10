@@ -19,7 +19,7 @@ class NotebookScoring(ttk.Frame):
         self.aMenu.add_command(label="Rejected",
                                command=lambda x="Rejected": self.setStatus(x))
         self.aMenu.add_command(label="Deleted",
-                               command=lambda x="Deleted": self.setStatus(x))
+                               command=lambda x="Unknown": self.setStatus(x))
 
         # layout self
         self.rowconfigure(0, weight=0) # frameSpectrum
@@ -112,7 +112,7 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("<Button-3>", self.popup)
         
         self.tree.bind("a", lambda e: self.setStatus("Accepted"))
-        self.tree.bind("d", lambda e: self.setStatus("Deleted"))
+        self.tree.bind("u", lambda e: self.setStatus("Unknown"))
         self.tree.bind("r", lambda e: self.setStatus("Rejected"))
 
         self.model.classes["NotebookScoring"] = self
@@ -132,8 +132,8 @@ class NotebookScoring(ttk.Frame):
                 spectrum.status = glyxsuite.io.ConfirmationStatus.Accepted
             elif status == "Rejected":
                 spectrum.status = glyxsuite.io.ConfirmationStatus.Rejected
-            elif status == "Deleted":
-                spectrum.status = glyxsuite.io.ConfirmationStatus.Deleted
+            elif status == "Unknown":
+                spectrum.status = glyxsuite.io.ConfirmationStatus.Unknown
             # Update on Treeview
             values = self.tree.item(item)["values"]
             values[5] = spectrum.status

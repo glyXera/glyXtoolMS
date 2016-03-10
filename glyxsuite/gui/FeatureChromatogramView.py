@@ -49,6 +49,11 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         self.canvas.bind("<Right>", self.goRight)
         self.canvas.bind("<ButtonRelease-3>", self.popup)
         
+        # Binf NotebookFeature Keys
+        self.canvas.bind("a", lambda e: self.setStatus("Accepted"))
+        self.canvas.bind("u", lambda e: self.setStatus("Unknown"))
+        self.canvas.bind("r", lambda e: self.setStatus("Rejected"))
+        
         self.aMenu = Tkinter.Menu(self.canvas, tearoff=0)
         self.aMenu.add_command(label="Set Left Retention Border", 
                                command=lambda x="leftborder": self.setBorder(x))
@@ -56,9 +61,12 @@ class FeatureChromatogramView(FramePlot.FramePlot):
                                command=lambda x="rightborder": self.setBorder(x))
         self.aMenu.add_command(label="Cancel",
                                command=lambda x="Cancel": self.setBorder(x))
-        #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
 
         self.spectrumPointer = None
+        
+    def setStatus(self, status):
+        self.model.classes["NotebookFeature"].setStatus(status)
+        self.model.classes["NotebookFeature"].featureTree.focus_set()
 
     def setBorder(self,status):
         self.aMenu.unpost()
@@ -69,27 +77,26 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         if status == "Cancel":
             return
         minRT, maxRT, minMZ, maxMZ = self.feature.getBoundingBox()
-        pMZ = self.convAtoX(self.currentX)
+        pX = self.convAtoX(self.currentX)
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         if status == "leftborder":
             if self.currentX >= maxRT:
                 return
-            self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("tempborder", ),fill="red", dash=(2, 4))
+            self.canvas.create_line(pX, pIntMin, pX, pIntMax, tags=("tempborder", ),fill="red", dash=(2, 4))
             if tkMessageBox.askyesno('Keep new Retention Border?',
                                      'Do you want to keep the new retention border?'):
                 self.feature.minRT = self.currentX
+                self.model.currentAnalysis.featureEdited(self.feature)
         if status == "rightborder":
             if self.currentX <= minRT:
                 return
-            self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("tempborder", ),fill="red", dash=(2, 4))
+            self.canvas.create_line(pX, pIntMin, pX, pIntMax, tags=("tempborder", ),fill="red", dash=(2, 4))
             if tkMessageBox.askyesno('Keep new Retention Border?',
                                      'Do you want to keep the new retention border?'):
                 self.feature.maxRT = self.currentX
+                self.model.currentAnalysis.featureEdited(self.feature)
         self.canvas.delete("tempborder")
-    
-    def featureEdited(self):
-        pass
     
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)
@@ -225,6 +232,10 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         #return rt, arr_mz_MZ, arr_intens_MZ
 
     def goLeft(self, event):
+        if self.model.currentAnalysis == None:
+            return
+        if self.model.currentAnalysis.project.mzMLFile == None:
+            return
         exp = self.model.currentAnalysis.project.mzMLFile.exp
         spec = None
         index = self.index
@@ -241,6 +252,10 @@ class FeatureChromatogramView(FramePlot.FramePlot):
 
 
     def goRight(self, event):
+        if self.model.currentAnalysis == None:
+            return
+        if self.model.currentAnalysis.project.mzMLFile == None:
+            return
         exp = self.model.currentAnalysis.project.mzMLFile.exp
         spec = None
         index = self.index

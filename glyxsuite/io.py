@@ -251,7 +251,24 @@ class GlyxXMLFeature(object):
         return self.minRT, self.maxRT, self.minMZ, self.maxMZ
 
     def addSpectrumId(self, spectrumId):
-        self.spectraIds.append(spectrumId)
+        if not spectrumId in self.spectraIds:
+            self.spectraIds.append(spectrumId)
+        
+    def addSpectrum(self, spectrum):
+        """ Add spectrum to feature """
+        if not spectrum in self.spectra:
+            self.addSpectrumId(spectrum.nativeId)
+            self.spectra.append(spectrum)
+            spectrum.features.add(self)
+            
+    def removeSpectrum(self, spectrum):
+        """ Remove spectrum from feature, if exists """
+        if spectrum in self.spectra:
+            self.spectra.remove(spectrum)
+        if spectrum.nativeId in self.spectraIds:
+            self.spectraIds.remove(spectrum.nativeId)
+        if self in spectrum.features:
+            spectrum.features.remove(self)
 
     def getSpectraIds(self):
         return self.spectraIds

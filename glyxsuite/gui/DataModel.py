@@ -156,7 +156,8 @@ class ContainerMZMLFile(object):
 
 class ContainerAnalysisFile(object):
 
-    def __init__(self, project, path):
+    def __init__(self,model, project, path):
+        self.model = model
         self.path = path
         self.project = project
         self.name = os.path.basename(path)
@@ -225,5 +226,25 @@ class ContainerAnalysisFile(object):
         if hit in self.analysis.glycoModHits:
             self.analysis.glycoModHits.remove(hit)
 
-
+    def featureEdited(self, feature):
+        if self.analysis == None:
+            return
+        minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
+        
+        # check if new spectra fall within feature bounds
+        for spectrum in self.analysis.spectra:
+            if (minRT <= spectrum.rt <= maxRT and 
+                minMZ <= spectrum.precursorMass <= maxMZ):
+                feature.addSpectrum(spectrum)    
+            else:
+                feature.removeSpectrum(spectrum)
+        # delete features that fall within bounds
+        
+        # remove possible identifications
+        
+        # update views
+        #self.model.classes["TwoDView"].paintObject()
+        self.model.classes["NotebookFeature"].updateFeature(feature)
+        self.model.classes["NotebookFeature"].updateSpectrumTree()
+        self.model.classes["NotebookFeature"].clickedFeatureTree(None)
 

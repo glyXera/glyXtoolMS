@@ -169,7 +169,7 @@ class ProjectFrame(ttk.Frame):
         if len(path) == 0:
             return
 
-        analysis = DataModel.ContainerAnalysisFile(project, path)
+        analysis = DataModel.ContainerAnalysisFile(self.model, project, path)
         if analysis.name in project.analysisFiles:
             tkMessageBox.showinfo(title="Warning",
                                   message="Analysisfile with this name"
@@ -406,7 +406,6 @@ class ProjectFrame(ttk.Frame):
                 spectrum.chromatogramSpectra.append(spec)
 
         # update Notebooks
-        print "update"
         self.model.classes["NotebookScoring"].updateTree()
         self.model.classes["NotebookIdentification"].updateTree()
         self.model.classes["NotebookFeature"].updateFeatureTree()

@@ -33,8 +33,8 @@ class NotebookFeature(ttk.Frame):
                                command=lambda x="Accepted": self.setStatus(x))
         self.aMenu.add_command(label="Rejected",
                                command=lambda x="Rejected": self.setStatus(x))
-        self.aMenu.add_command(label="Deleted",
-                               command=lambda x="Deleted": self.setStatus(x))
+        self.aMenu.add_command(label="Unknown",
+                               command=lambda x="Unknown": self.setStatus(x))
         self.aMenu.add_command(label="Change Feature",
                                command=self.changeFeature)
         self.aMenu.add_command(label="Add Identification",
@@ -83,9 +83,12 @@ class NotebookFeature(ttk.Frame):
         
         self.featureTree.bind("<<TreeviewSelect>>", self.clickedFeatureTree)
         self.featureTree.bind("a", lambda e: self.setStatus("Accepted"))
-        self.featureTree.bind("d", lambda e: self.setStatus("Deleted"))
+        self.featureTree.bind("u", lambda e: self.setStatus("Unknown"))
         self.featureTree.bind("r", lambda e: self.setStatus("Rejected"))
         self.featureTree.bind("<Button-3>", self.popup)
+        # Bindings influencing FeatureChromatogramView
+        self.featureTree.bind("<Left>", self.goLeft)
+        self.featureTree.bind("<Right>", self.goRight)
 
         self.model.classes["NotebookFeature"] = self
 
@@ -120,6 +123,14 @@ class NotebookFeature(ttk.Frame):
         if self.focus_get() != self.aMenu:
             self.aMenu.unpost()
             
+    def goLeft(self, event):
+        self.model.classes["FeatureChromatogramView"].goLeft(event)
+        return "break" # Stop default event propagation
+        
+    def goRight(self, event):
+        self.model.classes["FeatureChromatogramView"].goRight(event)
+        return "break" # Stop default event propagation
+            
     def setStatus(self, status):
         # get currently active hit
         selection = self.featureTree.selection()
@@ -132,8 +143,8 @@ class NotebookFeature(ttk.Frame):
                 feature.status = glyxsuite.io.ConfirmationStatus.Accepted
             elif status == "Rejected":
                 feature.status = glyxsuite.io.ConfirmationStatus.Rejected
-            elif status == "Deleted":
-                feature.status = glyxsuite.io.ConfirmationStatus.Deleted
+            elif status == "Unknown":
+                feature.status = glyxsuite.io.ConfirmationStatus.Unknown
             # Update on Treeview
             values = self.featureTree.item(item)["values"]
             values[5] = feature.status
@@ -151,11 +162,10 @@ class NotebookFeature(ttk.Frame):
         ChangeFeatureFrame(self.master, self.model, feature)
         
     def addIdentification(self):
-        #selection = self.featureTree.selection()
-        #if len(selection) != 1:
-        #    return
-        #feature = self.featureTreeIds[selection[0]]
-        feature = None
+        selection = self.featureTree.selection()
+        if len(selection) != 1:
+            return
+        feature = self.featureTreeIds[selection[0]]
         AddIdentificationFrame(self.master, self.model, feature)
 
     def sortFeatureColumn(self, col):
@@ -255,8 +265,7 @@ class NotebookFeature(ttk.Frame):
             for specId in feature.getSpectraIds():
                 spectrum = analysis.spectraIds[specId]
                 if spectrum.logScore < bestScore:
-                    bestScore = spectrum.logScore
-            nrFeatureHits = len(feature.hits)
+                    bestScore = spectrum.logScore 
 
             if self.model.timescale == "minutes":
                 rt = round(feature.getRT()/60.0, 2)
@@ -270,7 +279,7 @@ class NotebookFeature(ttk.Frame):
                                                    round(bestScore, 2),
                                                    len(feature.getSpectraIds()),
                                                    feature.status,
-                                                   nrFeatureHits),
+                                                   len(feature.hits)),
                                            tags=taglist)
             self.featureTreeIds[item] = feature
             self.featureItems[feature.getId()] = item
@@ -290,6 +299,32 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.selection_set(item)
         self.featureTree.see(item)
         self.clickedFeatureTree(None)
+        
+    def updateFeature(self, feature):
+        item = self.featureItems.get(feature.getId(), False)
+        if item == False:
+            return
+        analysis = self.model.currentAnalysis
+        if analysis == None:
+            return
+            
+        if self.model.timescale == "minutes":
+            rt = round(feature.getRT()/60.0, 2)
+        else:
+            rt = round(feature.getRT(), 1)
+                
+        bestScore = 10.0
+        for specId in feature.getSpectraIds():
+            spectrum = analysis.spectraIds[specId]
+            if spectrum.logScore < bestScore:
+                bestScore = spectrum.logScore
+        self.featureTree.item(item,values=(rt,
+                                           round(feature.getMZ(), 4),
+                                           feature.getCharge(),
+                                           round(bestScore, 2),
+                                           len(feature.getSpectraIds()),
+                                           feature.status,
+                                           len(feature.hits)))
         
 
     def clickedFeatureTree(self, event):
@@ -339,21 +374,6 @@ class NotebookFeature(ttk.Frame):
             c.intensity.append(sumIntensity)
             highest.append((sumIntensity, spec.getNativeID()))
 
-        
-        """# find spectrum index in the middle of the feature
-        rt = (minRT+maxRT)/2.0
-        index = -1
-        id = ""
-        if len(highest) > 0:
-            id = max(highest)[1]
-        for spec in self.model.currentAnalysis.project.mzMLFile.exp:
-            index += 1
-            if spec.getNativeID() == id:
-                break
-            if spec.getMSLevel() != 1:
-                continue
-            if spec.getRT() > rt:
-                break"""
         # find ms1 spectrum nearest to feature rt
         index = -1
         minDiff = None
@@ -622,7 +642,8 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
         self.feature.setCharge(self.charge)
         self.feature.setMZ(self.mass)
         self.destroy()
-        self.model.classes["NotebookFeature"].updateFeatureTree()
+        self.model.currentAnalysis.featureEdited(self.feature)
+        #self.model.classes["NotebookFeature"].updateFeatureTree()
 
     def cancel(self):
         self.destroy()
@@ -632,7 +653,6 @@ class AddIdentificationFrame(Tkinter.Toplevel):
 
     def __init__(self, master, model, feature):
         Tkinter.Toplevel.__init__(self, master=master)
-        feature = glyxsuite.io.GlyxXMLFeature()
         #self.minsize(600, 300)
         self.master = master
         self.feature = feature 
@@ -641,18 +661,19 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.model = model
         self.glycan = None
         self.peptide = None
-        
-        labelCharge = Tkinter.Label(self, text="Feature Charge")
-        labelChargeValue = Tkinter.Label(self, text=feature.getCharge())
-        labelCharge.grid(row=0, column=0, sticky="NWES")
-        labelChargeValue.grid(row=0, column=1, columnspan=2, sticky="NWES")
 
+        self.precursorMass = (self.feature.getMZ()*self.feature.getCharge()-
+                              glyxsuite.masses.MASS["H+"]*(self.feature.getCharge()-1))
         
         labelMass = Tkinter.Label(self, text="Feature Mass")
-        labelMassValue = Tkinter.Label(self, text=feature.getMZ())
-        labelMass.grid(row=1, column=0, sticky="NWES")
-        labelMassValue.grid(row=1, column=1, columnspan=2, sticky="NWES")
-
+        labelMassValue = Tkinter.Label(self, text=str(round(self.precursorMass,4))+ " Da")
+        labelMass.grid(row=0, column=0, sticky="NWES")
+        labelMassValue.grid(row=0, column=1, columnspan=2, sticky="NWES")
+        
+        labelError = Tkinter.Label(self, text="Feature Error")
+        self.labelErrorValue = Tkinter.Label(self, text="- Da")
+        labelError.grid(row=1, column=0, sticky="NWES")
+        self.labelErrorValue.grid(row=1, column=1, columnspan=2, sticky="NWES")
 
         labelGlycan = Tkinter.Label(self, text="Glycan")
         self.glycanVar = Tkinter.StringVar()
@@ -733,14 +754,21 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             self.peptide = None
             self.labelPeptideMass.config(text=" - Da")
             self.entryPeptide.config(bg="red")
+        
+        # calculate Identification error
+        if self.valid == True:
+            mass = self.peptide.mass+self.glycan.mass+glyxsuite.masses.MASS["H+"]
+            diff = mass-self.precursorMass
+            self.labelErrorValue.config(text=str(round(diff,4)) + " Da")
+        else:
+            self.labelErrorValue.config(text="- Da")
     
     def addIdentification(self):
         if self.valid == False:
             return
             
-        precursorMass = self.feature.getMZ()*self.feature.getCharge()-glyxsuite.masses.MASS["H+"]*(self.feature.getCharge()-1)
         mass = self.peptide.mass+self.glycan.mass+glyxsuite.masses.MASS["H+"]
-        diff = mass-precursorMass
+        diff = mass-self.precursorMass
         hit = glyxsuite.io.GlyxXMLGlycoModHit()
         hit.featureID = self.feature.getId()
         hit.glycan = self.glycan
