@@ -294,9 +294,6 @@ def main(options):
         link.nativeId = spec1.getNativeID()
         link.peaks = peaks
         links.append(link)
-        if spec1.getNativeID() == "controllerType=0 controllerNumber=1 scan=2223" and abs(link.mz - 659.8337402) < 0.1:
-            print mz, link.mz, link.charge
-            foolink = link
     
     print "could not find suitable starting pattern for ", noresult, "spectra from ", len(ms2) 
     timed("group precursors",starttime)
@@ -331,9 +328,6 @@ def main(options):
             for link in current.near:
                 if link.feature == None:
                     working.add(link)
-                    if foolink == link:
-                        print "feature found", feature
-                        foofeature = feature
 
     timed("calculate precursor positions",starttime)
     # calculate mz and charge of feature
@@ -363,7 +357,7 @@ def main(options):
             if not (f1.rtLow <= f2.rtHigh <= f1.rtHigh):
                 continue
             todelete.add(f2)
-    print "foofeature", foofeature.ms2
+
     for f in todelete:
         features.remove(f)
 
