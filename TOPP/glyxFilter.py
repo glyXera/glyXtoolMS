@@ -406,6 +406,9 @@ def main(options):
         else:
             minSpecCount = 2
         keep,notkeep,underThreshold = glyxsuite.consensus.generateConsensusSpectrum(spectra,minSpecCount=minSpecCount)
+        keep = sorted(keep, key=lambda p:p.y, reverse=True)[:150]
+        maykeep = sorted(underThreshold, key=lambda p:p.y, reverse=True)
+        keep = keep + maykeep[:150-len(keep)]
         feature.consensus = keep
         glyxXMLFile.features.append(feature)
 
