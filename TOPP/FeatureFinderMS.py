@@ -90,21 +90,31 @@ def findMonoIsotopicPeak(mz_org, charge, spec1, tolerance, precursorshift, mswin
         if abs(peak.getMZ()-mz_org) < precursorshift:
             near.append(peak)
         peaks.append(peak)
-    if len(near) == 0:
-        mz = mz_org
-    else:
+    mz_candidates = [mz_org]
+    if len(near) > 0:
         best = max(near, key=lambda p:p.getIntensity())
-        mz = best.getMZ()
-    
+        #best2 = min(near, key=lambda p:abs(p.getMZ()-mz_org))
+        mz_candidates.append(best.getMZ())
+
     # find which isotope mz is
     results = []
-    for i in range(-6,6):
-        # calculate possible monoisotopes
-        monomass = mz + i*glyxsuite.masses.MASS["H+"]/charge
-        result = findPattern(monomass, charge, peaks, tolerance)
-        if result == None:
-            continue
-        results.append(result)
+    for mz in mz_candidates: 
+        for i in range(-6,6):
+            # calculate possible monoisotopes
+            monomass = mz + i*glyxsuite.masses.MASS["H+"]/charge
+            result = findPattern(monomass, charge, peaks, tolerance)
+            if result == None:
+                continue
+            # check that pattern encloses mz_org
+            isInPattern = False
+            for x in result["x"]:
+                if abs(x-mz_org) < tolerance:
+                    isInPattern = True
+                    break
+            minMZ = min(result["x"])-tolerance
+            maxMZ = max(result["x"])+tolerance
+            if minMZ < mz_org < maxMZ and isInPattern == True and sum(result["y"]) > 0:
+                results.append(result)
     return peaks, results
 
 
@@ -136,23 +146,22 @@ class Feature:
     def extendRTDomain(self, ms1, tolerance, cutoff=20.0, maxRTspan=10000):
         # get highest spectrum as origin
         msBest = max(self.ms2, key = lambda ms: ms.result["sum"])
-        self.rt = msBest.rt
+        self.rt = msBest.rt1
         normedIntensities = []
         sumIntensityBest = sum(msBest.result["y"])
         for mz, signal in zip(msBest.result["x"], msBest.result["y"]):
             normedIntensities.append(signal/sumIntensityBest)
         # get minimum and maximum rt from linked precursors
-        minRT = min([link.rt for link in self.ms2])
+        minRT = min([link.rt1 for link in self.ms2])
         self.rtLow = minRT
         maxRT = max([link.rt for link in self.ms2])
         self.rtHigh = maxRT
-        
         # find starting index
         for start,spec in enumerate(ms1):
             if spec.getNativeID() == msBest.nativeId:
                 break
         assert spec.getNativeID() == msBest.nativeId
-        i = start
+        i = start+1
         self.pattern = {}
         while i > 0:
             i -= 1
@@ -174,6 +183,8 @@ class Feature:
                 if sumInt > 0:
                     sumMz = sumMz/sumInt
                     self.pattern[e] = [(spec.getRT(), sumMz, sumInt)]+self.pattern.get(e, [])
+                else:
+                    self.pattern[e] = [(spec.getRT(), mz, 0)]+self.pattern.get(e, [])
                 
             # calculate error
             sumIntensity = sum(intensities)
@@ -184,11 +195,14 @@ class Feature:
                 err = math.sqrt(err) / sumIntensity * 100
             else:
                 err = 100
-            self.rtLow = spec.getRT()
+            if spec.getRT() < self.rtLow:
+                self.rtLow = spec.getRT()
             if sumIntensity < sumIntensityBest/cutoff:
                 break
+                
             if err > 35: # TODO: Handle spray loss spectra
                 break
+                
         
         i = start-1
         while i < len(ms1)-1:
@@ -205,12 +219,15 @@ class Feature:
                         continue
                     if peak.getMZ() > mz+tolerance:
                         break
+                        
                     sumInt += peak.getIntensity()
                     sumMz += peak.getMZ()*peak.getIntensity()
                 intensities.append(sumInt)
                 if sumInt > 0:
                     sumMz = sumMz/sumInt
                     self.pattern[e] = self.pattern.get(e, []) + [(spec.getRT(), sumMz, sumInt)]
+                else:
+                    self.pattern[e] = self.pattern.get(e, []) + [(spec.getRT(), mz, 0)]
             # calculate error
             sumIntensity = sum(intensities)
             err = 0
@@ -220,7 +237,8 @@ class Feature:
                 err = math.sqrt(err) / sumIntensity * 100
             else:
                 err = 100
-            self.rtHigh = spec.getRT()
+            if spec.getRT() > self.rtHigh:
+                self.rtHigh = spec.getRT()
             if sumIntensity < sumIntensityBest/cutoff:
                 break
             if err > 35:
@@ -283,6 +301,8 @@ def main(options):
     timed("finding precursors " + str(len(ms2)),starttime)
     for mz, spec2, spec1 in ms2:
         charge = spec2.getPrecursors()[0].getCharge()
+        if charge == 0:
+            charge = 1
         peaks, results = findMonoIsotopicPeak(mz, charge, spec1, tolerance, precursorshift, mswindow)
         if len(results) == 0:
             noresult += 1
@@ -291,6 +311,7 @@ def main(options):
         best = min(results, key = lambda r: r["mass"]*r["error"]/r["sum"]**2)
         rt = spec2.getRT()
         link = Link(rt, best)
+        link.rt1 = spec1.getRT()
         link.nativeId = spec1.getNativeID()
         link.peaks = peaks
         links.append(link)
@@ -328,7 +349,7 @@ def main(options):
             for link in current.near:
                 if link.feature == None:
                     working.add(link)
-
+    
     timed("calculate precursor positions",starttime)
     # calculate mz and charge of feature
     for feature in features:
@@ -341,7 +362,7 @@ def main(options):
         masses = [l.result["x"][-1] for l in feature.ms2]
         feature.mzLow = feature.mz
         feature.mzHigh = max(masses)
-        
+            
     timed("merge features",starttime)
     # check features against each other
     # remove feature if mzLow is within other feature and rtLow and rtHigh within too
@@ -350,6 +371,8 @@ def main(options):
         for f2 in features:
             if f1 == f2:
                 continue
+            if abs(f1.mz-f2.mz) > tolerance:
+                continue
             if not (f1.mzLow <= f2.mzLow <= f1.mzHigh):
                 continue
             if not (f1.rtLow <= f2.rtLow <= f1.rtHigh):
@@ -357,7 +380,6 @@ def main(options):
             if not (f1.rtLow <= f2.rtHigh <= f1.rtHigh):
                 continue
             todelete.add(f2)
-
     for f in todelete:
         features.remove(f)
 
@@ -392,22 +414,11 @@ def main(options):
             newf.rt = (f1.rt+ f2.rt)/2.0
             newfeatures.add(newf)
 
-    features += list(newfeatures)
-    """
-    timed("check features",starttime)
-    invalid = 0
-    for feature in features:
-        for ms in feature.ms2:
-            invalid += 1
-            if not(feature.mzLow <= ms.mz <= feature.mzHigh):
-                print invalid, "mz", feature.mzLow, ms.mz, feature.mzHigh
-            if not(feature.rtLow <= ms.rt <= feature.rtHigh):
-                print invalid, "rt", feature.rtLow, ms.rt, feature.rtHigh
-    """
-                
+    features += list(newfeatures)     
     
     timed("write featuremap",starttime)
     fm = pyopenms.FeatureMap()
+    N = 0
     for feature in features:
         # calc bounding boxes from pattern
         f = pyopenms.Feature()
@@ -419,8 +430,10 @@ def main(options):
         sumIntensity = 0
         for i in feature.pattern:
             pattern = feature.pattern[i]
-            minRT = min([p[0] for p in pattern])
-            maxRT = max([p[0] for p in pattern])
+            minRT = feature.rtLow-1 # eliminate rounding error by adding a rt tolerance
+            maxRT = feature.rtHigh+1
+            #minRT = min([p[0] for p in pattern])
+            #maxRT = max([p[0] for p in pattern])
             minMZ = min([p[1] for p in pattern])-tolerance
             maxMZ = max([p[1] for p in pattern])+tolerance
             sumIntensity += sum([p[2] for p in pattern])
@@ -434,9 +447,21 @@ def main(options):
         f.getConvexHull().expandToBoundingBox()
         f.setIntensity(sumIntensity)
         f.setOverallQuality(feature.error)
-
-        fm.push_back(f)
         
+        # check if boundingbox is fullfilles
+        h = f.getConvexHull()
+        b = h.getBoundingBox()
+        minRT, minMZ = b.minPosition()
+        maxRT, maxMZ = b.maxPosition()
+
+        if sumIntensity == 0:
+            N += 1
+            continue
+        if charge == 0:
+            N += 1
+            continue
+        fm.push_back(f)
+    print "ignoring ", N, " features that have no peaks or a charge of 0"
     fxml = pyopenms.FeatureXMLFile()
     fxml.store(options.outfile, fm)
  
