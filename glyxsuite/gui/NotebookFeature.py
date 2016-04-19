@@ -31,12 +31,13 @@ class NotebookFeature(ttk.Frame):
         frameSpectrum.columnconfigure(1, weight=0)
         
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        self.aMenu.add_command(label="Accepted", 
+        self.aMenu.add_command(label="Set to Accepted", 
                                command=lambda x="Accepted": self.setStatus(x))
-        self.aMenu.add_command(label="Rejected",
+        self.aMenu.add_command(label="Set to  Rejected",
                                command=lambda x="Rejected": self.setStatus(x))
-        self.aMenu.add_command(label="Unknown",
+        self.aMenu.add_command(label="Set to Unknown",
                                command=lambda x="Unknown": self.setStatus(x))
+        self.aMenu.add_separator()
         self.aMenu.add_command(label="Change Feature",
                                command=self.changeFeature)
         self.aMenu.add_command(label="Copy Feature",

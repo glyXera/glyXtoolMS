@@ -12,11 +12,11 @@ class NotebookIdentification(ttk.Frame):
         
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        self.aMenu.add_command(label="Accepted", 
+        self.aMenu.add_command(label="Set to Accepted", 
                                command=lambda x="Accepted": self.setStatus(x))
-        self.aMenu.add_command(label="Rejected",
+        self.aMenu.add_command(label="Set to Rejected",
                                command=lambda x="Rejected": self.setStatus(x))
-        self.aMenu.add_command(label="Unknown",
+        self.aMenu.add_command(label="Set to Unknown",
                                command=lambda x="Unknown": self.setStatus(x))
 
         # show treeview of mzML file MS/MS and MS

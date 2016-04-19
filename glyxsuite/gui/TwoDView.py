@@ -9,7 +9,7 @@ class TwoDView(FramePlot.FramePlot):
     def __init__(self, master, model, height=300, width=300):
         FramePlot.FramePlot.__init__(self, master, model, height=height,
                                      width=width, xTitle="rt [s]",
-                                     yTitle="mz [Th]")
+                                     yTitle="m/z")
 
         self.master = master
         

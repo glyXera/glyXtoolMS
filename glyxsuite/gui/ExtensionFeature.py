@@ -65,7 +65,7 @@ class ExtensionFeature(ttk.Labelframe):
         self.n2 = Notebook2(self.notebook, self.model)
 
         self.notebook.add(self.n1, text='Feature')
-        self.notebook.add(self.n2, text='Spectruminformation')
+        self.notebook.add(self.n2, text='Fragment Spectrum')
         
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=0)

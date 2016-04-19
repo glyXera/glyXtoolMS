@@ -15,7 +15,7 @@ class SpectrumView(FramePlot.FramePlot):
         FramePlot.FramePlot.__init__(self, master, model,
                                      height=height,
                                      width=width,
-                                     xTitle="mz [Th]",
+                                     xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master

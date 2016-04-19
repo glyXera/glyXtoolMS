@@ -8,7 +8,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
     def __init__(self, master, model, height=300, width=800):
         AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="mz [Th]",
+                                     width=width, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master

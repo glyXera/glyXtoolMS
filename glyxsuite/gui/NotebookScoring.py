@@ -14,12 +14,12 @@ class NotebookScoring(ttk.Frame):
 
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        self.aMenu.add_command(label="Accepted", 
-                               command=lambda x="Accepted": self.setStatus(x))
-        self.aMenu.add_command(label="Rejected",
-                               command=lambda x="Rejected": self.setStatus(x))
-        self.aMenu.add_command(label="Deleted",
-                               command=lambda x="Unknown": self.setStatus(x))
+        #self.aMenu.add_command(label="Accepted", 
+        #                       command=lambda x="Accepted": self.setStatus(x))
+        #self.aMenu.add_command(label="Rejected",
+        #                       command=lambda x="Rejected": self.setStatus(x))
+        #self.aMenu.add_command(label="Deleted",
+        #                       command=lambda x="Unknown": self.setStatus(x))
 
         # layout self
         self.rowconfigure(0, weight=0) # frameSpectrum
@@ -99,21 +99,38 @@ class NotebookScoring(ttk.Frame):
         self.tree.tag_configure('oddUnknown', background='Moccasin')
         self.tree.tag_configure('evenUnknown', background='PeachPuff')
         
-        self.tree.tag_configure('oddDeleted', background='LightSalmon')
-        self.tree.tag_configure('evenDeleted', background='Salmon')
+        #self.tree.tag_configure('oddDeleted', background='LightSalmon')
+        #self.tree.tag_configure('evenDeleted', background='Salmon')
         
-        self.tree.tag_configure('oddAccepted', background='PaleGreen')
-        self.tree.tag_configure('evenAccepted', background='YellowGreen')
+        #self.tree.tag_configure('oddAccepted', background='PaleGreen')
+        #self.tree.tag_configure('evenAccepted', background='YellowGreen')
         
-        self.tree.tag_configure('oddRejected', background='LightBlue')
-        self.tree.tag_configure('evenRejected', background='SkyBlue')
+        #self.tree.tag_configure('oddRejected', background='LightBlue')
+        #self.tree.tag_configure('evenRejected', background='SkyBlue')
+        
+        self.tree.tag_configure('oddGlycopeptide', background='PaleGreen')
+        self.tree.tag_configure('evenGlycopeptide', background='YellowGreen')
+        
+        self.tree.tag_configure('oddNonGlycopeptide', background='LightBlue')
+        self.tree.tag_configure('evenNonGlycopeptide', background='SkyBlue')
+        
+        self.tree.tag_configure('oddPoorGlycopeptide', background='LightSalmon')
+        self.tree.tag_configure('evenPoorGlycopeptide', background='Salmon')
+        
+        self.tree.tag_configure('oddPoorNonGlycopeptide', background='Plum1')
+        self.tree.tag_configure('evenPoorNonGlycopeptide', background='Plum2')
         
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
         self.tree.bind("<Button-3>", self.popup)
         
-        self.tree.bind("a", lambda e: self.setStatus("Accepted"))
+        #self.tree.bind("a", lambda e: self.setStatus("Accepted"))
+        #self.tree.bind("u", lambda e: self.setStatus("Unknown"))
+        #self.tree.bind("r", lambda e: self.setStatus("Rejected"))
+        self.tree.bind("g", lambda e: self.setStatus("Glycopeptide"))
+        self.tree.bind("n", lambda e: self.setStatus("NonGlycopeptide"))
+        self.tree.bind("h", lambda e: self.setStatus("PoorGlycopeptide"))
+        self.tree.bind("m", lambda e: self.setStatus("PoorNonGlycopeptide"))
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
-        self.tree.bind("r", lambda e: self.setStatus("Rejected"))
 
         self.model.classes["NotebookScoring"] = self
         
@@ -128,12 +145,23 @@ class NotebookScoring(ttk.Frame):
         for item in selection:
             spec, spectrum = self.treeIds[item]
             
-            if status == "Accepted":
-                spectrum.status = glyxsuite.io.ConfirmationStatus.Accepted
-            elif status == "Rejected":
-                spectrum.status = glyxsuite.io.ConfirmationStatus.Rejected
+            #if status == "Accepted":
+            #    spectrum.status = glyxsuite.io.ConfirmationStatus.Accepted
+            #elif status == "Rejected":
+             #   spectrum.status = glyxsuite.io.ConfirmationStatus.Rejected
+            #elif status == "Unknown":
+            #    spectrum.status = glyxsuite.io.ConfirmationStatus.Unknown
+            if status == "Glycopeptide":
+                spectrum.status = glyxsuite.io.ConfirmationStatus.Glycopeptide
+            elif status == "NonGlycopeptide":
+                spectrum.status = glyxsuite.io.ConfirmationStatus.NonGlycopeptide
+            elif status == "PoorGlycopeptide":
+                spectrum.status = glyxsuite.io.ConfirmationStatus.PoorGlycopeptide
+            elif status == "PoorNonGlycopeptide":
+                spectrum.status = glyxsuite.io.ConfirmationStatus.PoorNonGlycopeptide
             elif status == "Unknown":
                 spectrum.status = glyxsuite.io.ConfirmationStatus.Unknown
+                
             # Update on Treeview
             values = self.tree.item(item)["values"]
             values[5] = spectrum.status
