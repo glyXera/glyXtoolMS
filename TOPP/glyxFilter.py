@@ -140,7 +140,7 @@ class Score(glyxsuite.io.GlyxXMLSpectrum, object):
             highest.ionname = oxname
             self.oxoniumIons.append(highest)
 
-        # Look for oxonium losses and neutra losses
+        # Look for oxonium losses and neutral losses
         oxoniumLosses = {}
         for peak, oxname in itertools.product(self.peaks,
                                               oxoniumIons):
@@ -208,7 +208,7 @@ def parseOxoniumIons(options):
 
     # Fucose
     if options.hasFucose == "true":
-        oxoniumIons['(dHex)1(H+)1'] = {'charge':1, 'depends':['(dHex)1(H2O)-1(H+)1']}
+        oxoniumIons['(dHex)1(H+)1'] = {'charge':1, 'depends':['(dHex)1(H2O)-1(H+)1', '(Hex)1(H2O)-1(H+)1']}
         oxoniumIons['(dHex)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(dHex)1(H+)1']}
         oxoniumIons['(HexNAc)1(Hex)1(dHex)1(H+)1'] = {'charge':1, 'depends':['(Hex)1(H+)1']}
 
