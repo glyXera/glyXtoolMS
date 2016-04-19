@@ -189,8 +189,18 @@ class ConfirmationStatus(object):
     Deleted = "Deleted"
     Accepted = "Accepted"
     Rejected = "Rejected"
-    
-    _types = ["Unknown", "Deleted", "Accepted", "Rejected"]
+    Glycopeptide = "Glycopeptide"
+    NonGlycopeptide = "NonGlycopeptide"
+    PoorGlycopeptide = "PoorGlycopeptide"
+    PoorNonGlycopeptide = "PoorNonGlycopeptide"
+    _types = ["Unknown",
+              "Deleted", 
+              "Accepted", 
+              "Rejected", 
+              "Glycopeptide", 
+              "NonGlycopeptide", 
+              "PoorGlycopeptide", 
+              "PoorNonGlycopeptide"]
 
 class GlyxXMLFeature(object):
 
