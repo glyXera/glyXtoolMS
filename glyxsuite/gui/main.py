@@ -319,8 +319,8 @@ class HistogramFrame(Tkinter.Toplevel):
         seriesGlyco = []
         seriesNon = []
         for ms1, spectrum in self.model.currentAnalysis.data:
-            if spectrum.logScore >= 10:
-                continue
+            #if spectrum.logScore >= 10:
+            #    continue
             if spectrum.isGlycopeptide == True:
                 seriesGlyco.append(spectrum.logScore)
             else:

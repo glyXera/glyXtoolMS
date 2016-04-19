@@ -34,7 +34,7 @@ class HistogramView(FramePlot.FramePlot, glyxsuite.lib.Histogram):
         height = {}
         for label in self.bins.keys():
             for b in self.bins[label]:
-                va = b*self.binwidth
+                va = (b+2)*self.binwidth
                 if self.aMax == -1 or va > self.aMax:
                     self.aMax = va
                 vb = self.bins[label][b]
