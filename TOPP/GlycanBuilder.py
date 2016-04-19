@@ -44,6 +44,8 @@ def main(options):
     rangeHexNAc = range(minHexNAc,maxHexNAc+1)
     rangeDHex = range(minDHex,maxDHex+1)
     rangeNeuAc = range(minNeuAc,maxNeuAc+1)
+    rangeNeuGC = range(minNeuGc,maxNeuGc+1)
+    
 
     # open output file
     fout = file(options.outfile,"w")
@@ -62,6 +64,8 @@ def main(options):
             if not minDHex <= glycan.sugar["DHEX"] <= maxDHex:
                 continue
             if not minNeuAc <= glycan.sugar["NEUAC"] <= maxNeuAc:
+                continue
+            if not minNeuGc <= glycan.sugar["NEUGC"] <= maxNeuGc:
                 continue
             if glycan.mass > 8000:
                 continue
