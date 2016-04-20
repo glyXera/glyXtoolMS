@@ -44,7 +44,7 @@ def main(options):
     rangeHexNAc = range(minHexNAc,maxHexNAc+1)
     rangeDHex = range(minDHex,maxDHex+1)
     rangeNeuAc = range(minNeuAc,maxNeuAc+1)
-    rangeNeuGC = range(minNeuGc,maxNeuGc+1)
+    rangeNeuGc = range(minNeuGc,maxNeuGc+1)
     
 
     # open output file
@@ -73,7 +73,7 @@ def main(options):
         fin.close()
     else:
         print "generating glycan compositions"
-        for NEUGC, NEUAC, DHEX, HEX, HEXNAC in product(rangeNeugGc,
+        for NEUGC, NEUAC, DHEX, HEX, HEXNAC in product(rangeNeuGc,
                                                        rangeNeuAc,
                                                        rangeDHex,
                                                        rangeHex,
