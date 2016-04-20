@@ -301,7 +301,7 @@ class ProteinDigest(object):
             for match in re.finditer(r"(?=(N[^P](S|T)))", self.protein.sequence):
                 sites.append((match.start(), "N"))
         if OGlycosylation == True:
-            for match in re.finditer(r"(?=(S|T)))", self.protein.sequence):
+            for match in re.finditer(r"(?=(S|T))", self.protein.sequence):
                 sites.append((match.start(), "O"))
         sites.sort()
 
