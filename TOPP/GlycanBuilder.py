@@ -85,8 +85,8 @@ def main(options):
                                   DHEX=DHEX,
                                   HEX=HEX,
                                   HEXNAC=HEXNAC)
-            if not glycan.checkComposition():
-                continue
+            #if not glycan.checkComposition():
+            #    continue
             if glycan.mass > 8000:
                 continue
             writeGlycans.add(glycan.toString())
