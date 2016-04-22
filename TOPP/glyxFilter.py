@@ -287,6 +287,7 @@ def main(options):
     keepFeatures = set()
     ms2Spectra = {}
     collectedScores = {}
+    spectraInfeatures = {}
     for spec in exp:
         if spec.getMSLevel() != 2:
             continue
@@ -318,12 +319,14 @@ def main(options):
             minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
             if minRT > spec.getRT() or spec.getRT() > maxRT:
                 continue
-            if minMZ > precursor.getMZ() or precursor.getMZ() > maxMZ+tolerance:
+            if minMZ-tolerance > precursor.getMZ() or precursor.getMZ() > maxMZ+tolerance:
                 continue
             #rt = feature.getRT()
             rt = spec.getRT()
             mz = feature.getMZ()
             charge = feature.getCharge()
+            feature.spectraIds.add(spec.getNativeID())
+            
             if charge != 1:
                 score = Score(spec.getNativeID(), rt, mz, precursor.getMZ(), charge, intensity, feature)
                 scores.append(score)
@@ -384,14 +387,14 @@ def main(options):
             score.feature = f
             allFeatures[f.getId()] = f
         if score.feature != None:
-            score.feature.spectraIds.append(score.getNativeId())
+            score.feature.spectraIds.add(score.getNativeId())
             if score.getLogScore() < scorethreshold:
                 keepFeatures.add(score.feature.getId())
 
     # write features
     for key in keepFeatures:
         # generate consensus spectra
-        feature = allFeatures[key]
+        feature = allFeatures[key]        
         # collect all spectra
         spectra = []
         for nativeID in feature.spectraIds:
@@ -406,9 +409,9 @@ def main(options):
         else:
             minSpecCount = 2
         keep,notkeep,underThreshold = glyxsuite.consensus.generateConsensusSpectrum(spectra,minSpecCount=minSpecCount)
-        keep = sorted(keep, key=lambda p:p.y, reverse=True)[:150]
+        keep = sorted(keep, key=lambda p:p.y, reverse=True)[:300]
         maykeep = sorted(underThreshold, key=lambda p:p.y, reverse=True)
-        keep = keep + maykeep[:150-len(keep)]
+        keep = keep + maykeep[:300-len(keep)]
         feature.consensus = keep
         glyxXMLFile.features.append(feature)
 

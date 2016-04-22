@@ -1,34 +1,50 @@
-"""
-Plot Spectrum within GUI
-"""
-
 import ttk
 import Tkinter
-#from glyxsuite.gui import FramePlot
-from glyxsuite.gui import Appearance
+
 from glyxsuite.gui import AnnotatedPlot
+from glyxsuite.gui import Appearance
+import glyxsuite
+
+"""
+class Annotation(object):
+    
+    def __init__(self):
+        self.x1 = 0
+        self.x2 = 0
+        self.y = 0
+        self.text = ""
+        self.items = {}
+        self.selected = ""
+"""
+class Peak:
+    
+    def __init__(self,x,y):
+        self.x = x
+        self.y = y
 
 class SpectrumView(AnnotatedPlot.AnnotatedPlot):
-    """ Constructs the SpectrumView Panel. Needs the master panel,
-        the Datamodel, height and width as parameters """
 
     def __init__(self, master, model, height=300, width=800):
-        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model,
-                                     height=height,
-                                     width=width,
-                                     xTitle="m/z",
+        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
+                                     width=width, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master
-        self.spec = None
+        self.spec = None # Link to raw spectrum
+        self.spectrum = None # Link to current spectrum score
+
+        self.peaksByItem = {}
+        self.annotationItems = {}
+        self.annotations = []
+        self.currentAnnotation = None
+        self.referenceMass = 0
 
         self.coord = Tkinter.StringVar()
         l = ttk.Label(self, textvariable=self.coord)
         l.grid(row=4, column=0, sticky="NS")
 
         self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed",
-                                   variable=self.keepZoom)
+        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
         c.grid(row=5, column=0, sticky="NS")
 
 
@@ -37,9 +53,36 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
 
         # link function
         self.model.classes["SpectrumView"] = self
+        
+        self.canvas.bind("<Button-2>", self.button2, "+")
+        
+        #self.canvas.bind("<Button-1>", self.button1Pressed, "+")
+        #self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
+        #self.canvas.bind("<B1-Motion>", self.button3Motion, "+")
 
+        
+        #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
+        #self.canvas.bind("<ButtonRelease-3>", self.button3Released, "+")
+        #self.canvas.bind("<B3-Motion>", self.button3Motion, "+")
+        
+        #self.canvas.bind("<Delete>", self.deleteAnnotation, "+")
+
+    def identifier(self):
+        return "SpectrumView"
+
+    def initSpectrum(self, spec):
+        if spec == None:
+            return
+        if spec.getNativeID() in self.model.currentAnalysis.spectraIds:
+             self.annotations = self.model.currentAnalysis.spectraIds[spec.getNativeID()].annotations
+        self.spec = spec
+        self.referenceMass = 0
+        self.peaksByItem = {}
+        self.annotationItems = {}
+        self.currentAnnotation = None
+        self.initCanvas()
+        
     def setMaxValues(self):
-        """ Recalculate Min/Max Values for the plot """
         self.aMax = -1
         self.bMax = -1
 
@@ -54,15 +97,10 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         self.bMax *= 1.2
 
     def paintObject(self):
-        """ Draw everything within the Plot """
-        if self.model.currentAnalysis == None:
-            return
         if self.spec == None:
             return
-        
         specId = self.spec.getNativeID()
         pInt0 = self.convBtoY(self.viewYMin)
-
 
         # create peaklist
         peaks = []
@@ -73,10 +111,10 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
                 continue
             if intens < self.viewYMin:
                 continue
-            peaks.append((intens, mz))
+            peaks.append(Peak(mz,intens))
 
         # sort peaks after highest intensity
-        peaks.sort(reverse=True)
+        peaks.sort(reverse=True, key=lambda p: p.y)
 
         # get scored peaks
         scored = {}
@@ -86,9 +124,9 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
                 for fragment in ions[sugar]:
                     mass = ions[sugar][fragment]["mass"]
                     l = []
-                    for intens, mz in peaks:
-                        if abs(mz-mass) < 1.0:
-                            l.append((abs(mz-mass), mz, sugar, fragment))
+                    for p in peaks:
+                        if abs(p.x-mass) < 1.0:
+                            l.append((abs(p.x-mass), p.x, sugar, fragment))
 
                     l.sort()
                     if len(l) > 0:
@@ -98,37 +136,38 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         scoredPeaks = []
         annotationText = []
         annotationMass = []
-        for intens, mz in peaks:
+        self.peaksByItem = {}
+        for p in peaks:
             # check if peak is a scored peak
-            pMZ = self.convAtoX(mz)
-            pInt = self.convBtoY(intens)
-            masstext = str(round(mz, 4))
-            if mz in scored:
-                scoredPeaks.append((intens, mz))
-                sugar, fragment = scored[mz]
+            pMZ = self.convAtoX(p.x)
+            pInt = self.convBtoY(p.y)
+            masstext = str(round(p.x - self.referenceMass, 4))
+            if p.x in scored:
+                scoredPeaks.append(p)
+                sugar, fragment = scored[p.x]
                 annotationText.append((pMZ, pInt, fragment+"\n"+masstext))
-
             else:
                 item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="black")
+                self.peaksByItem[item] = p
                 annotationMass.append((pMZ, pInt, masstext))
 
             self.allowZoom = True
 
         # plot scored peaks last
         scoredPeaks.sort(reverse=True)
-        for intens, mz in scoredPeaks:
-            pMZ = self.convAtoX(mz)
-            pInt = self.convBtoY(intens)
+        for p in scoredPeaks:
+            pMZ = self.convAtoX(p.x)
+            pInt = self.convBtoY(p.y)
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="red")
+            self.peaksByItem[item] = p
 
         items = self.plotText(annotationText, set(), 0)
         items = self.plotText(annotationMass, items, 5)
+        
+        # paint all available annotations
+        self.paintAllAnnotations()
 
-    def plotText(self, collectedText, items, N=0):
-        """ Draw text items onto the canvas, without overlap.
-            Parameters are the collectedText a List of (x, y, text),
-            a set of previously drawn items, and the maximum amount of
-            items to be drawn (0 - draw as many as possible)"""
+    def plotText(self, collectedText, items=set(), N=0):
         # remove text which is outside of view
         ymax = self.convBtoY(self.viewYMin)
         ymin = self.convBtoY(self.viewYMax)
@@ -148,7 +187,10 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
             if N > 0 and len(items) >= N:
                 break
             x, y, text = textinfo
-            item = self.canvas.create_text((x, y, ), text=text, fill="blue violet", anchor="s", justify="center")
+            item = self.canvas.create_text((x, y, ),
+                                           text=text,
+                                           fill="blue violet",
+                                           anchor="s", justify="center")
             # check bounds of other items
             bbox = self.canvas.bbox(item)
             overlap = set(self.canvas.find_overlapping(*bbox))
@@ -157,17 +199,6 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
             else:
                 self.canvas.delete(item)
         return items
-
-    def initSpectrum(self, spec):
-        """ Draw a new spectrum in the frame """
-        if spec == None:
-            return
-        self.spec = spec
-        self.initCanvas()
-
-    def identifier(self):
-        """ Returns a class identifier """
-        return "SpectrumView"
 
     def button2(self, event):
         if self.spec == None:

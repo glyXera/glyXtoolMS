@@ -215,7 +215,7 @@ class GlyxXMLFeature(object):
         self.minMZ = 0.0
         self.maxMZ = 0.0
         self.status = ConfirmationStatus.Unknown
-        self.spectraIds = []
+        self.spectraIds = set()
         self.spectra = []
         self.annotations = []
         self.consensus = []
@@ -261,8 +261,7 @@ class GlyxXMLFeature(object):
         return self.minRT, self.maxRT, self.minMZ, self.maxMZ
 
     def addSpectrumId(self, spectrumId):
-        if not spectrumId in self.spectraIds:
-            self.spectraIds.append(spectrumId)
+        self.spectraIds.add(spectrumId)
         
     def addSpectrum(self, spectrum):
         """ Add spectrum to feature """
@@ -295,7 +294,7 @@ class GlyxXMLFeature(object):
         new.minMZ = self.minMZ
         new.maxMZ = self.maxMZ
         new.status = self.status
-        new.spectraIds = list(self.spectraIds)
+        new.spectraIds = set(self.spectraIds)
         new.spectra = list(self.spectra)
         new.annotations = list(self.annotations)
         new.consensus = list(self.consensus)

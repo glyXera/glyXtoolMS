@@ -2,7 +2,8 @@ import ttk
 import Tkinter
 
 from glyxsuite.gui import ChromatogramView
-from glyxsuite.gui import SpectrumView
+from glyxsuite.gui import SpectrumView2
+
 from glyxsuite.gui import PrecursorView
 
 class ExtensionScoring(ttk.Labelframe):
@@ -32,7 +33,7 @@ class ExtensionScoring(ttk.Labelframe):
         msmsFrame.rowconfigure(0, weight=1)
         msmsFrame.columnconfigure(0, weight=1)
         
-        msmsView = SpectrumView.SpectrumView(msmsFrame, model, height=300, width=800)
+        msmsView = SpectrumView2.SpectrumView(msmsFrame, model, height=300, width=800)
         msmsView.grid(row=0, column=0, sticky="NWES")
 
         self.rowconfigure(0, weight=1)

@@ -440,6 +440,7 @@ class NotebookFeature(ttk.Frame):
         self.model.classes["TwoDView"].init(keepZoom=True)
         self.updateSpectrumTree()
         self.model.classes["FeatureChromatogramView"].init(c, feature, minMZView, maxMZView, index)
+        self.model.classes["ConsensusSpectrumFrame2"].init(feature)
 
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
@@ -554,6 +555,12 @@ class NotebookFeature(ttk.Frame):
         spec, spectrum = self.spectrumTreeIds[item]
         self.model.classes["FeatureSpectrumView"].initSpectrum(spec)
         self.model.classes["NotebookScoring"].setSelectedSpectrum(spectrum.index)
+        selection = self.featureTree.selection()
+        if len(selection) != 1:
+            return
+        feature = self.featureTreeIds[selection[0]]
+        if feature == None:
+            return
 
     def setSelectedFeature(self, index):
         for item in self.featureTreeIds:
