@@ -90,6 +90,7 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.bind("a", lambda e: self.setStatus("Accepted"))
         self.featureTree.bind("u", lambda e: self.setStatus("Unknown"))
         self.featureTree.bind("r", lambda e: self.setStatus("Rejected"))
+        self.featureTree.bind("z", self.zoomToFeature)
         self.featureTree.bind("<Button-3>", self.popup)
         # Bindings influencing FeatureChromatogramView
         self.featureTree.bind("<Left>", self.goLeft)
@@ -138,6 +139,20 @@ class NotebookFeature(ttk.Frame):
     def goRight(self, event):
         self.model.classes["FeatureChromatogramView"].goRight(event)
         return "break" # Stop default event propagation
+        
+    def zoomToFeature(self, event):
+        selection = self.featureTree.selection()
+        if len(selection) != 1:
+            return
+        feature = self.featureTreeIds[selection[0]]
+        minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
+        rtdiff = (maxRT-minRT)
+        minRT = minRT-rtdiff
+        maxRT = maxRT+rtdiff
+        mzdiff = maxMZ-minMZ
+        minMZ = minMZ-mzdiff*3
+        maxMZ = maxMZ+mzdiff*3
+        self.model.classes["TwoDView"].zoomToCoordinates(minRT, minMZ, maxRT, maxMZ)
             
     def setStatus(self, status):
         # get currently active hit

@@ -339,6 +339,7 @@ class FramePlot(ttk.Frame):
         self._paintCanvas()
 
     def zoom(self, x1, y1, x2, y2):
+        """ Zoom to pixelrange"""
         if self.allowZoom == False:
             return
         if x1 == x2 or y1 == y2:
@@ -389,6 +390,18 @@ class FramePlot(ttk.Frame):
         if self.viewYMin < self.bMin:
             self.viewYMin = self.bMin
 
+        self._paintCanvas()
+        
+    def zoomToCoordinates(self, x1, y1, x2, y2):
+        """ Zoom to datavalue range"""
+        if x1 > x2:
+            x1, x2 = x2, x1
+        if y1 > y2:
+            y1, y2 = y2, y1
+        self.viewXMin = x1
+        self.viewXMax = x2
+        self.viewYMin = y1
+        self.viewYMax = y2
         self._paintCanvas()
 
     def zoomBack(self, event):
