@@ -133,6 +133,20 @@ COMPOSITION["HYDR"] = {'O': 1}
 COMPOSITION["METH"] = {'C': 1, 'H': 2}
 
 # ------------------------------- Functions ---------------------------#
+def calcMassFromElements(composition):
+    """ Calculates the mass from the elemental composition
+        Input: Dictionary of the element composition 
+        e.g for water (H2O): {"H":2, "O":1}
+    """
+    mass = 0
+    for element in composition:
+        if not element in MASS:
+            raise Exception("Unknown element!")
+        m = MASS[element]
+        mass += m*composition[element]
+    return mass
+
+
 def calcPeptideMass(peptide):
     mass = MASS["H2O"]
     for s in peptide.sequence:
@@ -196,6 +210,9 @@ def calcIonMass(name):
         return mass
     else:
         return mass/float(charge), charge
+
+
+    
 
 def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
     """
