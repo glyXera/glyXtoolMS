@@ -77,24 +77,28 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         if status == "Cancel":
             return
         minRT, maxRT, minMZ, maxMZ = self.feature.getBoundingBox()
-        pX = self.convAtoX(self.currentX)
+        selectedRT = self.currentX
+        if self.model.timescale == "minutes":
+            selectedRT = selectedRT*60
+        pX = self.convAtoX(selectedRT)
+        
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         if status == "leftborder":
-            if self.currentX >= maxRT:
+            if selectedRT >= maxRT:
                 return
             self.canvas.create_line(pX, pIntMin, pX, pIntMax, tags=("tempborder", ),fill="red", dash=(2, 4))
             if tkMessageBox.askyesno('Keep new Retention Border?',
                                      'Do you want to keep the new retention border?'):
-                self.feature.minRT = self.currentX
+                self.feature.minRT = selectedRT
                 self.model.currentAnalysis.featureEdited(self.feature)
         if status == "rightborder":
-            if self.currentX <= minRT:
+            if selectedRT <= minRT:
                 return
             self.canvas.create_line(pX, pIntMin, pX, pIntMax, tags=("tempborder", ),fill="red", dash=(2, 4))
             if tkMessageBox.askyesno('Keep new Retention Border?',
                                      'Do you want to keep the new retention border?'):
-                self.feature.maxRT = self.currentX
+                self.feature.maxRT = selectedRT
                 self.model.currentAnalysis.featureEdited(self.feature)
         self.canvas.delete("tempborder")
     
