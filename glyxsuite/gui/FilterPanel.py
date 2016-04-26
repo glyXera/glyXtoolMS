@@ -126,6 +126,7 @@ class FilterPanel(Tkinter.Toplevel):
         filters.append(Fragmentname_Filter(self.model))
         filters.append(StatusFilter())
         filters.append(FeatureStatusFilter())
+        filters.append(GlycosylationSite_Filter(self.model))
         
         f = FilterEntry(self.filterIdentification,
                         filters,
@@ -810,6 +811,54 @@ class Fragmentname_Filter(Filter):
             return self.existsLabel(self.field1, hit)
         else:
             return not self.existsLabel(self.field1, hit)
+
+class GlycosylationSite_Filter(Filter):
+    def __init__(self, model):
+        super(GlycosylationSite_Filter, self).__init__("GlycosylationSite")
+        self.model = model
+        self.field1 = ""
+        self.type1 = FieldTypes.ASSISTED
+        self.field2 = "0 - 1"
+        self.choices1 = []
+        self.type2 = FieldTypes.INACTIVE
+        self.operatorChoices = ["exists", "exists not"]
+        self.operator = "exists"
+        self.collectSites()
+        
+    def reinitialize(self):
+        self.collectSites()
+        
+    def collectSites(self):
+        self.choices1 = set()
+        for projectName in self.model.projects:
+            project = self.model.projects[projectName]
+            for analysisName in project.analysisFiles:
+                analysis = project.analysisFiles[analysisName]
+                for hit in analysis.analysis.glycoModHits:
+                    for pos, t in hit.peptide.glycosylationSites:
+                        name = t+str(pos+1) # FIX position offset!
+                        self.choices1.add(name)
+        self.choices1 = list(self.choices1)
+        
+    def parseField1(self, field1):
+        assert field1 in self.choices1
+        self.field1 = field1
+        
+    def parseField2(self, field2):
+        return
+
+    def existsGlycosylationSite(self, site, hit):
+        for pos, t in hit.peptide.glycosylationSites:
+            name = t+str(pos+1) # FIX position offset!
+            if name == site:
+                return True
+        return False
+
+    def evaluate(self, hit, **args):
+        if self.operator == "exists":
+            return self.existsGlycosylationSite(self.field1, hit)
+        else:
+            return not self.existsGlycosylationSite(self.field1, hit)
 
 class Feature_RT_Filter(Filter):
     def __init__(self):
