@@ -214,6 +214,7 @@ def parseOxoniumIons(options):
         oxoniumIons['(NeuGc)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(NeuGc)1(H+)1']}
 
         oxoniumIons['(HexNAc)1(NeuGc)1(H+)1'] = {'charge':1, 'depends':['(NeuGc)1(H+)1']}
+        oxoniumIons['(Hex)1(HexNAc)1(NeuGc)1(H+)1'] = {'charge':1, 'depends':['(NeuGc)1(H+)1']}
         oxoniumIons['(Hex)1(HexNAc)1(NeuGc)2(H+)1'] = {'charge':1, 'depends':['(NeuGc)1(H+)1']}
         
     # bot sialic acids NANA and NGNA
