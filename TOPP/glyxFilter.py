@@ -198,14 +198,28 @@ def parseOxoniumIons(options):
     # N-Glycan core
     oxoniumIons['(HexNAc)1(Hex)2(H+)1'] = {'charge':1}
 
-    # Sialic acid
-    if options.hasSial == "true":
+    # Sialic acid NANA
+    if options.hasNANA == "true":
         oxoniumIons['(NeuAc)1(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H2O)-1(H+)1']}
         oxoniumIons['(NeuAc)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H+)1']}
 
         oxoniumIons['(Hex)1(HexNAc)1(NeuAc)1(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H+)1']}
         oxoniumIons['(Hex)2(HexNAc)1(NeuAc)1(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H+)1']}
+        
+        oxoniumIons['(Hex)1(HexNAc)1(NeuAc)2(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H+)1']}
 
+    # Sialic acid NGNA
+    if options.hasNGNA == "true":
+        oxoniumIons['(NeuGc)1(H+)1'] = {'charge':1, 'depends':['(NeuGc)1(H2O)-1(H+)1']}
+        oxoniumIons['(NeuGc)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(NeuGc)1(H+)1']}
+
+        oxoniumIons['(HexNAc)1(NeuGc)1(H+)1'] = {'charge':1, 'depends':['(NeuGc)1(H+)1']}
+        oxoniumIons['(Hex)1(HexNAc)1(NeuGc)2(H+)1'] = {'charge':1, 'depends':['(NeuGc)1(H+)1']}
+        
+    # bot sialic acids NANA and NGNA
+    if options.hasNANA == "true" and options.hasNGNA == "true":
+        oxoniumIons['(Hex)1(HexNAc)1(NeuAc)1(NeuGc)1(H+)1'] = {'charge':1, 'depends':['(NeuAc)1(H+)1', '(NeuGc)1(H+)1']}
+        
     # Fucose
     if options.hasFucose == "true":
         oxoniumIons['(dHex)1(H+)1'] = {'charge':1, 'depends':['(dHex)1(H2O)-1(H+)1', '(Hex)1(H2O)-1(H+)1']}
@@ -213,7 +227,7 @@ def parseOxoniumIons(options):
         oxoniumIons['(HexNAc)1(Hex)1(dHex)1(H+)1'] = {'charge':1, 'depends':['(Hex)1(H+)1']}
 
     # Fucose and Sialic acid
-    if options.hasSial == "true" and options.hasFucose == "true":
+    if options.hasNANA == "true" and options.hasFucose == "true":
         oxoniumIons['(Hex)1(HexNAc)1(NeuAc)1(dHex)1(H+)1'
                    ] = {'charge':1,
                         'depends':['(NeuAc)1(H+)1', '(dHex)1(H+)1']}
@@ -432,8 +446,10 @@ def handle_args(argv=None):
                         help="Create features for featureless spectra")
     parser.add_argument("--hasFucose", dest="hasFucose",
                         help="include oxoniumions indicative for fucosylation")
-    parser.add_argument("--hasSial", dest="hasSial",
-                        help="include oxoniumions indicative for sialisation")
+    parser.add_argument("--hasNANA", dest="hasNANA",
+                        help="include oxoniumions indicative for sialisation with NANA")
+    parser.add_argument("--hasNGNA", dest="hasNGNA",
+                        help="include oxoniumions indicative for sialisation with NGNA")
     parser.add_argument("--oxoniumions", dest="oxoniumions",
                         nargs='?', const="",
                         help="Additional oxoniumions as comma separated strings")
