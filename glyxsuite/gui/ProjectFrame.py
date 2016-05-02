@@ -82,7 +82,7 @@ class ProjectFrame(ttk.Frame):
         self.b1 = ttk.Button(tools, text="Add Project", command=self.clickedAddProject)
         self.b1.grid(row=0, column=0)
 
-        self.b2 = ttk.Button(tools, text="Delete Project", command=self.deleteProject)
+        self.b2 = ttk.Button(tools, text="Close Project", command=self.closeProject)
         self.b2.grid(row=0, column=1)
         self.b2.config(state=Tkinter.DISABLED)
 
@@ -92,7 +92,7 @@ class ProjectFrame(ttk.Frame):
 
         #NORMAL, ACTIVE or DISABLED
 
-        self.b4 = ttk.Button(tools, text="Delete Analysis", command=self.deleteAnalysis)
+        self.b4 = ttk.Button(tools, text="Close Analysis", command=self.closeAnalysis)
         self.b4.grid(row=1, column=1)
         self.b4.config(state=Tkinter.DISABLED)
 
@@ -196,12 +196,12 @@ class ProjectFrame(ttk.Frame):
         t = ThreadedOpenMZML(self, path, project)
         t.start()
 
-    def deleteProject(self):
+    def closeProject(self):
         item, obj, typ = self.getSelectedItem()
         if item == None:
             return
-        if not tkMessageBox.askyesno('Delete Project',
-                                     'Do you want to delete this project?'):
+        if not tkMessageBox.askyesno('Close Project',
+                                     'Do you want to close this project?'):
             return
         # get project itemId
         while not "project" in self.projectTree.item(item, "tags"):
@@ -221,7 +221,7 @@ class ProjectFrame(ttk.Frame):
         self.projectTree.delete(item)
 
 
-    def deleteAnalysis(self):
+    def closeAnalysis(self):
         item, obj, typ = self.getSelectedItem()
         if item == None:
             return
@@ -230,8 +230,8 @@ class ProjectFrame(ttk.Frame):
         # get analysis
         if not item in self.projectsTreeIds:
             return
-        if not tkMessageBox.askyesno('Delete Analysis',
-                                     'Do you want to delete this analysis?'):
+        if not tkMessageBox.askyesno('Close Analysis',
+                                     'Do you want to close this analysis?'):
             return
 
         analysis = self.projectsTreeIds[item]
@@ -338,7 +338,7 @@ class ProjectFrame(ttk.Frame):
         # add ContainerMZMLFile
         self.projectsTreeIds[itemMZML] = project.mzMLFile
 
-        # Aktivate delete button
+        # Aktivate close button
         if len(self.model.projects) > 0:
             self.b2.config(state=Tkinter.NORMAL)
         else:
