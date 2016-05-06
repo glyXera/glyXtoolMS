@@ -182,7 +182,10 @@ class ProteinDigest(object):
         m = sequence.count("M")
 
         # substract already specified modifications
-        for mod, amino, pos in peptide.modifications:
+        for mod, pos in peptide.modifications:
+            if pos == -1:
+                continue
+            amino = peptide.sequence[pos]
             if amino == "C":
                 c -= 1
             elif amino == "M":
@@ -216,11 +219,11 @@ class ProteinDigest(object):
 
             newPeptide = copy.deepcopy(peptide)
 
-            newPeptide.modifications += [("Cys_CAM", "C", -1)]*cys_CAM
-            newPeptide.modifications += [("Cys_CM", "C", -1)]*cys_CM
-            newPeptide.modifications += [("Cys_PAM", "C", -1)]*cys_PAM
-            newPeptide.modifications += [("MSO", "M", -1)]*MSO
-            newPeptide.modifications += [("CAM", "NTerm", 0)]*nterm_CAM
+            newPeptide.modifications += [("Cys_CAM", -1)]*cys_CAM
+            newPeptide.modifications += [("Cys_CM", -1)]*cys_CM
+            newPeptide.modifications += [("Cys_PAM", -1)]*cys_PAM
+            newPeptide.modifications += [("MSO", -1)]*MSO
+            newPeptide.modifications += [("NTERM_CAM", 0)]*nterm_CAM
             # calc peptide mass
             newPeptide.mass = glyxsuite.masses.calcPeptideMass(newPeptide)
             masses.append(newPeptide)

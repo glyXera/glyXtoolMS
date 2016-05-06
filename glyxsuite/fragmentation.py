@@ -66,42 +66,26 @@ class Composition(dict):
         return mass
 
 def getModificationVariants(peptide):
-    # separate static and variable modifications
     modify = []
-    static = set()
-    amino_numbers = {}
-    for mod, amino, pos in peptide.modifications:
-        #if len(amino) > 0: # special case like NTerm - dont check consistency
-        #    continue
-        amino_numbers[amino] = amino_numbers.get(amino, 0) + 1
+    for mod, pos in peptide.modifications:
         if pos != -1:
-            # check if aminoacid exists there
-            if peptide.sequence[pos] != amino and len(amino) == 0:
-                raise Exception("Wrong aminoacid position!")
-            if pos in static:
-                raise Exception("Aminoacid contains two static modifications!")
-            static.add(pos)
-            modify.append([(mod, amino, pos)])
-
-    # check if number of modifications on one aminoacid is greater than the real amount of aminoacids in the sequence
-    for amino in amino_numbers:
-        if len(amino) > 1:
-            continue
-        if amino_numbers[amino] > peptide.sequence.count(amino):
-            raise Exception("More modifications than modifiable aminoacids in sequence")
-
-    for mod, amino, pos in peptide.modifications:
-        if pos == -1:
-            positions = []
-            for i, e in enumerate(peptide.sequence):
-                if e == amino and i not in static:
-                    positions.append((mod, amino, i))
+            x = set()
+            x.add((mod, pos))
+            modify.append(x)
+        else:
+            # get possible target positions
+            targets = glyxsuite.masses.getModificationTargets(mod)
+            positions = set()
+            for pos, amino in enumerate(peptide.sequence):
+                if amino in targets:
+                    positions.add((mod, pos))
+            if "NTERM" in targets:
+                positions.add((mod, 0))
             modify.append(positions)
 
-    # make permutations
     def isValidPermutation(permutation):
         valid_list = set()
-        for mod, amino, pos in i:
+        for mod, pos in i:
             if pos in valid_list:
                 return False
             valid_list.add(pos)
@@ -121,11 +105,10 @@ def generatePeptideFragments(peptide):
 
     # assure that modifications are localized and have a known composition
     modifications = {}
-    for mod, amino, pos in peptide.modifications:
+    for mod, pos in peptide.modifications:
         assert pos > -1
         assert pos not in modifications
-        assert amino == sequence[pos] or len(amino) > 1
-        assert mod in glyxsuite.masses.COMPOSITION
+        amino = peptide.sequence[pos]
         modifications[pos] = (mod, amino)
 
     data = {}
@@ -143,9 +126,8 @@ def generatePeptideFragments(peptide):
             nterm += glyxsuite.masses.COMPOSITION[acid]
             if pos in modifications:
                 mod, amino = modifications[pos]
-                assert acid == amino or len(amino) > 1
                 peptidestring += "("+mod+")"
-                nterm += glyxsuite.masses.COMPOSITION[mod]
+                nterm += glyxsuite.masses.getModificationComposition(mod)
         a = nterm - {"C":1, "H":1, "O":2}
         b = nterm - {"H":1, "O":1}
         c = nterm - {"O":1} + {"H":2, "N":1}
@@ -187,9 +169,8 @@ def generatePeptideFragments(peptide):
             cTerm += glyxsuite.masses.COMPOSITION[acid]
             if pos in modifications:
                 mod, amino = modifications[pos]
-                assert acid == amino or len(amino) > 1
                 peptidestring += "("+mod+")"
-                nterm += glyxsuite.masses.COMPOSITION[mod]
+                nterm += glyxsuite.masses.getModificationComposition(mod)
         x = cTerm + {"C":1, "O":1} - {"H":1}
         y = cTerm + {"H":1}
         z = cTerm - {"H":2, "N":1}
@@ -235,7 +216,7 @@ def generatePeptideFragments(peptide):
                     mod, amino = modifications[pos]
                     assert acid == amino
                     peptidestring += "("+mod+")"
-                    nterm += glyxsuite.masses.COMPOSITION[mod]
+                    nterm += glyxsuite.masses.getModificationComposition(mod)
             by = nterm - {"O":1, "H":1}
             byNH3 = by - {"N":1, "H":3}
             byH2O = by - {"O":1, "H":2}

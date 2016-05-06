@@ -36,24 +36,86 @@ AMINOACID["V"] = 99.06841
 
 PROTEINMODIFICATION = {}
 # Cys_CAM Idoacetamide treatment (carbamidation)
-PROTEINMODIFICATION["Cys_CAM"] = {"mass": 57.021464, "targets": ["C"]}
-PROTEINMODIFICATION["NTERM_CAM"] = {"mass": 57.021464, "targets": ["NTerm"]}
-PROTEINMODIFICATION["CAM"] = {"mass": 57.021464, "targets": ["C","NTerm"]}
+PROTEINMODIFICATION["Cys_CAM"] = {"mass": 57.021464,
+                                  "targets": {"C"},
+                                  "composition":{'C':2, 'H':3, 'O':1, 'N':1}
+                                  }
+PROTEINMODIFICATION["NTERM_CAM"] = {"mass": 57.021464,
+                                    "targets": {"NTERM"},
+                                    "composition":{'C':2, 'H':3, 'O':1, 'N':1}
+                                    }
+PROTEINMODIFICATION["CAM"] = {"mass": 57.021464, 
+                              "targets": {"C","NTERM"},
+                              "composition":{'C':2, 'H':3, 'O':1, 'N':1}
+                             }
 # Cys_CM, Iodoacetic acid treatment (carboxylation)
-PROTEINMODIFICATION["Cys_CM"] = {"mass": 58.005479, "targets": ["C"]}
-PROTEINMODIFICATION["CM"] = {"mass": 58.005479, "targets": []}
+PROTEINMODIFICATION["Cys_CM"] = {"mass": 58.005479, 
+                                 "targets": {"C"},
+                                 "composition":{'C': 2, 'H': 2, 'O': 2}
+                                }
+PROTEINMODIFICATION["CM"] = {"mass": 58.005479, 
+                             "composition":{'C': 2, 'H': 2, 'O': 2}
+                            }
 # Cys_PAM Acrylamide Adduct
-PROTEINMODIFICATION["Cys_PAM"] = {"mass": 71.03712, "targets": ["C"]}
-PROTEINMODIFICATION["PAM"] = {"mass": 71.03712, "targets": []}
+PROTEINMODIFICATION["Cys_PAM"] = {"mass": 71.03712, 
+                                  "targets": {"C"},
+                                  "composition":{'C': 3, 'H': 5, 'O': 1, 'N': 1}
+                                 }
+PROTEINMODIFICATION["PAM"] = {"mass": 71.03712}
 
-PROTEINMODIFICATION["MSO"] = {"mass": 15.994915, "targets": ["M"]} # MSO
-PROTEINMODIFICATION["ACET"] = {"mass": 42.0106, "targets": []} # Acetylation
-PROTEINMODIFICATION["AMID"] = {"mass": -0.9840, "targets": []} # Amidation
-PROTEINMODIFICATION["DEAM"] = {"mass": 0.9840, "targets": []} # Deamidation
-PROTEINMODIFICATION["HYDR"] = {"mass": 15.9949, "targets": []} # Hydroxylation
-PROTEINMODIFICATION["METH"] = {"mass": 14.0157, "targets": []} # Methylation
-PROTEINMODIFICATION["PHOS"] = {"mass": 79.9663, "targets": []} # Phosphorylation
-PROTEINMODIFICATION["CHO"] = {"mass": 29.00275, "targets": []} # Aldehyde
+PROTEINMODIFICATION["MSO"] = {"mass": 15.994915, 
+                              "targets": {"M"},
+                              "composition":{'O': 1}
+                             } # MSO
+PROTEINMODIFICATION["ACET"] = {"mass": 42.0106,
+                               "composition":{'C': 2, 'H': 2, 'O': 1}
+                              } # Acetylation
+PROTEINMODIFICATION["AMID"] = {"mass": -0.9840,
+                               "composition":{'H': 1, 'O': -1, 'N': 1}
+                              } # Amidation
+PROTEINMODIFICATION["DEAM"] = {"mass": 0.9840,
+                               "composition":{'H': -1, 'O': 1, 'N': -1}
+                              } # Deamidation
+PROTEINMODIFICATION["HYDR"] = {"mass": 15.9949,
+                               "composition":{'O': 1}
+                              } # Hydroxylation
+PROTEINMODIFICATION["METH"] = {"mass": 14.0157,
+                               "composition":{'C': 1, 'H': 2}
+                              } # Methylation
+PROTEINMODIFICATION["PHOS"] = {"mass": 79.9663,
+                               "composition":{'P': 1, 'O': 3, 'H': 1}
+                              } # Phosphorylation
+
+
+def getModificationTargets(modification):
+    if modification in PROTEINMODIFICATION:
+        targets = PROTEINMODIFICATION[modification].get("targets", set())
+        if len(targets) > 0:
+            return targets
+    return set(AMINOACID.keys())
+
+def getModificationComposition(modification):
+    if modification in PROTEINMODIFICATION:
+        return PROTEINMODIFICATION[modification]["composition"]
+    if not re.search("^([\+-][A-z0-9]+?)+$", modification):
+        raise Exception("Cannot parse Proteinmodification")
+    composition = {}
+    for group in re.findall("[\+-][A-z0-9]+", modification):
+        sign = group[0]
+        for match in re.findall("[A-Z][a-z]?\d*", group):
+            element = re.search("[A-z]+",match).group()
+            if element not in MASS:
+                raise Exception("Unknown element!")
+            amount = re.sub("[A-z]+","",match)
+            if len(amount) == 0:
+                amount = 1
+            else:
+                amount = int(amount)
+            if sign == "-":
+                amount = -amount
+            composition[element] = composition.get(element, 0) + amount
+    return composition
+    
 
 # ------------------------------ Glycans ------------------------------#
 
@@ -66,15 +128,19 @@ GLYCAN["NEUGC"] = 307.0903
 
 
 # --------------------------- Other masses ----------------------------#
+# http://www.sisweb.com/referenc/source/exactmas.htm
 MASS = {}
 MASS["H2O"] = 18.01057
 MASS["H+"] = 1.00728
-MASS["H"] = 1.00783
+MASS["H"] = 1.007825
 MASS["C"] = 12.0
 MASS["N"] = 14.003074
 MASS["O"] = 15.994915
-MASS["S"] = 31.972071
-# P, Na, K, Mg
+MASS["S"] = 31.972072
+MASS["P"] = 30.973763
+MASS["Na"] = 22.989770
+MASS["K"] = 38.963708
+MASS["Mg"] = 23.985045
 
 # ----------------------------- Isotopes ------------------------------#
 """
@@ -123,38 +189,14 @@ COMPOSITION["DHEX"] = {'C': 6, 'H': 12, 'N': 0, 'O': 5}
 COMPOSITION["HEXNAC"] = {'C': 8, 'H': 15, 'N': 1, 'O': 6}
 COMPOSITION["NEUAC"] = {'C': 11, 'H': 19, 'N': 1, 'O': 9}
 COMPOSITION["NEUGC"] = {'C': 11, 'H': 19, 'N': 1, 'O': 10}
-COMPOSITION["H2O"] = {'H': 2, 'O': 1}
-
-
-COMPOSITION["Cys_CAM"] = {'C': 2, 'H': 3, 'O': 1, 'N': 1}
-COMPOSITION["Cys_CM"] = {'C': 2, 'H': 2, 'O': 2}
-COMPOSITION["Cys_PAM"] = {'C': 3, 'H': 5, 'O': 1, 'N': 1}
-COMPOSITION["CAM"] = {'C': 2, 'H': 3, 'O': 1, 'N': 1}
-COMPOSITION["MSO"] = {'O': 1}
-COMPOSITION["ACET"] = {'C': 2, 'H': 2, 'O': 1}
-COMPOSITION["AMID"] = {'H': 1, 'O': -1, 'N': 1}
-COMPOSITION["DEAM"] = {'H': -1, 'O': 1, 'N': -1}
-COMPOSITION["HYDR"] = {'O': 1}
-COMPOSITION["METH"] = {'C': 1, 'H': 2}
+COMPOSITION["H2O"] = {'H': 2, 'O': 1}  
 
 # ------------------------------- Functions ---------------------------#
 def calcMassFromElements(composition):
     """ Calculates the mass from the elemental composition
         Input: Dictionary of the element composition 
         e.g for water (H2O): {"H":2, "O":1}
-        alternative input as string: "H2O"
     """
-    if isinstance(composition, str):
-        newcomposition = {}
-        for match in re.findall("[A-Z][a-z]?\d*", composition):
-            element = re.search("[A-z]+",match).group()
-            amount = re.sub("[A-z]+","",match)
-            if len(amount) == 0:
-                amount = 0
-            else:
-                amount = int(amount)
-            newcomposition[element] = newcomposition.get(element, 0) + amount
-        composition = newcomposition
     mass = 0
     for element in composition:
         if not element in MASS:
@@ -177,17 +219,8 @@ def calcPeptideMass(peptide):
     # b) a given position (except -1) can only be
     for modification in peptide.modifications:
         mod = modification[0]
-        # distinguish element composititons from protein modifications
-        if mod.startswith("+"):
-            mass += calcMassFromElements(mod[1:])
-        elif mod.startswith("-"):
-            mass -= calcMassFromElements(mod[1:])
-        else:
-            try:
-                mass += PROTEINMODIFICATION[mod]["mass"]
-            except KeyError:
-                print "Unknown Proteinmodification '"+mod+"'!"
-                raise
+        composition = getModificationComposition(mod)
+        mass += calcMassFromElements(composition)
     return mass
 
 def calcIonMass(name):

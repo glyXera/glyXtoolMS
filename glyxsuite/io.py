@@ -15,6 +15,7 @@ f.writeToFile(path)
 
 from lxml import etree as ET
 import re
+import numpy as np
 import glyxsuite
 
 class Annotation(object):
@@ -584,7 +585,6 @@ class GlyxXMLFile(object):
 
 
     def _writeGlycoModHits(self, xmlGlycoModHits):
-        classXMLPeptide = XMLPeptide() # Use class as static to call _write function
         for glycoModHit  in self.glycoModHits:
             xmlHit = ET.SubElement(xmlGlycoModHits, "hit")
 
@@ -593,7 +593,7 @@ class GlyxXMLFile(object):
 
             # write peptide
             xmlPeptide = ET.SubElement(xmlHit, "peptide")
-            classXMLPeptide._write(xmlPeptide, glycoModHit.peptide)
+            glycoModHit.peptide._write(xmlPeptide)
 
             # write glycan, composition, mass
             xmlGlycan = ET.SubElement(xmlHit, "glycan")
@@ -641,7 +641,7 @@ class GlyxXMLFile(object):
             hit.glycan = glycan
 
             peptide = XMLPeptide()
-            peptide._parse(xmlHit.find("./peptide"), peptide)
+            peptide._parse(xmlHit.find("./peptide"))
             hit.peptide = peptide
 
             hit.fragments = {}
@@ -810,81 +810,154 @@ class XMLPeptide(object):
     def toString(self):
         s = self.sequence
         modi = {}
-        for mod, amino, pos in self.modifications:
-            if not mod in modi:
-                modi[mod] = []
-            modi[mod].append(pos)
+        for mod, pos in sorted(self.modifications, key=lambda x:x[1], reverse=True):
+            if pos == -1:
+                modi[mod] = modi.get(mod, 0) + 1
+            else:
+                s = s[:pos+1] + "("+mod+")"+ s[pos+1:]
         for mod in modi:
-            modi[mod].sort()
-            s += " " + mod + "("+", ".join([str(i) for i in modi[mod]])+")"
+            s += " ("+mod+")"+str(modi[mod])
         return s
         
     def fromString(self, string):
+        """ Peptide sequence: EE(Cys_CAM)QFNS(+CHO)TF(-OH)R Cys_CAM(-1) MSO(-1)  """
         string = string.strip()
-        sequence = string.split(" ")[0]
-        self.sequence = sequence
+        sp = string.split(" ")
+        
+        rawsequence = sp[0]
         self.modifications = []
-        for match in re.findall("[A-z]+?\(.+?\)", string):
-            mod = re.search("[A-z]+\(", match).group()[:-1]
-            assert mod in glyxsuite.masses.PROTEINMODIFICATION
-            for posstring in re.search("\(.+\)", match).group()[1:-1].split(","):
-                pos = int(posstring)
-                assert -1 < pos < len(sequence) 
-                amino = sequence[pos]
-                self.modifications.append((mod, amino, pos))
-        self.mass = glyxsuite.masses.calcPeptideMass(self)
 
-    def _parse(self, xmlPeptide, peptide):
-        peptide.proteinID = xmlPeptide.find("./proteinId").text
-        peptide.sequence = xmlPeptide.find("./sequence").text
-        peptide.start = int(xmlPeptide.find("./start").text)
-        peptide.end = int(xmlPeptide.find("./end").text)
-        peptide.mass = float(xmlPeptide.find("./mass").text)
+        # extract modifications from sequence
+        currentlyInMod = False
+        e = -1
+        self.sequence = ""
+        for i in range(0, len(rawsequence)):
+            letter = rawsequence[i]
+            if letter == "(":
+                currentlyInMod = True
+                mod = ""
+                pos = e
+                continue
+            elif letter == ")":
+                currentlyInMod = False
+                self.modifications.append((mod, pos))
+                continue
+            if currentlyInMod == False:
+                assert letter in glyxsuite.masses.AMINOACID
+                self.sequence += letter
+                e += 1
+            else:
+                mod += letter
+
+        for modstring in sp[1:]:
+            # check if modification is properly separated
+             # check if mod is like CAM(-1,-1) or (CAM)1
+            for match in re.findall(".+?\([,\d\W]+\)", modstring):
+                mod = re.search("[A-z]+\(", match).group()[:-1].upper()
+                assert mod in glyxsuite.masses.PROTEINMODIFICATION
+                for posstring in re.search("\(.+\)", match).group()[1:-1].split(","):
+                        pos = int(posstring)
+                        self.modifications.append((mod, pos))
+            for match in re.findall("\(.+?\)\d+", modstring):
+                mod = re.search("\(.+?\)", match).group()[1:-1].upper()
+                amount =  int(re.search("\d+$", match).group())
+                for i in range(0, amount):
+                    self.modifications.append((mod,  -1))
+        
+        self.mass = glyxsuite.masses.calcPeptideMass(self)
+        
+    def testModificationValidity(self):
+        """ Checks validity of the supplied modifications """
+        X = []
+        for mod,pos in self.modifications:
+            line = [0]*len(self.sequence)
+            if pos > -1:
+                line[pos] = 1
+            elif mod not in glyxsuite.masses.PROTEINMODIFICATION:
+                line = [1]*len(self.sequence)
+            else:
+                targets = glyxsuite.masses.PROTEINMODIFICATION[mod]["targets"]
+                if "NTERM" in targets:
+                    line[0] = 1
+                for pos,amino in enumerate(self.sequence):
+                    if amino in targets:
+                        line[pos] = 1
+            X.append(line)
+
+        matrix = np.array(X)
+
+        for row in range(0, matrix.shape[0]):
+            #find all rows with 1s, get the one with the lowest sum
+            hits = []
+            for col in range(0, matrix.shape[1]):
+                if matrix[row,col] == 1:
+                    hits.append((col,sum(matrix[:,col])))
+            # get minimum sum
+            if len(hits) == 0:
+                return False
+            col = min(hits,key=lambda x:x[1])[0]
+            # set column and row to zero
+            matrix[row,:] = 0
+            matrix[:,col] = 0
+            matrix[row,col] = 1
+
+        # check validity
+        for row in range(0, matrix.shape[0]):
+            if sum(matrix[row,:]) != 1:
+                return False
+
+        for col in range(0, matrix.shape[1]):
+            if sum(matrix[:,col]) > 1:
+                return False
+        return True
+
+    def _parse(self, xmlPeptide):
+        self.proteinID = xmlPeptide.find("./proteinId").text
+        self.sequence = xmlPeptide.find("./sequence").text
+        self.start = int(xmlPeptide.find("./start").text)
+        self.end = int(xmlPeptide.find("./end").text)
+        self.mass = float(xmlPeptide.find("./mass").text)
 
 
         for xmlMod in xmlPeptide.findall("./modifications/modification"):
             name = xmlMod.find("./name").text
-            amino = xmlMod.find("./aminoacid").text
             pos = int(xmlMod.find("./position").text)
-            peptide.modifications.append((name, amino, pos))
+            self.modifications.append((name, pos))
 
         for xmlSite in xmlPeptide.findall("./glycosylationsites/glycosylationsite"):
             typ = xmlSite.find("./type").text
             pos = int(xmlSite.find("./position").text)
-            peptide.glycosylationSites.append((pos, typ))
+            self.glycosylationSites.append((pos, typ))
         return
 
-    def _write(self, xmlPeptide, peptide):
+    def _write(self, xmlPeptide):
         xmlSequence = ET.SubElement(xmlPeptide, "sequence")
-        xmlSequence.text = peptide.sequence
+        xmlSequence.text = self.sequence
 
         xmlProteinId = ET.SubElement(xmlPeptide, "proteinId")
-        xmlProteinId.text = peptide.proteinID
+        xmlProteinId.text = self.proteinID
 
         xmlStart = ET.SubElement(xmlPeptide, "start")
-        xmlStart.text = str(peptide.start)
+        xmlStart.text = str(self.start)
 
         xmlEnd = ET.SubElement(xmlPeptide, "end")
-        xmlEnd.text = str(peptide.end)
+        xmlEnd.text = str(self.end)
 
         xmlMass = ET.SubElement(xmlPeptide, "mass")
-        xmlMass.text = str(peptide.mass)
+        xmlMass.text = str(self.mass)
 
         xmlModifications = ET.SubElement(xmlPeptide, "modifications")
-        for mod, amino, pos in peptide.modifications:
+        for mod, pos in self.modifications:
             xmlMod = ET.SubElement(xmlModifications, "modification")
 
             xmlModName = ET.SubElement(xmlMod, "name")
             xmlModName.text = mod
 
-            xmlModAmino = ET.SubElement(xmlMod, "aminoacid")
-            xmlModAmino.text = amino
-
             xmlModPos = ET.SubElement(xmlMod, "position")
             xmlModPos.text = str(pos)
 
         xmlSites = ET.SubElement(xmlPeptide, "glycosylationsites")
-        for pos, typ in peptide.glycosylationSites:
+        for pos, typ in self.glycosylationSites:
             xmlSite = ET.SubElement(xmlSites, "glycosylationsite")
             xmlSitePos = ET.SubElement(xmlSite, "position")
             xmlSitePos.text = str(pos)
@@ -936,10 +1009,9 @@ class XMLPeptideFile(object):
         return
 
     def _writePeptides(self, xmlPeptides):
-        classXMLPeptide = XMLPeptide() # Use class as static to call _write function
         for peptide in self.peptides:
             xmlPeptide = ET.SubElement(xmlPeptides, "peptide")
-            classXMLPeptide._write(xmlPeptide, peptide)
+            peptide._write(xmlPeptide)
         return
 
     def _parsePeptides(self, xmlPeptides):
@@ -947,7 +1019,7 @@ class XMLPeptideFile(object):
 
         for xmlPeptide in xmlPeptides:
             peptide = XMLPeptide()
-            peptide._parse(xmlPeptide, peptide)
+            peptide._parse(xmlPeptide)
             peptides.append(peptide)
 
         return peptides
