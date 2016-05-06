@@ -36,20 +36,24 @@ AMINOACID["V"] = 99.06841
 
 PROTEINMODIFICATION = {}
 # Cys_CAM Idoacetamide treatment (carbamidation)
-PROTEINMODIFICATION["Cys_CAM"] = 57.021464
-PROTEINMODIFICATION["CAM"] = 57.021464
+PROTEINMODIFICATION["Cys_CAM"] = {"mass": 57.021464, "targets": ["C"]}
+PROTEINMODIFICATION["NTERM_CAM"] = {"mass": 57.021464, "targets": ["NTerm"]}
+PROTEINMODIFICATION["CAM"] = {"mass": 57.021464, "targets": ["C","NTerm"]}
 # Cys_CM, Iodoacetic acid treatment (carboxylation)
-PROTEINMODIFICATION["Cys_CM"] = 58.005479
+PROTEINMODIFICATION["Cys_CM"] = {"mass": 58.005479, "targets": ["C"]}
+PROTEINMODIFICATION["CM"] = {"mass": 58.005479, "targets": []}
 # Cys_PAM Acrylamide Adduct
-PROTEINMODIFICATION["Cys_PAM"] = 71.03712
-PROTEINMODIFICATION["MSO"] = 15.994915 # MSO
-PROTEINMODIFICATION["ACET"] = 42.0106 # Acetylation
-PROTEINMODIFICATION["AMID"] = -0.9840 # Amidation
-PROTEINMODIFICATION["DEAM"] = 0.9840 # Deamidation
-PROTEINMODIFICATION["HYDR"] = 15.9949 # Hydroxylation
-PROTEINMODIFICATION["METH"] = 14.0157 # Methylation
-PROTEINMODIFICATION["PHOS"] = 79.9663 # Phosphorylation
-PROTEINMODIFICATION["CHO"] = 29.00275 # Aldehyde
+PROTEINMODIFICATION["Cys_PAM"] = {"mass": 71.03712, "targets": ["C"]}
+PROTEINMODIFICATION["PAM"] = {"mass": 71.03712, "targets": []}
+
+PROTEINMODIFICATION["MSO"] = {"mass": 15.994915, "targets": ["M"]} # MSO
+PROTEINMODIFICATION["ACET"] = {"mass": 42.0106, "targets": []} # Acetylation
+PROTEINMODIFICATION["AMID"] = {"mass": -0.9840, "targets": []} # Amidation
+PROTEINMODIFICATION["DEAM"] = {"mass": 0.9840, "targets": []} # Deamidation
+PROTEINMODIFICATION["HYDR"] = {"mass": 15.9949, "targets": []} # Hydroxylation
+PROTEINMODIFICATION["METH"] = {"mass": 14.0157, "targets": []} # Methylation
+PROTEINMODIFICATION["PHOS"] = {"mass": 79.9663, "targets": []} # Phosphorylation
+PROTEINMODIFICATION["CHO"] = {"mass": 29.00275, "targets": []} # Aldehyde
 
 # ------------------------------ Glycans ------------------------------#
 
@@ -70,6 +74,7 @@ MASS["C"] = 12.0
 MASS["N"] = 14.003074
 MASS["O"] = 15.994915
 MASS["S"] = 31.972071
+# P, Na, K, Mg
 
 # ----------------------------- Isotopes ------------------------------#
 """
@@ -137,7 +142,19 @@ def calcMassFromElements(composition):
     """ Calculates the mass from the elemental composition
         Input: Dictionary of the element composition 
         e.g for water (H2O): {"H":2, "O":1}
+        alternative input as string: "H2O"
     """
+    if isinstance(composition, str):
+        newcomposition = {}
+        for match in re.findall("[A-Z][a-z]?\d*", composition):
+            element = re.search("[A-z]+",match).group()
+            amount = re.sub("[A-z]+","",match)
+            if len(amount) == 0:
+                amount = 0
+            else:
+                amount = int(amount)
+            newcomposition[element] = newcomposition.get(element, 0) + amount
+        composition = newcomposition
     mass = 0
     for element in composition:
         if not element in MASS:
@@ -158,12 +175,19 @@ def calcPeptideMass(peptide):
     # TODO: Checks for modification consistency
     # a) amount of amino acids must be in sequence
     # b) a given position (except -1) can only be
-    for mod, amino, pos in peptide.modifications:
-        try:
-            mass += PROTEINMODIFICATION[mod]
-        except KeyError:
-            print "Unknown Proteinmodification '"+mod+"'!"
-            raise
+    for modification in peptide.modifications:
+        mod = modification[0]
+        # distinguish element composititons from protein modifications
+        if mod.startswith("+"):
+            mass += calcMassFromElements(mod[1:])
+        elif mod.startswith("-"):
+            mass -= calcMassFromElements(mod[1:])
+        else:
+            try:
+                mass += PROTEINMODIFICATION[mod]["mass"]
+            except KeyError:
+                print "Unknown Proteinmodification '"+mod+"'!"
+                raise
     return mass
 
 def calcIonMass(name):
@@ -203,7 +227,7 @@ def calcIonMass(name):
         elif monomer in MASS:
             mass += MASS[monomer]*amount
         elif monomer in PROTEINMODIFICATION:
-            mass += PROTEINMODIFICATION[monomer]*amount
+            mass += PROTEINMODIFICATION[monomer]["mass"]*amount
         else:
             raise Exception("cannot find monomer {} in {}".format(monomer, name))
     if charge == 0:
