@@ -38,83 +38,16 @@ def main(options):
         # TODO: handle status settings
         feature = hit.feature
         hit.fragments = {}
-        for charge in range(1,feature.getCharge()):
-            pepIon = hit.peptide.mass+glyxsuite.masses.MASS["H+"]
-            pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEXNAC"]
-            pepNH3 = pepIon-glyxsuite.masses.MASS["N"] - 3*glyxsuite.masses.MASS["H"]
-            pep83 = pepIon + (glyxsuite.masses.MASS["C"]*4 +
-                              glyxsuite.masses.MASS["H"]*5 +
-                              glyxsuite.masses.MASS["N"]*1 +
-                              glyxsuite.masses.MASS["O"]*1)
-            
-            # calc charged mass
-            pepIon = calcChargedMass(pepIon,charge)
-            pepGlcNAcIon = calcChargedMass(pepGlcNAcIon,charge)
-            pepNH3 = calcChargedMass(pepNH3,charge)
-            pep83 = calcChargedMass(pep83,charge)
-
-            # search for hits in spectra
-            consensusSpectrum = feature.consensus
-            foundA = searchMassInSpectrum(pepIon,tolerance,consensusSpectrum)
-            foundB = searchMassInSpectrum(pepGlcNAcIon,tolerance,consensusSpectrum)
-            foundC = searchMassInSpectrum(pepNH3,tolerance,consensusSpectrum)
-            foundD = searchMassInSpectrum(pep83,tolerance,consensusSpectrum)
-
-            chargeName = "+("+str(charge)+"H+)"
-            if foundA > 0:
-                fragment = {}
-                fragment["mass"] = pepIon
-                fragment["sequence"] = hit.peptide.sequence+chargeName
-                fragment["counts"] = foundA
-                hit.fragments["peptide"+chargeName] = fragment
-            if foundB > 0:
-                fragment = {}
-                fragment["mass"] = pepGlcNAcIon
-                fragment["sequence"] = hit.peptide.sequence+"+HexNAC"+chargeName
-                fragment["counts"] = foundB
-                hit.fragments["peptide+HexNAc"+chargeName] = fragment
-            if foundC > 0:
-                fragment = {}
-                fragment["mass"] = pepNH3
-                fragment["sequence"] = hit.peptide.sequence+"-NH3"+chargeName
-                fragment["counts"] = foundC
-                hit.fragments["peptide-NH3"+chargeName] = fragment
-            if foundD > 0:
-                fragment = {}
-                fragment["mass"] = pep83
-                fragment["sequence"] = hit.peptide.sequence+"+HexNAC0.2X"+chargeName
-                fragment["counts"] = foundD
-                hit.fragments["peptide+HexNAC0.2X"+chargeName] = fragment
-        # search for peptide fragments
-        p = hit.peptide
-        fragmenthits = (None,{})
-        for i in glyxsuite.fragmentation.getModificationVariants(p):
-            
-            pepvariant = p.copy()
-            pepvariant.modifications = i
-            fragments = glyxsuite.fragmentation.generatePeptideFragments(pepvariant)
-            fhit = {}
-            for fragmentkey in fragments:
-                fragmentmass = fragments[fragmentkey][0]
-                fragmentsequence = fragments[fragmentkey][1]
-                spectrahits = searchMassInSpectrum(fragmentmass,tolerance,consensusSpectrum)
-                if spectrahits > 0:
-                    fhit[fragmentkey] = (fragmentmass,fragmentsequence,spectrahits)
-                
-
-            if len(fhit) > len(fragmenthits[1]):
-                fragmenthits = (pepvariant,fhit)
-        if fragmenthits[0] is not None:
-            pepvariant,fhit = fragmenthits
-            
-            # write fragments to hit
-            hit.peptide = pepvariant
-            for fragmentname in fhit:
-                fragment = {}
-                fragment["mass"] = fhit[fragmentname][0]
-                fragment["sequence"] = fhit[fragmentname][1]
-                fragment["counts"] = fhit[fragmentname][2]
-                hit.fragments[fragmentname] = fragment
+        result = glyxsuite.fragmentation.annotateSpectrumWithFragments(hit.peptide,
+                                                                       feature.consensus, 
+                                                                       tolerance, 
+                                                                       feature.getCharge())
+        peptidevariant = result["peptidevariant"] 
+        fragments = result["fragments"]
+        # write fragments to hit
+        if peptidevariant != None:
+            hit.peptide = peptidevariant
+            hit.fragments = fragments
         keep.append(hit)
 
     print "keeping " + str(len(keep)) + " glycopeptide hits from " + str(len(glyxXMLFile.glycoModHits))

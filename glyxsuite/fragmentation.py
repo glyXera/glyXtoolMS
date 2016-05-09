@@ -141,24 +141,18 @@ def generatePeptideFragments(peptide):
 
         if i < len(sequence)-1: # generate a,b and c ions
             key = str(i+1)
-            #data["a"+key] = (a.mass(), peptidestring, 0, i+1)
-            #data["a"+key+"-NH3"] = (aNH3.mass(), peptidestring+"-NH3", 0, i+1)
-            #data["a"+key+"-H2O"] = (aH2O.mass(), peptidestring+"-H2O", 0, i+1)
-
-            data["b"+key] = (b.mass(), peptidestring, 0, i+1)
-            data["b"+key+"+HexNAc"] = (bHEXNAC.mass(), peptidestring+"+HexNac", 0, i+1)
+            data["b"+key] = (b.mass(), peptidestring)
+            data["b"+key+"+HexNAc"] = (bHEXNAC.mass(), peptidestring+"+HexNac")
             
             if ("R" in sequence or
                 "K" in sequence or
                 "Q" in sequence or
                 "N" in sequence):
-                data["b"+key+"-NH3"] = (bNH3.mass(), peptidestring+"-NH3", 0, i+1)
+                data["b"+key+"-NH3"] = (bNH3.mass(), peptidestring+"-NH3")
             if ("S" in sequence or
                 "T" in sequence or
                 sequence.startswith("E")):
-                data["b"+key+"-H2O"] = (bH2O.mass(), peptidestring+"-H2O", 0, i+1)
-
-            #data["c"+key] = (c.mass(), peptidestring, 0, i+1)
+                data["b"+key+"-H2O"] = (bH2O.mass(), peptidestring+"-H2O")
 
         cTerm = Composition() + {"H":2, "O":1}
         peptidestring = ""
@@ -183,21 +177,17 @@ def generatePeptideFragments(peptide):
         key = str(len(sequence)-i)
 
         if i > 0:
-            #data["x"+key] = (x.mass(), peptidestring, i, len(sequence))
-            data["y"+key] = (y.mass(), peptidestring, i, len(sequence))
-            data["y"+key+"+HexNAc"] = (yHEXNAC.mass(), peptidestring+"+HexNac", i, len(sequence))
+            data["y"+key] = (y.mass(), peptidestring)
+            data["y"+key+"+HexNAc"] = (yHEXNAC.mass(), peptidestring+"+HexNac")
             if ("R" in sequence or
                 "K" in sequence or
                 "Q" in sequence or
                 "N" in sequence):
-                data["y"+key+"-NH3"] = (yNH3.mass(), peptidestring+"-NH3", i, len(sequence))
+                data["y"+key+"-NH3"] = (yNH3.mass(), peptidestring+"-NH3")
             if ("S" in sequence or
                 "T" in sequence or
                 sequence.startswith("E")):
-                data["y"+key+"-H2O"] = (yH2O.mass(), peptidestring+"-H2O", i, len(sequence))
-            #data["z"+key] = (z.mass(), peptidestring, i, len(sequence)) # equals y-NH3
-
-
+                data["y"+key+"-H2O"] = (yH2O.mass(), peptidestring+"-H2O")
 
     # calc internal fragments
     for i in range(1, len(sequence)):
@@ -223,10 +213,73 @@ def generatePeptideFragments(peptide):
             byCO = by - {"C":1, "O":1}
 
             key = "y"+str(len(sequence)-i)+"b"+str(e)
-            data[key] = (by.mass(), peptidestring, i, e)
-            data[key+"-NH3"] = (byNH3.mass(), peptidestring+"-NH3", i, e)
-            data[key+"-H2O"] = (byH2O.mass(), peptidestring+"-H2O", i, e)
-            data[key+"-CO"] = (byCO.mass(), peptidestring+"-CO", i, e)
-
+            data[key] = (by.mass(), peptidestring)
+            data[key+"-NH3"] = (byNH3.mass(), peptidestring+"-NH3")
+            data[key+"-H2O"] = (byH2O.mass(), peptidestring+"-H2O")
+            data[key+"-CO"] = (byCO.mass(), peptidestring+"-CO")
 
     return data
+
+
+def annotateSpectrumWithFragments(peptide, spectrum, tolerance, maxCharge):
+
+    # helper function to search masses in a spectrum
+    def searchMassInSpectrum(mass,tolerance,spectrum):
+        hits = []
+        for peak in spectrum:
+            if abs(peak.x - mass) < tolerance:
+                hits.append(peak)
+        if len(hits) == 0:
+            return None
+        return max(hits, key=lambda p:p.y)
+    
+    # helper function to calculate charged ion masses
+    def calcChargedMass(singlyChargedMass,charge):
+        mass = singlyChargedMass+(charge-1)*glyxsuite.masses.MASS["H"]
+        return mass/float(charge)
+    
+    # calculate peptide mass
+    pepIon = peptide.mass+glyxsuite.masses.MASS["H+"]
+    pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEXNAC"]
+    pepNH3 = pepIon-glyxsuite.masses.MASS["N"] - 3*glyxsuite.masses.MASS["H"]
+    pep83 = pepIon + glyxsuite.masses.calcMassFromElements({"C":4, "H":5, "N":1, "O":1})
+    
+    # determine all peptide modification variants
+    bestVariant = (None, {})
+    
+    for i in glyxsuite.fragmentation.getModificationVariants(peptide):
+        pepvariant = peptide.copy()
+        pepvariant.modifications = i
+        fragments = glyxsuite.fragmentation.generatePeptideFragments(pepvariant)
+        # add peptide + HexNAc variants
+        for charge in range(1, maxCharge):
+            pepIonMass = calcChargedMass(pepIon,charge)
+            pepGlcNAcIonMass = calcChargedMass(pepGlcNAcIon,charge)
+            pepNH3Mass = calcChargedMass(pepNH3,charge)
+            pep83Mass = calcChargedMass(pep83,charge)
+            
+            chargeName = "+("+str(charge)+"H+)"
+            fragments["peptide"+chargeName] = (pepIonMass, peptide.sequence+chargeName)
+            fragments["peptide+HexNAc"+chargeName] = (pepGlcNAcIonMass, peptide.sequence+"+HexNAC"+chargeName)
+            fragments["peptide-NH3"+chargeName] = (pepNH3Mass, peptide.sequence+"-NH3"+chargeName)
+            fragments["peptide+HexNAC0.2X"+chargeName] = (pep83Mass, peptide.sequence+"+HexNAC0.2X"+chargeName)
+        
+        # search for the existence of each fragment within the spectrum
+        found_fragments = {}
+        for fragmentkey in fragments:
+            fragmentmass, fragmentsequence = fragments[fragmentkey]
+            # search highest peak within tolerance
+            peak = searchMassInSpectrum(fragmentmass, tolerance, spectrum)
+            if peak == None:
+                continue
+            fragment = {}
+            fragment["mass"] = fragmentmass
+            fragment["sequence"] = fragmentsequence
+            fragment["counts"] = peak.y
+            found_fragments[fragmentkey] = fragment
+        
+        # check if peptide variant has highest fragment count
+        if len(found_fragments) > len(bestVariant[1]):
+            bestVariant = (pepvariant, found_fragments)
+    
+    return {"peptidevariant":bestVariant[0], "fragments":bestVariant[1]}
