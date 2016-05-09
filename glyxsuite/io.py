@@ -868,6 +868,8 @@ class XMLPeptide(object):
         
     def testModificationValidity(self):
         """ Checks validity of the supplied modifications """
+        if len(self.modifications) == 0:
+            return True
         X = []
         for mod,pos in self.modifications:
             line = [0]*len(self.sequence)
