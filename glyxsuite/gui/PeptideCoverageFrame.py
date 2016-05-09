@@ -178,6 +178,12 @@ class PeptideCoverageFrame(ttk.Frame):
 
         self.canvas.delete(Tkinter.ALL)
 
+        # collect positions of glycosylationsites
+        glycosites = set()
+        for pos, typ in self.hit.peptide.glycosylationSites:
+            glycosites.add(pos-self.hit.peptide.start)
+            
+
         # write peptide sequence
         xc = self.width/2.0
         yc = self.height/2.0
@@ -196,11 +202,16 @@ class PeptideCoverageFrame(ttk.Frame):
         start = xc - letterSize/2.0*(len(text)-1)
         for index, letter in enumerate(text):
             x = start + index*letterSize
+            # check if letter is a glycoslyation site
+            fillcolor = "black"
+            if index in glycosites:
+                fillcolor = "red"
             self.canvas.create_text((x, yc, ), text=letter,
                                     font=("Courier", s),
-                                    fill="black",
+                                    fill=fillcolor,
                                     anchor="center",
                                     justify="center")
+            
 
         # plot lines
 
