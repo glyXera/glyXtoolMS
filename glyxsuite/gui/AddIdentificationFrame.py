@@ -453,6 +453,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         hit.peptide = self.peptide
         hit.error = diff
         hit.feature = self.feature
+        hit.fragments = self.frameSpec.fragments
             
         self.model.currentAnalysis.analysis.glycoModHits.append(hit)
         
