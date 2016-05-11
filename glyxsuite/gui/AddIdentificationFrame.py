@@ -216,6 +216,8 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         
     def plotFragments(self):
         tolerance = 0.05
+        if self.peptide == None:
+            return
         result = glyxsuite.fragmentation.annotateSpectrumWithFragments(self.peptide,
                                                                        self.feature.consensus, 
                                                                        tolerance, 
