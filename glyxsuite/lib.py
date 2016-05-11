@@ -219,9 +219,9 @@ class ProteinDigest(object):
 
             newPeptide = copy.deepcopy(peptide)
 
-            newPeptide.modifications += [("Cys_CAM", -1)]*cys_CAM
-            newPeptide.modifications += [("Cys_CM", -1)]*cys_CM
-            newPeptide.modifications += [("Cys_PAM", -1)]*cys_PAM
+            newPeptide.modifications += [("CYS_CAM", -1)]*cys_CAM
+            newPeptide.modifications += [("CYS_CM", -1)]*cys_CM
+            newPeptide.modifications += [("CYS_PAM", -1)]*cys_PAM
             newPeptide.modifications += [("MSO", -1)]*MSO
             newPeptide.modifications += [("NTERM_CAM", 0)]*nterm_CAM
             # calc peptide mass

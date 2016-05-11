@@ -875,10 +875,8 @@ class XMLPeptide(object):
             line = [0]*len(self.sequence)
             if pos > -1:
                 line[pos] = 1
-            elif mod not in glyxsuite.masses.PROTEINMODIFICATION:
-                line = [1]*len(self.sequence)
             else:
-                targets = glyxsuite.masses.PROTEINMODIFICATION[mod]["targets"]
+                targets = glyxsuite.masses.getModificationTargets(mod)
                 if "NTERM" in targets:
                     line[0] = 1
                 for pos,amino in enumerate(self.sequence):

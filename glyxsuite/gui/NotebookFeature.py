@@ -6,6 +6,7 @@ import random
 import numpy as np
 
 import glyxsuite
+from glyxsuite.gui import AddIdentificationFrame
 
 
 class NotebookFeature(ttk.Frame):
@@ -223,7 +224,7 @@ class NotebookFeature(ttk.Frame):
         if len(selection) != 1:
             return
         feature = self.featureTreeIds[selection[0]]
-        AddIdentificationFrame(self.master, self.model, feature)
+        AddIdentificationFrame.AddIdentificationFrame(self.master, self.model, feature)
 
     def sortFeatureColumn(self, col):
 
@@ -708,144 +709,6 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
         self.destroy()
         self.model.currentAnalysis.featureEdited(self.feature)
         #self.model.classes["NotebookFeature"].updateFeatureTree()
-
-    def cancel(self):
-        self.destroy()
-
-
-class AddIdentificationFrame(Tkinter.Toplevel):
-
-    def __init__(self, master, model, feature):
-        Tkinter.Toplevel.__init__(self, master=master)
-        #self.minsize(600, 300)
-        self.master = master
-        self.feature = feature 
-        self.title("Add Identification")
-        self.config(bg="#d9d9d9")
-        self.model = model
-        self.glycan = None
-        self.peptide = None
-
-        self.precursorMass = (self.feature.getMZ()*self.feature.getCharge()-
-                              glyxsuite.masses.MASS["H+"]*(self.feature.getCharge()-1))
-        
-        labelMass = Tkinter.Label(self, text="Feature Mass")
-        labelMassValue = Tkinter.Label(self, text=str(round(self.precursorMass,4))+ " Da")
-        labelMass.grid(row=0, column=0, sticky="NWES")
-        labelMassValue.grid(row=0, column=1, columnspan=2, sticky="NWES")
-        
-        labelError = Tkinter.Label(self, text="Feature Error")
-        self.labelErrorValue = Tkinter.Label(self, text="- Da")
-        labelError.grid(row=1, column=0, sticky="NWES")
-        self.labelErrorValue.grid(row=1, column=1, columnspan=2, sticky="NWES")
-
-        labelGlycan = Tkinter.Label(self, text="Glycan")
-        self.glycanVar = Tkinter.StringVar()
-        self.glycanVar.trace("w", self.valuesChanged)
-        self.entryGlycan = Tkinter.Entry(self, textvariable=self.glycanVar)
-        labelGlycanMassLabel = Tkinter.Label(self, text="Glycan Mass")
-        self.labelGlycanMass = Tkinter.Label(self, text="")
-        
-        labelGlycan.grid(row=2, column=0, sticky="NWES")
-        self.entryGlycan.grid(row=2, column=1, columnspan=2, sticky="NWES")
-        labelGlycanMassLabel.grid(row=3, column=0, sticky="NWES")
-        self.labelGlycanMass.grid(row=3, column=1, columnspan=2, sticky="NWES")
-        
-        
-        labelPeptide = Tkinter.Label(self, text="Peptide")
-        self.peptideVar = Tkinter.StringVar()
-        self.peptideVar.trace("w", self.valuesChanged)
-        self.entryPeptide = Tkinter.Entry(self, textvariable=self.peptideVar)
-        labelPeptideMassLabel = Tkinter.Label(self, text="Peptide Mass")
-        self.labelPeptideMass = Tkinter.Label(self, text="")
-        
-        labelPeptide.grid(row=4, column=0, sticky="NWES")
-        self.entryPeptide.grid(row=4, column=1, columnspan=2, sticky="NWES")
-        labelPeptideMassLabel.grid(row=5, column=0, sticky="NWES")
-        self.labelPeptideMass.grid(row=5, column=1, columnspan=2, sticky="NWES")
-        
-        
-        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)        
-        saveButton = Tkinter.Button(self, text="Add Identification", command=self.addIdentification)
-
-        cancelButton.grid(row=10, column=0, sticky="NWES")
-        saveButton.grid(row=10, column=1, sticky="NWES")
-        
-        # set values
-        #self.chargeVar.set(feature.getCharge())
-        #self.massVar.set(feature.getMZ())
-        
-        # get window size
-        self.update()
-        h = self.winfo_height()
-        w = self.winfo_width()
-
-        # get screen width and height
-        ws = master.winfo_screenwidth() # width of the screen
-        hs = master.winfo_screenheight() # height of the screen
-
-        # calculate x and y coordinates for the Tk window
-        x = (ws/2) - (w/2)
-        y = (hs/2) - (h/2)
-        # set the dimensions of the screen 
-        # and where it is placed
-        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
-                                                   
-        
-    def valuesChanged(self, *args):
-        # check entries for validity
-        
-        self.valid = True
-        try:
-            self.glycan = glyxsuite.lib.Glycan(self.glycanVar.get())
-            self.labelGlycanMass.config(text=str(self.glycan.mass) +" Da")
-            self.glycanVar.set(self.glycan.toString())
-            self.entryGlycan.config(bg="grey")
-            
-        except:
-            self.valid = False
-            self.glycan = None
-            self.labelGlycanMass.config(text=" - Da")
-            self.entryGlycan.config(bg="red")
-
-        try:
-            self.peptide = glyxsuite.io.XMLPeptide()
-            self.peptide.fromString(self.peptideVar.get())
-            self.labelPeptideMass.config(text=str(self.peptide.mass) +" Da")
-            self.entryPeptide.config(bg="grey")
-        except:
-            self.valid = False
-            self.peptide = None
-            self.labelPeptideMass.config(text=" - Da")
-            self.entryPeptide.config(bg="red")
-        
-        # calculate Identification error
-        if self.valid == True:
-            mass = self.peptide.mass+self.glycan.mass+glyxsuite.masses.MASS["H+"]
-            diff = mass-self.precursorMass
-            self.labelErrorValue.config(text=str(round(diff,4)) + " Da")
-        else:
-            self.labelErrorValue.config(text="- Da")
-    
-    def addIdentification(self):
-        if self.valid == False:
-            return
-            
-        mass = self.peptide.mass+self.glycan.mass+glyxsuite.masses.MASS["H+"]
-        diff = mass-self.precursorMass
-        hit = glyxsuite.io.GlyxXMLGlycoModHit()
-        hit.featureID = self.feature.getId()
-        hit.glycan = self.glycan
-        hit.peptide = self.peptide
-        hit.error = diff
-        hit.feature = self.feature
-            
-        self.model.currentAnalysis.analysis.glycoModHits.append(hit)
-        
-        self.destroy()
-        self.model.runFilters()
-        self.model.classes["NotebookFeature"].updateFeatureTree()
-        self.model.classes["NotebookIdentification"].updateTree()
 
     def cancel(self):
         self.destroy()

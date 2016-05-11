@@ -36,7 +36,7 @@ AMINOACID["V"] = 99.06841
 
 PROTEINMODIFICATION = {}
 # Cys_CAM Idoacetamide treatment (carbamidation)
-PROTEINMODIFICATION["Cys_CAM"] = {"mass": 57.021464,
+PROTEINMODIFICATION["CYS_CAM"] = {"mass": 57.021464,
                                   "targets": {"C"},
                                   "composition":{'C':2, 'H':3, 'O':1, 'N':1}
                                   }
@@ -49,7 +49,7 @@ PROTEINMODIFICATION["CAM"] = {"mass": 57.021464,
                               "composition":{'C':2, 'H':3, 'O':1, 'N':1}
                              }
 # Cys_CM, Iodoacetic acid treatment (carboxylation)
-PROTEINMODIFICATION["Cys_CM"] = {"mass": 58.005479, 
+PROTEINMODIFICATION["CYS_CM"] = {"mass": 58.005479, 
                                  "targets": {"C"},
                                  "composition":{'C': 2, 'H': 2, 'O': 2}
                                 }
@@ -57,7 +57,7 @@ PROTEINMODIFICATION["CM"] = {"mass": 58.005479,
                              "composition":{'C': 2, 'H': 2, 'O': 2}
                             }
 # Cys_PAM Acrylamide Adduct
-PROTEINMODIFICATION["Cys_PAM"] = {"mass": 71.03712, 
+PROTEINMODIFICATION["CYS_PAM"] = {"mass": 71.03712, 
                                   "targets": {"C"},
                                   "composition":{'C': 3, 'H': 5, 'O': 1, 'N': 1}
                                  }
@@ -88,6 +88,7 @@ PROTEINMODIFICATION["PHOS"] = {"mass": 79.9663,
 
 
 def getModificationTargets(modification):
+    modification = modification.upper()
     if modification in PROTEINMODIFICATION:
         targets = PROTEINMODIFICATION[modification].get("targets", set())
         if len(targets) > 0:
@@ -95,10 +96,10 @@ def getModificationTargets(modification):
     return set(AMINOACID.keys())
 
 def getModificationComposition(modification):
-    if modification in PROTEINMODIFICATION:
-        return PROTEINMODIFICATION[modification]["composition"]
+    if modification.upper() in PROTEINMODIFICATION:
+        return PROTEINMODIFICATION[modification.upper()]["composition"]
     if not re.search("^([\+-][A-z0-9]+?)+$", modification):
-        raise Exception("Cannot parse Proteinmodification")
+        raise Exception("Cannot parse Proteinmodification: ", modification)
     composition = {}
     for group in re.findall("[\+-][A-z0-9]+", modification):
         sign = group[0]

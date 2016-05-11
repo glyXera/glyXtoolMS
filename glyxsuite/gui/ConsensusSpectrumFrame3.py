@@ -12,9 +12,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                                      yTitle="Intensity [counts]")
 
         self.master = master
-        self.hit = None
-        self.feature = None
         self.consensus = None
+        self.feature = None
         self.selectedFragments = []
         self.NrXScales = 5.0
         
@@ -38,7 +37,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.grid_columnconfigure(0, weight=1)
 
         # register class
-        self.model.classes["ConsensusSpectrumFrame2"] = self
+        self.model.classes["ConsensusSpectrumFrame3"] = self
         
         # register additional button bindings
         self.canvas.bind("<Button-2>", self.button2, "+")
@@ -65,6 +64,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         return
 
     def setMaxValues(self):
+        if self.feature == None:
+            return
         if self.consensus == None:
             return
         self.aMax = -1
@@ -107,6 +108,13 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                     break
 
             foundPep = None
+            for key in self.fragments:
+                if foundGlycan != None:
+                    break
+                if abs(self.fragments[key]["mass"]-peak.x) < 0.1:
+                    foundPep = key
+                    foundPep = self.fragments[key]["sequence"]
+                    break
             if foundGlycan != None and foundPep != None:
                 color = "green"
                 annotationText.append((pMZ, pInt, foundGlycan+"\n"+foundPep+"\n"+masstext))
@@ -124,15 +132,18 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         items = self.plotText(annotationText, set(), 0)
         items = self.plotText(annotationMass, items, 5)
 
+        self.plotSelectedFragments()
+        
         # paint all available annotations
         self.paintAllAnnotations()
         
         self.allowZoom = True
 
-    def init(self, feature):
+    def init(self, feature, fragments):
         if feature.consensus == None:
             return
         self.feature = feature
+        self.fragments = fragments
         self.consensus = sorted(feature.consensus, key=lambda e: e.y, reverse=True)
         self.selectedFragments = []
         self.viewXMin = 0
@@ -147,7 +158,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.initCanvas(keepZoom=True)
 
     def identifier(self):
-        return "ConsensusSpectrumFrame2"
+        return "ConsensusSpectrumFrame3"
 
 
     def plotText(self, collectedText, items=set(), N=0):
@@ -182,4 +193,28 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                 self.canvas.delete(item)
         return items
 
+    def plotSelectedFragments(self, fragments={}):
+        # remove previous fragment selections
+        self.canvas.delete("fragmentSelection")
+        if fragments != {}:
+            self.fragments = fragments
+
+        pIntMin = self.convBtoY(self.viewYMin)
+        pIntMax = self.convBtoY(self.viewYMax)
+        colors = {"pep":"green", "b":"khaki", "b+m":"dark khaki", "y":"gray", "y+m":"slate gray"}
+        for ionname in self.fragments:
+            ion = self.fragments[ionname]
+            key = ion["typ"]
+            if key != "pep" and "(" in ion["sequence"]:
+                key +="+m"
+            if key not in colors:
+                continue
+            color = colors.get(key)
+
+            mz = self.fragments[ionname]["mass"]
+            pMZ = self.convAtoX(mz)
+            self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax,
+                                    tags=("fragmentSelection", ),
+                                    fill=color)
+        self.canvas.tag_lower("fragmentSelection", "peak")
 
