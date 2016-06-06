@@ -2,6 +2,8 @@ import glyxsuite
 import os
 import configparser
 import tkFont
+from pkg_resources import resource_stream
+import pickle
 
 class FilterMass:
     
@@ -32,9 +34,14 @@ class DataModel(object):
         self.currentAnalysis = None
         self.filters = {"Identification":[], "Features":[], "Scoring":[]} # stores filter used to filter data
         self.classes = {} # Functionhandler - each class should register itself here
+        
+        self.resources = {}
 
         # read settings
         self.readSettings()
+        
+        # read resources
+        self.loadResources()
         
     def runFilters(self): # check filters
         hasActiveFilter = False
@@ -113,6 +120,13 @@ class DataModel(object):
         config["DEFAULT"]["timescale"] = self.timescale
         with open(settingspath, 'w') as configfile:
             config.write(configfile)
+            
+    def loadResources(self):
+        
+        # load table with isotope distibution confidence intervals
+        # get pickled res
+        pickle_obj = resource_stream('glyxsuite', 'resources/isotope_confidence.pickle')
+        self.resources["isotopes"] = pickle.load(pickle_obj)
 
 class Chromatogram(object):
 

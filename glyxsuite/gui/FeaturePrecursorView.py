@@ -1,7 +1,8 @@
 import ttk
 import Tkinter
 import tkMessageBox
-
+import glyxsuite
+import numpy as np
 from glyxsuite.gui import FramePlot
 from glyxsuite.gui import Appearance
 
@@ -133,7 +134,6 @@ class PrecursorView(FramePlot.FramePlot):
         if len(xy) > 0:
             self.canvas.create_line(xy, tags=("peak", ))
         
-        
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         
@@ -142,14 +142,84 @@ class PrecursorView(FramePlot.FramePlot):
         self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="blue")
         
         minRT, maxRT, minMZ, maxMZ = self.feature.getBoundingBox()
-        # paint monoisotopic mass
+
+        # paint border
         pMZ = self.convAtoX(minMZ)
         self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("leftborder", ),fill="red")
         
         pMZ = self.convAtoX(maxMZ)
         self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("rightborder", ),fill="red")
-
+        
+        # paint confidence interval
+        self.plotConfidenceBoxes()
+        
+        
         self.allowZoom = True
+        
+    def plotConfidenceBoxes(self):
+        
+        def countStuff(x, l5, l95):
+            N = 0
+            for a,b in zip(l5, l95):
+                if b <= x <= a:
+                    N += 1
+            return N
+        
+        xp = []
+        for i in range(0,5):
+            xp.append(self.feature.getMZ()+i/float(self.feature.getCharge())*glyxsuite.masses.MASS["H+"])
+        
+        yp = np.interp(xp, self.base, self.spectrum)
+
+
+        # get convidence range
+        key = int(self.feature.getMZ()*self.feature.getCharge()/50)*50
+        conv = glyxsuite.masses.ISOTOPE_CONFIDENCE[key]
+
+        z5 = np.array([conv[i]["5%"] for i in range(0,5)])
+        z50 = np.array([conv[i]["50%"] for i in range(0,5)])
+        z95 = np.array([conv[i]["95%"] for i in range(0,5)])
+
+        # find best fit
+        l5 = [yp[i]/z5[i] for i in range(0,5)]
+        l95 = [yp[i]/z95[i] for i in range(0,5)]
+        
+        ky = sorted(l5+l95)
+        kx = [countStuff(value, l5,l95) for value in ky]
+
+        # split stretches
+        stretches = {}
+        current = -1
+        stretch = []
+        for a,b in zip(kx,ky):
+            if a != current:
+                stretches[current] = stretches.get(current, []) + [stretch]
+                current = a
+                stretch = []
+            stretch.append(b)
+            
+        # get longest strecht
+        strecht = max(stretches[max(stretches.keys())], key=lambda x:len(x))
+        if len(strecht) > 0:
+            fa = (min(strecht)+max(strecht))/2.0
+        else:
+            fa = yp[0]/z50[0]
+        #fa = np.polyfit(zp,yp,1)[0]
+        
+        # plot boxes
+        for i in range(0,5):
+            
+            pMZlow = self.convAtoX(xp[i]-0.05)
+            pMZhigh = self.convAtoX(xp[i]+0.05)
+            pIntLow = self.convBtoY(conv[i]["5%"]*fa)
+            pInthigh = self.convBtoY(conv[i]["95%"]*fa)
+            b =  [pMZlow,  pIntLow]
+            b += [pMZhigh, pIntLow]
+            b += [pMZhigh, pInthigh]
+            b += [pMZlow,  pInthigh]
+            b += [pMZlow,  pIntLow]
+            self.canvas.create_line(b, tags=("box", ), fill="red")
+            
         
     def init(self, spectrumXArray, spectrumYArray, feature, minMZ, maxMZ):
         self.spectrum = spectrumYArray

@@ -879,6 +879,8 @@ class XMLPeptide(object):
                 targets = glyxsuite.masses.getModificationTargets(mod)
                 if "NTERM" in targets:
                     line[0] = 1
+                if "CTERM" in targets:
+                    line[-1] = 1   
                 for pos,amino in enumerate(self.sequence):
                     if amino in targets:
                         line[pos] = 1

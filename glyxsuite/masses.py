@@ -8,6 +8,9 @@ import re
 import math
 import itertools
 import numpy as np
+from pkg_resources import resource_stream
+import pickle
+
 # --------------------------- Aminoacids ------------------------------#
 
 AMINOACID = {}
@@ -71,6 +74,7 @@ PROTEINMODIFICATION["ACET"] = {"mass": 42.0106,
                                "composition":{'C': 2, 'H': 2, 'O': 1}
                               } # Acetylation
 PROTEINMODIFICATION["AMID"] = {"mass": -0.9840,
+                               "targets": {"CTERM"},
                                "composition":{'H': 1, 'O': -1, 'N': 1}
                               } # Amidation
 PROTEINMODIFICATION["DEAM"] = {"mass": 0.9840,
@@ -550,3 +554,7 @@ def findBestFittingMass(x, y, max_charge=5, N_isotopes=4, intensityCutoff=0.2):
                 best["intensities"] = intensities
                 best["estimate"] = estimate
     return best
+    
+# Load resource file
+pickle_obj = resource_stream('glyxsuite', 'resources/isotope_confidence.pickle')
+ISOTOPE_CONFIDENCE = pickle.load(pickle_obj)

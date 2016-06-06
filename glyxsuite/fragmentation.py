@@ -81,6 +81,8 @@ def getModificationVariants(peptide):
                     positions.add((mod, pos))
             if "NTERM" in targets:
                 positions.add((mod, 0))
+            if "CTERM" in targets:
+                positions.add((mod, len(peptide.sequence)-1))
             modify.append(positions)
 
     def isValidPermutation(permutation):
