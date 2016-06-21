@@ -333,14 +333,17 @@ twoLetterCode = {
 "AG": "HEX",    # alpha-Gal
 "HN": "HEXNAC", # Hexnac
 "H": "HEX",     # Hex
+"N": "HEXNAC",  # HEXNAC
+"Sa": "NEUAC",  # NEUAC
+"Sg": "NEUGC"  # NEUGC
 }
 
 msComposition = {
-"HEXNAC": "HN",
+"HEXNAC": "N",
 "HEX": "H",
 "DHEX": "F",
-"NEUAC": "NA",
-"NEUGC": "NG"
+"NEUAC": "Sa",
+"NEUGC": "Sg"
 }
 
 msCompositionOrder = [
@@ -435,7 +438,7 @@ class Glycan(glyxsuite.io.XMLGlycan):
             elif name in twoLetterCode:
                 unit = twoLetterCode[name]
             else:
-                raise Exception("Unknown modificaiton "+ name)
+                raise Exception("Unknown modification "+ name)
             amount = int(re.search(r"\d+", comp).group())
             self.sugar[unit] = amount
             self.mass += glyxsuite.masses.GLYCAN[unit]*amount

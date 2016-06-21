@@ -50,9 +50,17 @@ def main(options):
     
     # remove old hits
     keepHits = []
+    accepted = {}
     for hit in glyML.glycoModHits:
         if hit.status == glyxsuite.io.ConfirmationStatus.Accepted:
+            
+            glycan = glyxsuite.lib.Glycan(hit.glycan.composition)
+            hit.glycan.composition = glycan.toString()
             keepHits.append(hit)
+            key = hit.peptide.toString() + ":"+glycan.toString()
+            thisset = accepted.get(key, set())
+            thisset.add(hit.feature.id)
+            accepted[key] = thisset
     glyML.glycoModHits = keepHits
     print "keeping " + str(len(keepHits)) + " nr of manual accepted identifications"
     print "starting search for new identifcation hits"
@@ -67,16 +75,18 @@ def main(options):
                 diff = mass-precursorMass
                 if diff > tolerance:
                     break
-                if abs(diff) < tolerance:
-                    hit = glyxsuite.io.GlyxXMLGlycoModHit()
-                    hit.featureID = feature.getId()
-                    hit.glycan = glycan
-                    hit.peptide = peptide
-                    hit.error = diff
-                    
-                    #hit = (feature.getRT(),precursorMass,peptide,glycan,mass,mass-precursorMass)
-                    #hits.append(hit)
-                    glyML.glycoModHits.append(hit)
+                if abs(diff) > tolerance:
+                    continue
+                # check if an accepted hit exists already for feature
+                key = peptide.toString() + ":"+glycan.toString()
+                if feature.id in accepted.get(key, set()):
+                    continue
+                hit = glyxsuite.io.GlyxXMLGlycoModHit()
+                hit.featureID = feature.getId()
+                hit.glycan = glycan
+                hit.peptide = peptide
+                hit.error = diff
+                glyML.glycoModHits.append(hit)
 
     print "found ",len(glyML.glycoModHits), " hits"
     print "writing output"
