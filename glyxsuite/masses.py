@@ -554,7 +554,3 @@ def findBestFittingMass(x, y, max_charge=5, N_isotopes=4, intensityCutoff=0.2):
                 best["intensities"] = intensities
                 best["estimate"] = estimate
     return best
-    
-# Load resource file
-pickle_obj = resource_stream('glyxsuite', 'resources/isotope_confidence.pickle')
-ISOTOPE_CONFIDENCE = pickle.load(pickle_obj)
