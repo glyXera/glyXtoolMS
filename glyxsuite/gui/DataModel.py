@@ -4,6 +4,8 @@ import configparser
 import tkFont
 from pkg_resources import resource_stream
 import pickle
+import base64
+import Tkinter
 
 class FilterMass:
     
@@ -125,8 +127,14 @@ class DataModel(object):
         
         # load table with isotope distibution confidence intervals
         # get pickled res
-        pickle_obj = resource_stream('glyxsuite', 'resources/isotope_confidence.pickle')
+        pickle_obj = resource_stream('glyxsuite', 'gui/resources/isotope_confidence.pickle')
         self.resources["isotopes"] = pickle.load(pickle_obj)
+        stream = resource_stream('glyxsuite', 'gui/resources/zoom_in.gif')
+        self.resources["zoom_in"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxsuite', 'gui/resources/zoom_out.gif')
+        self.resources["zoom_out"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxsuite', 'gui/resources/ruler.gif')
+        self.resources["ruler"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
 
 class Chromatogram(object):
 

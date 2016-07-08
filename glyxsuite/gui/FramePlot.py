@@ -4,6 +4,35 @@ import math
 import os
 import tkFileDialog
 
+class ToggleButton(Tkinter.Button):
+    
+    def __init__(self, master, image, group = []):
+        Tkinter.Button.__init__(self, master=master,image=image, command=self.toggle)
+        self.active = False
+        self.group = group
+        self.config(relief="raised")
+        
+    def setOn(self):
+        self.config(relief="sunken")
+        self.active = True
+        
+    def setOff(self):
+        self.config(relief="raised")
+        self.active = False
+        
+    def toggle(self):
+        if self.config('relief')[-1] == 'sunken':
+            self.config(relief="raised")
+            self.status = 0
+        else:
+            self.config(relief="sunken")
+            self.status = 1
+            # disable all other
+            for button in self.group:
+                if button == self:
+                    continue
+                else:
+                    button.setOff()
 
 class ActionZoom(object):
 
@@ -75,6 +104,7 @@ class FramePlot(ttk.Frame):
 
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
+        self.grid_columnconfigure(1, weight=0)
 
         self.canvas.bind("<Button-1>", self.eventTakeFokus, "+")
         self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
@@ -88,11 +118,30 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<Configure>", self.on_resize, "+")
         self.canvas.bind("<Control-s>", self.savePlot, "+")
         
+        # setup toolbar
+        self.toolbar = ttk.Frame(self)
+        self.toolbar.grid(row=0, column=1, sticky="NSEW")
+        #zoomButton = ttk.Button(self.toolbar, image=self.model.resources["zoom"], command=self.toggle)
+        group = []
+        zoominButton = ToggleButton(self.toolbar, image=self.model.resources["zoom_in"], group=group)
+        group.append(zoominButton)
+        zoominButton.pack()
+        zoomoutButton = ToggleButton(self.toolbar, image=self.model.resources["zoom_out"], group=group)
+        group.append(zoomoutButton)
+        zoomoutButton.pack()
+        
+        rulerButton = ToggleButton(self.toolbar, image=self.model.resources["ruler"], group=group)
+        group.append(rulerButton)
+        rulerButton.pack()
+        
         #saveButton = ttk.Button(self, text="Save Plot", command=self.savePlot)
         #saveButton.grid(row=5, column=1, sticky="NS")
 
         self.calcScales()
         self._paintAxis()
+        
+    def toggle(self):
+        print "foo"
         
     def savePlot(self, event):
         if self.model.currentAnalysis == None:

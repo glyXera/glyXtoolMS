@@ -174,7 +174,7 @@ class PrecursorView(FramePlot.FramePlot):
 
         # get convidence range
         key = int(self.feature.getMZ()*self.feature.getCharge()/50)*50
-        conv = glyxsuite.masses.ISOTOPE_CONFIDENCE[key]
+        conv = self.model.resources["isotopes"][key]
 
         z5 = np.array([conv[i]["5%"] for i in range(0,5)])
         z50 = np.array([conv[i]["50%"] for i in range(0,5)])
