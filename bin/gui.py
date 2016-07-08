@@ -1,5 +1,5 @@
-import glyxsuite
+import glyxtoolms
 
 # run GUI
-app = glyxsuite.gui.runGUI()
+app = glyxtoolsm.gui.runGUI()
 

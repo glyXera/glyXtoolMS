@@ -54,7 +54,7 @@ def main(options):
         print "checking glycans in file"
         fin = file(options.infile,"r")
         for line in fin:
-            glycan = glyxsuite.lib.Glycan(line.strip())
+            glycan = glyxtoolms.lib.Glycan(line.strip())
             if not glycan.checkComposition():
                 continue
             if not minHex <= glycan.sugar["HEX"] <= maxHex:
@@ -79,7 +79,7 @@ def main(options):
                                                        rangeHex,
                                                        rangeHexNAc):
             # calc mass
-            glycan = glyxsuite.lib.Glycan()
+            glycan = glyxtoolms.lib.Glycan()
             glycan.setComposition(NEUGC=NEUGC, 
                                   NEUAC=NEUAC,
                                   DHEX=DHEX,
@@ -102,7 +102,7 @@ def main(options):
     
 
 import sys
-import glyxsuite
+import glyxtoolms
 from itertools import product
 
 if __name__ == "__main__":

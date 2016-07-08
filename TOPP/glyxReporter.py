@@ -31,7 +31,7 @@ def generateGlycoylationSiteKey(peptide):
 def main(options): 
 
     # parse analysis file
-    fin = glyxsuite.io.GlyxXMLFile()
+    fin = glyxtoolms.io.GlyxXMLFile()
     fin.readFromFile(options.infileAnalysis) 
 
     # get features
@@ -68,13 +68,13 @@ def main(options):
         # calculate theoretical glycopeptide mass
         mass = (peptide.mass+
                 glycan.mass+
-                glyxsuite.masses.MASS["H+"]*charge)/charge
+                glyxtoolms.masses.MASS["H+"]*charge)/charge
 
         comp = glycan.composition
         comp = glycan.composition
         comps[comp] = glycan.mass
         seq = peptide.toString()
-        peptideMasses[seq] = peptide.mass+glyxsuite.masses.MASS["H+"]
+        peptideMasses[seq] = peptide.mass+glyxtoolms.masses.MASS["H+"]
         
         # generate glycosite
         glycoSiteKey = generateGlycoylationSiteKey(peptide)
@@ -181,7 +181,7 @@ def main(options):
 
 
 import sys
-import glyxsuite
+import glyxtoolms
 import xlwt
 import re
 

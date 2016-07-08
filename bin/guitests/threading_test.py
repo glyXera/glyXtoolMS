@@ -3,7 +3,7 @@ import threading
 import ttk
 import pyopenms
 import time
-import glyxsuite
+import glyxtoolms
 from Tkinter import *
 
 

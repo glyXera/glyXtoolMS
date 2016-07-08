@@ -12,7 +12,7 @@ import math
 import itertools
 import datetime
 
-import glyxsuite
+import glyxtoolms
 import pyopenms
 
 class Peak(object):
@@ -29,7 +29,7 @@ class Peak(object):
         self.ionname = None
         self.rank = 0
 
-class Score(glyxsuite.io.GlyxXMLSpectrum, object):
+class Score(glyxtoolms.io.GlyxXMLSpectrum, object):
     """ Glyxfilter scoring class
 
     Usage:  a) initialize Score with information about the
@@ -234,10 +234,10 @@ def parseOxoniumIons(options):
                         'depends':['(NeuAc)1(H+)1', '(dHex)1(H+)1']}
 
     for name in oxoniumIons:
-        oxoniumIons[name]["mass"] = glyxsuite.masses.calcIonMass(name)[0]
+        oxoniumIons[name]["mass"] = glyxtoolms.masses.calcIonMass(name)[0]
     if len(options.oxoniumions) > 0:
         for name in list(set(options.oxoniumions.split(","))):
-            mass, charge = glyxsuite.masses.calcIonMass(name)
+            mass, charge = glyxtoolms.masses.calcIonMass(name)
             oxoniumIons[name] = {}
             oxoniumIons[name]["mass"] = mass
             oxoniumIons[name]["charge"] = charge
@@ -268,7 +268,7 @@ def main(options):
 
     allFeatures = {}
     for feature in fm:
-        f = glyxsuite.io.GlyxXMLFeature()
+        f = glyxtoolms.io.GlyxXMLFeature()
         f.setId(feature.getUniqueId())
         hull = feature.getConvexHull().getBoundingBox()
         minRT, minMZ = hull.minPosition()
@@ -281,11 +281,11 @@ def main(options):
         allFeatures[feature.getUniqueId()] = f
 
     # loading mzML file
-    exp = glyxsuite.lib.openOpenMSExperiment(options.inMZML)
+    exp = glyxtoolms.lib.openOpenMSExperiment(options.inMZML)
 
 
     # initialize output xml file
-    glyxXMLFile = glyxsuite.io.GlyxXMLFile()
+    glyxXMLFile = glyxtoolms.io.GlyxXMLFile()
     parameters = glyxXMLFile.parameters
     parameters.setTimestamp(str(datetime.datetime.today()))
     source = exp.getSourceFiles()[0]
@@ -387,7 +387,7 @@ def main(options):
         glyxXMLFile.spectra.append(score)
         if score.feature is None and options.createFeatures == "true":
             # generate new feature
-            f = glyxsuite.io.GlyxXMLFeature()
+            f = glyxtoolms.io.GlyxXMLFeature()
             featureNr += 1
             f.setId("own"+str(featureNr))
             minRT = score.rt
@@ -423,7 +423,7 @@ def main(options):
             minSpecCount = 1
         else:
             minSpecCount = 2
-        keep,notkeep,underThreshold = glyxsuite.consensus.generateConsensusSpectrum(spectra,minSpecCount=minSpecCount)
+        keep,notkeep,underThreshold = glyxtoolms.consensus.generateConsensusSpectrum(spectra,minSpecCount=minSpecCount)
         keep = sorted(keep, key=lambda p:p.y, reverse=True)[:300]
         maykeep = sorted(underThreshold, key=lambda p:p.y, reverse=True)
         keep = keep + maykeep[:300-len(keep)]

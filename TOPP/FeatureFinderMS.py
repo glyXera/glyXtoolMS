@@ -3,7 +3,7 @@
 find a feature to the given peak position within a picked mzML file
 
 """ 
-import glyxsuite
+import glyxtoolms
 import math
 import pyopenms
 import sys
@@ -15,7 +15,7 @@ import time
 def findPattern(monomass, charge, peaks, tolerance):
     # make assumtion about Nr of peaks that should occour
     sumP = 0
-    pattern = glyxsuite.masses.calcIsotopicPatternFromMass(monomass*charge,10)
+    pattern = glyxtoolms.masses.calcIsotopicPatternFromMass(monomass*charge,10)
     for N,p in pattern:
         if sumP > 0.99:
             break
@@ -23,7 +23,7 @@ def findPattern(monomass, charge, peaks, tolerance):
 
     candidates = []
     for e in range(0,N):
-        mass = monomass + e*glyxsuite.masses.MASS["H+"]/charge
+        mass = monomass + e*glyxtoolms.masses.MASS["H+"]/charge
         # find highest peak
         highest = None
         for peak in peaks:
@@ -44,7 +44,7 @@ def findPattern(monomass, charge, peaks, tolerance):
     if sumIntensity == 0:
         return None
     # calculate pattern
-    #pattern = glyxsuite.masses.calcIsotopicPatternFromMass(monomass*charge,len(candidates))
+    #pattern = glyxtoolms.masses.calcIsotopicPatternFromMass(monomass*charge,len(candidates))
     pattern = pattern[:len(candidates)]
     sumP = sum([b for a,b in pattern])
     
@@ -101,7 +101,7 @@ def findMonoIsotopicPeak(mz_org, charge, spec1, tolerance, precursorshift, mswin
     for mz in mz_candidates: 
         for i in range(-6,6):
             # calculate possible monoisotopes
-            monomass = mz + i*glyxsuite.masses.MASS["H+"]/charge
+            monomass = mz + i*glyxtoolms.masses.MASS["H+"]/charge
             result = findPattern(monomass, charge, peaks, tolerance)
             if result == None:
                 continue
@@ -289,7 +289,7 @@ def main(options):
     
     # load file
     timed("loading experiment",starttime)
-    exp = glyxsuite.lib.openOpenMSExperiment(options.infile)
+    exp = glyxtoolms.lib.openOpenMSExperiment(options.infile)
     # assure sorted spectra
     exp.sortSpectra()
     timed("sort spectra",starttime)

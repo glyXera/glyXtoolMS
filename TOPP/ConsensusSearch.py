@@ -6,7 +6,7 @@ Ions are assumed to be singly charged.
 """ 
 
 import sys
-import glyxsuite
+import glyxtoolms
 
 def searchMassInSpectrum(mass,tolerance,spectrum):
     intensity = 0
@@ -16,7 +16,7 @@ def searchMassInSpectrum(mass,tolerance,spectrum):
     return intensity
     
 def calcChargedMass(singlyChargedMass,charge):
-    mass = singlyChargedMass+(charge-1)*glyxsuite.masses.MASS["H"]
+    mass = singlyChargedMass+(charge-1)*glyxtoolms.masses.MASS["H"]
     return mass/float(charge)
 
 def main(options):
@@ -26,7 +26,7 @@ def main(options):
     ionthreshold = float(options.ionthreshold)
     
     # load analysis file
-    glyxXMLFile = glyxsuite.io.GlyxXMLFile()
+    glyxXMLFile = glyxtoolms.io.GlyxXMLFile()
     glyxXMLFile.readFromFile(options.inGlyML)
     
     scoredSpectra = {}
@@ -38,7 +38,7 @@ def main(options):
         # TODO: handle status settings
         feature = hit.feature
         hit.fragments = {}
-        result = glyxsuite.fragmentation.annotateSpectrumWithFragments(hit.peptide,
+        result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(hit.peptide,
                                                                        feature.consensus, 
                                                                        tolerance, 
                                                                        feature.getCharge())

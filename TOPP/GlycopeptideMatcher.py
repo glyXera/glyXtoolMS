@@ -31,16 +31,16 @@ def main(options):
     
     print "parsing input files"
     # Analysis file
-    glyML = glyxsuite.io.GlyxXMLFile()
+    glyML = glyxtoolms.io.GlyxXMLFile()
     glyML.readFromFile(options.infileAnalysis)
     # Peptide file
-    pepFile = glyxsuite.io.XMLPeptideFile()
+    pepFile = glyxtoolms.io.XMLPeptideFile()
     pepFile.loadFromFile(options.infilePeptide)
     # Glycan file
     glycans = []
     glycanFile = file(options.infileGlycan,"r")
     for line in glycanFile:
-        glycan = glyxsuite.lib.Glycan(line[:-1])
+        glycan = glyxtoolms.lib.Glycan(line[:-1])
         glycans.append((glycan.mass,glycan))
     glycanFile.close()
 
@@ -52,9 +52,9 @@ def main(options):
     keepHits = []
     #~ accepted = {}
     #~ for hit in glyML.glycoModHits:
-        #~ if hit.status == glyxsuite.io.ConfirmationStatus.Accepted:
+        #~ if hit.status == glyxtoolms.io.ConfirmationStatus.Accepted:
             #~ 
-            #~ glycan = glyxsuite.lib.Glycan(hit.glycan.composition)
+            #~ glycan = glyxtoolms.lib.Glycan(hit.glycan.composition)
             #~ hit.glycan.composition = glycan.toString()
             #~ keepHits.append(hit)
             #~ key = hit.peptide.toString() + ":"+glycan.toString()
@@ -65,13 +65,13 @@ def main(options):
     #~ print "keeping " + str(len(keepHits)) + " nr of manual accepted identifications"
     print "starting search for new identifcation hits"
     for feature in glyML.features:
-        if feature.status == glyxsuite.io.ConfirmationStatus.Rejected:
+        if feature.status == glyxtoolms.io.ConfirmationStatus.Rejected:
             continue
-        precursorMass = feature.getMZ()*feature.getCharge()-glyxsuite.masses.MASS["H+"]*(feature.getCharge()-1)
+        precursorMass = feature.getMZ()*feature.getCharge()-glyxtoolms.masses.MASS["H+"]*(feature.getCharge()-1)
         found = False
         for peptide in pepFile.peptides:
             for glycanmass, glycan in glycans:
-                mass = peptide.mass+glycanmass+glyxsuite.masses.MASS["H+"]
+                mass = peptide.mass+glycanmass+glyxtoolms.masses.MASS["H+"]
                 diff = mass-precursorMass
                 if diff > tolerance:
                     break
@@ -81,7 +81,7 @@ def main(options):
                 #~ key = peptide.toString() + ":"+glycan.toString()
                 #~ if feature.id in accepted.get(key, set()):
                     #~ continue
-                hit = glyxsuite.io.GlyxXMLGlycoModHit()
+                hit = glyxtoolms.io.GlyxXMLGlycoModHit()
                 hit.featureID = feature.getId()
                 hit.glycan = glycan
                 hit.peptide = peptide
@@ -98,7 +98,7 @@ def main(options):
     return
 
 import sys
-import glyxsuite
+import glyxtoolms
 from itertools import product
 
 if __name__ == "__main__":

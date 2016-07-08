@@ -1,4 +1,4 @@
-import glyxsuite
+import glyxtoolms
 from lxml import etree as ET
 import sys
 import datetime
@@ -11,10 +11,10 @@ def main(options):
     glycans = list(set(glycans))
     print "glycanlist: ",glycans
 
-    exp = glyxsuite.lib.openOpenMSExperiment(options.infile)
+    exp = glyxtoolms.lib.openOpenMSExperiment(options.infile)
 
     # Initialize IonSeriesCalculator
-    seriesCalc = glyxsuite.scoring.IonSeriesCalculator()
+    seriesCalc = glyxtoolms.scoring.IonSeriesCalculator()
 
     # add glycans to IonSeriesCalculator
     print "adding glycans:"
@@ -22,7 +22,7 @@ def main(options):
         print glycan, seriesCalc.addGlycan(glycan)
 
     # initialize output xml file
-    glyxXMLFile = glyxsuite.io.GlyxXMLFile()
+    glyxXMLFile = glyxtoolms.io.GlyxXMLFile()
     parameters = glyxXMLFile.parameters
     parameters.setTimestamp(str(datetime.datetime.today()))
     source = exp.getSourceFiles()[0]
@@ -49,7 +49,7 @@ def main(options):
             continue
         # create spectrum
         precursor = spec.getPrecursors()[0] # Multiple precurors currently not handled!
-        s = glyxsuite.scoring.SpectrumGlyxScore(spec.getNativeID(),
+        s = glyxtoolms.scoring.SpectrumGlyxScore(spec.getNativeID(),
                                                 spec.getRT(),
                                                 precursor.getMZ(),
                                                 precursor.getCharge(),

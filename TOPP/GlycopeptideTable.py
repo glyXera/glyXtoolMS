@@ -35,13 +35,13 @@ def main(options):
     # charge range
     minCharge,maxCharge = map(int,options.chargeRange.split(":"))
     # Peptide file
-    pepFile = glyxsuite.io.XMLPeptideFile()
+    pepFile = glyxtoolms.io.XMLPeptideFile()
     pepFile.loadFromFile(options.infilePeptide)
     # Glycan file
     glycans = []
     glycanFile = file(options.infileGlycan,"r")
     for line in glycanFile:
-        glycan = glyxsuite.lib.Glycan(line[:-1])
+        glycan = glyxtoolms.lib.Glycan(line[:-1])
         glycans.append((glycan.mass,glycan))
     glycanFile.close()
 
@@ -59,10 +59,10 @@ def main(options):
             if not seq in data:
                 data[seq] = {}
                 
-            mass = peptide.mass+glycanmass+glyxsuite.masses.MASS["H+"]
+            mass = peptide.mass+glycanmass+glyxtoolms.masses.MASS["H+"]
             chargestates = []
             for charge in range(minCharge,maxCharge+1):
-                ionmass = (mass + glyxsuite.masses.MASS["H+"]*charge)/charge
+                ionmass = (mass + glyxtoolms.masses.MASS["H+"]*charge)/charge
                 chargestates.append("{}({})".format(str(round(ionmass,1)),str(charge)))
             data[seq][comp] = ";".join(chargestates)
                 
@@ -92,7 +92,7 @@ def main(options):
     return
 
 import sys
-import glyxsuite
+import glyxtoolms
 from itertools import product
 import xlwt
 import re

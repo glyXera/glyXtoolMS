@@ -32,7 +32,7 @@ def main(options):
     fh.load(options.infileFeature,fm)
     
     print "loading analysis file"
-    glyML = glyxsuite.io.GlyxXMLFile()
+    glyML = glyxtoolms.io.GlyxXMLFile()
     glyML.readFromFile(options.infileAnalysis)
     
     # reset features
@@ -77,7 +77,7 @@ def main(options):
 
             
         # create glyxMLFeature
-        glyxFeature = glyxsuite.io.GlyxXMLFeature()
+        glyxFeature = glyxtoolms.io.GlyxXMLFeature()
         glyxFeature.setId(feature.getUniqueId())
         glyxFeature.setRT(feature.getRT())
         glyxFeature.setMZ(feature.getMZ())
@@ -132,7 +132,7 @@ def main(options):
 
 import sys
 import pyopenms
-import glyxsuite
+import glyxtoolms
 
 if __name__ == "__main__":
     options = handle_args()

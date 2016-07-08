@@ -6,7 +6,7 @@ Ions are assumed to be singly charged.
 """ 
 
 import sys
-import glyxsuite
+import glyxtoolms
 
 def countMassInSpectra(mass,tolerance,spectra):
     count = 0
@@ -24,11 +24,11 @@ def main(options):
     ionthreshold = float(options.ionthreshold)
     
     # load analysis file
-    glyxXMLFile = glyxsuite.io.GlyxXMLFile()
+    glyxXMLFile = glyxtoolms.io.GlyxXMLFile()
     glyxXMLFile.readFromFile(options.inGlyML)
     
     # loading mzML file
-    exp = glyxsuite.lib.openOpenMSExperiment(options.inMZML)
+    exp = glyxtoolms.lib.openOpenMSExperiment(options.inMZML)
 
     rawSpectra = {}
     for spectrum in exp:
@@ -48,9 +48,9 @@ def main(options):
 
         feature = features[hit.featureID]
             
-        pepIon = hit.peptide.mass+glyxsuite.masses.MASS["H+"]
-        pepGlcNAcIon = pepIon+glyxsuite.masses.GLYCAN["HEXNAC"]
-        pepNH3 = pepIon-glyxsuite.masses.MASS["N"] - 3*glyxsuite.masses.MASS["H"]
+        pepIon = hit.peptide.mass+glyxtoolms.masses.MASS["H+"]
+        pepGlcNAcIon = pepIon+glyxtoolms.masses.GLYCAN["HEXNAC"]
+        pepNH3 = pepIon-glyxtoolms.masses.MASS["N"] - 3*glyxtoolms.masses.MASS["H"]
 
         # search for hits in spectra
         foundA = 0
@@ -89,11 +89,11 @@ def main(options):
         # search for peptide fragments
         p = hit.peptide
         fragmenthits = (None,{})
-        for i in glyxsuite.fragmentation.getModificationVariants(p):
+        for i in glyxtoolms.fragmentation.getModificationVariants(p):
             
             pepvariant = p.copy()
             pepvariant.modifications = i
-            fragments = glyxsuite.fragmentation.generatePeptideFragments(pepvariant)
+            fragments = glyxtoolms.fragmentation.generatePeptideFragments(pepvariant)
             fhit = {}
             for fragmentkey in fragments:
                 fragmentmass = fragments[fragmentkey][0]

@@ -37,10 +37,10 @@ def main(options):
     
     # initialize outfile parameters
     
-    parameters = glyxsuite.io.XMLPeptideParameters()
+    parameters = glyxtoolms.io.XMLPeptideParameters()
 
     print "setting digest parameters"
-    proteinDigest = glyxsuite.lib.ProteinDigest()
+    proteinDigest = glyxtoolms.lib.ProteinDigest()
     
     if options.cystTreatment == "None":
         proteinDigest.setCarbamidation(False)
@@ -97,7 +97,7 @@ def main(options):
    
     allGlycopeptides = []
     for fastaEntry in fastaData:
-        protein = glyxsuite.lib.Protein()
+        protein = glyxtoolms.lib.Protein()
         
         protein.loadFromFasta(fastaEntry.identifier,fastaEntry.description,fastaEntry.sequence)
         parameters.proteins.append(protein)
@@ -118,7 +118,7 @@ def main(options):
     print "found ",len(allGlycopeptides), " peptides"
     
     print "writing to file"
-    outf = glyxsuite.io.XMLPeptideFile()
+    outf = glyxtoolms.io.XMLPeptideFile()
     outf.peptides = allGlycopeptides
     outf.parameters = parameters
     print options.outfile
@@ -129,7 +129,7 @@ def main(options):
 
 import sys
 import pyopenms
-import glyxsuite
+import glyxtoolms
 
 if __name__ == "__main__":
     options = handle_args()

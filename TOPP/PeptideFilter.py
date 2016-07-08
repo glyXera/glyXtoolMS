@@ -26,7 +26,7 @@ def handle_args(argv=None):
 def main(options):
     
     print "loading peptide file"
-    inPeptides = glyxsuite.io.XMLPeptideFile()
+    inPeptides = glyxtoolms.io.XMLPeptideFile()
     inPeptides.loadFromFile(options.inPeptideDigest)
     
     print "loading whitelist peptides"
@@ -34,7 +34,7 @@ def main(options):
     whitelistPeptides = set()
     for line in f:
         # test if peptide is valid
-        p = glyxsuite.io.XMLPeptide() 
+        p = glyxtoolms.io.XMLPeptide() 
         p.fromString(line[:-1])
         whitelistPeptides.add(p.sequence)
     if len(whitelistPeptides) == 0:
@@ -53,7 +53,7 @@ def main(options):
     return
 
 import sys
-import glyxsuite
+import glyxtoolms
 
 if __name__ == "__main__":
     options = handle_args()
