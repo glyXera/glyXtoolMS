@@ -25,7 +25,7 @@ def parseComposition(comp):
 def generateGlycoylationSiteKey(peptide):
     parts = []
     for nr,amino in sorted(peptide.glycosylationSites):
-        parts.append(amino + str(nr))
+        parts.append(amino + str(nr+1)) # correct counting of amino acids
     return "/".join(parts)
     
 def main(options): 
@@ -78,7 +78,7 @@ def main(options):
         
         # generate glycosite
         glycoSiteKey = generateGlycoylationSiteKey(peptide)
-        glycoSites[seq] = glycoSiteKey
+        glycoSites[seq] = (peptide.proteinID, glycoSiteKey)
         
         if not seq in data[h.status]:
             data[h.status][seq] = {}
@@ -156,20 +156,21 @@ def main(options):
     for status in data:
         # write header
         ws3.write(row, 0, status)
-        for col,comp in enumerate(["GlycoSite", "Peptide", "Peptidemass"]+compsHeader):
+        for col,comp in enumerate(["Protein", "GlycoSite", "Peptide", "Peptidemass"]+compsHeader):
             ws3.write(row+1, col, comp)
         
         for col,comp in enumerate(compsHeader):
-            ws3.write(row, col+3, round(comps[comp], 1))
+            ws3.write(row, col+4, round(comps[comp], 1))
         
         row +=1
         for seq in data[status]:
             row += 1
             # write sequence
-            ws3.write(row, 0, glycoSites[seq])
-            ws3.write(row, 1, seq)
-            ws3.write(row, 2, round(peptideMasses[seq], 2))
-            col = 2
+            ws3.write(row, 0, glycoSites[seq][0])
+            ws3.write(row, 1, glycoSites[seq][1])
+            ws3.write(row, 2, seq)
+            ws3.write(row, 3, round(peptideMasses[seq], 2))
+            col = 3
             for comp in compsHeader:
                 col += 1
                 print 
