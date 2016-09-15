@@ -10,7 +10,6 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
                                      width=width, xTitle="m/z",
                                      yTitle="Intensity [counts]")
-
         self.master = master
         self.hit = None
         self.consensus = None
@@ -212,6 +211,6 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             pMZ = self.convAtoX(mz)
             self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax,
                                     tags=("fragmentSelection", ),
-                                    fill="green")
+                                    fill="cyan")
         self.canvas.tag_lower("fragmentSelection", "peak")
 

@@ -159,9 +159,10 @@ class PeptideCoverageFrame(ttk.Frame):
                 continue
             ySeries.add(y)
             bSeries.add(b)
-            
-            self.fragmentCoverage[y] = self.fragmentCoverage.get(y, []) + [name]
-            self.fragmentCoverage[b] = self.fragmentCoverage.get(b, []) + [name]
+            key_y = "y" + str(y)
+            key_b = "b" + str(b)
+            self.fragmentCoverage[key_y] = self.fragmentCoverage.get(key_y, []) + [name]
+            self.fragmentCoverage[key_b] = self.fragmentCoverage.get(key_b, []) + [name]
         
         self.setMenuChoices(restNames)
         
@@ -234,9 +235,9 @@ class PeptideCoverageFrame(ttk.Frame):
                                             fill=color,
                                             anchor="center",
                                             justify="center")
-            self.coverage[item1] = index
-            self.coverage[item2] = index
-            self.coverage[item3] = index
+            self.coverage[item1] = "y" + str(index)
+            self.coverage[item2] = "y" + str(index)
+            self.coverage[item3] = "y" + str(index)
 
 
         for index in bSeries:
@@ -256,9 +257,9 @@ class PeptideCoverageFrame(ttk.Frame):
                                             fill=color,
                                             anchor="center",
                                             justify="center")
-            self.coverage[item1] = index
-            self.coverage[item2] = index
-            self.coverage[item3] = index
+            self.coverage[item1] = "b" + str(index)
+            self.coverage[item2] = "b" + str(index)
+            self.coverage[item3] = "b" + str(index)
 
     def identifier(self):
         return "PeptideCoverageFrame"
