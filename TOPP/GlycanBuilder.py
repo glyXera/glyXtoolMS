@@ -13,7 +13,7 @@ def handle_args(argv=None):
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--in", dest="infile",help="File input Glycanstructure file .txt")
     parser.add_argument("--out", dest="outfile",help="File output Glycanstructure file .txt")
-    parser.add_argument("--useinfile", dest="useinfile",help="Use file input as basis and filter with the given ranges (true)")
+    parser.add_argument("--useAsFilter", dest="useAsFilter",help="Use file input as basis and filter with the given ranges (true)")
     parser.add_argument("--rangeHex", dest="rangeHex",help="Range of Hexoses in the glycan structure min:max")
     parser.add_argument("--rangeHexNAc", dest="rangeHexNAc",help="Range of HexNAc in the glycan structure min:max")
     parser.add_argument("--rangeFuc", dest="rangeDHex",help="Range of Fucose in the glycan structure min:max")
@@ -50,7 +50,7 @@ def main(options):
     # open output file
     fout = file(options.outfile,"w")
     writeGlycans = set()
-    if options.useinfile == "true":
+    if options.useAsFilter == "true":
         print "checking glycans in file"
         fin = file(options.infile,"r")
         for line in fin:

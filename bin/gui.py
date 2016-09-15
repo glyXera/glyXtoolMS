@@ -1,5 +1,5 @@
 import glyxtoolms
 
 # run GUI
-app = glyxtoolsm.gui.runGUI()
+app = glyxtoolms.gui.runGUI()
 
