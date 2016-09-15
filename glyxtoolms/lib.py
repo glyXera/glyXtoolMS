@@ -243,6 +243,14 @@ class ProteinDigest(object):
                 if not (i+1 < len(self.protein.sequence) and self.protein.sequence[i+1] == "P"):
                     self.breakpoints.append(i)
             i += 1
+            
+    def add_tryptic_low_specific_digest(self):
+        # cleaves C-terminal side of K or R, even if P is C-term to K or R
+        i = 0
+        while i < len(self.protein.sequence):
+            if self.protein.sequence[i] == "R" or self.protein.sequence[i] == "K":
+                    self.breakpoints.append(i)
+            i += 1
 
 
     def add_AspN_digest(self):

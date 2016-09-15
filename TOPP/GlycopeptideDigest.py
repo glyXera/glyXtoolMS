@@ -81,6 +81,8 @@ def main(options):
         parameters.digestionEnzymes.append(digest)
         if digest == "Trypsin":
             digests.append(proteinDigest.add_tryptic_digest)
+        elif digest == "TrypsinLowSpecific"
+            digests.append(proteinDigest.add_tryptic_low_specific_digest)
         elif digest == "AspN":
             digests.append(proteinDigest.add_AspN_digest)
         elif digest == "AspN2":
