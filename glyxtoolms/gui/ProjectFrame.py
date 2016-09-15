@@ -261,7 +261,8 @@ class ProjectFrame(ttk.Frame):
         options = {}
         options['defaultextension'] = '.xml'
         options['filetypes'] = [('Analysis files', '.xml'), ('all files', '.*')]
-        options['initialdir'] = self.model.workingdir
+        workingdir = os.path.dirname(obj.project.mzMLFile.path)
+        options['initialdir'] = workingdir
         options['title'] = 'Save Analysis'
         options['confirmoverwrite'] = True
         path = tkFileDialog.asksaveasfilename(**options)
