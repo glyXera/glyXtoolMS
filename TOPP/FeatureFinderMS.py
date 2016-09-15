@@ -268,7 +268,7 @@ def handle_args(argv=None):
     parser.add_argument("--outFeature", dest="outfile",help="Featurefile output")
     parser.add_argument("--tolerance", dest="tolerance",help="Mass tolerance in Dalton")
     parser.add_argument("--mswindow", dest="mswindow",help="Precursor mass window")
-    parser.add_argument("--precursorshift", dest="shift",help="Allowed precursor mass shift to search best precursor candidate")
+    parser.add_argument("--precursorshift", dest="precursorshift",help="Allowed precursor mass shift to search best precursor candidate")
     parser.add_argument("--rtwindow", dest="rtwindow",help="RT range of an eluting peak in seconds")
     
     if not argv:
