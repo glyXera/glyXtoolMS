@@ -98,7 +98,6 @@ class Protein(object):
             self.modifications.append((name, sequence[pos], pos))
             diff += x.end()-x.start()
         self.sequence = re.sub(r"\(.+?\)", "", sequence)
-
         # check aminoacids and modifications
         try:
             for s in self.sequence:
@@ -119,6 +118,36 @@ class Protein(object):
             if start <= pos and pos < end:
                 peptide.modifications.append((mod, amino, pos))
         return peptide
+        
+class Glycopeptide:
+    
+    def __init__(self,peptidesequence, glycancomposition, modifications=list()):
+        """
+        peptidesequence, glycancomposition, peptidemodifications
+        modifications as list with (modificationname, aminoacid, position)
+        """
+        # generate peptide
+        self.peptide = glyxtoolms.io.XMLPeptide()
+        for s in peptidesequence:
+            assert s in glyxtoolms.masses.AMINOACID
+        self.peptide.sequence = peptidesequence
+        
+        # add modifications
+        for name, amino, pos in modifications:
+            assert name in glyxtoolms.masses.PROTEINMODIFICATION
+            assert amino == self.peptide.sequence[pos]
+            self.peptide.modifications.append((name, amino, pos))
+        self.peptide.mass = glyxtoolms.masses.calcPeptideMass(self.peptide)
+        # generate glycan
+        self.glycan = glyxtoolms.lib.Glycan(glycancomposition)
+        
+    def calcIonMass(self, charge):
+        # TODO: Extend for Sodium and Potassium
+        if charge < 1:
+            return self.peptide.mass + self.glycan.mass
+        else:
+            return (self.peptide.mass + self.glycan.mass + charge*glyxtoolms.masses.MASS["H+"]) / float(charge)
+       
 
 class ProteinDigest(object):
 
