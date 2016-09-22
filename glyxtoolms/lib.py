@@ -393,10 +393,10 @@ msCompositionOrder = [
 
 class Glycan(glyxtoolms.io.XMLGlycan):
 
-    def __init__(self, composition=None):
+    def __init__(self, composition=None, typ="?"):
         super(Glycan, self).__init__()
         self.composition = composition
-        self.typ = None
+        self.typ = typ
         self.glycosylationSite = None
         self.linearCode = ""
         self.structure = None
@@ -482,7 +482,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
 
     def getComposition(self, typ="N"):
         comp = self.sugar.copy()
-        if typ == "N" and self.checkNCore() == "core":
+        if typ == "N" and self.hasNCore() == True:
             comp["HEX"] -= 3
             comp["HEXNAC"] -= 2
             composition = "(GlcNAc)2 (Man)3 + "
@@ -504,23 +504,13 @@ class Glycan(glyxtoolms.io.XMLGlycan):
         return result
 
 
-    def checkNCore(self): # ouput: "None", "sub", "core"
-        # Core: 2 HexNac + 3 Hex
-        # Subcore:
-        # 2 / 3
-        # 2/2
-        # 2/1
-        #2/0
-        # 1/0
+    def hasNCore(self):
+        """ Checks if the compositin contains 2 HexNac and 3 Hexose to build N-Glycan core """ 
         hexnac = self.sugar["HEXNAC"]
         hexose = self.sugar["HEX"]
         if hexnac >= 2 and hexose >= 3:
-            return "core"
-        if hexnac >= 2:
-            return "sub"
-        if hexnac == 1 and hexose == 0:
-            return "sub"
-        return "none"
+            return True
+        return False
 
 
 

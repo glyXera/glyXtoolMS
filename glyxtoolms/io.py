@@ -1057,3 +1057,35 @@ class XMLPeptideFile(object):
         self.parameters = parameters
         self.peptides = peptides
         return
+
+class GlycanCompositionFile(object):
+    
+    def __init__(self):
+        self.glycans = []
+        self.version = "1.0"
+        
+    def read(self, path):
+        f = file(path,"r")
+        self.glycans = []
+        self.version = "1.0"
+        for line in f:
+            line = line.strip()
+            if line.startswith("#"): # comment
+                if line.startswith("#version:"):
+                    self.version = line.split(":")[1]
+                continue
+            elif "," in line:
+                typ,glycanstring = line.split(",")
+                assert typ in ["?", "N", "O"]
+                glycan = glyxtoolms.lib.Glycan(glycanstring.strip(),typ=typ.strip())
+            else:
+                glycan = glyxtoolms.lib.Glycan(line)
+            self.glycans.append(glycan)
+        f.close()
+    
+    def write(self,path):
+        f = file(path,"w")
+        f.write("#version:"+self.version+"\n")
+        for glycan in self.glycans:
+            f.write(glycan.typ + "," + glycan.toString() + "\n")
+        f.close()
