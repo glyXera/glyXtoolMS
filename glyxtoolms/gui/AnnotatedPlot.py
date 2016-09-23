@@ -16,7 +16,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.annotationItems = {}
         self.currentAnnotation = None
 
-        self.canvas.bind("<Button-2>", self.button2, "+")
+        #self.canvas.bind("<Button-2>", self.button2, "+")
         
         self.canvas.bind("<Button-1>", self.button1Pressed, "+")
         self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
@@ -26,7 +26,10 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.canvas.bind("<ButtonRelease-3>", self.button3Released, "+")
         self.canvas.bind("<B3-Motion>", self.button3Motion, "+")
         
-        self.canvas.bind("<Delete>", self.deleteAnnotation, "+") 
+        self.canvas.bind("<Delete>", self.deleteAnnotation, "+")
+        
+        # add ruler toggle
+        self.rulerbutton = self.addButtonToToolbar("ruler","rulergroup")
 
     def findPeakAt(self, pixelX):
         overlap = set(self.canvas.find_overlapping(pixelX-10,
@@ -80,6 +83,8 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.paintAllAnnotations()
 
     def button3Pressed(self, event):
+        if self.rulerbutton.active == False:
+            return
         peak = self.findPeakAt(event.x)
         y = self.convYtoB(event.y)
         
@@ -95,6 +100,8 @@ class AnnotatedPlot(FramePlot.FramePlot):
 
     
     def button3Motion(self, event):
+        if self.rulerbutton.active == False:
+            return
         if self.currentAnnotation is None:
             return
         peak = self.findPeakAt(event.x)
@@ -113,6 +120,8 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.paintCurrentAnnotation()
     
     def button3Released(self, event):
+        if self.rulerbutton.active == False:
+            return
         if self.currentAnnotation is None:
             return
         self.currentAnnotation.y = event.y

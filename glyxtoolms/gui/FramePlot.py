@@ -23,10 +23,10 @@ class ToggleButton(Tkinter.Button):
     def toggle(self):
         if self.config('relief')[-1] == 'sunken':
             self.config(relief="raised")
-            self.status = 0
+            self.active = False
         else:
             self.config(relief="sunken")
-            self.status = 1
+            self.active = True
             # disable all other
             for button in self.group:
                 if button == self:
@@ -101,10 +101,27 @@ class FramePlot(ttk.Frame):
         self.canvas.config(bg="white")
         self.canvas.config(highlightthickness=0)
         self.canvas.grid(row=0, column=0, sticky="NSEW")
+        
+        self.hbar = Tkinter.Scrollbar(self,orient="horizontal",command=self.scrollX)
+        self.hbar.grid(row=1, column=0, sticky="NSEW")
+        
+        self.vbar=Tkinter.Scrollbar(self,orient="vertical",command=self.scrollY)
+        self.vbar.grid(row=0, column=1, sticky="NSEW")
+        
+        # TODO: check where the coords should be set initially - compromisies top-down hirachy
+        self.coord = Tkinter.StringVar()
+        l = ttk.Label(self, textvariable=self.coord)
+        l.grid(row=4, column=0, sticky="NS")
 
+        self.keepZoom = Tkinter.IntVar()
+        #c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
+        #c.grid(row=5, column=0, sticky="NS")
+        
         self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(1, weight=0)
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=0)
+        self.grid_columnconfigure(2, weight=0)
 
         self.canvas.bind("<Button-1>", self.eventTakeFokus, "+")
         self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
@@ -120,19 +137,15 @@ class FramePlot(ttk.Frame):
         
         # setup toolbar
         self.toolbar = ttk.Frame(self)
-        self.toolbar.grid(row=0, column=1, sticky="NSEW")
-        #zoomButton = ttk.Button(self.toolbar, image=self.model.resources["zoom"], command=self.toggle)
-        group = []
-        zoominButton = ToggleButton(self.toolbar, image=self.model.resources["zoom_in"], group=group)
-        group.append(zoominButton)
-        zoominButton.pack()
-        zoomoutButton = ToggleButton(self.toolbar, image=self.model.resources["zoom_out"], group=group)
-        group.append(zoomoutButton)
-        zoomoutButton.pack()
+        self.toolbar.grid(row=0, column=2, sticky="NSEW")
+        self.toolbar.groups = {}
         
-        rulerButton = ToggleButton(self.toolbar, image=self.model.resources["ruler"], group=group)
-        group.append(rulerButton)
-        rulerButton.pack()
+        # add toolbar buttons for zoom
+        self.addButtonToToolbar("zoom_in","zoomgroup")
+        self.addButtonToToolbar("zoom_out","zoomgroup")
+
+        
+
         
         #saveButton = ttk.Button(self, text="Save Plot", command=self.savePlot)
         #saveButton.grid(row=5, column=1, sticky="NS")
@@ -140,9 +153,61 @@ class FramePlot(ttk.Frame):
         self.calcScales()
         self._paintAxis()
         
+    def addButtonToToolbar(self, imagepath, groupname):
+        if groupname not in self.toolbar.groups:
+            self.toolbar.groups[groupname] = []
+        group = self.toolbar.groups.get(groupname)
+        
+        button = ToggleButton(self.toolbar, image=self.model.resources[imagepath], group=group)
+        group.append(button)
+        button.pack()
+        return button
+        
     def toggle(self):
         print "foo"
         
+    def scrollX(self, *args):
+        if args[0] == '-1':
+            self.keyLeft(None)
+        elif args[0] == '1':
+            self.keyRight(None)
+        elif args[0] == 'scroll':
+            if args[1] == '-1':
+                self.keyLeft(None)
+            if args[1] == '1':
+                self.keyRight(None)
+        elif args[0] == 'moveto':
+            moveto = float(args[1])
+            barsize = self.hbar.get()[1]-self.hbar.get()[0]
+            if moveto < 0:
+                moveto = 0
+            elif (moveto + barsize) > 1:
+                moveto = 1 - barsize
+            self.viewXMin = moveto * float(self.aMax-self.aMin)
+            self.viewXMax = (moveto + barsize) * float(self.aMax-self.aMin)
+            self._paintCanvas(addToHistory=False)
+    
+    def scrollY(self, *args):
+        if args[0] == '-1':
+            self.keyUp(None)
+        elif args[0] == '1':
+            self.keyDown(None)
+        elif args[0] == 'scroll':
+            if args[1] == '-1':
+                self.keyUp(None)
+            if args[1] == '1':
+                self.keyDown(None)
+        elif args[0] == 'moveto':
+            moveto = float(args[1])
+            barsize = self.vbar.get()[1]-self.vbar.get()[0]
+            if moveto < 0:
+                moveto = 0
+            elif (moveto + barsize) > 1:
+                moveto = 1 - barsize
+            self.viewYMax = self.bMax-moveto * float(self.bMax-self.bMin)
+            self.viewYMin = self.bMax-(moveto + barsize) * float(self.bMax-self.bMin)
+            self._paintCanvas(addToHistory=False)
+
     def savePlot(self, event):
         if self.model.currentAnalysis == None:
             return
@@ -162,24 +227,56 @@ class FramePlot(ttk.Frame):
         self.canvas.config(width=self.width, height=self.height)
         self._paintCanvas(False)
 
+    def keyUp(self,event):
+        if self.allowZoom == False:
+            return
+        windowsize = self.viewYMax-self.viewYMin
+        add = abs(windowsize)*0.1
+        if self.viewYMax+add >= self.bMax:
+            self.viewYMin = self.bMax - windowsize
+            self.viewYMax = self.bMax
+        else:
+            self.viewYMin = self.viewYMin+add
+            self.viewYMax = self.viewYMax+add
+        self._paintCanvas(addToHistory=False)
+        
+    def keyDown(self,event):
+        if self.allowZoom == False:
+            return
+        windowsize = self.viewYMax-self.viewYMin
+        add = abs(windowsize)*0.1
+        if self.viewYMin-add <= self.bMin:
+            self.viewYMin = self.bMin 
+            self.viewYMax = self.bMin + windowsize
+        else:
+            self.viewYMin = self.viewYMin-add
+            self.viewYMax = self.viewYMax-add
+        self._paintCanvas(addToHistory=False)
+
     def keyLeft(self, event):
         if self.allowZoom == False:
             return
-        add = abs(self.viewXMax-self.viewXMin)*0.1
-        if self.viewXMin-add <= 0:
-            add = self.viewXMin
-        self.viewXMin = self.viewXMin-add
-        self.viewXMax = self.viewXMax-add
+        windowsize = self.viewXMax-self.viewXMin
+        add = abs(windowsize)*0.1
+        if self.viewXMin-add <= self.aMin:
+            self.viewXMin = self.aMin
+            self.viewXMax = self.aMin + windowsize
+        else:
+            self.viewXMin = self.viewXMin-add
+            self.viewXMax = self.viewXMax-add
         self._paintCanvas(addToHistory=False)
 
     def keyRight(self, event):
         if self.allowZoom == False:
             return
-        add = abs(self.viewXMax-self.viewXMin)*0.1
+        windowsize = self.viewXMax-self.viewXMin
+        add = abs(windowsize)*0.1
         if self.viewXMax+add >= self.aMax:
-            add = self.aMax-self.viewXMax
-        self.viewXMin = self.viewXMin+add
-        self.viewXMax = self.viewXMax+add
+            self.viewXMin = self.aMax - windowsize
+            self.viewXMax = self.aMax
+        else:
+            self.viewXMin = self.viewXMin+add
+            self.viewXMax = self.viewXMax+add
         self._paintCanvas(addToHistory=False)
 
     def identifier(self):
@@ -228,14 +325,14 @@ class FramePlot(ttk.Frame):
         return
 
     def calcScales(self):
-        if self.viewXMin == -1:
+        if self.viewXMin == -1 or self.viewXMin < self.aMin:
             self.viewXMin = self.aMin
-        if self.viewYMin == -1:
+        if self.viewYMin == -1 or self.viewYMin < self.bMin:
             self.viewYMin = self.bMin
 
-        if self.viewXMax == -1:
+        if self.viewXMax == -1 or self.viewXMax > self.aMax:
             self.viewXMax = self.aMax
-        if self.viewYMax == -1:
+        if self.viewYMax == -1 or self.viewYMax > self.bMax:
             self.viewYMax = self.bMax
 
         # calc slopes
@@ -251,6 +348,16 @@ class FramePlot(ttk.Frame):
         self.slopeB = (self.height-self.borderTop-self.borderBottom)/baseY
         
         self.slopeA = self.slopeA
+        
+        # calculate scrollbar dimensions
+        lowX = self.viewXMin/float(self.aMax-self.aMin)
+        highX = self.viewXMax/float(self.aMax-self.aMin)
+        self.hbar.set(lowX, highX)
+        
+        height = float(self.bMax-self.bMin)
+        highY = 1.0 - self.viewYMin / height
+        lowY = 1.0 - self.viewYMax / height
+        self.vbar.set(lowY, highY)
 
     def convAtoX(self, A):
         return self.borderLeft+self.slopeA*(A-self.viewXMin)

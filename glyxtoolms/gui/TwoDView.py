@@ -48,7 +48,7 @@ class TwoDView(FramePlot.FramePlot):
         #self.canvas.bind("<Right>", self.setButtonValue)
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
 
-        optionsFrame = ttk.Labelframe(self, text="Plot Options")
+        optionsFrame = ttk.Labelframe(master, text="Plot Options")
         optionsFrame.grid(row=0, column=1, sticky="NS")
 
         self.ov1 = Tkinter.IntVar()
