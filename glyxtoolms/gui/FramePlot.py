@@ -134,7 +134,8 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<Control-BackSpace>", self.resetZoom, "+")
         self.canvas.bind("<Configure>", self.on_resize, "+")
         self.canvas.bind("<Control-s>", self.savePlot, "+")
-        
+        self.canvas.bind("<4>", self.eventMousewheel, "+")
+        self.canvas.bind("<5>", self.eventMousewheel, "+")
         # setup toolbar
         self.toolbar = ttk.Frame(self)
         self.toolbar.grid(row=0, column=2, sticky="NSEW")
@@ -278,6 +279,41 @@ class FramePlot(ttk.Frame):
             self.viewXMin = self.viewXMin+add
             self.viewXMax = self.viewXMax+add
         self._paintCanvas(addToHistory=False)
+        
+    def eventMousewheel(self, event):
+        
+        def calcScroll(self, value, sign, viewMin, viewMax):         
+            add = abs(viewMax-viewMin)*0.1*sign
+            a1 = value - viewMin
+            b1 = viewMax - value
+            if a1 > b1:
+                a2 = a1 - add
+                b2 = a2 * b1 / float(a1)
+            else:
+                b2 = b1 - add
+                a2 = a1 *b2 / float(b1)
+            return value - a2, value + b2
+        
+        x = self.convXtoA(event.x)
+        y = self.convYtoB(event.y)
+        if event.num == 4:
+            sign = -1
+        elif event.num == 5:
+            sign = 1
+        else:
+            return
+        if x > 0 and y > 0:
+            self.viewXMin,self.viewXMax = calcScroll(self,x, sign,self.viewXMin,self.viewXMax)
+            self.viewYMin,self.viewYMax = calcScroll(self,y, sign,self.viewYMin,self.viewYMax)
+        elif x > 0:
+            self.viewXMin,self.viewXMax = calcScroll(self,x, sign,self.viewXMin,self.viewXMax)
+        elif y > 0:
+            self.viewYMin,self.viewYMax = calcScroll(self,y, sign,self.viewYMin,self.viewYMax)
+        else:
+            return
+
+        self._paintCanvas(addToHistory=False)
+        #print event.__dict__
 
     def identifier(self):
         return "Frameplot"
