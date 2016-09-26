@@ -6,12 +6,19 @@ import tkFileDialog
 
 class ToggleButton(Tkinter.Button):
     
-    def __init__(self, master, image, group = []):
-        Tkinter.Button.__init__(self, master=master,image=image, command=self.toggle)
+    def __init__(self, toolbar, image, groupname, name, cursor = ""):
+        Tkinter.Button.__init__(self, master=toolbar,image=image, command=self.toggle)
+        self.toolbar = toolbar
+        self.name = name
         self.active = False
-        self.group = group
+        self.groupname = groupname
+        self.cursor = cursor
         self.config(relief="raised")
         
+        if groupname not in self.toolbar.groups:
+            self.toolbar.groups[groupname] = []
+        self.toolbar.groups.get(groupname).append(self)
+
     def setOn(self):
         self.config(relief="sunken")
         self.active = True
@@ -22,18 +29,46 @@ class ToggleButton(Tkinter.Button):
         
     def toggle(self):
         if self.config('relief')[-1] == 'sunken':
-            self.config(relief="raised")
-            self.active = False
+            self.setOff()
         else:
-            self.config(relief="sunken")
-            self.active = True
             # disable all other
-            for button in self.group:
+            for button in self.toolbar.groups.get(self.groupname):
                 if button == self:
                     continue
                 else:
                     button.setOff()
+            self.setOn()
+        self.toolbar.collectActiveButtons()
 
+class Toolbar(ttk.Frame):
+    def __init__(self, master, model, canvas):
+        ttk.Frame.__init__(self, master=master)
+        self.model = model
+        self.canvas = canvas
+        self.groups = {}
+        self.active = {}
+        
+        
+    def addButton(self, imagepath, groupname, cursor=""):
+
+        button = ToggleButton(self, self.model.resources[imagepath], groupname, imagepath, cursor=cursor)
+        button.pack()
+        return button
+        
+    def collectActiveButtons(self):
+        self.active = {}
+        for groupname in self.groups:
+            for button in self.groups[groupname]:
+                if button.active == True:
+                    self.active[groupname] = button.name
+                    self.canvas.config(cursor=button.cursor)
+        self.master.toolboxButtonPressed()
+                    
+    def deactivateGroup(self, groupname):
+        for button in self.groups[groupname]:
+            button.setOff()
+
+        
 class ActionZoom(object):
 
     def __init__(self, master, canvas, x, y):
@@ -123,10 +158,10 @@ class FramePlot(ttk.Frame):
         self.grid_columnconfigure(1, weight=0)
         self.grid_columnconfigure(2, weight=0)
 
-        self.canvas.bind("<Button-1>", self.eventTakeFokus, "+")
+        self.canvas.bind("<Button-1>", self.eventButton1, "+")
         self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
         self.canvas.bind("<B1-Motion>", self.eventMouseMotionB1, "+")
-        self.canvas.bind("<Control-Button-1>", self.eventStartZoom, "+")
+        #self.canvas.bind("<Control-Button-1>", self.eventStartZoom, "+")
         self.canvas.bind("<ButtonRelease-1>", self.eventButtonRelease, "+")
         self.canvas.bind("<BackSpace>", self.zoomBack, "+")
         self.canvas.bind("<Control-Left>", self.keyLeft, "+")
@@ -137,16 +172,14 @@ class FramePlot(ttk.Frame):
         self.canvas.bind("<4>", self.eventMousewheel, "+")
         self.canvas.bind("<5>", self.eventMousewheel, "+")
         # setup toolbar
-        self.toolbar = ttk.Frame(self)
+        self.toolbar = Toolbar(self, model, self.canvas)
         self.toolbar.grid(row=0, column=2, sticky="NSEW")
-        self.toolbar.groups = {}
         
         # add toolbar buttons for zoom
-        self.addButtonToToolbar("zoom_in","zoomgroup")
-        self.addButtonToToolbar("zoom_out","zoomgroup")
-
-        
-
+        self.toolbar.addButton("drag","defaultgroup", cursor="hand2")
+        self.toolbar.addButton("zoom_in","defaultgroup", cursor="")
+        self.toolbar.addButton("zoom_out","defaultgroup", cursor="")
+        self.toolbar.addButton("zoom_auto","defaultgroup", cursor="")
         
         #saveButton = ttk.Button(self, text="Save Plot", command=self.savePlot)
         #saveButton.grid(row=5, column=1, sticky="NS")
@@ -154,15 +187,7 @@ class FramePlot(ttk.Frame):
         self.calcScales()
         self._paintAxis()
         
-    def addButtonToToolbar(self, imagepath, groupname):
-        if groupname not in self.toolbar.groups:
-            self.toolbar.groups[groupname] = []
-        group = self.toolbar.groups.get(groupname)
-        
-        button = ToggleButton(self.toolbar, image=self.model.resources[imagepath], group=group)
-        group.append(button)
-        button.pack()
-        return button
+
         
     def toggle(self):
         print "foo"
@@ -323,9 +348,28 @@ class FramePlot(ttk.Frame):
 
     def paintObject(self):
         raise Exception("Replace function!")
+        
+    def toolboxButtonPressed(self):
+        if self.toolbar.active.get("defaultgroup", "") == "zoom_auto":
+            self.toolbar.deactivateGroup("defaultgroup")
+            self.viewXMin = self.aMin
+            self.viewXMax = self.aMax
+            self.viewYMin = self.bMin
+            self.viewYMax = self.bMax
+            self._paintCanvas(addToHistory=False)
 
-    def eventTakeFokus(self, event):
+    def eventButton1(self, event):
         self.canvas.focus_set()
+        # get current toolbar
+        if self.toolbar.active.get("defaultgroup", "") == "zoom_out":
+            event.num = 4
+            self.eventMousewheel(event)
+        elif self.toolbar.active.get("defaultgroup", "") == "zoom_in":
+            self.action = ActionZoom(self, self.canvas, event.x, event.y)
+        elif self.toolbar.active.get("defaultgroup", "") == "drag":
+            self.action = {"name":"drag", "startx":self.convXtoA(event.x), "starty":self.convYtoB(event.y)}
+            #self.action = {"name":"drag", "startx":event.x, "starty":event.y}
+
 
     def eventMouseMotion(self, event):
         x = self.convXtoA(event.x)
@@ -339,16 +383,43 @@ class FramePlot(ttk.Frame):
     def eventMouseMotionB1(self, event):
         if self.action == None:
             return
-        if not hasattr(self.action, "onMotion"):
-            return
-        self.action.onMotion(event)
+        try:
+            if self.action.get("name","") == "drag":
+                x = self.convXtoA(event.x)
+                y = self.convYtoB(event.y)
+
+                startx = self.action.get("startx")
+                starty = self.action.get("starty")
+                dragx = startx - x
+                dragy = starty - y
+
+                if dragx < 0 and self.viewXMin == self.aMin:
+                    dragx = 0
+                elif dragx > 0 and self.viewXMax == self.aMax:
+                    dragx = 0
+                    
+                if dragy < 0 and self.viewYMin == self.bMin:
+                    dragy = 0
+                elif dragy > 0 and self.viewYMax == self.bMax:
+                    dragy = 0
+
+                self.viewXMin += dragx
+                self.viewXMax += dragx
+                self.viewYMin += dragy
+                self.viewYMax += dragy
+                self._paintCanvas(addToHistory=False)
+                return
+        except:
+            if not hasattr(self.action, "onMotion"):
+                return
+            self.action.onMotion(event)
 
 
-    def eventStartZoom(self, event):
-        self.canvas.focus_set()
-        # ToDo: Cancel previous action?
-        self.action = ActionZoom(self, self.canvas, event.x, event.y)
-        return
+#    def eventStartZoom(self, event):
+#        self.canvas.focus_set()
+#        # ToDo: Cancel previous action?
+#        self.action = ActionZoom(self, self.canvas, event.x, event.y)
+#        return
 
 
     def eventButtonRelease(self, event):

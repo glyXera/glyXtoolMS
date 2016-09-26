@@ -9,8 +9,6 @@ class AnnotatedPlot(FramePlot.FramePlot):
                                      yTitle=yTitle)
 
         self.master = master
-        self.annotations = None # Link to current Annotations
-
         self.peaksByItem = {}
         self.annotations = []
         self.annotationItems = {}
@@ -29,7 +27,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.canvas.bind("<Delete>", self.deleteAnnotation, "+")
         
         # add ruler toggle
-        self.rulerbutton = self.addButtonToToolbar("ruler","rulergroup")
+        self.rulerbutton = self.toolbar.addButton("ruler","defaultgroup")
 
     def findPeakAt(self, pixelX):
         overlap = set(self.canvas.find_overlapping(pixelX-10,

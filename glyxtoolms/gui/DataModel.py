@@ -129,12 +129,17 @@ class DataModel(object):
         # get pickled res
         pickle_obj = resource_stream('glyxtoolms', 'gui/resources/isotope_confidence.pickle')
         self.resources["isotopes"] = pickle.load(pickle_obj)
+        stream = resource_stream('glyxtoolms', 'gui/resources/drag.gif')
+        self.resources["drag"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/zoom_in.gif')
         self.resources["zoom_in"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/zoom_out.gif')
         self.resources["zoom_out"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/zoom_auto.gif')
+        self.resources["zoom_auto"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/ruler.gif')
         self.resources["ruler"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+
 
 class Chromatogram(object):
 
