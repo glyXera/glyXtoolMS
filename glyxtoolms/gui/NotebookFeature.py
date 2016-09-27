@@ -425,8 +425,8 @@ class NotebookFeature(ttk.Frame):
                 mzArray, intensArray = peaks
                 
             # get intensity in range
-            #choice_Chrom = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
-            choice_Chrom = np.logical_and(np.greater(mzArray, minMZ-0.1), np.less(mzArray, minMZ+0.1))
+            choice_Chrom = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
+            #choice_Chrom = np.logical_and(np.greater(mzArray, minMZ-0.1), np.less(mzArray, minMZ+0.1))
             arr_intens_Chrom = np.extract(choice_Chrom, intensArray)
             sumIntensity = arr_intens_Chrom.sum()
             c.intensity.append(sumIntensity)
