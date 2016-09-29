@@ -25,6 +25,9 @@ class Annotation(object):
         self.x2 = 0
         self.y = 0
         self.text = ""
+        self.series = ""
+        self.nr = 0
+        self.level = 0
 
 class GlyxXMLSpectrum(object):
     """ Define the GlyxXMLSpectrum as used in the glyML format """

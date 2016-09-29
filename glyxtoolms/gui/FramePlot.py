@@ -68,26 +68,7 @@ class Toolbar(ttk.Frame):
         for button in self.groups[groupname]:
             button.setOff()
 
-        
-class ActionZoom(object):
-
-    def __init__(self, master, canvas, x, y):
-        self.master = master
-        self.canvas = canvas
-        self.rectangle = canvas.create_rectangle(x, y, x, y)
-        self.x = x
-        self.y = y
-
-    def onMotion(self, event):
-        # change coordinates of rectangle
-        self.canvas.coords(self.rectangle, (self.x, self.y, event.x, event.y))
-
-    def onButtonRelease(self, event):
-        x1, y1, x2, y2 = self.canvas.coords(self.rectangle)
-        self.canvas.delete(self.rectangle)
-        self.master.zoom(x1, y1, x2, y2)
-
-class FramePlot(ttk.Frame):
+class FramePlot(ttk.Frame, object):
 
     def __init__(self, master, model, height=300, width=800, xTitle="", yTitle=""):
         ttk.Frame.__init__(self, master=master)
@@ -176,10 +157,10 @@ class FramePlot(ttk.Frame):
         self.toolbar.grid(row=0, column=2, sticky="NSEW")
         
         # add toolbar buttons for zoom
-        self.toolbar.addButton("drag","defaultgroup", cursor="hand2")
-        self.toolbar.addButton("zoom_in","defaultgroup", cursor="")
-        self.toolbar.addButton("zoom_out","defaultgroup", cursor="")
-        self.toolbar.addButton("zoom_auto","defaultgroup", cursor="")
+        self.toolbar.addButton("drag","toggle", cursor="hand2")
+        self.toolbar.addButton("zoom_in","toggle", cursor="")
+        self.toolbar.addButton("zoom_out","single", cursor="")
+        self.toolbar.addButton("zoom_auto","single", cursor="")
         
         #saveButton = ttk.Button(self, text="Save Plot", command=self.savePlot)
         #saveButton.grid(row=5, column=1, sticky="NS")
@@ -322,9 +303,9 @@ class FramePlot(ttk.Frame):
         x = self.convXtoA(event.x)
         y = self.convYtoB(event.y)
         if event.num == 4:
-            sign = -1
-        elif event.num == 5:
             sign = 1
+        elif event.num == 5:
+            sign = -1
         else:
             return
         if x > 0 and y > 0:
@@ -338,7 +319,6 @@ class FramePlot(ttk.Frame):
             return
 
         self._paintCanvas(addToHistory=False)
-        #print event.__dict__
 
     def identifier(self):
         return "Frameplot"
@@ -350,25 +330,43 @@ class FramePlot(ttk.Frame):
         raise Exception("Replace function!")
         
     def toolboxButtonPressed(self):
-        if self.toolbar.active.get("defaultgroup", "") == "zoom_auto":
-            self.toolbar.deactivateGroup("defaultgroup")
+        if self.toolbar.active.get("single", "") == "zoom_auto":
+            self.toolbar.deactivateGroup("single")
             self.viewXMin = self.aMin
             self.viewXMax = self.aMax
             self.viewYMin = self.bMin
             self.viewYMax = self.bMax
             self._paintCanvas(addToHistory=False)
-
+        elif self.toolbar.active.get("single", "") == "zoom_out":
+            addX = abs(self.viewXMax-self.viewXMin)*0.1
+            self.viewXMin -= addX
+            self.viewXMax += addX
+            if self.viewXMin < self.aMin:
+                self.viewXMin = self.aMin
+            if self.viewXMax > self.aMin:
+                self.viewXMax = self.aMax
+                
+            addY = abs(self.viewYMax-self.viewYMin)*0.1
+            self.viewYMin -= addY
+            self.viewYMax += addY
+            if self.viewYMin < self.bMin:
+                self.viewYMin = self.bMin
+            if self.viewYMax > self.bMin:
+                self.viewYMax = self.bMax
+            self.toolbar.deactivateGroup("single")
+            self._paintCanvas(addToHistory=False)
+                
     def eventButton1(self, event):
         self.canvas.focus_set()
         # get current toolbar
-        if self.toolbar.active.get("defaultgroup", "") == "zoom_out":
-            event.num = 4
-            self.eventMousewheel(event)
-        elif self.toolbar.active.get("defaultgroup", "") == "zoom_in":
-            self.action = ActionZoom(self, self.canvas, event.x, event.y)
-        elif self.toolbar.active.get("defaultgroup", "") == "drag":
+        if self.toolbar.active.get("toggle", "") == "zoom_in":
+            x = event.x
+            y = event.y
+            self.action = {"name":"zoomin", "x":x, "y":y}
+            rectangle = self.canvas.create_rectangle(x, y, x, y)
+            self.action["rectangle"] = rectangle
+        elif self.toolbar.active.get("toggle", "") == "drag":
             self.action = {"name":"drag", "startx":self.convXtoA(event.x), "starty":self.convYtoB(event.y)}
-            #self.action = {"name":"drag", "startx":event.x, "starty":event.y}
 
 
     def eventMouseMotion(self, event):
@@ -383,53 +381,48 @@ class FramePlot(ttk.Frame):
     def eventMouseMotionB1(self, event):
         if self.action == None:
             return
-        try:
-            if self.action.get("name","") == "drag":
-                x = self.convXtoA(event.x)
-                y = self.convYtoB(event.y)
 
-                startx = self.action.get("startx")
-                starty = self.action.get("starty")
-                dragx = startx - x
-                dragy = starty - y
+        if self.action.get("name","") == "drag":
+            x = self.convXtoA(event.x)
+            y = self.convYtoB(event.y)
 
-                if dragx < 0 and self.viewXMin == self.aMin:
-                    dragx = 0
-                elif dragx > 0 and self.viewXMax == self.aMax:
-                    dragx = 0
-                    
-                if dragy < 0 and self.viewYMin == self.bMin:
-                    dragy = 0
-                elif dragy > 0 and self.viewYMax == self.bMax:
-                    dragy = 0
+            startx = self.action.get("startx")
+            starty = self.action.get("starty")
+            dragx = startx - x
+            dragy = starty - y
 
-                self.viewXMin += dragx
-                self.viewXMax += dragx
-                self.viewYMin += dragy
-                self.viewYMax += dragy
-                self._paintCanvas(addToHistory=False)
-                return
-        except:
-            if not hasattr(self.action, "onMotion"):
-                return
-            self.action.onMotion(event)
+            if dragx < 0 and self.viewXMin == self.aMin:
+                dragx = 0
+            elif dragx > 0 and self.viewXMax == self.aMax:
+                dragx = 0
+                
+            if dragy < 0 and self.viewYMin == self.bMin:
+                dragy = 0
+            elif dragy > 0 and self.viewYMax == self.bMax:
+                dragy = 0
+
+            self.viewXMin += dragx
+            self.viewXMax += dragx
+            self.viewYMin += dragy
+            self.viewYMax += dragy
+            self._paintCanvas(addToHistory=False)
+            return
+        elif self.action.get("name","") == "zoomin":
+            self.canvas.coords(self.action["rectangle"], 
+                               (self.action["x"], self.action["y"], 
+                               event.x, event.y))
 
 
-#    def eventStartZoom(self, event):
-#        self.canvas.focus_set()
-#        # ToDo: Cancel previous action?
-#        self.action = ActionZoom(self, self.canvas, event.x, event.y)
-#        return
 
 
     def eventButtonRelease(self, event):
         if self.action == None:
             return
-        if not hasattr(self.action, "onButtonRelease"):
-            return
-        self.action.onButtonRelease(event)
-        self.action = None
-        return
+        if self.action.get("name","") == "zoomin":
+            x1, y1, x2, y2 = self.canvas.coords(self.action ["rectangle"])
+            self.canvas.delete(self.action ["rectangle"])
+            self.zoom(x1, y1, x2, y2)
+            self.action = None
 
     def calcScales(self):
         if self.viewXMin == -1 or self.viewXMin < self.aMin:
@@ -457,13 +450,22 @@ class FramePlot(ttk.Frame):
         self.slopeA = self.slopeA
         
         # calculate scrollbar dimensions
-        lowX = self.viewXMin/float(self.aMax-self.aMin)
-        highX = self.viewXMax/float(self.aMax-self.aMin)
+        width = float(self.aMax-self.aMin)
+        if width > 0:
+            lowX = self.viewXMin/width
+            highX = self.viewXMax/width
+        else:
+            lowX = 0.0
+            highX = 1.0
         self.hbar.set(lowX, highX)
         
         height = float(self.bMax-self.bMin)
-        highY = 1.0 - self.viewYMin / height
-        lowY = 1.0 - self.viewYMax / height
+        if height > 0:
+            highY = 1.0 - self.viewYMin / height
+            lowY = 1.0 - self.viewYMax / height
+        else:
+            lowY = 0.0
+            highY = 1.0
         self.vbar.set(lowY, highY)
 
     def convAtoX(self, A):

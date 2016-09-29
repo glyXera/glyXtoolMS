@@ -271,6 +271,14 @@ class ContainerAnalysisFile(object):
                 feature.removeSpectrum(spectrum)
         # delete features that fall within bounds
         
+        # update identifications
+        for hit in feature.hits:
+            mass = hit.peptide.mass+hit.glycan.mass+glyxtoolms.masses.MASS["H+"]
+            precursormass = (feature.mz*feature.charge-
+                              glyxtoolms.masses.MASS["H+"]*(feature.charge-1))
+            diff = mass- precursormass
+            hit.error = diff
+        
         # remove possible identifications
         
         # update views
