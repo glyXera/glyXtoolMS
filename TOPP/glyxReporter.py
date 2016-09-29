@@ -70,8 +70,11 @@ def main(options):
                 glycan.mass+
                 glyxtoolms.masses.MASS["H+"]*charge)/charge
 
-        comp = glycan.composition
-        comp = glycan.composition
+        # convert glycan to check  consistency of glycancomposition and mass
+        g = glyxtoolms.lib.Glycan(glycan.composition)
+
+        comp = g.toString()
+        comps[comp] = g.mass
         comps[comp] = glycan.mass
         seq = peptide.toString()
         peptideMasses[seq] = peptide.mass+glyxtoolms.masses.MASS["H+"]
