@@ -76,6 +76,9 @@ def main(options):
         comp = g.toString()
         comps[comp] = g.mass
         comps[comp] = glycan.mass
+        error = str(round(h.error,4))
+        if not error.startswith("-"):
+            error = "+"+error
         seq = peptide.toString()
         peptideMasses[seq] = peptide.mass+glyxtoolms.masses.MASS["H+"]
         
@@ -87,7 +90,7 @@ def main(options):
             data[h.status][seq] = {}
         if not comp in data[h.status][seq]:
             data[h.status][seq][comp] = set()
-        data[h.status][seq][comp].add("{}({})[{}]".format(str(round(mass,1)),str(charge),str(round(rt/60.0,1))))
+        data[h.status][seq][comp].add("{}({})[{}]".format(str(round(mass,4))+error,str(charge),str(round(rt/60.0,1))))
         
 
     # write output
@@ -163,7 +166,7 @@ def main(options):
             ws3.write(row+1, col, comp)
         
         for col,comp in enumerate(compsHeader):
-            ws3.write(row, col+4, round(comps[comp], 1))
+            ws3.write(row, col+4, round(comps[comp], 4))
         
         row +=1
         for seq in data[status]:
@@ -172,11 +175,10 @@ def main(options):
             ws3.write(row, 0, glycoSites[seq][0])
             ws3.write(row, 1, glycoSites[seq][1])
             ws3.write(row, 2, seq)
-            ws3.write(row, 3, round(peptideMasses[seq], 2))
+            ws3.write(row, 3, round(peptideMasses[seq], 4))
             col = 3
             for comp in compsHeader:
                 col += 1
-                print 
                 if comp in data[status][seq]:
                     ws3.write(row, col, ";".join(data[status][seq][comp]))
         row += 3
