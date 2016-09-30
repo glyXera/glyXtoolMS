@@ -69,12 +69,9 @@ class AnnotatedPlot(FramePlot.FramePlot):
         #self.annotations[series] = self.annotations.get(series,[]) + [annotation]
         self.annotations[series].append(annotation)
 
-    #def findItemsAt(self, pixelX=None, pixelY=None, delta=10):
-        
-
-    def findItemAt(self, pixelX=None, pixelY=None):
+    def findItemsAt(self, pixelX=None, pixelY=None, delta=10):
         if pixelX == None and pixelY == None:
-            return
+            return {"annotatable":[], "annotation":[]} 
         if pixelX == None:
             xmin = 0
             xmax = self.height
@@ -103,14 +100,23 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 peaks.append((mini, item))
             if item in self.annotationItems:
                 annotations.append((mini, item))
+        return {"annotatable":[p[1] for p in peaks], 
+                 "annotation":[a[1] for a in annotations]}        
+
+    def findItemAt(self, pixelX=None, pixelY=None):
+        if pixelX == None and pixelY == None:
+            return
+        objects = self.findItemsAt(pixelX,pixelY)
+        peaks = objects["annotatable"]
+        annotations = objects["annotation"]
         if len(peaks) == 0:
             peak = None
         else:
-            peak = min(peaks)[1]
+            peak = peaks[0]
         if len(annotations) == 0:
             annotation = None
         else:
-            annotation = min(annotations)[1]
+            annotation = annotations[0]
         return {"annotatable":peak, "annotation":annotation}
 
     def findObjectAt(self, pixelX=None, pixelY=None):
