@@ -64,18 +64,19 @@ def main(options):
         peptide = h.peptide
         glycan = h.glycan
         charge = feature.getCharge()
-        rt = feature.getRT()
+        rt = str(round(feature.getRT()/60.0,1))
+        
+        # convert glycan to check  consistency of glycancomposition and mass
+        g = glyxtoolms.lib.Glycan(glycan.composition)
+
         # calculate theoretical glycopeptide mass
         mass = (peptide.mass+
                 glycan.mass+
                 glyxtoolms.masses.MASS["H+"]*charge)/charge
-
-        # convert glycan to check  consistency of glycancomposition and mass
-        g = glyxtoolms.lib.Glycan(glycan.composition)
+        mass = str(round(mass,4))
 
         comp = g.toString()
         comps[comp] = g.mass
-        comps[comp] = glycan.mass
         error = str(round(h.error,4))
         if not error.startswith("-"):
             error = "+"+error
@@ -90,7 +91,8 @@ def main(options):
             data[h.status][seq] = {}
         if not comp in data[h.status][seq]:
             data[h.status][seq][comp] = set()
-        data[h.status][seq][comp].add("{}({})[{}]".format(str(round(mass,4))+error,str(charge),str(round(rt/60.0,1))))
+        #data[h.status][seq][comp].add("{}({})[{}]".format(str(round(mass,4))+error,str(charge),str(round(rt/60.0,1))))
+        data[h.status][seq][comp].add(" | ".join([mass, error, str(charge), rt]))
         
 
     # write output
