@@ -26,8 +26,8 @@ class AnnotatedPlot(FramePlot.FramePlot):
         #self.canvas.bind("<Button-2>", self.button2, "+")
         
         self.canvas.bind("<Button-1>", self.button1Pressed, "+")
-        #self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
-        #self.canvas.bind("<B1-Motion>", self.button3Motion, "+")
+        self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
+        self.canvas.bind("<B1-Motion>", self.button1Motion, "+")
         self.canvas.bind("<Motion>", self.mouseMoveEvent, "+")
 
         #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
@@ -41,6 +41,79 @@ class AnnotatedPlot(FramePlot.FramePlot):
         # add ruler toggle
         self.rulerbutton = self.toolbar.addButton("ruler","toggle")
         
+    def button1Motion(self, event):
+        if self.rulerbutton.active == False:
+            return
+        if self.action == None:
+            return
+        objects = self.findItemsAt(pixelX=event.x)
+
+        #print "b1-motion", self.action
+        # find annotations and peaks
+        xx = []
+        for item in objects["annotation"]:
+            other = self.annotationItems[item]
+            key = other.items[item]
+            if key == "x1":
+                xx.append((other.x1,other))
+            elif key == "x2":
+                xx.append((other.x2,other))
+        for item in objects["annotatable"]:
+            peak = self.peaksByItem[item]
+            xx.append((peak.x, peak))
+        
+        if self.action.get("name","") == 'move_x1':
+            annotation = self.action.get("annotation")
+            # select new x position
+            x = None
+            for x,other in xx:
+                if other == annotation:
+                    continue
+                break
+            if x != None and x < annotation.x2:
+                annotation.x1 = x
+            self._paintCanvas(False)
+        elif self.action.get("name","") == 'move_x2':
+            annotation = self.action.get("annotation")
+            x = None
+            for x,other in xx:
+                if other == annotation:
+                    continue
+                break
+            if x != None and x > annotation.x1:
+                annotation.x2 = x
+            self._paintCanvas(False)
+        elif self.action.get("name","") == 'selected_x1' or self.action.get("name","") == 'selected_x2':
+            annotation = self.action.get("annotation")
+            x = None
+            for x,other in xx:
+                if other == annotation:
+                    continue
+                break
+            if x != None:
+                xo = self.action.get("originx")
+                if x < xo:
+                    annotation.x1 = x
+                    annotation.x2 = xo
+                else:
+                    annotation.x1 = xo
+                    annotation.x2 = x
+                self._paintCanvas(False)
+
+    def button1Released(self, event):
+        if self.rulerbutton.active == False:
+            return
+        if self.action is None:
+            return
+        if self.action.get("name","") == 'selected_x1' or self.action.get("name","") == 'selected_x1':
+            annotation = self.action.get("annotation")
+            if annotation.x1 == annotation.x2:
+                self.removeAnnotation(annotation)
+                self._paintCanvas(False)
+        else:
+            self.action = None
+        
+
     def _paintCanvas(self, addToHistory=True):
         """ Method override to inject annotation painting """
         super(AnnotatedPlot, self)._paintCanvas(addToHistory)
@@ -66,9 +139,18 @@ class AnnotatedPlot(FramePlot.FramePlot):
         else:
             maxnr = max([a.nr for a in self.annotations[series]])
             annotation.nr = maxnr+1
-        #self.annotations[series] = self.annotations.get(series,[]) + [annotation]
         self.annotations[series].append(annotation)
-
+        
+    def removeAnnotation(self, annotation):
+        series = annotation.series
+        if not series in self.annotations:
+            return
+        if not annotation in  self.annotations[series]:
+            return
+        self.annotations[series].remove(annotation)
+        if self.selectedAnnotation == annotation:
+            self.setSelectedAnnotation(None)
+            
     def findItemsAt(self, pixelX=None, pixelY=None, delta=10):
         if pixelX == None and pixelY == None:
             return {"annotatable":[], "annotation":[]} 
@@ -133,125 +215,115 @@ class AnnotatedPlot(FramePlot.FramePlot):
             annotation = self.annotationItems[annotationItem]
         return {"annotatable":peak, "annotation":annotation}
 
-#    def findPeakAt(self, pixelX):
-#        overlap = set(self.canvas.find_overlapping(pixelX-10,
-#                                                   0,
-#                                                   pixelX+10,
-#                                                   self.height))
-#        peaks = []
-#        for item in overlap:
-#            if item in self.peaksByItem:
-#                peaks.append((abs(self.canvas.coords(item)[0] - pixelX), self.peaksByItem[item]))
-#        if len(peaks) == 0:
-#            peak = None
-#        else:
-#            peak = min(peaks)[1]
-#        return peak
-    
-#    def findAnnotationAt(self.pixelX, pixelY):
-#        overlap = set(self.canvas.find_overlapping(pixelX-10,
-#                                           0,
-#                                           pixelX+10,
-#                                           self.height))
-#        for item in overlap:
-#            if item in self.annotationItems:
-
     def setSelectedAnnotation(self, annotation):
-        #old = self.selectedAnnotation
         if self.selectedAnnotation != None:
             self.selectedAnnotation.selected = ""
         self.selectedAnnotation = annotation
-        self._paintCanvas()
-        #if old != None:
-        #    old.selected = ""
-        #    self.paintAnnotation(old)
-        #if self.selectedAnnotation != None:
-        #    self.paintAnnotation(self.selectedAnnotation)        
+        self._paintCanvas()    
         
     def setMouseOverAnnotation(self, annotation):
-        #old = self.mouseOverAnnotation
         self.mouseOverAnnotation = annotation
         self._paintCanvas()
-        #
-        #if old != None:
-        #    self.paintAnnotation(old)
-        #if self.mouseOverAnnotation != None:
-        #    self.paintAnnotation(self.mouseOverAnnotation) 
                 
     def mouseMoveEvent(self, event):
         if self.rulerbutton.active == False:
             return
-        nearest = self.findItemAt(pixelX=event.x, pixelY=event.y)
-        annotationItem = nearest["annotation"]
-        annotatableItem = nearest["annotatable"]
-        
-        if annotationItem != None:
-            annotation = self.annotationItems[annotationItem]
-            if annotation.items[annotationItem] in ["line", "text"]:
-                self.setMouseOverAnnotation(annotation)
-                self.canvas.config(cursor="pencil")
-            else:
-                self.canvas.config(cursor="plus")
-                #self.setMouseOverAnnotation(None)
-            #if self.canvas.coords(annotationItem)[0] - event.x < 0:
-            #    self.canvas.config(cursor="left_side")
-            #else:
-            #    self.canvas.config(cursor="right_side")
-        else:
-            self.setMouseOverAnnotation(None)
-        if annotatableItem != None:
-            #self.setMouseOverAnnotation(None)
-            self.canvas.config(cursor="bottom_side")
-        else:
-            #self.setMouseOverAnnotation(None)
-            self.canvas.config(cursor="")
-        
+        objects = self.findItemsAt(pixelX=event.x, pixelY=event.y,delta=10)
+        annotationItems = objects["annotation"]
+        peakItems = objects["annotatable"]
+        cursor = ""
+        if len(annotationItems) > 0:
+            # collect text
+            text = {}
+            for item in annotationItems:
+                annotation = self.annotationItems[item]
+                key = annotation.items[item]
+                if not key in text:
+                    text[key] = annotation
+            if "move_x1" in text:
+                cursor="sb_h_double_arrow"
+                self.setMouseOverAnnotation(text["move_x1"])
+            elif "move_x2" in text:
+                cursor="sb_h_double_arrow"
+                self.setMouseOverAnnotation(text["move_x2"])
+            elif "selected_x1" in text:
+                cursor="plus"
+                self.setMouseOverAnnotation(text["selected_x1"])
+            elif "selected_x2" in text:
+                cursor="plus"
+                self.setMouseOverAnnotation(text["selected_x2"])
+            elif "selected_body" in text:
+                cursor="pencil"
+                self.setMouseOverAnnotation(text["selected_body"])
+            elif "line" in text:
+                self.setMouseOverAnnotation(text["line"])
+            elif "text" in text:
+                self.setMouseOverAnnotation(text["text"])
+        if cursor == "" and len(peakItems) > 0:
+            cursor = "bottom_side"
+        self.canvas.config(cursor=cursor)
 
     def button1Pressed(self, event):
         if self.rulerbutton.active == False:
             return
-        
-        #if self.mouseOverAnnotation == None:
-        #    return
-        self.setSelectedAnnotation(self.mouseOverAnnotation)
-        #self._paintCanvas()
-        ## search nearest annotation
-        #overlap = set(self.canvas.find_overlapping(event.x-10,
-        #                                           event.y-10,
-        #                                           event.x+10,
-        #                                           event.y+10))
-        #annotations = []
-        #for item in overlap:
-        #    if item in self.annotationItems:
-        #        annotations.append((abs(self.canvas.coords(item)[0] - event.x), item))
-        #print annotations
-        #if len(annotations) != 1:
-        #    self.selectedAnnotation = None
-        #    self._paintCanvas()
-        #    return
-        #    
-        #
-        #item = min(annotations)[1]
-        #annotation = self.annotationItems[item]
-        #annotation.selected = annotation.items[item]
-        #self.setSelectedAnnotation(annotation)
-        
-        #self.paintCanvas()
+        items = self.findItemsAt(pixelX=event.x, pixelY=event.y,delta=10)["annotation"]
+        if len(items) == 0:
+            self.setSelectedAnnotation(None)
+        else:
+            # collect text
+            text = {}
+            for item in items:
+                annotation = self.annotationItems[item]
+                key = annotation.items[item]
+                if not key in text or annotation == self.selectedAnnotation:
+                    text[key] = annotation
+            #print [(key,text[key].text) for key in text]
+            setTo = None
+            self.action = None
+            if "move_x1" in text:
+                print "action move x1"
+                setTo = text["move_x1"]
+                self.action = {"name":"move_x1", "annotation":setTo}
+            elif "move_x2" in text:
+                print "action move x2"
+                setTo = text["move_x2"]
+                self.action = {"name":"move_x2", "annotation":setTo}
+            elif "selected_x1" in text:
+                print "action selected_x1"
+                setTo = text["selected_x1"]
+                # create new annotation
+                a = glyxtoolms.io.Annotation()
+                a.x1 = setTo.x1
+                a.x2 = setTo.x1
+                a.text = "new"
+                a.y = 0
+                self.addAnnotation(a, setTo.series)
+                self.action = {"name":"selected_x1", "annotation":a, "originx":setTo.x1}
+                setTo = a
+            elif "selected_x2" in text:
+                print "action selected_x2"
+                setTo = text["selected_x2"]
+                # create new annotation
+                a = glyxtoolms.io.Annotation()
+                a.x1 = setTo.x2
+                a.x2 = setTo.x2
+                a.text = "new"
+                a.y = 0
+                self.addAnnotation(a, setTo.series)
+                self.action = {"name":"selected_x2", "annotation":a, "originx":setTo.x2}
+                setTo = a
+            elif "selected_body" in text:
+                setTo = text["selected_body"]
+                print "action body"
+            elif "text" in text:
+                setTo = text["text"]
+            elif "line" in text:
+                setTo = text["line"]
+            if self.selectedAnnotation != setTo:
+                self.setSelectedAnnotation(setTo)
 
-    def button1Released(self, event):
-        if self.selectedAnnotation is None:
-            return
-        if not self.selectedAnnotation.selected == "text":
-            self.selectedAnnotation.y = event.y
-        peak = self.findObjectAt(pixelX=event.x)["annotatable"]
 
-        if peak is not None:
-            if self.selectedAnnotation.selected == "x1":
-                self.selectedAnnotation.x1 = peak.x
-            elif self.selectedAnnotation.selected == "x2":
-                self.selectedAnnotation.x2 = peak.x
-            self.selectedAnnotation.text = str(round(abs(self.selectedAnnotation.x1-self.selectedAnnotation.x2),4))
-        self.paintCanvas()
+
 
     def button3Pressed(self, event):
         if self.rulerbutton.active == False:
