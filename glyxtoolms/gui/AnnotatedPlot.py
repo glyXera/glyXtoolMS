@@ -133,7 +133,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         annotation.series = series
         annotation.items = {}
         if not series in self.annotations:
-            return
+            self.addSeries(series, "black")
         if len(self.annotations[series]) == 0:
             annotation.nr = 0
         else:
@@ -150,6 +150,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.annotations[series].remove(annotation)
         if self.selectedAnnotation == annotation:
             self.setSelectedAnnotation(None)
+            self._paintCanvas()
             
     def findItemsAt(self, pixelX=None, pixelY=None, delta=10):
         if pixelX == None and pixelY == None:
@@ -219,7 +220,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         if self.selectedAnnotation != None:
             self.selectedAnnotation.selected = ""
         self.selectedAnnotation = annotation
-        self._paintCanvas()    
+           
         
     def setMouseOverAnnotation(self, annotation):
         self.mouseOverAnnotation = annotation
@@ -259,6 +260,8 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 self.setMouseOverAnnotation(text["line"])
             elif "text" in text:
                 self.setMouseOverAnnotation(text["text"])
+        else:
+            self.setMouseOverAnnotation(None)
         if cursor == "" and len(peakItems) > 0:
             cursor = "bottom_side"
         self.canvas.config(cursor=cursor)
@@ -266,13 +269,14 @@ class AnnotatedPlot(FramePlot.FramePlot):
     def button1Pressed(self, event):
         if self.rulerbutton.active == False:
             return
-        items = self.findItemsAt(pixelX=event.x, pixelY=event.y,delta=10)["annotation"]
-        if len(items) == 0:
-            self.setSelectedAnnotation(None)
-        else:
+        objects = self.findItemsAt(pixelX=event.x, pixelY=event.y,delta=10)
+        annotationItems = objects["annotation"]
+        annotatableItems = objects["annotatable"]
+        
+        if len(annotationItems) > 0:
             # collect text
             text = {}
-            for item in items:
+            for item in annotationItems:
                 annotation = self.annotationItems[item]
                 key = annotation.items[item]
                 if not key in text or annotation == self.selectedAnnotation:
@@ -321,6 +325,33 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 setTo = text["line"]
             if self.selectedAnnotation != setTo:
                 self.setSelectedAnnotation(setTo)
+                self._paintCanvas()
+                return
+            elif setTo != None:
+                self._paintCanvas()
+                return
+        if len(annotatableItems) > 0:
+            self.setSelectedAnnotation(None)
+            # select nearest annotatable
+            nearest = []
+            for item in annotatableItems:
+                annotatable = self.peaksByItem[item]
+                dist = abs(self.convAtoX(annotatable.x)-event.x)
+                nearest.append((dist, annotatable))
+            nearest = nearest[0][1]
+            # create new annotation
+            a = glyxtoolms.io.Annotation()
+            a.x1 = nearest.x
+            a.x2 = nearest.x
+            a.text = "new"
+            a.y = 0
+            self.addAnnotation(a, "")
+            self.action = {"name":"selected_x1", "annotation":a, "originx":a.x1}
+            self.setSelectedAnnotation(a)
+            self._paintCanvas()
+        else:
+            self.setSelectedAnnotation(None)
+            self._paintCanvas()
 
 
 
