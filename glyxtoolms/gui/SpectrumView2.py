@@ -32,7 +32,7 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         self.clearAnnotatableList()
         
         self.annotationItems = {}
-        self.annotations = []
+        self.annotations = {}
         self.currentAnnotation = None
         self.referenceMass = 0
 

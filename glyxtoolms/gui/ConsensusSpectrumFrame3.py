@@ -20,7 +20,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.referenceMass = 0
         
         self.annotationItems = {}
-        self.annotations = []
+        self.annotations = {}
         self.currentAnnotation = None
         self.peaksByItem = {}
         

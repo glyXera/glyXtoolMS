@@ -23,11 +23,20 @@ class Annotation(object):
     def __init__(self):
         self.x1 = 0
         self.x2 = 0
-        self.y = 0
+        #self.y = 0
         self.text = ""
         self.series = ""
-        self.nr = 0
+        #self.nr = 0
         self.level = 0
+        self.items = {}
+        
+class AnnotationSeries(object):
+    
+    def __init__(self):
+        self.name = "None"
+        self.color = "black"
+        self.hidden = False
+        self.annotations = []
 
 class GlyxXMLSpectrum(object):
     """ Define the GlyxXMLSpectrum as used in the glyML format """
@@ -336,7 +345,7 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self._version_ = "0.0.9" # current version
+        self._version_ = "0.1.0" # current version
         self.version = self._version_ # will be overwritten by file
 
     def _parseParameters(self, xmlParameters):
@@ -408,14 +417,16 @@ class GlyxXMLFile(object):
             if self.version > "0.0.5":
                 spectrum.status = s.find("./status").text
             if self.version > "0.0.7":
-                spectrum.annotations = []
-                for xmlAnn in s.findall("./annotations/annotation"):
-                    ann = Annotation()
-                    ann.text = xmlAnn.find("./text").text
-                    ann.x1 = float(xmlAnn.find("./x1").text)
-                    ann.x2 = float(xmlAnn.find("./x2").text)
-                    ann.y = float(xmlAnn.find("./y").text)
-                    spectrum.annotations.append(ann)
+                self._parseAnnotations(s, spectrum)
+                #spectrum.annotations = {}
+                #annotations = []
+                #for xmlAnn in s.findall("./annotations/annotation"):
+                #    ann = Annotation()
+                #    ann.text = xmlAnn.find("./text").text
+                #    ann.x1 = float(xmlAnn.find("./x1").text)
+                #    ann.x2 = float(xmlAnn.find("./x2").text)
+                #spectrum.annotations["NoName"] = annotations
+                
             spectra.append(spectrum)
 
         return spectra
@@ -505,19 +516,18 @@ class GlyxXMLFile(object):
                     xmlIonIntensity = ET.SubElement(xmlIon, "intensity")
                     xmlIonIntensity.text = str(ions[glycan][ionName]["intensity"])
             # write spectrum annotations
-            xmlAnnotations = ET.SubElement(xmlSpectrum, "annotations")
-            for annotation in spectrum.annotations:
-                xmlAnn = ET.SubElement(xmlAnnotations, "annotation")
-                xmlAnnText = ET.SubElement(xmlAnn, "text")
-                xmlAnnText.text = annotation.text
-                xmlAnnX1 = ET.SubElement(xmlAnn, "x1")
-                xmlAnnX1.text = str(annotation.x1)
-                xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
-                xmlAnnX2.text = str(annotation.x2)
-                xmlAnnY = ET.SubElement(xmlAnn, "y")
-                xmlAnnY.text = str(annotation.y)
-            
-
+            self._writeAnnotations(xmlSpectrum, spectrum)
+            #xmlAnnotations = ET.SubElement(xmlSpectrum, "annotations")
+            #for annotation in spectrum.annotations:
+            #    xmlAnn = ET.SubElement(xmlAnnotations, "annotation")
+            #    xmlAnnText = ET.SubElement(xmlAnn, "text")
+            #    xmlAnnText.text = annotation.text
+            #    xmlAnnX1 = ET.SubElement(xmlAnn, "x1")
+            #    xmlAnnX1.text = str(annotation.x1)
+            #    xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
+            #    xmlAnnX2.text = str(annotation.x2)
+            #    xmlAnnY = ET.SubElement(xmlAnn, "y")
+            #    xmlAnnY.text = str(annotation.y)
 
 
     def _writeFeatures(self, xmlFeatures):
@@ -572,19 +582,9 @@ class GlyxXMLFile(object):
             xmlStatus = ET.SubElement(xmlFeature, "status")
             xmlStatus.text = feature.status
             
-            xmlAnnotations = ET.SubElement(xmlFeature, "annotations")
-            for annotation in feature.annotations:
-                xmlAnn = ET.SubElement(xmlAnnotations, "annotation")
-                xmlAnnText = ET.SubElement(xmlAnn, "text")
-                xmlAnnText.text = annotation.text
-                xmlAnnX1 = ET.SubElement(xmlAnn, "x1")
-                xmlAnnX1.text = str(annotation.x1)
-                xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
-                xmlAnnX2.text = str(annotation.x2)
-                xmlAnnY = ET.SubElement(xmlAnn, "y")
-                xmlAnnY.text = str(annotation.y)
+            # write annotations
+            self._writeAnnotations(xmlFeature, feature)
             
-
 
 
     def _writeGlycoModHits(self, xmlGlycoModHits):
@@ -694,18 +694,66 @@ class GlyxXMLFile(object):
                     raise
             if self.version > "0.0.5":
                 feature.status = xmlFeature.find("./status").text
+            
             if self.version > "0.0.7":
-                feature.annotations = []
-                for xmlAnn in xmlFeature.findall("./annotations/annotation"):
+                self._parseAnnotations(xmlFeature, feature)
+                #feature.annotations = []
+                #for xmlAnn in xmlFeature.findall("./annotations/annotation"):
+                #    ann = Annotation()
+                #    ann.text = xmlAnn.find("./text").text
+                #    ann.x1 = float(xmlAnn.find("./x1").text)
+                #    ann.x2 = float(xmlAnn.find("./x2").text)
+                #    ann.y = float(xmlAnn.find("./y").text)
+                #    feature.annotations.append(ann)
+            features.append(feature)
+
+        return features
+
+    def _writeAnnotations(self, xmlAnnotationParent, parent):
+        xmlAnnotations = ET.SubElement(xmlAnnotationParent, "annotations")
+        for seriesName in parent.annotations:
+            series = parent.annotations[seriesName]
+            if len(series.annotations) == 0:
+                continue
+            xmlSeries = ET.SubElement(xmlAnnotations, "series", name=seriesName, color=series.color)
+            for annotation in series.annotations:
+                xmlAnn = ET.SubElement(xmlSeries, "annotation")
+                xmlAnnText = ET.SubElement(xmlAnn, "text")
+                xmlAnnText.text = annotation.text
+                xmlAnnX1 = ET.SubElement(xmlAnn, "x1")
+                xmlAnnX1.text = str(annotation.x1)
+                xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
+                xmlAnnX2.text = str(annotation.x2)
+                
+    def _parseAnnotations(self,xmlAnnotationParent, parent):
+        parent.annotations = {}
+        if self.version < "0.1.0":
+            series = AnnotationSeries()
+            series.name = "None"
+            seriesAnnotations = []
+            for xmlAnn in xmlAnnotationParent.findall("./annotations/annotation"):
+                ann = Annotation()
+                ann.text = xmlAnn.find("./text").text
+                ann.x1 = float(xmlAnn.find("./x1").text)
+                ann.x2 = float(xmlAnn.find("./x2").text)
+                ann.series = series.name
+                series.annotations.append(ann)
+            if len(series.annotations) > 0:
+                parent.annotations[series.name] = series
+        else:
+            for xmlSeries in xmlAnnotationParent.findall("./annotations/series"):
+                series = AnnotationSeries()
+                series.name = xmlSeries.get("name")
+                series.color = xmlSeries.get("color")
+                for xmlAnn in xmlSeries.findall("./annotation"):
                     ann = Annotation()
                     ann.text = xmlAnn.find("./text").text
                     ann.x1 = float(xmlAnn.find("./x1").text)
                     ann.x2 = float(xmlAnn.find("./x2").text)
-                    ann.y = float(xmlAnn.find("./y").text)
-                    feature.annotations.append(ann)
-            features.append(feature)
-
-        return features
+                    ann.series = series.name
+                    series.annotations.append(ann)
+                if len(series.annotations) > 0:
+                    parent.annotations[series.name] = series
 
     def writeToFile(self, path):
         xmlRoot = ET.Element("glyxXML")
