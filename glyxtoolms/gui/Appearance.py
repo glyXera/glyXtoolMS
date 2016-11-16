@@ -9,3 +9,9 @@ class Checkbutton(Tkinter.Checkbutton):
         self.config(activebackground="#d9d9d9")
         self.config(highlightcolor="#d9d9d9")
         self.config(highlightbackground="#d9d9d9")
+        
+class Label(Tkinter.Label):
+    def __init__(self, *arg, **args):
+        Tkinter.Checkbutton.__init__(self, *arg, **args)
+        self.config(bg="#d9d9d9")
+    

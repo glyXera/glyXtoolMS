@@ -6,14 +6,16 @@ import tkFileDialog
 
 class ToggleButton(Tkinter.Button):
     
-    def __init__(self, toolbar, image, groupname, name, cursor = ""):
-        Tkinter.Button.__init__(self, master=toolbar,image=image, command=self.toggle)
+    def __init__(self, master, toolbar, image, groupname, name, cursor = ""):
+        Tkinter.Button.__init__(self, master,image=image, command=self.toggle)
         self.toolbar = toolbar
+        self.master = master
         self.name = name
-        self.active = False
         self.groupname = groupname
         self.cursor = cursor
         self.config(relief="raised")
+        self.active = Tkinter.BooleanVar()
+        self.active.set(False)
         
         if groupname not in self.toolbar.groups:
             self.toolbar.groups[groupname] = []
@@ -21,11 +23,11 @@ class ToggleButton(Tkinter.Button):
 
     def setOn(self):
         self.config(relief="sunken")
-        self.active = True
+        self.active.set(True)
         
     def setOff(self):
         self.config(relief="raised")
-        self.active = False
+        self.active.set(False)
         
     def toggle(self):
         if self.config('relief')[-1] == 'sunken':
@@ -40,26 +42,37 @@ class ToggleButton(Tkinter.Button):
             self.setOn()
         self.toolbar.collectActiveButtons()
 
-class Toolbar(ttk.Frame):
+class Toolbar(Tkinter.Frame):
     def __init__(self, master, model, canvas):
-        ttk.Frame.__init__(self, master=master)
+        Tkinter.Frame.__init__(self, master=master)
         self.model = model
         self.canvas = canvas
         self.groups = {}
+        self.panels = {}
         self.active = {}
         
-        
-    def addButton(self, imagepath, groupname, cursor=""):
+    def addPanel(self, panelname, panel=None, side="left"):
+        assert panelname not in self.panels
+        if panel == None:
+            panel = Tkinter.Frame(self)
+        panel.pack(side=side)
+        self.panels[panelname] = panel
+        return panel
 
-        button = ToggleButton(self, self.model.resources[imagepath], groupname, imagepath, cursor=cursor)
-        button.pack()
+    def addButton(self, imagepath, groupname, panelname, cursor="", side="left"):
+        # get panel
+        button = ToggleButton(self.panels[panelname], self,
+                              self.model.resources[imagepath], 
+                              groupname, imagepath, cursor=cursor)
+        button.pack(side=side)
         return button
         
+
     def collectActiveButtons(self):
         self.active = {}
         for groupname in self.groups:
             for button in self.groups[groupname]:
-                if button.active == True:
+                if button.active.get() == True:
                     self.active[groupname] = button.name
                     self.canvas.config(cursor=button.cursor)
         self.master.toolboxButtonPressed()
@@ -68,16 +81,15 @@ class Toolbar(ttk.Frame):
         for button in self.groups[groupname]:
             button.setOff()
 
-class FramePlot(ttk.Frame, object):
+class FramePlot(Tkinter.Frame, object):
 
     def __init__(self, master, model, height=300, width=800, xTitle="", yTitle=""):
-        ttk.Frame.__init__(self, master=master)
+        Tkinter.Frame.__init__(self, master=master)
         self.model = model
         self.master = master
         self.action = None
         self.zoomHistory = []
         self.allowZoom = False
-        self.coord = (0, 0)
 
         self.xTitle = xTitle
         self.yTitle = yTitle
@@ -116,18 +128,15 @@ class FramePlot(ttk.Frame, object):
         self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height) # check screen resolution
         self.canvas.config(bg="white")
         self.canvas.config(highlightthickness=0)
-        self.canvas.grid(row=0, column=0, sticky="NSEW")
+        self.canvas.grid(row=1, column=0, sticky="NSEW")
         
         self.hbar = Tkinter.Scrollbar(self,orient="horizontal",command=self.scrollX)
-        self.hbar.grid(row=1, column=0, sticky="NSEW")
+        self.hbar.grid(row=2, column=0, sticky="NSEW")
         
         self.vbar=Tkinter.Scrollbar(self,orient="vertical",command=self.scrollY)
-        self.vbar.grid(row=0, column=1, sticky="NSEW")
+        self.vbar.grid(row=1, column=1, sticky="NSEW")
         
-        # TODO: check where the coords should be set initially - compromisies top-down hirachy
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
+        
 
         self.keepZoom = Tkinter.IntVar()
         #c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
@@ -154,13 +163,26 @@ class FramePlot(ttk.Frame, object):
         self.canvas.bind("<5>", self.eventMousewheel, "+")
         # setup toolbar
         self.toolbar = Toolbar(self, model, self.canvas)
-        self.toolbar.grid(row=0, column=2, sticky="NSEW")
+        #self.toolbar.grid(row=0, column=2, sticky="NSEW")
+        self.toolbar.grid(row=0, column=0, sticky="NSEW")
         
         # add toolbar buttons for zoom
-        self.toolbar.addButton("drag","toggle", cursor="hand2")
-        self.toolbar.addButton("zoom_in","toggle", cursor="")
-        self.toolbar.addButton("zoom_out","single", cursor="")
-        self.toolbar.addButton("zoom_auto","single", cursor="")
+        panelZoom = self.toolbar.addPanel("default", side="left")
+        self.toolbar.addButton("drag","toggle", "default", cursor="hand2")
+        self.toolbar.addButton("zoom_in","toggle", "default", cursor="")
+        self.toolbar.addButton("zoom_out","single", "default", cursor="")
+        self.toolbar.addButton("zoom_auto","single", "default", cursor="")
+        
+        # Add coords and Canvasname to panel
+        panelCoords = self.toolbar.addPanel("coords", side="right")
+        #panelCoords.config(bg=self.toolbar.cget("bg"))
+        labelName = Tkinter.Label(panelCoords, text=self.identifier())
+        #labelName.config(bg=panelCoords.cget("bg"))
+        labelName.grid(row=0, column=0, sticky="NE")
+        
+        self.coord = Tkinter.StringVar()
+        l = Tkinter.Label(panelCoords, textvariable=self.coord)
+        l.grid(row=1, column=0, sticky="NE")
         
         #saveButton = ttk.Button(self, text="Save Plot", command=self.savePlot)
         #saveButton.grid(row=5, column=1, sticky="NS")
@@ -376,7 +398,12 @@ class FramePlot(ttk.Frame, object):
         y = self.convYtoB(event.y)
         self.currentX = x
         self.currentY = y
-        self.coord.set(self.identifier()+"/"+str(round(x, 4))+"/"+str(round(y, 0)))
+        xstring = str(round(x, 4))
+        xstring += "0"*(4-len(xstring.split(".")[1])) # pad number
+        ystring = str(round(y, 4))
+        ystring += "0"*(4-len(ystring.split(".")[1])) # pad number
+        
+        self.coord.set(xstring+"/"+ystring)
 
     def eventMouseMotionB1(self, event):
         if self.action == None:
