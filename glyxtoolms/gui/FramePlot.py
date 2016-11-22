@@ -4,6 +4,15 @@ import math
 import os
 import tkFileDialog
 
+class Observe(Tkinter.Button):
+    
+    def __init__(self,master, text):
+        Tkinter.Button.__init__(self, master=master, text=text)
+        
+    def pack(self, *arg):
+        print "pack called"
+        Tkinter.Button.pack(self, arg)
+
 class ToggleButton(Tkinter.Button):
     
     def __init__(self, master, toolbar, image, groupname, name, cursor = ""):
@@ -43,10 +52,11 @@ class ToggleButton(Tkinter.Button):
         self.toolbar.collectActiveButtons()
 
 class Toolbar(Tkinter.Frame):
-    def __init__(self, master, model, canvas):
+    def __init__(self, master, model, canvas, sidepanel):
         Tkinter.Frame.__init__(self, master=master)
         self.model = model
         self.canvas = canvas
+        self.sidepanel = sidepanel
         self.groups = {}
         self.panels = {}
         self.active = {}
@@ -75,11 +85,49 @@ class Toolbar(Tkinter.Frame):
                 if button.active.get() == True:
                     self.active[groupname] = button.name
                     self.canvas.config(cursor=button.cursor)
+        self.sidepanel.activatePanels(self.active.keys())
         self.master.toolboxButtonPressed()
                     
     def deactivateGroup(self, groupname):
         for button in self.groups[groupname]:
             button.setOff()
+
+            
+class SidePanel(Tkinter.Frame, object):
+    def __init__(self, master):
+        Tkinter.Frame.__init__(self, master=master)
+        self.master = master
+        self.panels = {}
+
+        # add spacer frame to force pack updates
+        nullframe = Tkinter.Frame(self, bd=0)
+        nullframe.pack()
+        
+    def addContextPanel(self, groupname, panel):
+        self.panels[groupname] = panel
+
+    def activatePanels(self,groupnames):
+        for name in self.panels:
+            if name in groupnames:
+                self.panels[name].pack(side="bottom", anchor="n")
+                self.panels[name].update()
+            else:
+                self.panels[name].pack_forget()
+                #self.panels[name].grid_forget()
+        #print self.children
+        #for name in self.panels:
+        #    if self.panels[name].winfo_ismapped():
+        #        self.panels[name].pack_forget()
+        #        #self.panels[name].grid_forget()
+        #    
+        #for name in self.panels:
+        #    if name in groupnames:
+        #        if not self.panels[name].winfo_ismapped():
+        #            self.panels[name].pack()
+        #            #self.panels[name].grid(row=0, column=0)
+        #    #elif self.panels[name].winfo_ismapped():
+        #    #    print "forget", name
+        #    #    self.panels[name].pack_forget()
 
 class FramePlot(Tkinter.Frame, object):
 
@@ -125,7 +173,16 @@ class FramePlot(Tkinter.Frame, object):
         self.borderTop = 50
         self.borderBottom = 50
 
-        self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height) # check screen resolution
+        self.columnconfigure(0,weight=1)
+        self.columnconfigure(1,weight=0)
+        self.columnconfigure(2,weight=0)
+        self.rowconfigure(0,weight=0)
+        self.rowconfigure(1,weight=1)
+        self.rowconfigure(2,weight=0)
+        
+
+        #self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height) # check screen resolution
+        self.canvas = Tkinter.Canvas(self) # check screen resolution
         self.canvas.config(bg="white")
         self.canvas.config(highlightthickness=0)
         self.canvas.grid(row=1, column=0, sticky="NSEW")
@@ -136,17 +193,14 @@ class FramePlot(Tkinter.Frame, object):
         self.vbar=Tkinter.Scrollbar(self,orient="vertical",command=self.scrollY)
         self.vbar.grid(row=1, column=1, sticky="NSEW")
         
+        self.sidepanel = SidePanel(self)
+        self.sidepanel.grid(row=1, column=2, sticky="NEW")
+        
         
 
         self.keepZoom = Tkinter.IntVar()
         #c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
         #c.grid(row=5, column=0, sticky="NS")
-        
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_rowconfigure(1, weight=0)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=0)
-        self.grid_columnconfigure(2, weight=0)
 
         self.canvas.bind("<Button-1>", self.eventButton1, "+")
         self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
@@ -162,9 +216,9 @@ class FramePlot(Tkinter.Frame, object):
         self.canvas.bind("<4>", self.eventMousewheel, "+")
         self.canvas.bind("<5>", self.eventMousewheel, "+")
         # setup toolbar
-        self.toolbar = Toolbar(self, model, self.canvas)
+        self.toolbar = Toolbar(self, model, self.canvas, self.sidepanel)
         #self.toolbar.grid(row=0, column=2, sticky="NSEW")
-        self.toolbar.grid(row=0, column=0, sticky="NSEW")
+        self.toolbar.grid(row=0, column=0, columnspan=3, sticky="NSEW")
         
         # add toolbar buttons for zoom
         panelZoom = self.toolbar.addPanel("default", side="left")
@@ -253,7 +307,6 @@ class FramePlot(Tkinter.Frame, object):
     def on_resize(self,event):
         self.width = event.width
         self.height = event.height
-        self.canvas.config(width=self.width, height=self.height)
         self._paintCanvas(False)
 
     def keyUp(self,event):
@@ -438,9 +491,6 @@ class FramePlot(Tkinter.Frame, object):
             self.canvas.coords(self.action["rectangle"], 
                                (self.action["x"], self.action["y"], 
                                event.x, event.y))
-
-
-
 
     def eventButtonRelease(self, event):
         if self.action == None:

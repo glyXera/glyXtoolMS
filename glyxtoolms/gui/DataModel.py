@@ -139,6 +139,8 @@ class DataModel(object):
         self.resources["zoom_auto"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/ruler.gif')
         self.resources["ruler"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/eye.gif')
+        self.resources["eye"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
 
 
 class Chromatogram(object):

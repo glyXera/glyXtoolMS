@@ -29,6 +29,7 @@ class Annotation(object):
         #self.nr = 0
         self.level = 0
         self.items = {}
+        self.valid = True
         
 class AnnotationSeries(object):
     
