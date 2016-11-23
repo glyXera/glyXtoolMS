@@ -85,7 +85,7 @@ class Toolbar(Tkinter.Frame):
                 if button.active.get() == True:
                     self.active[groupname] = button.name
                     self.canvas.config(cursor=button.cursor)
-        self.sidepanel.activatePanels(self.active.keys())
+        self.sidepanel.activatePanels(self.active.values())
         self.master.toolboxButtonPressed()
                     
     def deactivateGroup(self, groupname):
@@ -103,31 +103,19 @@ class SidePanel(Tkinter.Frame, object):
         nullframe = Tkinter.Frame(self, bd=0)
         nullframe.pack()
         
-    def addContextPanel(self, groupname, panel):
-        self.panels[groupname] = panel
+    def addContextPanel(self, buttonname, panel):
+        self.panels[buttonname] = panel
 
-    def activatePanels(self,groupnames):
+    def activatePanels(self,buttonnames):
         for name in self.panels:
-            if name in groupnames:
-                self.panels[name].pack(side="bottom", anchor="n")
-                self.panels[name].update()
-            else:
+            if name in buttonnames:
+                if not self.panels[name].winfo_ismapped():
+                    # activate panel
+                    self.panels[name].pack(side="bottom", anchor="n")
+                    self.panels[name].update()
+            elif self.panels[name].winfo_ismapped():
+                # deactivate panel
                 self.panels[name].pack_forget()
-                #self.panels[name].grid_forget()
-        #print self.children
-        #for name in self.panels:
-        #    if self.panels[name].winfo_ismapped():
-        #        self.panels[name].pack_forget()
-        #        #self.panels[name].grid_forget()
-        #    
-        #for name in self.panels:
-        #    if name in groupnames:
-        #        if not self.panels[name].winfo_ismapped():
-        #            self.panels[name].pack()
-        #            #self.panels[name].grid(row=0, column=0)
-        #    #elif self.panels[name].winfo_ismapped():
-        #    #    print "forget", name
-        #    #    self.panels[name].pack_forget()
 
 class FramePlot(Tkinter.Frame, object):
 

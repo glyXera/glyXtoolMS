@@ -68,142 +68,6 @@ class ColorChooser(Tkinter.Toplevel):
     def pressedCancel(self):
         self.color = None
         self.destroy()
-        
-
-class AnnotationContextPanel(Tkinter.Frame):
-    def __init__(self, master, framePlot):
-        Tkinter.Frame.__init__(self, master=master)
-        self.master = master
-        self.framePlot = framePlot
-        self.currentAnnotation = None
-        
-        self.editPanel = ttk.Frame(self)
-        self.editPanel.pack(side="left")
-        
-        self.hideEditPanel()
-        
-        self.seriesPanel = Tkinter.Frame(self.editPanel)
-        self.seriesPanel.pack(side="left")
-        editButton = Tkinter.Button(self.seriesPanel, text="Edit Series", command=self.editSeries)
-        editButton.pack(side="left", fill="y")
-        
-        self.annotationPanel = Tkinter.Frame(self.editPanel)
-        self.annotationPanel.pack(side="left")
-        
-        frameText = Tkinter.LabelFrame(self.annotationPanel,text="Annotation Text")
-        frameText.pack(side="left")
-        
-        font = tkFont.Font(font=frameText['font'])
-        font["size"] = 8
-        frameText.config(font=font)
-
-        self.varText = Tkinter.StringVar()
-        entryText = Tkinter.Entry(frameText, textvariable=self.varText)
-        entryText.config(bg="white")
-        entryText.pack(side="left")
-        self.varText.trace("w", self.eventTextChanged)
-        
-        frameSeries = Tkinter.LabelFrame(self.annotationPanel,text="Select Series")
-        frameSeries.pack(side="left", fill="y")
-        frameSeries.config(font=font)
-        frameSeries.columnconfigure(0,weight=1)
-        frameSeries.rowconfigure(0,weight=1)
-        
-        self.mb = Tkinter.Menubutton(frameSeries, text='', pady=0,
-                             relief="raised")
-        self.mb.grid(sticky="NWSE")
-        
-        
-        self.mb.menu = Tkinter.Menu(self.mb, tearoff=0)
-        self.mb['menu'] = self.mb.menu
-
-        self.varSeries  = Tkinter.StringVar()
-        self.varSeries.trace("w", self.eventSeriesChanged)
-        
-        frameMasses = Tkinter.Frame(self.annotationPanel)
-        frameMasses.pack(side="left")
-        self.varMasses1 = Tkinter.StringVar()
-        labelMasses1 = Tkinter.Label(frameMasses, textvariable=self.varMasses1)
-        labelMasses1.pack(side="top", anchor="w")
-        self.varMasses2 = Tkinter.StringVar()
-        labelMasses2 = Tkinter.Label(frameMasses, textvariable=self.varMasses2)
-        labelMasses2.pack(side="top", anchor="w")
-        
-        self.setAnnotation(None)
-
-    def eventSeriesChanged(self,*arg, **args):
-        newSeries = self.framePlot.annotations[self.varSeries.get()]
-        self.mb.config(text=newSeries.name)
-        self.mb.config(foreground=newSeries.color)
-        self.mb.config(activeforeground=newSeries.color)
-        # check if annotation needs to be updated
-        if self.currentAnnotation == None:
-            return
-        if self.currentAnnotation.series == newSeries.name:
-            return
-        oldSeries = self.framePlot.annotations[self.currentAnnotation.series]
-        oldSeries.annotations.remove(self.currentAnnotation)
-        newSeries.annotations.append(self.currentAnnotation)
-        self.currentAnnotation.series = newSeries.name
-        self.framePlot._paintCanvas()
-        
-    def buildMenu(self):
-        if self.currentAnnotation == None:
-            return
-        series = self.framePlot.annotations[self.currentAnnotation.series]
-        self.mb.menu.delete(0,"end")
-        for name in sorted(self.framePlot.annotations.keys()):
-            s = self.framePlot.annotations[name]
-            self.mb.menu.add_radiobutton(label=name, 
-                                         variable=self.varSeries,
-                                         value=name)
-            self.mb.menu.entryconfig("end", foreground=s.color)
-            self.mb.menu.entryconfig("end", activeforeground=s.color)
-        self.mb.menu.add_separator()
-        self.mb.menu.add_command(label="Edit Series", command=self.editSeries)
-        self.varSeries.set(series.name)
-        self.mb.config(text=series.name)
-        self.mb.config(foreground=series.color)
-        self.mb.config(activeforeground=series.color)
-        
-    def showEditPanel(self):
-        self.editPanel.pack(side="left")
-    
-    def hideEditPanel(self):
-        self.editPanel.pack_forget()
-        
-    def setAnnotation(self, annotation):
-        # show or hide annotation panel, make annotation editable
-        if (annotation == None or 
-        annotation.series not in self.framePlot.annotations or
-        self.framePlot.annotations[annotation.series].hidden == True):
-                
-            self.annotationPanel.pack_forget()
-            self.seriesPanel.pack(side="left")
-            self.currentAnnotation = None
-        else:
-            self.currentAnnotation = annotation
-            self.annotationPanel.pack(side="left")
-            self.seriesPanel.pack_forget()
-            # get series
-            series = self.framePlot.annotations[annotation.series]
-            self.varText.set(annotation.text)
-            
-            # build menu for series chooser
-            self.buildMenu()
-            self.varMasses1.set(str(round(annotation.x1,4)) + " -> " + str(round(annotation.x2,4)))
-            self.varMasses2.set("= " + str(round(annotation.x2-annotation.x1,4)))
-            
-    def eventTextChanged(self, *arg, **args):
-        self.currentAnnotation.text = self.varText.get()
-        self.framePlot._paintCanvas()
-        
-    def editSeries(self):
-        EditSeriesFrame(self, self.framePlot)
-        
-    def eventSeriesEdited(self):
-        # rebuild menu to represent changes to series properties
-        self.setAnnotation(self.currentAnnotation)
 
 class AnnotatedPlot(FramePlot.FramePlot):
 
@@ -219,8 +83,6 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.annotationItems = {}
         self.selectedAnnotation = None
         self.mouseOverAnnotation = None
-
-        #self.canvas.bind("<Button-2>", self.button2, "+")
         
         self.canvas.bind("<Button-1>", self.button1Pressed, "+")
         self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
@@ -228,38 +90,24 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.canvas.bind("<Motion>", self.mouseMoveEvent, "+")
         #self.canvas.bind("<Button-3>", self.showContextMenu)
         #self.canvas.bind("<Double-Button-1>", self.showAnnotationEdit)
-        
-
         #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
         #self.canvas.bind("<ButtonRelease-3>", self.button3Released, "+")
         #self.canvas.bind("<B3-Motion>", self.button3Motion, "+")
         
-        self.canvas.bind("<Delete>", self.deleteAnnotation, "+")
-        
-        
-        # add annotation context panel
-        self.contextPanel = AnnotationContextPanel(self.toolbar, self)
-        self.toolbar.addPanel("annotation", panel=self.contextPanel, side="left")
+        self.canvas.bind("<Delete>", self.eventDeleteAnnotation, "+")
         
         # add sidepanel for annotations
-        
-        self.meh = AnnotationSidePanel(self.sidepanel, self)
-        #self.sidepanel.panels["toggle"] = self.meh
-        self.sidepanel.addContextPanel("toggle", self.meh)
-        #self.sidepanel.addContextPanel("toggle", AnnotationSidePanel)
+        sidePanelAnnotations = AnnotationSidePanel(self.sidepanel, self)
+        self.sidepanel.addContextPanel("ruler", sidePanelAnnotations)
         
         # add ruler toggle
-        self.rulerbutton = self.toolbar.addButton("ruler","toggle", "annotation")
+        self.rulerbutton = self.toolbar.addButton("ruler","toggle", "default")
         # add trace to ruler button toggles
         self.rulerbutton.active.trace("w", self.rulerToggled)
-        #self.sidepanel.activatePanels([])
 
         
     def rulerToggled(self, *arg, **args):
-        if self.rulerbutton.active.get() == True:
-            self.contextPanel.showEditPanel()
-        else:
-            self.contextPanel.hideEditPanel()
+        if self.rulerbutton.active.get() == False:
             self.setSelectedAnnotation(None)
             self._paintCanvas()
         
@@ -304,7 +152,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 else:
                     cursor="X_cursor"
             self.canvas.config(cursor=cursor)
-            self.sidepanel.panels["toggle"].updateAnnotationMasses()
+            self.sidepanel.panels["ruler"].updateAnnotationMasses()
             self._paintCanvas(False)
         elif self.action.get("name","") == 'move_x2':
             annotation = self.action.get("annotation")
@@ -327,7 +175,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 else:
                     cursor="X_cursor"
             self.canvas.config(cursor=cursor)
-            self.sidepanel.panels["toggle"].updateAnnotationMasses()
+            self.sidepanel.panels["ruler"].updateAnnotationMasses()
             self._paintCanvas(False)
         elif self.action.get("name","") == 'selected_x1' or self.action.get("name","") == 'selected_x2':
             annotation = self.action.get("annotation")
@@ -349,7 +197,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             else:
                 annotation.x1 = xo
                 annotation.x2 = x
-            self.sidepanel.panels["toggle"].updateAnnotationMasses()
+            self.sidepanel.panels["ruler"].updateAnnotationMasses()
             self._paintCanvas(False)
 
     def button1Released(self, event):
@@ -364,14 +212,14 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 annotation.valid = True
                 annotation.x1 = self.action.get("originx")
                 repaint = True
-                self.sidepanel.panels["toggle"].updateAnnotationMasses()
+                self.sidepanel.panels["ruler"].updateAnnotationMasses()
         if self.action.get("name","") == 'move_x2':
             annotation = self.action.get("annotation")
             if annotation.valid == False:
                 annotation.valid = True
                 annotation.x2 = self.action.get("originx")
                 repaint = True
-                self.sidepanel.panels["toggle"].updateAnnotationMasses()
+                self.sidepanel.panels["ruler"].updateAnnotationMasses()
         if self.action.get("name","") == 'selected_x1' or self.action.get("name","") == 'selected_x1':
             annotation = self.action.get("annotation")
             if annotation.valid == False or annotation.x1 == annotation.x2:
@@ -399,7 +247,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         series.name = seriesName
         series.color = color
         self.annotations[seriesName] = series
-        self.sidepanel.panels["toggle"].update()
+        self.sidepanel.panels["ruler"].update()
 
     def addAnnotation(self, annotation, seriesName):
         annotation.series = seriesName
@@ -425,12 +273,13 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.annotations[seriesName].annotations.remove(annotation)
         # check if series is empty, if yes remove too
         repaint = False
-        if len(self.annotations[seriesName].annotations) == 0:
-            self.annotations.pop(seriesName)
-            repaint = True
         if self.selectedAnnotation == annotation:
             self.setSelectedAnnotation(None)
             repaint = True
+        if len(self.annotations[seriesName].annotations) == 0:
+            self.annotations.pop(seriesName)
+            repaint = True
+            self.sidepanel.panels["ruler"].update()
         if repaint == True:
             self._paintCanvas()
             
@@ -502,9 +351,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         if self.selectedAnnotation != None:
             self.selectedAnnotation.selected = ""
         self.selectedAnnotation = annotation
-        self.sidepanel.panels["toggle"].setAnnotation(annotation)
-        #self.contextPanel.setAnnotation(annotation)
-           
+        self.sidepanel.panels["ruler"].setAnnotation(annotation)
         
     def setMouseOverAnnotation(self, annotations, selected):
         if self.mouseOverAnnotation != None:
@@ -645,9 +492,6 @@ class AnnotatedPlot(FramePlot.FramePlot):
             self.setSelectedAnnotation(None)
             self._paintCanvas()
 
-
-
-
     def button3Pressed(self, event):
         if self.rulerbutton.active.get() == False:
             return
@@ -700,22 +544,13 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 self.selectedAnnotation.x2 = peak.x
             self.selectedAnnotation.text = str(round(abs(self.selectedAnnotation.x1-self.selectedAnnotation.x2),4))
             self.addAnnotation(self.selectedAnnotation, "test")
-            #series = self.selectedAnnotation.series
-            #self.annotations[series] = self.annotations.get(series,[]) + [self.selectedAnnotation]
         self.selectedAnnotation = None
         self.paintCanvas()
 
-    def deleteAnnotation(self, event):
+    def eventDeleteAnnotation(self, event):
         if self.selectedAnnotation is None:
             return
-        seriesName = self.selectedAnnotation.series
-        if not seriesName in self.annotations:
-            return
-        if not self.selectedAnnotation in self.annotations[seriesName].annotations:
-            return
-        self.annotations[seriesName].annotations.remove(self.selectedAnnotation)
-        self.setSelectedAnnotation(None)
-        self._paintCanvas()
+        self.removeAnnotation(self.selectedAnnotation)
         
     def paintCurrentAnnotation(self):
         self.canvas.delete("currentAnnotation")
@@ -1152,7 +987,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
     def deleteAnnotation(self):
         if self.currentAnnotation == None:
             return
-        self.framePlot.deleteAnnotation(self.currentAnnotation)
+        self.framePlot.removeAnnotation(self.currentAnnotation)
 
     def update(self):
         self.frameSeries.clear()
