@@ -6,9 +6,8 @@ from glyxtoolms.gui import Appearance
 
 class PrecursorView(FramePlot.FramePlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="m/z",
+    def __init__(self, master, model):
+        FramePlot.FramePlot.__init__(self, master, model, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master

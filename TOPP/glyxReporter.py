@@ -22,7 +22,7 @@ def parseComposition(comp):
         string += names[unit] + str(amount)
     return string
       
-def generateGlycoylationSiteKey(peptide):
+def generateGlycosylationSiteKey(peptide):
     parts = []
     for nr,amino in sorted(peptide.glycosylationSites):
         parts.append(amino + str(nr+1)) # correct counting of amino acids
@@ -78,7 +78,7 @@ def main(options):
         peptideMasses[seq] = peptide.mass+glyxtoolms.masses.MASS["H+"]
         
         # generate glycosite
-        glycoSiteKey = generateGlycoylationSiteKey(peptide)
+        glycoSiteKey = generateGlycosylationSiteKey(peptide)
         glycoSites[seq] = (peptide.proteinID, glycoSiteKey)
         
         if not seq in data[h.status]:

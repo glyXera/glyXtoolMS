@@ -6,8 +6,8 @@ from glyxtoolms.gui import Appearance
 
 class ChromatogramView(FramePlot.FramePlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="rt [s]", yTitle="Intensity [counts]")
+    def __init__(self, master, model):
+        FramePlot.FramePlot.__init__(self, master, model, xTitle="rt [s]", yTitle="Intensity [counts]")
 
         self.master = master
         self.NrXScales = 3.0

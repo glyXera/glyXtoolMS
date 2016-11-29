@@ -20,14 +20,14 @@ class Notebook1(ttk.Frame):
 
         chromFrame = ttk.Labelframe(self, text="Precursor Chromatogram")
         chromFrame.grid(row=0, column=0, sticky="NWES")
-        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, model, height=300, width=400)
+        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, model)
         chromView.grid(row=0, column=0, sticky="NWES")
         chromFrame.columnconfigure(0, weight=1)
         chromFrame.rowconfigure(0, weight=1)
 
         msFrame = ttk.Labelframe(self, text="Precursorspectrum")
         msFrame.grid(row=0, column=1, sticky="NWES")
-        msView = FeaturePrecursorView.PrecursorView(msFrame, model, height=300, width=400)
+        msView = FeaturePrecursorView.PrecursorView(msFrame, model)
         msView.grid(row=0, column=0, sticky="NWES")
         msFrame.columnconfigure(0, weight=1)
         msFrame.rowconfigure(0, weight=1)
@@ -41,11 +41,14 @@ class Notebook2(ttk.Frame):
         ttk.Frame.__init__(self, master=master)
         self.master = master
         self.model = model
-
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
         msmsFrame = ttk.Labelframe(self, text="MS/MS Spectrum")
-        msmsFrame.grid(row=0, column=0)
-        msmsView = FeatureSpectrumView.FeatureSpectrumView(msmsFrame, model, height=300, width=800)
-        msmsView.grid(row=0, column=0)
+        msmsFrame.grid(row=0, column=0, sticky="NWES")
+        msmsFrame.columnconfigure(0, weight=1)
+        msmsFrame.rowconfigure(0, weight=1)
+        msmsView = FeatureSpectrumView.FeatureSpectrumView(msmsFrame, model)
+        msmsView.grid(row=0, column=0, sticky="NWES")
         
 class Notebook3(ttk.Frame):
 
@@ -53,10 +56,13 @@ class Notebook3(ttk.Frame):
         ttk.Frame.__init__(self, master=master)
         self.master = master
         self.model = model
-
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
         consFrame = ttk.Labelframe(self, text="Consensusspectrum")
-        consFrame.grid(row=0, column=1, sticky="NWES")
-        consView = ConsensusSpectrumFrame2.ConsensusSpectrumFrame(consFrame, model, height=300, width=800)
+        consFrame.grid(row=0, column=0, sticky="NWES")
+        consFrame.columnconfigure(0, weight=1)
+        consFrame.rowconfigure(0, weight=1)
+        consView = ConsensusSpectrumFrame2.ConsensusSpectrumFrame(consFrame, model)
         consView.grid(row=0, column=0, sticky="NWES")
 
 
@@ -72,7 +78,7 @@ class ExtensionFeature(ttk.Labelframe):
         twoDFrame.columnconfigure(0, weight=1)
         twoDFrame.rowconfigure(0, weight=1)
 
-        twoDView = TwoDView.TwoDView(twoDFrame, model, height=450, width=500)
+        twoDView = TwoDView.TwoDView(twoDFrame, model)
         twoDView.grid(row=0, column=0, sticky="NWES")
 
         self.notebook = ttk.Notebook(self)
@@ -86,7 +92,7 @@ class ExtensionFeature(ttk.Labelframe):
         self.notebook.add(self.n3, text='Consensus Spectrum')
         
         self.columnconfigure(0, weight=1)
-        self.rowconfigure(0, weight=0)
+        self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
 
 

@@ -119,7 +119,7 @@ class SidePanel(Tkinter.Frame, object):
 
 class FramePlot(Tkinter.Frame, object):
 
-    def __init__(self, master, model, height=300, width=800, xTitle="", yTitle=""):
+    def __init__(self, master, model, xTitle="", yTitle=""):
         Tkinter.Frame.__init__(self, master=master)
         self.model = model
         self.master = master
@@ -153,8 +153,8 @@ class FramePlot(Tkinter.Frame, object):
         self.currentX = 0
         self.currentY = 0
 
-        self.height = height
-        self.width = width
+        self.height = 0
+        self.width = 0
 
         self.borderLeft = 100
         self.borderRight = 50

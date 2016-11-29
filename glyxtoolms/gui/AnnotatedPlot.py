@@ -71,9 +71,8 @@ class ColorChooser(Tkinter.Toplevel):
 
 class AnnotatedPlot(FramePlot.FramePlot):
 
-    def __init__(self, master, model, height=300, width=800, xTitle="", yTitle=""):
-        FramePlot.FramePlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle=xTitle,
+    def __init__(self, master, model, xTitle="", yTitle=""):
+        FramePlot.FramePlot.__init__(self, master, model, xTitle=xTitle,
                                      yTitle=yTitle)
 
         self.master = master

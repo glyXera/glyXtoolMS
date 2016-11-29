@@ -19,9 +19,8 @@ class Annotation(object):
 
 class SpectrumView(AnnotatedPlot.AnnotatedPlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="m/z",
+    def __init__(self, master, model):
+        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master

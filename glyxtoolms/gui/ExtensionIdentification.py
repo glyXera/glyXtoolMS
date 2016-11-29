@@ -20,9 +20,7 @@ class ExtensionIdentification(ttk.Labelframe):
         errorFrame.grid(row=0, column=0, columnspan=2, sticky="NWES")
 
         errorView = IdentificationStatsFrame.IdentificationStatsFrame(errorFrame,
-                                                                      model,
-                                                                      height=200,
-                                                                      width=800)
+                                                                      model)
         errorView.pack(expand=True, fill="both")
 
 
@@ -31,9 +29,7 @@ class ExtensionIdentification(ttk.Labelframe):
         
 
         peptideView = PeptideCoverageFrame.PeptideCoverageFrame(peptideFrame,
-                                                                model,
-                                                                height=200,
-                                                                width=200)
+                                                                model)
         peptideView.pack(expand=True, fill="both")
 
 
@@ -41,7 +37,5 @@ class ExtensionIdentification(ttk.Labelframe):
         consensusFrame.grid(row=2, column=0, columnspan=2, sticky="NWES")
 
         consensusView = ConsensusSpectrumFrame.ConsensusSpectrumFrame(consensusFrame,
-                                                                      model,
-                                                                      height=300,
-                                                                      width=800)
+                                                                      model)
         consensusView.pack(expand=True, fill="both")
