@@ -38,18 +38,6 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
         self.currentAnnotation = None
         self.referenceMass = 0
 
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
         # link function
         self.model.classes["FeatureSpectrumView"] = self
         

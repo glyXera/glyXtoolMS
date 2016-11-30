@@ -65,7 +65,7 @@ class Toolbar(Tkinter.Frame):
         assert panelname not in self.panels
         if panel == None:
             panel = Tkinter.Frame(self)
-        panel.pack(side=side)
+        panel.pack(side=side)        
         self.panels[panelname] = panel
         return panel
 
@@ -74,7 +74,9 @@ class Toolbar(Tkinter.Frame):
         button = ToggleButton(self.panels[panelname], self,
                               self.model.resources[imagepath], 
                               groupname, imagepath, cursor=cursor)
+        #button.pack(side=side,fill="y", expand=1)
         button.pack(side=side)
+        #button.grid(row=0, column=self.panels[panelname].grid_size()[1]+1)
         return button
         
 
@@ -164,7 +166,7 @@ class FramePlot(Tkinter.Frame, object):
         self.columnconfigure(0,weight=1)
         self.columnconfigure(1,weight=0)
         self.columnconfigure(2,weight=0)
-        self.rowconfigure(0,weight=0)
+        self.rowconfigure(0,weight=0, minsize=38)
         self.rowconfigure(1,weight=1)
         self.rowconfigure(2,weight=0)
         
@@ -205,8 +207,8 @@ class FramePlot(Tkinter.Frame, object):
         self.canvas.bind("<5>", self.eventMousewheel, "+")
         # setup toolbar
         self.toolbar = Toolbar(self, model, self.canvas, self.sidepanel)
-        #self.toolbar.grid(row=0, column=2, sticky="NSEW")
         self.toolbar.grid(row=0, column=0, columnspan=3, sticky="NSEW")
+
         
         # add toolbar buttons for zoom
         panelZoom = self.toolbar.addPanel("default", side="left")
@@ -231,7 +233,6 @@ class FramePlot(Tkinter.Frame, object):
 
         self.calcScales()
         self._paintAxis()
-        
 
         
     def toggle(self):

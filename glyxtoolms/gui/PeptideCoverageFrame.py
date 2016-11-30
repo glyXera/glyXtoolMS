@@ -31,7 +31,7 @@ def parseYFragment(name, length):
 
 class PeptideCoverageFrame(ttk.Frame):
 
-    def __init__(self, master, model, height=300, width=800):
+    def __init__(self, master, model):
         ttk.Frame.__init__(self, master=master)
 
         self.master = master
@@ -42,10 +42,10 @@ class PeptideCoverageFrame(ttk.Frame):
         self.fragmentCoverage = {}
         self.indexList = set()
 
-        self.height = height
-        self.width = width
+        self.height = 0
+        self.width = 0
 
-        self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height)
+        self.canvas = Tkinter.Canvas(self)
         self.canvas.config(bg="white")
         self.canvas.grid(row=1, column=0, sticky="NSEW")
         #self.canvas.pack(expand=True, fill="both")
@@ -112,7 +112,7 @@ class PeptideCoverageFrame(ttk.Frame):
     def on_resize(self,event):
         self.width = event.width
         self.height = event.height
-        self.canvas.config(width=self.width, height=self.height)
+        #self.canvas.config(width=self.width, height=self.height)
         self.paint_canvas()
         self.colorIndex()
 
@@ -192,10 +192,11 @@ class PeptideCoverageFrame(ttk.Frame):
 
         # find fitting text size
         s = 0
-        for s in range(0, 100):
+        for s in range(0, self.height-20):
             font = tkFont.Font(family="Courier", size=s)
             if (font.measure(" ")+4)*len(text) > self.width:
                 break
+            
 
         s -= 1
         font = tkFont.Font(family="Courier", size=s)
