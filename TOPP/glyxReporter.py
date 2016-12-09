@@ -49,6 +49,7 @@ def main(options):
     comps = {}
     glycoSites = {}
     peptideMasses = {}
+    newdata = []
     for h in fin.glycoModHits:
         if not h.status in data:
             data[h.status] = {}
@@ -86,6 +87,19 @@ def main(options):
         if not comp in data[h.status][seq]:
             data[h.status][seq][comp] = set()
         data[h.status][seq][comp].add("{}({})[{}]".format(str(round(mass,1)),str(charge),str(round(rt/60.0,1))))
+        dataHit = {}
+        dataHit["peptide"] = seq
+        dataHit["glycan"] = comp
+        dataHit["m peptide"] = str(round(peptide.mass,4))
+        dataHit["m glycan"] = str(round(glycan.mass,4))
+        dataHit["rt"] = str(round(rt/60.0,1))
+        dataHit["m/z"] = str(round(mass,4))
+        dataHit["z"] = str(charge)
+        dataHit["protID"] = peptide.proteinID
+        dataHit["sites"] = glycoSiteKey
+        dataHit["status"] = h.status
+        dataHit["intensity"] = feature.intensity
+        newdata.append(dataHit)
         
 
     # write output
@@ -151,36 +165,46 @@ def main(options):
             ws2.write(row, 3, int(feature.getCharge()))
             ws2.write(row, 4, round(spectrum.getLogScore(), 3))
     # ---------------------- Identifications --------------------------#
-    
     ws3 = wb.add_sheet("Identifications")
-    row = 0
-    for status in data:
-        # write header
-        ws3.write(row, 0, status)
-        for col,comp in enumerate(["Protein", "GlycoSite", "Peptide", "Peptidemass"]+compsHeader):
-            ws3.write(row+1, col, comp)
-        
-        for col,comp in enumerate(compsHeader):
-            ws3.write(row, col+4, round(comps[comp], 1))
-        
-        row +=1
-        for seq in data[status]:
-            row += 1
-            # write sequence
-            ws3.write(row, 0, glycoSites[seq][0])
-            ws3.write(row, 1, glycoSites[seq][1])
-            ws3.write(row, 2, seq)
-            ws3.write(row, 3, round(peptideMasses[seq], 2))
-            col = 3
-            for comp in compsHeader:
-                col += 1
-                print 
-                if comp in data[status][seq]:
-                    ws3.write(row, col, ";".join(data[status][seq][comp]))
-        row += 3
+    # header
+    header = ["peptide","glycan","m peptide","m glycan","rt","m/z","z","protID","sites","status", "intensity"]
+    for col,name in enumerate(header):
+        ws3.write(0, col, name)
+    row = 1
+    for hit in newdata:
+        for col,name in enumerate(header):
+            ws3.write(row, col, hit[name])
+        row += 1
     wb.save(options.outfile)
+    #ws3 = wb.add_sheet("Identifications")
+    #row = 0
+    #for status in data:
+    #    # write header
+    #    ws3.write(row, 0, status)
+    #    for col,comp in enumerate(["Protein", "GlycoSite", "Peptide", "Peptidemass"]+compsHeader):
+    #        ws3.write(row+1, col, comp)
+    #    
+    #    for col,comp in enumerate(compsHeader):
+    #        ws3.write(row, col+4, round(comps[comp], 1))
+    #    
+    #    row +=1
+    #    for seq in data[status]:
+    #        row += 1
+    #        # write sequence
+    #        ws3.write(row, 0, glycoSites[seq][0])
+    #        ws3.write(row, 1, glycoSites[seq][1])
+    #        ws3.write(row, 2, seq)
+    #        ws3.write(row, 3, round(peptideMasses[seq], 2))
+    #        col = 3
+    #        for comp in compsHeader:
+    #            col += 1
+    #            print 
+    #            if comp in data[status][seq]:
+    #                ws3.write(row, col, ";".join(data[status][seq][comp]))
+    #    row += 3
+    #wb.save(options.outfile)
 
-
+    
 import sys
 import glyxtoolms
 import xlwt

@@ -18,10 +18,13 @@ class NotebookIdentification(ttk.Frame):
                                command=lambda x="Rejected": self.setStatus(x))
         self.aMenu.add_command(label="Set to Unknown",
                                command=lambda x="Unknown": self.setStatus(x))
+        self.aMenu.add_command(label="Copy to Clipboard",
+                               command=self.copyToClipboard)
+                               
 
         # show treeview of mzML file MS/MS and MS
         scrollbar = Tkinter.Scrollbar(self)
-        self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
+        self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set, selectmode='extended')
 
         columns = {"Mass":70, "error":70, "Peptide":160, "Glycan":160, "Status":80}
         self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan", "Status")
@@ -64,6 +67,27 @@ class NotebookIdentification(ttk.Frame):
         self.columnconfigure(1, weight=0)
 
         self.model.classes["NotebookIdentification"] = self
+        
+    def copyToClipboard(self, *arg, **args):
+        # add header
+        line = ["Feature Nr", "m/z", "z", "rt", "intensity"]
+        line += self.tree["columns"]
+        text = "\t".join(line) + "\n"
+        for item in self.tree.selection():
+            content = self.tree.item(item)
+            hit = self.treeIds[item]
+            line = []
+            line.append(content["text"])
+            line.append(str(round(hit.feature.mz,4)))
+            line.append(str(hit.feature.charge))
+            line.append(str(round(hit.feature.rt,2)))
+            line.append(str(round(hit.feature.intensity,2)))
+            line += content["values"]
+            text += "\t".join(line) + "\n"
+
+        self.model.root.clipboard_clear()
+        self.model.root.clipboard_append(text)
+        
 
     def setStatus(self,status):
         # get currently active hit
