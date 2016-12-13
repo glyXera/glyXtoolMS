@@ -638,6 +638,17 @@ class AnnotatedPlot(FramePlot.FramePlot):
         color = self.annotations[annotation.series].color
         width = 1
         
+        # get annotation text
+        if annotation.show == "text":
+            annotationText = annotation.text
+        elif annotation.show == "lookup":
+            annotationText = annotation.lookup
+        elif annotation.show == "mass":
+            mass = round(abs(annotation.x1-annotation.x2),4)
+            annotationText = str(mass)
+        else:
+            annotationText = ""
+
         tags = ("annotation", )
         if annotation == self.selectedAnnotation:
             tags = ("currentAnnotation", "annotation")
@@ -655,7 +666,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         else:
             item3 = self.canvas.create_line(px1, py, px2, py, tags=tags, fill=color,arrow="both", width=width, dash=(3,5))
         item4 = self.canvas.create_text((pXText, py, ),
-                               text=annotation.text,
+                               text=annotationText,
                                fill=color,
                                anchor="s", justify="center",
                                tags=tags)
@@ -914,19 +925,52 @@ class CheckboxList(Tkinter.Frame):
                     annotation.series = newName
                 changedSeries.name = newName
                 self.master.setAnnotation(self.master.currentAnnotation)
-    
+
+class AutoScrollbar(Tkinter.Scrollbar):
+    # a scrollbar that hides itself if it's not needed.  only
+    # works if you use the grid geometry manager.
+    def set(self, lo, hi):
+        if float(lo) <= 0.0 and float(hi) >= 1.0:
+            # grid_remove is currently missing from Tkinter!
+            #self.tk.call("grid", "remove", self)
+            self.pack_forget()
+        else:
+            #self.grid()
+            self.pack(side="right", fill="y", expand="yes")
+        Tkinter.Scrollbar.set(self, lo, hi)
+    #def pack(self, **kw):
+    #    raise Tkinter.TclError, "cannot use pack with this widget"
+    def place(self, **kw):
+        raise Tkinter.TclError, "cannot use place with this widget"
+
 class AnnotationSidePanel(Tkinter.Frame, object):
     def __init__(self, master, framePlot):
         Tkinter.Frame.__init__(self, master=master)
         self.master = master
         self.framePlot = framePlot
+        scrollbar = AutoScrollbar(self)
+
+        scrollbar.pack(side="right", fill="y", expand="yes")
+        self.canvas = Tkinter.Canvas(self, yscrollcommand=scrollbar.set)
+        self.canvas.config(highlightthickness=0)
+        self.canvas.pack(side="left", fill="both", expand="yes")
+
+        self.frame = Tkinter.Frame(self.canvas)
+        self.canvas.create_window(0, 0, anchor="nw", window=self.frame)
         
-        self.columnconfigure(0,weight=1)
-        self.rowconfigure(0,weight=0)
-        self.rowconfigure(1,weight=1)
-        self.rowconfigure(2,weight=0)
+        scrollbar.config(command=self.canvas.yview)
         
-        self.frameAnnotation = Tkinter.LabelFrame(self,text="Current Annotation")
+        self.grid_rowconfigure(0, weight=1)
+        self.grid_columnconfigure(0, weight=1)
+
+        self.frame.columnconfigure(1,weight=1)
+        self.frame.rowconfigure(1,weight=1)
+        
+        self.canvas.bind("<Configure>", self.on_resize, "+")
+        self.frame.bind("<Configure>", self.on_resize, "+")
+        
+
+        self.frameAnnotation = Tkinter.LabelFrame(self.frame,text="Current Annotation")
         self.annotationContent = Tkinter.Frame(self.frameAnnotation)
         self.annotationContent.grid(row=0,column=0)
         self.annotationContent.columnconfigure(0,weight=0)
@@ -939,50 +983,94 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.buttonDelete = Tkinter.Button(self.annotationContent, text="Delete  Annotation",command=self.deleteAnnotation)
         self.buttonDelete.grid(row=0,column=1,columnspan=1, sticky="NESW")
         
-        labelMassText1 = Tkinter.Label(self.annotationContent, text="m1:")
+        labelMassText1 = Tkinter.Label(self.annotationContent, text="m1")
         labelMassText1.grid(row=1,column=0, sticky="NSEW")
         self.labelMass1 = Tkinter.Label(self.annotationContent, text=" - Da", anchor="e")
         self.labelMass1.grid(row=1,column=1, sticky="NSEW")
         
-        labelMassText2 = Tkinter.Label(self.annotationContent, text="m2:")
+        labelMassText2 = Tkinter.Label(self.annotationContent, text="m2")
         labelMassText2.grid(row=2,column=0, sticky="NSEW")
         self.labelMass2 = Tkinter.Label(self.annotationContent, text=" - Da", anchor="e")
         self.labelMass2.grid(row=2,column=1, sticky="NSEW")
         
-        labelMassText3 = Tkinter.Label(self.annotationContent, text="diff:")
-        labelMassText3.grid(row=3,column=0, sticky="NSEW")
-        self.labelMass3 = Tkinter.Label(self.annotationContent, text="= - Da", anchor="e")
-        self.labelMass3.grid(row=3,column=1, sticky="NSEW")
         
-
-        labelText = Tkinter.Label(self.annotationContent, text="Text:")
-        labelText.grid(row=4,column=0)
+        radioFrame = Tkinter.LabelFrame(self.annotationContent, text="Annotate with")
+        radioFrame.grid(row=3,column=0, columnspan=2)
+        
+        self.varRadio = Tkinter.StringVar()
+        self.varRadio.trace("w", self.radioGroupChanged)
+        
+        self.buttonShowDiff = Tkinter.Radiobutton(radioFrame, text="Diff", variable=self.varRadio, value="mass")
+        self.buttonShowDiff.grid(row=0,column=0, sticky="NWS")
+        
+        self.varMass = Tkinter.StringVar()
+        self.entryMass= Tkinter.Entry(radioFrame, textvariable=self.varMass ,width=13)
+        self.entryMass.grid(row=0,column=1, sticky="NSEW")
+        self.entryMass.config(justify="right")
+        
+        self.buttonShowLookup = Tkinter.Radiobutton(radioFrame, text="Lookup", variable=self.varRadio, value="lookup")
+        self.buttonShowLookup.grid(row=1,column=0, sticky="NWS")
+        
+        self.varLookup = Tkinter.StringVar()
+        self.entryLookup= Tkinter.Entry(radioFrame, textvariable=self.varLookup ,width=13)
+        self.entryLookup.grid(row=1,column=1, sticky="NWES")
+        
+        self.buttonShowText = Tkinter.Radiobutton(radioFrame, text="Text", variable=self.varRadio, value="text")
+        self.buttonShowText.grid(row=2,column=0, sticky="NWS")
+        
+        self.buttonShowNone = Tkinter.Radiobutton(radioFrame, text="None", variable=self.varRadio, value="none")
+        self.buttonShowNone.grid(row=3,column=0, sticky="NWS")
+        
         self.varText = Tkinter.StringVar()
-        self.entryText = Tkinter.Entry(self.annotationContent, textvariable=self.varText ,width=15)
+        self.entryText = Tkinter.Entry(radioFrame, textvariable=self.varText ,width=13)
         self.entryText.config(bg="white")
-        self.entryText.grid(row=4,column=1, sticky="NWES")
+        self.entryText.grid(row=2,column=1, sticky="NWES")
+        
+        self.entryLookup.config(state="readonly")
+        self.entryMass.config(state="readonly")
 
-        labelSeries = Tkinter.Label(self.annotationContent, text="Series:")
-        labelSeries.grid(row=5,column=0)
+        
+        labelSeries = Tkinter.Label(self.annotationContent, text="Series")
+        labelSeries.grid(row=8,column=0)
 
         self.varSeries = Tkinter.StringVar()
         self.mb = Tkinter.Menubutton(self.annotationContent, text=u" \u25BC",
                              relief="raised", anchor="e")
         self.mb.menu = Tkinter.Menu(self.mb, tearoff=0)
         self.mb['menu'] = self.mb.menu
-        self.mb.grid(row=5,column=1, sticky="NESW")
+        self.mb.grid(row=8,column=1, sticky="NESW")
 
         self.varText.trace("w", self.eventTextChanged)
         self.varSeries.trace("w", self.eventSeriesChanged)
         
-
-        
         self.frameAnnotation.grid(row=0,column=0, sticky="SEW")
         
-        self.frameSeries = CheckboxList(self, self.framePlot)
+        self.frameSeries = CheckboxList(self.frame, self.framePlot)
         self.frameSeries.grid(row=1,column=0, sticky="SEW")
         self.setAnnotation(None)
         
+    def radioGroupChanged(self, *arg, **args):
+        if self.currentAnnotation == None:
+            self.entryText.config(state="disabled")
+            self.entryLookup.config(state="disabled")
+            self.entryMass.config(state="disabled")
+            return
+
+        self.entryLookup.config(state="readonly")
+        self.entryMass.config(state="readonly")
+        self.currentAnnotation.show = self.varRadio.get()        
+        if self.currentAnnotation.show == "text":
+            self.entryText.config(state="normal")
+        else:
+            self.entryText.config(state="disabled")
+        self.framePlot._paintCanvas()
+        
+    def on_resize(self,event=None):
+        self.frame.update_idletasks()
+        size = self.canvas.bbox("all")
+        self.canvas.config(width=size[2], height=size[3])
+        self.canvas.config(scrollregion=size)
+ 
     def deleteAnnotation(self):
         if self.currentAnnotation == None:
             return
@@ -994,24 +1082,44 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             series = self.framePlot.annotations[seriesName]
             self.frameSeries.addSeries(series)
         self.buildMenu()
+        
+    def doMassDifferenceLookup(self, massdifference, tolerance):
+        string = []
+        for key in glyxtoolms.masses.GLYCAN:
+            mass = glyxtoolms.masses.GLYCAN[key]
+            error = abs(mass-massdifference)
+            if abs(mass-massdifference) <= tolerance:
+                string.append((error, key))
+        for key in glyxtoolms.masses.AMINOACID:
+            mass = glyxtoolms.masses.AMINOACID[key]
+            error = abs(mass-massdifference)
+            if abs(mass-massdifference) <= tolerance:
+                string.append((error, key))
+        string = sorted(string)
+        return "; ".join([s for e,s in string])
+
             
     def updateAnnotationMasses(self):
         if self.currentAnnotation == None:
             self.labelMass1.config(text=" - Da")
             self.labelMass2.config(text=" - Da")
-            self.labelMass3.config(text="= - Da")
-            self.labelMass3.config(fg="black")
+            self.varMass.set("- Da")
+            #self.labelMass3.config(text="= - Da")
+            #self.labelMass3.config(fg="black")
         else:
             m1 = str(round(self.currentAnnotation.x1,4))
             m2 = str(round(self.currentAnnotation.x2,4))
             m3 = str(round(self.currentAnnotation.x2-self.currentAnnotation.x1,4))
             self.labelMass1.config(text= m1 + " Da")
             self.labelMass2.config(text= m2 + " Da")
-            self.labelMass3.config(text="= " + m3 + " Da")
+            self.varMass.set(m3 + " Da")
+            string = self.doMassDifferenceLookup(abs(self.currentAnnotation.x1-self.currentAnnotation.x2), 0.1)
+            self.currentAnnotation.lookup = string
+            self.varLookup.set(string)
             if self.currentAnnotation.valid == True:
-                self.labelMass3.config(fg="black")
+                self.entryMass.config(fg="black")
             else:
-                self.labelMass3.config(fg="red")
+                self.entryMass.config(fg="red")
         
     def setAnnotation(self, annotation):
         self.currentAnnotation = annotation
@@ -1020,12 +1128,27 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             self.mb.config(text="Series"+u" \u25BC")
             self.mb.config(state="disabled")
             self.buttonDelete.config(state="disabled")
-            self.varText.set("Select Annotation")
+
+            self.buttonShowDiff.config(state="disabled")
+            self.buttonShowLookup.config(state="disabled")
+            self.buttonShowText.config(state="disabled")
+            self.buttonShowNone.config(state="disabled")
+
+            self.entryMass.config(state="disabled")
+            self.varText.set("")
             self.entryText.config(state="disabled")
+            self.entryLookup.config(state="disabled")
+            
         else:
             self.mb.config(state="normal")
             self.buttonDelete.config(state="normal")
-            self.entryText.config(state="normal")
+            
+            self.buttonShowDiff.config(state="normal")
+            self.buttonShowLookup.config(state="normal")
+            self.buttonShowText.config(state="normal")
+            self.buttonShowNone.config(state="normal")
+            
+            self.varRadio.set(annotation.show)
             self.varSeries.set(annotation.series)
             self.buildMenu()
             self.varText.set(annotation.text)

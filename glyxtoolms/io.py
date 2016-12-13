@@ -25,7 +25,9 @@ class Annotation(object):
         self.x2 = 0
         #self.y = 0
         self.text = ""
+        self.lookup = ""
         self.series = ""
+        self.show = "lookup" #{"mass", "lookup", "text", "none"}
         #self.nr = 0
         self.level = 0
         self.items = {}

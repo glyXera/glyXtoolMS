@@ -74,9 +74,7 @@ class Toolbar(Tkinter.Frame):
         button = ToggleButton(self.panels[panelname], self,
                               self.model.resources[imagepath], 
                               groupname, imagepath, cursor=cursor)
-        #button.pack(side=side,fill="y", expand=1)
         button.pack(side=side)
-        #button.grid(row=0, column=self.panels[panelname].grid_size()[1]+1)
         return button
         
 
