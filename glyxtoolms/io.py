@@ -17,6 +17,7 @@ from lxml import etree as ET
 import re
 import numpy as np
 import glyxtoolms
+   
 
 class Annotation(object):
     
@@ -348,7 +349,7 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self._version_ = "0.1.0" # current version
+        self._version_ = "0.1.1" # current version
         self.version = self._version_ # will be overwritten by file
 
     def _parseParameters(self, xmlParameters):
@@ -520,17 +521,6 @@ class GlyxXMLFile(object):
                     xmlIonIntensity.text = str(ions[glycan][ionName]["intensity"])
             # write spectrum annotations
             self._writeAnnotations(xmlSpectrum, spectrum)
-            #xmlAnnotations = ET.SubElement(xmlSpectrum, "annotations")
-            #for annotation in spectrum.annotations:
-            #    xmlAnn = ET.SubElement(xmlAnnotations, "annotation")
-            #    xmlAnnText = ET.SubElement(xmlAnn, "text")
-            #    xmlAnnText.text = annotation.text
-            #    xmlAnnX1 = ET.SubElement(xmlAnn, "x1")
-            #    xmlAnnX1.text = str(annotation.x1)
-            #    xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
-            #    xmlAnnX2.text = str(annotation.x2)
-            #    xmlAnnY = ET.SubElement(xmlAnn, "y")
-            #    xmlAnnY.text = str(annotation.y)
 
 
     def _writeFeatures(self, xmlFeatures):
@@ -727,6 +717,8 @@ class GlyxXMLFile(object):
                 xmlAnnX1.text = str(annotation.x1)
                 xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
                 xmlAnnX2.text = str(annotation.x2)
+                xmlAnnShow = ET.SubElement(xmlAnn, "show")
+                xmlAnnShow.text = str(annotation.show)
                 
     def _parseAnnotations(self,xmlAnnotationParent, parent):
         parent.annotations = {}
@@ -753,6 +745,8 @@ class GlyxXMLFile(object):
                     ann.text = xmlAnn.find("./text").text
                     ann.x1 = float(xmlAnn.find("./x1").text)
                     ann.x2 = float(xmlAnn.find("./x2").text)
+                    if self.version > "0.1.0":
+                        ann.show = xmlAnn.find("./show").text
                     ann.series = series.name
                     series.annotations.append(ann)
                 if len(series.annotations) > 0:

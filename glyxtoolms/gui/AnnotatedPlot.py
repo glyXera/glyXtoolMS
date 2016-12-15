@@ -708,10 +708,6 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.annotationItems[item3] = annotation
         self.annotationItems[item4] = annotation
 
-
-
-
-        
 class EditAnnotationFrame(Tkinter.Toplevel):
 
     def __init__(self, master):
@@ -779,17 +775,27 @@ class EditAnnotationFrame(Tkinter.Toplevel):
         
 class CheckboxList(Tkinter.Frame):
     
-    def __init__(self, master, framePlot):
+    def __init__(self, master, annotationspanel, framePlot):
         Tkinter.Frame.__init__(self, master=master)
+        self.columnconfigure(0,weight=1)
+        self.rowconfigure(0,weight=1)
         # Header:
         # Action, Name, Color, Show Series
         self.frame = Tkinter.LabelFrame(self,text="Edit Series")
         self.frame.grid(row=0, column=0, sticky="NSEW")
         self.framePlot = framePlot
-        self.columnconfigure(0,weight=1)
-        self.rowconfigure(0,weight=1)
+        self.annotationspanel = annotationspanel
+
+        
+        self.frame.columnconfigure(0,weight=1, minsize=100) # 121
+        self.frame.columnconfigure(1,weight=0, minsize=22) # 22
+        self.frame.columnconfigure(2,weight=0, minsize=27) # 27
+        self.frame.columnconfigure(3,weight=0, minsize=20) # 20
+        self.frame.rowconfigure(0,weight=1)
+        
         self.row = 0
         self.elements = {} # link to all elements of each series over series object
+        
         eye_icon = 'R0lGODlhDAAIAIAAAAAAAAAAACH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAAEALAAAAAAMAAgA\nAAIUjIFpC9fx4JkyPhthbnlJ6nWJYhQAOw==\n'
         photo = Tkinter.PhotoImage(data=eye_icon)
         h1 = Tkinter.Label(self.frame, text="Name")
@@ -811,13 +817,6 @@ class CheckboxList(Tkinter.Frame):
         
     def addSeries(self, series):
         self.row += 1
-        
-        self.frame.columnconfigure(0,weight=1)
-        self.frame.columnconfigure(1,weight=0)
-        self.frame.columnconfigure(2,weight=0)
-        self.frame.columnconfigure(3,weight=0)
-        self.frame.rowconfigure(0,weight=1)
-        
         varName = Tkinter.StringVar()
         entryName = Tkinter.Entry(self.frame, textvariable=varName, width=10)
         entryName.config(bg="white")
@@ -855,12 +854,13 @@ class CheckboxList(Tkinter.Frame):
         self.elements[series]["checkShow"] = checkShow
         self.elements[series]["buttonDelete"] = buttonDelete
         
+        
     def eventSetVisibility(self, series, var):
         if series.hidden  == var.get():
             series.hidden = not series.hidden
-            if series.hidden == True and self.master.currentAnnotation != None:
-                if self.master.currentAnnotation.series == series.name:
-                    self.master.setAnnotation(None)
+            if series.hidden == True and self.annotationspanel.currentAnnotation != None:
+                if self.annotationspanel.currentAnnotation.series == series.name:
+                    self.annotationspanel.setAnnotation(None)
             self.framePlot._paintCanvas()
 
     def eventDeleteSeries(self, series):
@@ -879,9 +879,9 @@ class CheckboxList(Tkinter.Frame):
         self.elements[series]["buttonDelete"].destroy()
         self.elements.pop(series)
         self.framePlot.annotations.pop(series.name)
-        if self.master.currentAnnotation in series.annotations:
-            self.master.setAnnotation(None)
-        self.master.update()
+        if self.annotationspanel.currentAnnotation in series.annotations:
+            self.annotationspanel.setAnnotation(None)
+        self.annotationspanel.update()
         self.framePlot._paintCanvas()
         
     def eventSetColor(self, button, series):
@@ -891,7 +891,7 @@ class CheckboxList(Tkinter.Frame):
             button.config(bg=color)
             button.config(activebackground=color)
             series.color=color
-            self.master.update()
+            self.annotationspanel.update()
             self.framePlot._paintCanvas()
         
     def eventNameChanged(self,changedSeries):
@@ -924,53 +924,43 @@ class CheckboxList(Tkinter.Frame):
                 for annotation in changedSeries.annotations:
                     annotation.series = newName
                 changedSeries.name = newName
-                self.master.setAnnotation(self.master.currentAnnotation)
-
-class AutoScrollbar(Tkinter.Scrollbar):
-    # a scrollbar that hides itself if it's not needed.  only
-    # works if you use the grid geometry manager.
-    def set(self, lo, hi):
-        if float(lo) <= 0.0 and float(hi) >= 1.0:
-            # grid_remove is currently missing from Tkinter!
-            #self.tk.call("grid", "remove", self)
-            self.pack_forget()
-        else:
-            #self.grid()
-            self.pack(side="right", fill="y", expand="yes")
-        Tkinter.Scrollbar.set(self, lo, hi)
-    #def pack(self, **kw):
-    #    raise Tkinter.TclError, "cannot use pack with this widget"
-    def place(self, **kw):
-        raise Tkinter.TclError, "cannot use place with this widget"
+                self.annotationspanel.setAnnotation(self.annotationspanel.currentAnnotation)
 
 class AnnotationSidePanel(Tkinter.Frame, object):
     def __init__(self, master, framePlot):
         Tkinter.Frame.__init__(self, master=master)
         self.master = master
         self.framePlot = framePlot
-        scrollbar = AutoScrollbar(self)
 
-        scrollbar.pack(side="right", fill="y", expand="yes")
-        self.canvas = Tkinter.Canvas(self, yscrollcommand=scrollbar.set)
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        
+        self.scrollbar = Tkinter.Scrollbar(self)
+        self.scrollbar.grid(row=0, column=1, sticky="WNS")
+        self.canvas = Tkinter.Canvas(self, yscrollcommand=self.scrollbar.set)
         self.canvas.config(highlightthickness=0)
-        self.canvas.pack(side="left", fill="both", expand="yes")
+        #self.canvas.grid(row=0, column=0, sticky="NSWE")
+        self.canvas.grid(row=0, column=0, rowspan=2, sticky="NSWE")
 
         self.frame = Tkinter.Frame(self.canvas)
         self.canvas.create_window(0, 0, anchor="nw", window=self.frame)
+
+        self.scrollbar.config(command=self.canvas.yview)
         
-        scrollbar.config(command=self.canvas.yview)
-        
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        self.empty = Tkinter.Canvas(self, width=10, height=0)
+        self.empty.grid(row=1, column=1, sticky="WNS")
+        self.empty.config(highlightthickness=0)
 
         self.frame.columnconfigure(1,weight=1)
+        self.frame.rowconfigure(0,weight=0)
         self.frame.rowconfigure(1,weight=1)
         
         self.canvas.bind("<Configure>", self.on_resize, "+")
         self.frame.bind("<Configure>", self.on_resize, "+")
         
-
         self.frameAnnotation = Tkinter.LabelFrame(self.frame,text="Current Annotation")
+        self.frameAnnotation.grid(row=0,column=0, sticky="NEW", padx=2)
+        
         self.annotationContent = Tkinter.Frame(self.frameAnnotation)
         self.annotationContent.grid(row=0,column=0)
         self.annotationContent.columnconfigure(0,weight=0)
@@ -981,21 +971,20 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.annotationContent.rowconfigure(3,weight=1)
         
         self.buttonDelete = Tkinter.Button(self.annotationContent, text="Delete  Annotation",command=self.deleteAnnotation)
-        self.buttonDelete.grid(row=0,column=1,columnspan=1, sticky="NESW")
+        self.buttonDelete.grid(row=0,column=0,columnspan=2, padx=4, sticky="NESW")
         
         labelMassText1 = Tkinter.Label(self.annotationContent, text="m1")
         labelMassText1.grid(row=1,column=0, sticky="NSEW")
         self.labelMass1 = Tkinter.Label(self.annotationContent, text=" - Da", anchor="e")
-        self.labelMass1.grid(row=1,column=1, sticky="NSEW")
+        self.labelMass1.grid(row=1,column=1, padx=4, sticky="NSEW")
         
         labelMassText2 = Tkinter.Label(self.annotationContent, text="m2")
         labelMassText2.grid(row=2,column=0, sticky="NSEW")
         self.labelMass2 = Tkinter.Label(self.annotationContent, text=" - Da", anchor="e")
-        self.labelMass2.grid(row=2,column=1, sticky="NSEW")
-        
-        
+        self.labelMass2.grid(row=2,column=1, padx=4, sticky="NSEW")
+
         radioFrame = Tkinter.LabelFrame(self.annotationContent, text="Annotate with")
-        radioFrame.grid(row=3,column=0, columnspan=2)
+        radioFrame.grid(row=3,column=0, columnspan=2, padx=2)
         
         self.varRadio = Tkinter.StringVar()
         self.varRadio.trace("w", self.radioGroupChanged)
@@ -1004,16 +993,16 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.buttonShowDiff.grid(row=0,column=0, sticky="NWS")
         
         self.varMass = Tkinter.StringVar()
-        self.entryMass= Tkinter.Entry(radioFrame, textvariable=self.varMass ,width=13)
-        self.entryMass.grid(row=0,column=1, sticky="NSEW")
+        self.entryMass= Tkinter.Entry(radioFrame, textvariable=self.varMass ,width=12)
+        self.entryMass.grid(row=0,column=1, padx=4, sticky="NSEW")
         self.entryMass.config(justify="right")
         
         self.buttonShowLookup = Tkinter.Radiobutton(radioFrame, text="Lookup", variable=self.varRadio, value="lookup")
         self.buttonShowLookup.grid(row=1,column=0, sticky="NWS")
         
         self.varLookup = Tkinter.StringVar()
-        self.entryLookup= Tkinter.Entry(radioFrame, textvariable=self.varLookup ,width=13)
-        self.entryLookup.grid(row=1,column=1, sticky="NWES")
+        self.entryLookup= Tkinter.Entry(radioFrame, textvariable=self.varLookup ,width=12)
+        self.entryLookup.grid(row=1,column=1, padx=4, sticky="NWES")
         
         self.buttonShowText = Tkinter.Radiobutton(radioFrame, text="Text", variable=self.varRadio, value="text")
         self.buttonShowText.grid(row=2,column=0, sticky="NWS")
@@ -1022,31 +1011,28 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.buttonShowNone.grid(row=3,column=0, sticky="NWS")
         
         self.varText = Tkinter.StringVar()
-        self.entryText = Tkinter.Entry(radioFrame, textvariable=self.varText ,width=13)
+        self.entryText = Tkinter.Entry(radioFrame, textvariable=self.varText ,width=12)
         self.entryText.config(bg="white")
-        self.entryText.grid(row=2,column=1, sticky="NWES")
+        self.entryText.grid(row=2,column=1, padx=4, sticky="NWES")
         
         self.entryLookup.config(state="readonly")
         self.entryMass.config(state="readonly")
 
-        
         labelSeries = Tkinter.Label(self.annotationContent, text="Series")
-        labelSeries.grid(row=8,column=0)
+        labelSeries.grid(row=8,column=0, padx=2)
 
         self.varSeries = Tkinter.StringVar()
         self.mb = Tkinter.Menubutton(self.annotationContent, text=u" \u25BC",
                              relief="raised", anchor="e")
         self.mb.menu = Tkinter.Menu(self.mb, tearoff=0)
         self.mb['menu'] = self.mb.menu
-        self.mb.grid(row=8,column=1, sticky="NESW")
+        self.mb.grid(row=8,column=1, padx=4, pady=4, sticky="NESW")
 
         self.varText.trace("w", self.eventTextChanged)
         self.varSeries.trace("w", self.eventSeriesChanged)
-        
-        self.frameAnnotation.grid(row=0,column=0, sticky="SEW")
-        
-        self.frameSeries = CheckboxList(self.frame, self.framePlot)
-        self.frameSeries.grid(row=1,column=0, sticky="SEW")
+
+        self.frameSeries = CheckboxList(self.frame, self, self.framePlot)
+        self.frameSeries.grid(row=1,column=0, sticky="SEW", padx=2)
         self.setAnnotation(None)
         
     def radioGroupChanged(self, *arg, **args):
@@ -1065,10 +1051,11 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             self.entryText.config(state="disabled")
         self.framePlot._paintCanvas()
         
-    def on_resize(self,event=None):
+    def on_resize(self,event):
         self.frame.update_idletasks()
         size = self.canvas.bbox("all")
-        self.canvas.config(width=size[2], height=size[3])
+        self.empty.config(height=event.height -size[3])
+        self.canvas.config(height=size[3], width=size[2])
         self.canvas.config(scrollregion=size)
  
     def deleteAnnotation(self):
@@ -1104,8 +1091,6 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             self.labelMass1.config(text=" - Da")
             self.labelMass2.config(text=" - Da")
             self.varMass.set("- Da")
-            #self.labelMass3.config(text="= - Da")
-            #self.labelMass3.config(fg="black")
         else:
             m1 = str(round(self.currentAnnotation.x1,4))
             m2 = str(round(self.currentAnnotation.x2,4))

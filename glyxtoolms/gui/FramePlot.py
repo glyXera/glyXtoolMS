@@ -98,24 +98,33 @@ class SidePanel(Tkinter.Frame, object):
         Tkinter.Frame.__init__(self, master=master)
         self.master = master
         self.panels = {}
-
         # add spacer frame to force pack updates
         nullframe = Tkinter.Frame(self, bd=0)
-        nullframe.pack()
+        #nullframe.pack(side="bottom")
+        nullframe.pack(side="bottom", anchor="n", fill="y", expand="yes")
+        #nullframe.grid(row=1000, column=0, sticky="NSEW")
+        #self.rowconfigure(1000, weight=0)
+        #self.rowconfigure(0, weight=1)
         
     def addContextPanel(self, buttonname, panel):
         self.panels[buttonname] = panel
 
     def activatePanels(self,buttonnames):
+        #row = 0
         for name in self.panels:
             if name in buttonnames:
                 if not self.panels[name].winfo_ismapped():
                     # activate panel
-                    self.panels[name].pack(side="bottom", anchor="n")
-                    self.panels[name].update()
+                    self.panels[name].pack(side="top", anchor="n", fill="y", expand="yes")
+                    #self.panels[name].pack(side="top")
+                    
+                    #self.panels[name].grid(row=row, column=0, sticky="NSEW")
+                    #self.panels[name].update()
+                    #row += 1
             elif self.panels[name].winfo_ismapped():
                 # deactivate panel
                 self.panels[name].pack_forget()
+                #self.panels[name].grid_forget()
 
 class FramePlot(Tkinter.Frame, object):
 
@@ -182,7 +191,7 @@ class FramePlot(Tkinter.Frame, object):
         self.vbar.grid(row=1, column=1, sticky="NSEW")
         
         self.sidepanel = SidePanel(self)
-        self.sidepanel.grid(row=1, column=2, sticky="NEW")
+        self.sidepanel.grid(row=1, column=2, rowspan=2, sticky="NEWS")
         
         
 
