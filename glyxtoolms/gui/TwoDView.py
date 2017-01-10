@@ -32,7 +32,7 @@ class TwoDView(FramePlot.FramePlot):
         #self.canvas.bind("<Left>", self.setButtonValue)
         #self.canvas.bind("<Right>", self.setButtonValue)
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
-
+        """
         optionsFrame = ttk.Labelframe(master, text="Plot Options")
         optionsFrame.grid(row=0, column=1, sticky="NS")
 
@@ -131,7 +131,7 @@ class TwoDView(FramePlot.FramePlot):
         self.ov9.set(1)
         self.ov10.set(1)
         self.ov11.set(0)
-
+        """
 
     def setButtonValue(self, i):
         state = getattr(self, "ov"+str(i)).get()

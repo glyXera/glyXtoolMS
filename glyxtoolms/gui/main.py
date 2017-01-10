@@ -1,26 +1,20 @@
 """
 Viewer for analysis file
-a) MS/MS spectra, annotation
-b) scored spectra
-c) scored features
-d) Histogram
-
 GUI:
 |---------------------------------------------------|
 |         Menubar                                   |
 |---------------------------------------------------|
-|   Project   |  tab structure, context dependend   |
-|   control   |                                     |
-|             |                                     |
-|-------------|                                     |
-| ProjectView |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
+| Feature list | 2D View  | Chroma    |  Isotope    |
+|                         | togram    |  pattern    |
+|                         |           |             |
+|                         |           |             |
+|-------------------------|-------------------------|
+| Identifications|Spectra |  Spectrumview           |
+|                         |                         |
+|                         |   Consensusspectrum     |
+|                         |   or                    |
+|                         |   single spectrum       |
+|                         |   depending on tab      |
 |---------------------------------------------------|
 """
 
@@ -31,13 +25,18 @@ import tkFileDialog
 from glyxtoolms.gui import DataModel
 from glyxtoolms.gui import ProjectFrame
 from glyxtoolms.gui import NotebookScoring
-from glyxtoolms.gui import NotebookFeature
+from glyxtoolms.gui import FeaturesFrame
 from glyxtoolms.gui import NotebookIdentification
 from glyxtoolms.gui import ExtensionScoring
 from glyxtoolms.gui import ExtensionFeature
 from glyxtoolms.gui import HistogramView
 from glyxtoolms.gui import ExtensionIdentification
 from glyxtoolms.gui import FilterPanel
+from glyxtoolms.gui import ConsensusSpectrumFrame
+from glyxtoolms.gui import FeaturePrecursorView
+from glyxtoolms.gui import FeatureChromatogramView
+from glyxtoolms.gui import TwoDView
+from glyxtoolms.gui import SpectrumView2
 
 class App(ttk.Frame):
 
@@ -52,7 +51,7 @@ class App(ttk.Frame):
         self.model = DataModel.DataModel()
 
         self.model.root = master
-
+        
         filemenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         #filemenu.add_command(label="Set workspace", command=self.setWorkspace)
         filemenu.add_command(label="Options", command=self.setOptions)
@@ -80,6 +79,100 @@ class App(ttk.Frame):
         #toolMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
         #menubar.add_cascade(label="Tool", menu=toolMenu)
         
+        
+        # Divide left and right
+        panes = Tkinter.PanedWindow(master, orient="horizontal")
+        panes.config(sashwidth=10)
+        panes.config(opaqueresize=False)
+        panes.config(sashrelief="raised")
+
+        panes.pack(fill="both", expand="yes")
+        left = Tkinter.PanedWindow(panes, orient="vertical")
+        left.pack(fill="both", expand="yes")
+        left.config(sashwidth=10)
+        left.config(opaqueresize=False)
+        left.config(sashrelief="raised")
+
+        right = Tkinter.PanedWindow(panes, orient="vertical")
+        right.pack(fill="both", expand="yes")
+        right.config(sashwidth=10)
+        right.config(opaqueresize=False)
+        right.config(sashrelief="raised")
+
+        panes.add(left)
+        panes.add(right)
+        
+        leftTop = Tkinter.Frame(left,width=100, height=100)
+        leftTop.pack()
+        leftBottom = Tkinter.Frame(left,width=100, height=100)
+        leftBottom.pack()
+        
+        left.add(leftTop)
+        left.add(leftBottom)
+        
+        rightTop = Tkinter.Frame(right,width=100, height=100)
+        rightTop.pack()
+        rightBottom = Tkinter.Frame(right,width=100, height=100)
+        rightBottom.pack()
+        
+        right.add(rightTop)
+        right.add(rightBottom)
+        
+        # ---- Left side -----
+        
+        notebookFeature = ttk.Notebook(leftTop)
+        notebookFeature.pack(fill="both", expand="yes")
+        
+        n1_0 = ProjectFrame.ProjectFrame(notebookFeature, self.model)
+        n1_1 = FeaturesFrame.NotebookFeature(notebookFeature, self.model)
+        n1_2 = TwoDView.TwoDView(notebookFeature, self.model)
+        
+        notebookFeature.add(n1_0, text='Projects')
+        notebookFeature.add(n1_1, text='FeatureList')
+        notebookFeature.add(n1_2, text='2D View')
+        
+        self.notebook = ttk.Notebook(leftBottom)
+        self.notebook.pack(fill="both", expand="yes")
+        n1 = NotebookIdentification.NotebookIdentification(self.notebook, self.model)
+        n2 = NotebookScoring.NotebookScoring(self.notebook, self.model)
+        
+        
+        self.notebook.add(n1, text='Identifications')
+        self.notebook.add(n2, text='Spectra')
+        
+        # ---- Right side -----
+        rightBottom.columnconfigure(0,weight=1)
+        rightBottom.rowconfigure(0,weight=1)
+        self.spectrumFrame1 = ConsensusSpectrumFrame.ConsensusSpectrumFrame(rightBottom, self.model)
+        self.spectrumFrame1.grid(row=0,column=0, sticky="NWES")
+        #self.spectrumFrame1.pack(fill="both", expand="yes")
+        
+        self.spectrumFrame2 = SpectrumView2.SpectrumView(rightBottom, self.model)
+        #self.spectrumFrame2.pack(fill="both", expand="yes")
+        self.spectrumFrame2.grid(row=0,column=0, sticky="NWES")    
+        
+        chromFrame = ttk.Labelframe(rightTop, text="Precursor Chromatogram")
+        chromFrame.grid(row=0, column=0, sticky="NWES")
+        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, self.model)
+        chromView.grid(row=0, column=0, sticky="NWES")
+        chromFrame.columnconfigure(0, weight=1)
+        chromFrame.rowconfigure(0, weight=1)
+
+        msFrame = ttk.Labelframe(rightTop, text="Precursorspectrum")
+        msFrame.grid(row=0, column=1, sticky="NWES")
+        msView = FeaturePrecursorView.PrecursorView(msFrame, self.model)
+        msView.grid(row=0, column=0, sticky="NWES")
+        msFrame.columnconfigure(0, weight=1)
+        msFrame.rowconfigure(0, weight=1)
+        
+        
+        self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
+        self.model.classes["main"] = self
+        
+        
+        
+        
+        """
         panes = Tkinter.PanedWindow(master)
         panes.config(sashwidth=10)
         panes.config(opaqueresize=False)
@@ -147,6 +240,7 @@ class App(ttk.Frame):
         
         # register class in Datamodel
         self.model.classes["main"] = self
+        """
         
     def setActiveFilterHint(self, hasActiveFilter):
         if hasActiveFilter == True:
@@ -159,18 +253,26 @@ class App(ttk.Frame):
 
     def changedNotebook(self, event):
         idx = self.notebook.select()
-        # hide all extensions
-        self.e1.lower()
-        self.e2.lower()
-        self.e3.lower()
-        # show selected extension
         text = self.notebook.tab(idx, "text")
-        if "1" in text:
-            self.e1.lift()
-        elif "2" in text:
-            self.e2.lift()
-        elif "3" in text:
-            self.e3.lift()
+        if text == "Identifications":
+            self.spectrumFrame1.lift()
+            self.spectrumFrame2.lower()
+        else:
+            self.spectrumFrame1.lower()
+            self.spectrumFrame2.lift()
+        #idx = self.notebook.select()
+        ## hide all extensions
+        #self.e1.lower()
+        #self.e2.lower()
+        #self.e3.lower()
+        ## show selected extension
+        #text = self.notebook.tab(idx, "text")
+        #if "1" in text:
+        #    self.e1.lift()
+        #elif "2" in text:
+        #    self.e2.lift()
+        #elif "3" in text:
+        #    self.e3.lift()
 
     def showHistogram(self):
         if self.model.currentAnalysis == None:
