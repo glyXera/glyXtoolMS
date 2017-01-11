@@ -81,12 +81,90 @@ class App(ttk.Frame):
         
         
         # Divide left and right
-        panes = Tkinter.PanedWindow(master, orient="horizontal")
+        panes = Tkinter.PanedWindow(master, orient="vertical")
         panes.config(sashwidth=10)
         panes.config(opaqueresize=False)
         panes.config(sashrelief="raised")
 
         panes.pack(fill="both", expand="yes")
+        top = Tkinter.PanedWindow(panes, orient="horizontal")
+        top.pack(fill="both", expand="yes")
+        top.config(sashwidth=10)
+        top.config(opaqueresize=False)
+        top.config(sashrelief="raised")
+        top.config(bg="red")
+        
+        bottom = ttk.Notebook(panes)
+        bottom.pack(fill="both", expand="yes")
+        panes.add(top)
+        panes.add(bottom)
+        
+        topLeft = ttk.Notebook(top)
+        topLeft.pack(fill="both", expand="yes")
+        
+        n1_0 = ProjectFrame.ProjectFrame(topLeft, self.model)
+        n1_1 = FeaturesFrame.NotebookFeature(topLeft, self.model)
+        n1_2 = TwoDView.TwoDView(topLeft, self.model)
+        
+        topLeft.add(n1_0, text='Projects')
+        topLeft.add(n1_1, text='FeatureList')
+        topLeft.add(n1_2, text='2D View')
+        
+        
+        
+        # TopRight
+        
+        topRight = Tkinter.Frame(top)
+        topRight.pack(fill="both", expand="yes")
+        
+        top.add(topLeft)
+        top.add(topRight)
+        
+        topRight.columnconfigure(0, weight=1)
+        topRight.columnconfigure(1, weight=1)
+        topRight.rowconfigure(1, weight=1)
+        
+        chromFrame = ttk.Labelframe(topRight, text="Precursor Chromatogram")
+        chromFrame.grid(row=0, column=0, sticky="NWES")
+        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, self.model)
+        chromView.grid(row=0, column=0, sticky="NWES")
+        chromFrame.columnconfigure(0, weight=1)
+        chromFrame.rowconfigure(0, weight=1)
+
+        msFrame = ttk.Labelframe(topRight, text="Precursorspectrum")
+        msFrame.grid(row=0, column=1, sticky="NWES")
+        msView = FeaturePrecursorView.PrecursorView(msFrame, self.model)
+        msView.grid(row=0, column=0, sticky="NWES")
+        msFrame.columnconfigure(0, weight=1)
+        msFrame.rowconfigure(0, weight=1)
+        
+        # Bottom
+        notebook_b1 = Tkinter.PanedWindow(bottom, orient="horizontal")
+        notebook_b1.config(sashwidth=10)
+        notebook_b1.config(opaqueresize=False)
+        notebook_b1.config(sashrelief="raised")
+        notebook_b2 = Tkinter.PanedWindow(bottom, orient="horizontal")
+        notebook_b2.config(sashwidth=10)
+        notebook_b2.config(opaqueresize=False)
+        notebook_b2.config(sashrelief="raised")
+        
+        bottom.add(notebook_b1, text='Identifications')
+        bottom.add(notebook_b2, text='Spectra')
+        
+        # Identification Frame
+        identificationFrame = NotebookIdentification.NotebookIdentification(notebook_b1, self.model)
+        identificationFrame.pack(fill="both", expand="yes")
+        notebook_b1.add(identificationFrame)
+        
+        consensusFrame = ConsensusSpectrumFrame.ConsensusSpectrumFrame(notebook_b1, self.model)
+        consensusFrame.pack(fill="both", expand="yes")
+        notebook_b1.add(consensusFrame)
+        
+        
+        #n2 = NotebookScoring.NotebookScoring(self.notebook, self.model)
+        
+        
+        """
         left = Tkinter.PanedWindow(panes, orient="vertical")
         left.pack(fill="both", expand="yes")
         left.config(sashwidth=10)
@@ -168,80 +246,8 @@ class App(ttk.Frame):
         
         self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
         self.model.classes["main"] = self
-        
-        
-        
-        
         """
-        panes = Tkinter.PanedWindow(master)
-        panes.config(sashwidth=10)
-        panes.config(opaqueresize=False)
-        panes.config(sashrelief="raised")
-
-        panes.pack(fill="both", expand="yes")
-
-        left = Tkinter.Frame(panes)
-        left.pack()
-
-        right = Tkinter.Frame(panes)
-        right.pack()
-
-        panes.add(left)
-        panes.add(right)
-
-        frameProject = ttk.Labelframe(left, text="Projects")
-        projectFrame = ProjectFrame.ProjectFrame(frameProject, self.model)
-        projectFrame.pack(fill="both", expand="yes")
-        
-        frameProject.grid(row=0, column=0, sticky="NWES")
-
-
-        frameNotebook = ttk.Labelframe(left, text="Analysis")
-        frameNotebook.grid(row=1, column=0, sticky=("NWES"))
-        frameNotebook.columnconfigure(0, weight=1)
-        frameNotebook.rowconfigure(0, weight=1)
-
-
-        self.notebook = ttk.Notebook(frameNotebook)
-
-        n1 = NotebookIdentification.NotebookIdentification(self.notebook, self.model)
-        n2 = NotebookFeature.NotebookFeature(self.notebook, self.model)
-        n3 = NotebookScoring.NotebookScoring(self.notebook, self.model)
-        
-        
-        self.notebook.add(n1, text='1. Identification')
-        self.notebook.add(n2, text='2. Features')
-        self.notebook.add(n3, text='3. Scoring')
-
-        self.notebook.grid(row=0, column=0, sticky="NWES")
-        self.notebook.columnconfigure(0, weight=1)
-
-        self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
-
-
-
-        # Add extention frames
-        
-        self.e1 = ExtensionIdentification.ExtensionIdentification(right, self.model, '1. Identification')
-        self.e1.grid(row=0, column=0, sticky="NWES")
-        
-        self.e2 = ExtensionFeature.ExtensionFeature(right, self.model, '2. Features')
-        self.e2.grid(row=0, column=0, sticky="NWES")
-        
-        self.e3 = ExtensionScoring.ExtensionScoring(right, self.model, '3. Scoring')
-        self.e3.grid(row=0, column=0, sticky="NWES")
-        
-        
-        left.columnconfigure(0, weight=1)
-        left.rowconfigure(0, weight=0)
-        left.rowconfigure(1, weight=1)
-        right.columnconfigure(0, weight=1)
-        right.rowconfigure(0, weight=1)
-        
-        # register class in Datamodel
-        self.model.classes["main"] = self
-        """
-        
+               
     def setActiveFilterHint(self, hasActiveFilter):
         if hasActiveFilter == True:
             self.menubar.entryconfig(4, background="#e60000")
@@ -260,19 +266,6 @@ class App(ttk.Frame):
         else:
             self.spectrumFrame1.lower()
             self.spectrumFrame2.lift()
-        #idx = self.notebook.select()
-        ## hide all extensions
-        #self.e1.lower()
-        #self.e2.lower()
-        #self.e3.lower()
-        ## show selected extension
-        #text = self.notebook.tab(idx, "text")
-        #if "1" in text:
-        #    self.e1.lift()
-        #elif "2" in text:
-        #    self.e2.lift()
-        #elif "3" in text:
-        #    self.e3.lift()
 
     def showHistogram(self):
         if self.model.currentAnalysis == None:
