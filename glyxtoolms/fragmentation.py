@@ -113,6 +113,22 @@ def generatePeptideFragments(peptide):
         amino = peptide.sequence[pos]
         modifications[pos] = (mod, amino)
     
+    # collect glycosylationsite positions
+    glycosylationsSites = set()
+    for site,typ in peptide.glycosylationSites:
+        pos = site-peptide.start
+        assert 0 <= pos < len(peptide.sequence)
+        amino = peptide.sequence[pos]
+        if typ == "N":
+            assert amino == "N"
+        elif typ == "O":
+            assert amino == "S" or amino == "T"
+        glycosylationsSites.add(pos)
+    if len(glycosylationsSites) == 0:
+        for pos, amino in enumerate(peptide.sequence):
+            if amino in ["N", "s", "T"]:
+                glycosylationsSites.add(pos)
+    
     data = {}
     for i in range(0, len(sequence)):
 
@@ -139,12 +155,13 @@ def generatePeptideFragments(peptide):
 
         bNH3 = b - {"N":1, "H":3}
         bH2O = b - {"O":1, "H":2}
-        bHEXNAC = b + glyxtoolms.masses.COMPOSITION["HEXNAC"]
+        bHEXNAC = b + glyxtoolms.masses.COMPOSITION["HEXNAC"] - {"H":2, "O":1}
 
         if i < len(sequence)-1: # generate a,b and c ions
             key = str(i+1)
             data["b"+key] = (b.mass(), peptidestring, "b")
-            data["b"+key+"+HexNAc"] = (bHEXNAC.mass(), peptidestring+"+HexNac", "b")
+            if min(glycosylationsSites) <= i:
+                data["b"+key+"+HexNAc"] = (bHEXNAC.mass(), peptidestring+"+HexNac", "b")
             
             if ("R" in sequence or
                 "K" in sequence or
@@ -174,13 +191,14 @@ def generatePeptideFragments(peptide):
         yNH3 = y - {"N":1, "H":3}
         yH2O = y - {"O":1, "H":2}
 
-        yHEXNAC = y + glyxtoolms.masses.COMPOSITION["HEXNAC"]
+        yHEXNAC = y + glyxtoolms.masses.COMPOSITION["HEXNAC"] - {"H":2, "O":1}
 
         key = str(len(sequence)-i)
 
         if i > 0:
             data["y"+key] = (y.mass(), peptidestring, "y")
-            data["y"+key+"+HexNAc"] = (yHEXNAC.mass(), peptidestring+"+HexNac", "y")
+            if max(glycosylationsSites) >= i:
+                data["y"+key+"+HexNAc"] = (yHEXNAC.mass(), peptidestring+"+HexNac", "y")
             if ("R" in sequence or
                 "K" in sequence or
                 "Q" in sequence or
