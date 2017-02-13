@@ -24,7 +24,7 @@ import tkFileDialog
 
 from glyxtoolms.gui import DataModel
 from glyxtoolms.gui import ProjectFrame
-from glyxtoolms.gui import NotebookScoring
+from glyxtoolms.gui import NotebookScoring2
 from glyxtoolms.gui import FeaturesFrame
 from glyxtoolms.gui import NotebookIdentification
 from glyxtoolms.gui import ExtensionScoring
@@ -32,7 +32,7 @@ from glyxtoolms.gui import ExtensionFeature
 from glyxtoolms.gui import HistogramView
 from glyxtoolms.gui import ExtensionIdentification
 from glyxtoolms.gui import FilterPanel
-from glyxtoolms.gui import ConsensusSpectrumFrame
+from glyxtoolms.gui import ConsensusSpectrumFrame3
 from glyxtoolms.gui import FeaturePrecursorView
 from glyxtoolms.gui import FeatureChromatogramView
 from glyxtoolms.gui import TwoDView
@@ -122,7 +122,7 @@ class App(ttk.Frame):
         
         topRight.columnconfigure(0, weight=1)
         topRight.columnconfigure(1, weight=1)
-        topRight.rowconfigure(1, weight=1)
+        topRight.rowconfigure(0, weight=1)
         
         chromFrame = ttk.Labelframe(topRight, text="Precursor Chromatogram")
         chromFrame.grid(row=0, column=0, sticky="NWES")
@@ -156,13 +156,24 @@ class App(ttk.Frame):
         identificationFrame.pack(fill="both", expand="yes")
         notebook_b1.add(identificationFrame)
         
-        consensusFrame = ConsensusSpectrumFrame.ConsensusSpectrumFrame(notebook_b1, self.model)
+        consensusFrame = ConsensusSpectrumFrame3.ConsensusSpectrumFrame(notebook_b1, self.model)
         consensusFrame.pack(fill="both", expand="yes")
         notebook_b1.add(consensusFrame)
         
+        # Spectrum Frame
+        scoringFrame = NotebookScoring2.NotebookScoring(notebook_b2, self.model)
+        scoringFrame.pack(fill="both", expand="yes")
+        notebook_b2.add(scoringFrame)
         
-        #n2 = NotebookScoring.NotebookScoring(self.notebook, self.model)
         
+        spectrumFrame = SpectrumView2.SpectrumView(notebook_b2, self.model)
+        spectrumFrame.pack(fill="both", expand="yes")
+        notebook_b2.add(spectrumFrame)
+        
+        self.model.classes["main"] = self
+        
+        #self.spectrumFrame2.pack(fill="both", expand="yes")
+        #self.spectrumFrame2.grid(row=0,column=0, sticky="NWES")  
         
         """
         left = Tkinter.PanedWindow(panes, orient="vertical")

@@ -130,8 +130,10 @@ class ProjectFrame(ttk.Frame):
         #self.rowconfigure(1, minsize=200, weight=1)
         projects.columnconfigure(0, weight=1)
         projects.columnconfigure(1, weight=0)
+        projects.rowconfigure(0, weight=1)
         
         self.columnconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
 
         # Events
         self.projectTree.bind("<<TreeviewSelect>>", self.clickedTree)

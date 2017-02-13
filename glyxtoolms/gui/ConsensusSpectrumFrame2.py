@@ -25,7 +25,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.peaksByItem = {}
 
         # register class
-        self.model.classes["ConsensusSpectrumFrame2"] = self
+        self.model.classes["ConsensusSpectrumFrame"] = self
         
         # register additional button bindings
         self.canvas.bind("<Button-2>", self.button2, "+")

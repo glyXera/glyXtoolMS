@@ -260,7 +260,8 @@ class TwoDView(FramePlot.FramePlot):
                     hasCharge = True
                     break
             nrFeatureHits = max(nrFeatureHits)
-
+            
+            """
             nr = 1
             if spectrum.isGlycopeptide:
                 nr *= 1
@@ -312,9 +313,10 @@ class TwoDView(FramePlot.FramePlot):
                 if self.ov11.get() == 0:
                     continue
                 color = colorNonGlyco
-
+            """
             x = self.convAtoX(spectrum.rt)
             y = self.convBtoY(spectrum.precursorMass)
+            color = "red"
             item = self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill=color)
 
     def paintObject(self):

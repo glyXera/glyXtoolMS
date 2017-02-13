@@ -239,9 +239,6 @@ class NotebookIdentification(ttk.Frame):
         analysis.sorting["NotebookIdentification"] = (sortingColumn, not reverse)
         self.sortColumn(sortingColumn)
 
-        # update Extention
-        self.model.classes["IdentificationStatsFrame"].init()
-
     def clickedTree(self, event):
         selection = self.tree.selection()
         if len(selection) == 0:
@@ -250,7 +247,6 @@ class NotebookIdentification(ttk.Frame):
             item = selection[0]
             self.model.classes["NotebookFeature"].setSelectedFeature(self.tree.item(item, "text"))
             self.model.classes["ConsensusSpectrumFrame"].init(self.treeIds[item])
-            self.model.classes["PeptideCoverageFrame"].init(self.treeIds[item])
 
     def deleteIdentification(self, event):
         selection = self.tree.selection()
