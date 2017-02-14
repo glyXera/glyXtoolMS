@@ -388,6 +388,12 @@ class NotebookFeature(ttk.Frame):
     def clickedFeatureTree(self, event):
         selection = self.featureTree.selection()
         if len(selection) == 0:
+            # clear views
+            return
+        # update identification list
+        
+        if len(selection) > 1:
+            # clear views
             return
         item = selection[0]
         feature = self.featureTreeIds[item]

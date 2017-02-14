@@ -32,11 +32,12 @@ from glyxtoolms.gui import ExtensionFeature
 from glyxtoolms.gui import HistogramView
 from glyxtoolms.gui import ExtensionIdentification
 from glyxtoolms.gui import FilterPanel
-from glyxtoolms.gui import ConsensusSpectrumFrame3
+from glyxtoolms.gui import ConsensusSpectrumFrame
 from glyxtoolms.gui import FeaturePrecursorView
 from glyxtoolms.gui import FeatureChromatogramView
 from glyxtoolms.gui import TwoDView
 from glyxtoolms.gui import SpectrumView2
+from glyxtoolms.gui import PeptideCoverageFrame
 
 class App(ttk.Frame):
 
@@ -92,7 +93,6 @@ class App(ttk.Frame):
         top.config(sashwidth=10)
         top.config(opaqueresize=False)
         top.config(sashrelief="raised")
-        top.config(bg="red")
         
         bottom = ttk.Notebook(panes)
         bottom.pack(fill="both", expand="yes")
@@ -123,6 +123,7 @@ class App(ttk.Frame):
         topRight.columnconfigure(0, weight=1)
         topRight.columnconfigure(1, weight=1)
         topRight.rowconfigure(0, weight=1)
+        topRight.rowconfigure(1, weight=0)
         
         chromFrame = ttk.Labelframe(topRight, text="Precursor Chromatogram")
         chromFrame.grid(row=0, column=0, sticky="NWES")
@@ -137,6 +138,13 @@ class App(ttk.Frame):
         msView.grid(row=0, column=0, sticky="NWES")
         msFrame.columnconfigure(0, weight=1)
         msFrame.rowconfigure(0, weight=1)
+        
+        covFrame = ttk.Labelframe(topRight, text="Peptide Coverage")
+        covFrame.grid(row=1, column=0, columnspan=2, sticky="NWES")
+        covView = PeptideCoverageFrame.PeptideCoverageFrame(covFrame, self.model)
+        covView.grid(row=0, column=0, sticky="NWES")
+        covFrame.columnconfigure(0, weight=1)
+        covFrame.rowconfigure(0, weight=0)
         
         # Bottom
         notebook_b1 = Tkinter.PanedWindow(bottom, orient="horizontal")
@@ -156,7 +164,7 @@ class App(ttk.Frame):
         identificationFrame.pack(fill="both", expand="yes")
         notebook_b1.add(identificationFrame)
         
-        consensusFrame = ConsensusSpectrumFrame3.ConsensusSpectrumFrame(notebook_b1, self.model)
+        consensusFrame = ConsensusSpectrumFrame.ConsensusSpectrumFrame(notebook_b1, self.model)
         consensusFrame.pack(fill="both", expand="yes")
         notebook_b1.add(consensusFrame)
         

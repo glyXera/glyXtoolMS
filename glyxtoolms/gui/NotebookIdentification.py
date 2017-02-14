@@ -181,8 +181,7 @@ class NotebookIdentification(ttk.Frame):
         return taglist
 
 
-    def updateTree(self):
-
+    def updateTree(self, features):
         # clear tree
         self.tree.delete(*self.tree.get_children())
         self.treeIds = {}
@@ -204,6 +203,10 @@ class NotebookIdentification(ttk.Frame):
 
         index = 0
         for hit in analysis.analysis.glycoModHits:
+            
+            # select hits only present in given features
+            if hit.feature not in features:
+                continue
             
             # check if hit passes filters
             if hit.passesFilter == False:
@@ -245,8 +248,10 @@ class NotebookIdentification(ttk.Frame):
             return
         elif len(selection) == 1:
             item = selection[0]
-            self.model.classes["NotebookFeature"].setSelectedFeature(self.tree.item(item, "text"))
-            self.model.classes["ConsensusSpectrumFrame"].init(self.treeIds[item])
+            #self.model.classes["NotebookFeature"].setSelectedFeature(self.tree.item(item, "text"))
+            hit = self.treeIds[item]
+            self.model.classes["ConsensusSpectrumFrame"].init(hit.feature, hit)
+            self.model.classes["PeptideCoverageFrame"].init(hit)
 
     def deleteIdentification(self, event):
         selection = self.tree.selection()

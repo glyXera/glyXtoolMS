@@ -13,6 +13,7 @@ class TwoDView(FramePlot.FramePlot):
         self.master = master
         self.xTypeTime = True
         self.featureItems = {}
+        self.currentFeature = None
 
         # link function
         self.model.classes["TwoDView"] = self
@@ -173,15 +174,11 @@ class TwoDView(FramePlot.FramePlot):
         self.bMax *= 1.1
 
     def plotFeatureLine(self):
-        # plot feature line
-        if self.model.currentAnalysis == None:
+        if self.currentFeature == None:
             return
-        feature = self.model.currentAnalysis.currentFeature
-        if feature == None:
-            return
-        if feature.passesFilter == False:
+        if self.currentFeature.passesFilter == False:
                 return
-        rt1, rt2, mz1, mz2 = feature.getBoundingBox()
+        rt1, rt2, mz1, mz2 = self.currentFeature.getBoundingBox()
         rt1 = self.convAtoX(rt1)
         rt2 = self.convAtoX(rt2)
         mz1 = self.convBtoY(mz1)
@@ -221,7 +218,7 @@ class TwoDView(FramePlot.FramePlot):
             xy += [rt2, mz2]
             xy += [rt1, mz2]
             xy += [rt1, mz1]
-            if self.model.currentAnalysis.currentFeature == feature:
+            if self.currentFeature == feature:
                 color = "purple"
             elif feature.getId().startswith("own"):
                 color = "orange"
@@ -331,11 +328,12 @@ class TwoDView(FramePlot.FramePlot):
 
         self.allowZoom = True
 
-    def init(self, keepZoom=False):
+    def init(self, feature=None, keepZoom=False):
         if self.model.currentAnalysis == None:
             return
         if self.model.currentAnalysis.analysis == None:
             return
+        self.currentFeature = feature
         self.initCanvas(keepZoom=keepZoom)
         
     def eventMouseClick(self, event):
@@ -360,6 +358,7 @@ class TwoDView(FramePlot.FramePlot):
                     distn = dist
         if nearest != None:
             self.model.currentAnalysis.currentFeature = nearest
+            self.currentFeature = nearest
             self.model.classes["NotebookFeature"].selectFeature(nearest)
 
     def identifier(self):

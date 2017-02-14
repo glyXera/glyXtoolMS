@@ -184,8 +184,7 @@ class NotebookScoring(ttk.Frame):
             self.tree.item(k, tags=taglist)
 
 
-    def updateTree(self):
-
+    def updateTree(self, features):
         # clear tree
         self.tree.delete(*self.tree.get_children())
         self.treeIds = {}
@@ -207,6 +206,14 @@ class NotebookScoring(ttk.Frame):
 
         index = 0
         for spec, spectrum in analysis.data:
+            # check if 
+            contains = False
+            for feature in spectrum.features:
+                if feature in features:
+                    contains = True
+                    break
+            if contains == False:
+                continue
             if index%2 == 0:
                 taglist = ("even" + spectrum.status, "even")
             else:
@@ -247,65 +254,15 @@ class NotebookScoring(ttk.Frame):
 
         # make calculations
         ms2, ms1 = self.model.currentProject.mzMLFile.experimentIds[spectrum.nativeId]
-        mz = spectrum.precursorMass
-        charge = spectrum.precursorCharge
-        p = ms2.getPrecursors()[0]
-        low = p.getIsolationWindowLowerOffset()
-        high = p.getIsolationWindowUpperOffset()
-        if low == 0:
-            low = 2
-        if high == 0:
-            high = 2
-        low = mz-low
-        high = mz+high
-
-        #rtLow = ms1.getRT()-100
-        #rtHigh = ms1.getRT()+100
-
-        # create chromatogram
-        c = glyxtoolms.gui.DataModel.Chromatogram()
-        c.plot = True
-        c.name = "test"
-        c.rangeLow = mz-0.1
-        if charge != 0:
-            c.rangeHigh = mz+3/abs(float(charge))+0.1
-        else:
-            c.rangeHigh = mz+1+0.1
-        c.rt = []
-        c.intensity = []
-        c.msLevel = 1
-        c.selected = True
-        if len(spectrum.chromatogramSpectra) == 0:
-            print "no chromatogram spectra", spectrum
-            return
-        rtLow = spectrum.chromatogramSpectra[0].getRT()
-        rtHigh = spectrum.chromatogramSpectra[-1].getRT()
-
-        for spec in spectrum.chromatogramSpectra:
-            c.rt.append(spec.getRT())
-            peaks = spec.get_peaks()
-            if hasattr(peaks, "shape"):
-                mzArray = peaks[:, 0]
-                intensArray = peaks[:, 1]
-            else:
-                mzArray, intensArray = peaks
-            # get intensity in range
-            choice = np.logical_and(np.greater(mzArray, c.rangeLow),
-                                    np.less(mzArray, c.rangeHigh))
-            c.intensity.append(np.extract(choice, intensArray).sum())
-
-        # set chromatogram within analysis
-        self.model.currentAnalysis.chromatograms[c.name] = c
-        self.model.currentAnalysis.selectedChromatogram = c
 
         # init spectrum view
         self.model.classes["SpectrumView"].initSpectrum(ms2)
 
         # init precursor spectrum view
-        self.model.classes["PrecursorView"].initSpectrum(ms1, mz, charge, low, high)
+        #self.model.classes["PrecursorView"].initSpectrum(ms1, mz, charge, low, high)
 
         # init chromatogram view
-        self.model.classes["ChromatogramView"].initChromatogram(rtLow, rtHigh, ms2.getRT())
+        #self.model.classes["ChromatogramView"].initChromatogram(rtLow, rtHigh, ms2.getRT())
 
     def setSelectedSpectrum(self, index):
         for itemSpectra in self.treeIds:

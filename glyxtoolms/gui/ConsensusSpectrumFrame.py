@@ -11,6 +11,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                                      yTitle="Intensity [counts]")
         self.master = master
         self.hit = None
+        self.feature = None
         self.consensus = None
         self.selectedFragments = []
         self.NrXScales = 5.0
@@ -68,13 +69,13 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
     def paintObject(self):
         if self.consensus == None:
             return
+        if self.feature == None:
+            return
         pInt0 = self.convBtoY(self.viewYMin)
         # compile list of found oxonium-ions within the MS2 Spectra
         analysis = self.model.currentAnalysis
-        feature = analysis.featureIds[self.hit.featureID]
         glycanFragments = {}
-        for specID in feature.spectraIds:
-            spectrum = analysis.spectraIds[specID]
+        for spectrum in self.feature.spectra:
             for glycanname in spectrum.ions:
                 for ionname in spectrum.ions[glycanname]:
                     ion = spectrum.ions[glycanname][ionname]
@@ -95,12 +96,13 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                     break
 
             foundPep = None
-            for key in self.hit.fragments:
-                if foundGlycan != None:
-                    break
-                if abs(self.hit.fragments[key]["mass"]-peak.x) < 0.1:
-                    foundPep = key
-                    break
+            if self.hit != None:
+                for key in self.hit.fragments:
+                    if foundGlycan != None:
+                        break
+                    if abs(self.hit.fragments[key]["mass"]-peak.x) < 0.1:
+                        foundPep = key
+                        break
             if foundGlycan != None and foundPep != None:
                 color = "green"
                 annotationText.append((pMZ, pInt, foundGlycan+"\n"+foundPep+"\n"+masstext))
@@ -125,23 +127,15 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         
         self.allowZoom = True
 
-    def init(self, hit):
-        analysis = self.model.currentAnalysis
-        if analysis == None:
-            return
-        if hit.featureID not in analysis.featureIds:
-            return
+    def init(self, feature, hit):
         self.hit = hit
-        feature = analysis.featureIds[hit.featureID]
-        if feature.consensus == None:
-            return
+        self.feature = feature
         self.consensus = sorted(feature.consensus, key=lambda e: e.y, reverse=True)
         self.selectedFragments = []
         self.viewXMin = 0
         self.viewXMax = -1
         self.viewYMin = -1
         self.viewYMax = -1
-        self.hit = hit
         self.referenceMass = 0
         self.annotationItems = {}
         self.currentAnnotation = None

@@ -44,20 +44,21 @@ class PeptideCoverageFrame(ttk.Frame):
 
         self.height = 0
         self.width = 0
-
-        self.canvas = Tkinter.Canvas(self)
+        
+        self.rowconfigure(0, weight=0, minsize=38)
+        self.rowconfigure(1, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=0)
+        
+        self.canvas = Tkinter.Canvas(self, height=100)
         self.canvas.config(bg="white")
-        self.canvas.grid(row=1, column=0, sticky="NSEW")
+        #self.canvas.grid(row=1, column=0, sticky="NSEW")
         #self.canvas.pack(expand=True, fill="both")
         
         self.canvas.config(highlightthickness=0)
-        
-        #self.canvas.grid(row=0, column=0, sticky="NSEW")
+        self.canvas.grid(row=1, column=0, sticky="NSEW")
 
-        self.grid_rowconfigure(0, weight=0)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=0)
+
 
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)

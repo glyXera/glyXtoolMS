@@ -181,7 +181,7 @@ class NotebookFeature(ttk.Frame):
         # collect specta within features
         analysis.collectFeatureSpectra()
         self.updateFeatureTree()
-        self.model.classes["NotebookScoring"].updateTree()
+        self.model.classes["NotebookScoring"].updateTree([feature])
         tkMessageBox.showinfo("Feature Copied", "The feature has been copied!")
         
         
@@ -349,16 +349,31 @@ class NotebookFeature(ttk.Frame):
                                            len(feature.getSpectraIds()),
                                            feature.status,
                                            len(feature.hits)))
-        
+    
+    def getSelectedFeatures(self):
+        selection = self.featureTree.selection()
+        features = []
+        for item in selection:
+            feature = self.featureTreeIds[item]
+            features.append(feature)
+        return features
 
     def clickedFeatureTree(self, event):
-        selection = self.featureTree.selection()
-        if len(selection) == 0:
+        # collect features and update IdentificationFrame
+        features = self.getSelectedFeatures()
+        self.model.classes["NotebookIdentification"].updateTree(features)
+        self.model.classes["NotebookScoring"].updateTree(features)
+        if len(features) == 0:
             return
-        item = selection[0]
-        feature = self.featureTreeIds[item]
+        if len(features) > 1:
+            return
+            
+        feature = features[0]
+        self.plotSelectedFeature(feature)
+        
+    def plotSelectedFeature(self, feature):
+        
         self.model.currentAnalysis.currentFeature = feature
-
         # calculate spectrum and chromatogram
         exp = self.model.currentProject.mzMLFile.exp
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
@@ -419,10 +434,9 @@ class NotebookFeature(ttk.Frame):
         c.msLevel = 1
         c.selected = True
 
-        self.model.classes["TwoDView"].init(keepZoom=True)
-        #self.updateSpectrumTree()
+        self.model.classes["TwoDView"].init(feature, keepZoom=True)
         self.model.classes["FeatureChromatogramView"].init(c, feature, minMZView, maxMZView, index)
-        self.model.classes["ConsensusSpectrumFrame"].init(feature, {})
+        self.model.classes["ConsensusSpectrumFrame"].init(feature, None)
 
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:

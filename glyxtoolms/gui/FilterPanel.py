@@ -108,9 +108,10 @@ class FilterPanel(Tkinter.Toplevel):
         try:
             self.destroy()
             self.model.runFilters()
-            self.model.classes["NotebookScoring"].updateTree()
-            self.model.classes["NotebookIdentification"].updateTree()
             self.model.classes["NotebookFeature"].updateFeatureTree()
+            features = self.model.classes["NotebookFeature"].getSelectedFeatures()
+            self.model.classes["NotebookScoring"].updateTree(features)
+            self.model.classes["NotebookIdentification"].updateTree(features)
             self.model.classes["TwoDView"].init()
             
         except:
