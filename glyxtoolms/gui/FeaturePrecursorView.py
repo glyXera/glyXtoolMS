@@ -95,6 +95,8 @@ class PrecursorView(FramePlot.FramePlot):
             pass
 
     def setMaxValues(self):
+        if self.spectrum == None:
+            return
         try:
             self.bMax = max(self.spectrum)
         except:
@@ -216,7 +218,7 @@ class PrecursorView(FramePlot.FramePlot):
         self.viewXMin = minMZ
         self.viewXMax = maxMZ
         self.viewYMin = 0
-        if sum(spectrumYArray) > 0:
+        if self.spectrum != None and sum(spectrumYArray) > 0:
             self.viewYMax = max(spectrumYArray)
         self.initCanvas(keepZoom=True)
 

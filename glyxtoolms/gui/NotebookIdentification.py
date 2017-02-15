@@ -244,14 +244,24 @@ class NotebookIdentification(ttk.Frame):
 
     def clickedTree(self, event):
         selection = self.tree.selection()
-        if len(selection) == 0:
-            return
-        elif len(selection) == 1:
+
+        if len(selection) == 1:
             item = selection[0]
-            #self.model.classes["NotebookFeature"].setSelectedFeature(self.tree.item(item, "text"))
             hit = self.treeIds[item]
-            self.model.classes["ConsensusSpectrumFrame"].init(hit.feature, hit)
+            self.model.classes["NotebookFeature"].plotSelectedFeatures([hit.feature], hit)
             self.model.classes["PeptideCoverageFrame"].init(hit)
+            #self.model.classes["ConsensusSpectrumFrame"].init(hit.feature, hit)
+        else:
+            features = set()
+            for item in selection:
+                hit = self.treeIds[item]
+                features.add(hit.feature)
+            features = list(features)
+            self.model.classes["NotebookFeature"].plotSelectedFeatures(features, None)
+            self.model.classes["PeptideCoverageFrame"].init(None)
+            #if len(features) == 1:
+            #    self.model.classes["ConsensusSpectrumFrame"].init(features[0], None)
+            
 
     def deleteIdentification(self, event):
         selection = self.tree.selection()

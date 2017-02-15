@@ -133,7 +133,8 @@ class FeatureChromatogramView(FramePlot.FramePlot):
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1
-
+        if self.chrom == None:
+            return
         for rt in self.chrom.rt:
             if self.aMax == -1 or rt > self.aMax:
                 self.aMax = rt
@@ -171,15 +172,16 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         
         self.chrom = chrom
         self.feature = feature
-        minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
-        self.viewXMin = chrom.rt[0]
-        self.viewXMax =  chrom.rt[-1]
-        self.viewYMin = 0
-        self.viewYMax = -1
-        self.featureLow = minRT
-        self.featureHigh = maxRT
-        self.minMZView = minMZView
-        self.maxMZView = maxMZView
+        if chrom != None:
+            minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
+            self.viewXMin = chrom.rt[0]
+            self.viewXMax =  chrom.rt[-1]
+            self.viewYMin = 0
+            self.viewYMax = -1
+            self.featureLow = minRT
+            self.featureHigh = maxRT
+            self.minMZView = minMZView
+            self.maxMZView = maxMZView
         
         self.initCanvas(keepZoom=True)
         self.plotPrecursorSpectrum(index)
@@ -196,6 +198,13 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         item = self.canvas.create_line(pRT, pIntMin, pRT, pIntMax, tags=("positionmarker", ),fill="blue")
         
     def plotPrecursorSpectrum(self, index):
+        if self.chrom == None:
+            self.model.classes["FeaturePrecursorView"].init(None,
+                                                None,
+                                                self.feature,
+                                                self.minMZView,
+                                                self.maxMZView)
+            return
         spec = self.model.currentAnalysis.project.mzMLFile.exp[index]
         if spec.getMSLevel() != 1:
             return

@@ -118,11 +118,8 @@ class PeptideCoverageFrame(ttk.Frame):
         self.colorIndex()
 
     def init(self, hit):
-
         analysis = self.model.currentAnalysis
         if analysis == None:
-            return
-        if hit.featureID not in analysis.featureIds:
             return
         self.hit = hit
         self.indexList = set()
@@ -130,6 +127,9 @@ class PeptideCoverageFrame(ttk.Frame):
         
 
     def paint_canvas(self):
+        
+        self.canvas.delete(Tkinter.ALL)
+        self.setMenuChoices([])
         if self.hit == None:
             return
         peptideSequence = self.hit.peptide.sequence
@@ -177,8 +177,6 @@ class PeptideCoverageFrame(ttk.Frame):
             ySeries.remove(peptideLength)
         if peptideLength in bSeries:
             bSeries.remove(peptideLength)
-
-        self.canvas.delete(Tkinter.ALL)
 
         # collect positions of glycosylationsites
         glycosites = set()
@@ -289,7 +287,6 @@ class PeptideCoverageFrame(ttk.Frame):
             for item in self.coverage:
                 if self.coverage[item] == index:
                     self.canvas.itemconfigure(item, fill="red")
-
         self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found)
 
 

@@ -130,7 +130,9 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
     def init(self, feature, hit):
         self.hit = hit
         self.feature = feature
-        self.consensus = sorted(feature.consensus, key=lambda e: e.y, reverse=True)
+        if self.feature != None:
+            self.consensus = sorted(feature.consensus, key=lambda e: e.y, reverse=True)
+            self.annotations = feature.annotations
         self.selectedFragments = []
         self.viewXMin = 0
         self.viewXMax = -1
@@ -140,7 +142,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.annotationItems = {}
         self.currentAnnotation = None
         self.peaksByItem = {}
-        self.annotations = feature.annotations
+        
         self.initCanvas(keepZoom=True)
 
     def identifier(self):
@@ -184,7 +186,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.canvas.delete("fragmentSelection")
         if fragments != None:
             self.selectedFragments = fragments
-
+        if self.hit == None:
+            return
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         for ionname in self.selectedFragments:

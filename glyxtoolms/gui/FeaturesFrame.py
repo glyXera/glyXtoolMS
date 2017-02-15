@@ -363,17 +363,15 @@ class NotebookFeature(ttk.Frame):
         features = self.getSelectedFeatures()
         self.model.classes["NotebookIdentification"].updateTree(features)
         self.model.classes["NotebookScoring"].updateTree(features)
-        if len(features) == 0:
+        self.plotSelectedFeatures(features)
+        
+    def plotSelectedFeatures(self, features, hit=None):
+        self.model.classes["TwoDView"].init(features, keepZoom=True)
+        if len(features) != 1:
+            self.model.classes["FeatureChromatogramView"].init(None, None, 0, 0, 0)
+            self.model.classes["ConsensusSpectrumFrame"].init(None, hit)
             return
-        if len(features) > 1:
-            return
-            
         feature = features[0]
-        self.plotSelectedFeature(feature)
-        
-    def plotSelectedFeature(self, feature):
-        
-        self.model.currentAnalysis.currentFeature = feature
         # calculate spectrum and chromatogram
         exp = self.model.currentProject.mzMLFile.exp
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
@@ -434,9 +432,9 @@ class NotebookFeature(ttk.Frame):
         c.msLevel = 1
         c.selected = True
 
-        self.model.classes["TwoDView"].init(feature, keepZoom=True)
+        
         self.model.classes["FeatureChromatogramView"].init(c, feature, minMZView, maxMZView, index)
-        self.model.classes["ConsensusSpectrumFrame"].init(feature, None)
+        self.model.classes["ConsensusSpectrumFrame"].init(feature, hit)
 
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:

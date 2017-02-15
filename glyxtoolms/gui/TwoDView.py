@@ -13,7 +13,7 @@ class TwoDView(FramePlot.FramePlot):
         self.master = master
         self.xTypeTime = True
         self.featureItems = {}
-        self.currentFeature = None
+        self.currentFeatures = []
 
         # link function
         self.model.classes["TwoDView"] = self
@@ -173,12 +173,10 @@ class TwoDView(FramePlot.FramePlot):
         self.aMax *= 1.1
         self.bMax *= 1.1
 
-    def plotFeatureLine(self):
-        if self.currentFeature == None:
-            return
-        if self.currentFeature.passesFilter == False:
+    def plotFeatureLine(self, feature):
+        if feature.passesFilter == False:
                 return
-        rt1, rt2, mz1, mz2 = self.currentFeature.getBoundingBox()
+        rt1, rt2, mz1, mz2 = feature.getBoundingBox()
         rt1 = self.convAtoX(rt1)
         rt2 = self.convAtoX(rt2)
         mz1 = self.convBtoY(mz1)
@@ -199,10 +197,13 @@ class TwoDView(FramePlot.FramePlot):
         if self.model.currentAnalysis.analysis == None:
             return
         self.featureItems = {}
-        self.plotFeatureLine()
+        for feature in self.currentFeatures:
+            self.plotFeatureLine(feature)
+            
         for feature in self.model.currentAnalysis.analysis.features:
             if feature.passesFilter == False:
                 continue
+            
             rt1, rt2, mz1, mz2 = feature.getBoundingBox()
             rt1 = self.convAtoX(rt1)
             rt2 = self.convAtoX(rt2)
@@ -218,7 +219,7 @@ class TwoDView(FramePlot.FramePlot):
             xy += [rt2, mz2]
             xy += [rt1, mz2]
             xy += [rt1, mz1]
-            if self.currentFeature == feature:
+            if feature in self.currentFeatures:
                 color = "purple"
             elif feature.getId().startswith("own"):
                 color = "orange"
@@ -328,12 +329,12 @@ class TwoDView(FramePlot.FramePlot):
 
         self.allowZoom = True
 
-    def init(self, feature=None, keepZoom=False):
+    def init(self, features=[], keepZoom=False):
         if self.model.currentAnalysis == None:
             return
         if self.model.currentAnalysis.analysis == None:
             return
-        self.currentFeature = feature
+        self.currentFeatures = features
         self.initCanvas(keepZoom=keepZoom)
         
     def eventMouseClick(self, event):
@@ -358,7 +359,7 @@ class TwoDView(FramePlot.FramePlot):
                     distn = dist
         if nearest != None:
             self.model.currentAnalysis.currentFeature = nearest
-            self.currentFeature = nearest
+            self.currentFeatures = [nearest]
             self.model.classes["NotebookFeature"].selectFeature(nearest)
 
     def identifier(self):
