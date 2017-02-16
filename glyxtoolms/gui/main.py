@@ -80,7 +80,7 @@ class App(ttk.Frame):
         #toolMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
         #menubar.add_cascade(label="Tool", menu=toolMenu)
         
-        
+        """
         # Divide left and right
         panes = Tkinter.PanedWindow(master, orient="vertical")
         panes.config(sashwidth=10)
@@ -184,6 +184,13 @@ class App(ttk.Frame):
         #self.spectrumFrame2.grid(row=0,column=0, sticky="NWES")  
         
         """
+        # Divide left and right
+        panes = Tkinter.PanedWindow(master, orient="horizontal")
+        panes.config(sashwidth=10)
+        panes.config(opaqueresize=False)
+        panes.config(sashrelief="raised")
+        panes.pack(fill="both", expand="yes")
+        
         left = Tkinter.PanedWindow(panes, orient="vertical")
         left.pack(fill="both", expand="yes")
         left.config(sashwidth=10)
@@ -198,7 +205,7 @@ class App(ttk.Frame):
 
         panes.add(left)
         panes.add(right)
-        
+
         leftTop = Tkinter.Frame(left,width=100, height=100)
         leftTop.pack()
         leftBottom = Tkinter.Frame(left,width=100, height=100)
@@ -231,7 +238,7 @@ class App(ttk.Frame):
         self.notebook = ttk.Notebook(leftBottom)
         self.notebook.pack(fill="both", expand="yes")
         n1 = NotebookIdentification.NotebookIdentification(self.notebook, self.model)
-        n2 = NotebookScoring.NotebookScoring(self.notebook, self.model)
+        n2 = NotebookScoring2.NotebookScoring(self.notebook, self.model)
         
         
         self.notebook.add(n1, text='Identifications')
@@ -264,8 +271,9 @@ class App(ttk.Frame):
         
         
         self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
+
         self.model.classes["main"] = self
-        """
+        
                
     def setActiveFilterHint(self, hasActiveFilter):
         if hasActiveFilter == True:
