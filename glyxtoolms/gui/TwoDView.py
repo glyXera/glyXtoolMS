@@ -338,6 +338,8 @@ class TwoDView(FramePlot.FramePlot):
         self.initCanvas(keepZoom=keepZoom)
         
     def eventMouseClick(self, event):
+        if self.toolbar.active.get("toggle", "") != "": # TODO create real action
+            return
         # clear color from all items
         self.canvas.itemconfigure("site", fill="black")
 

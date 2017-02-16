@@ -208,22 +208,109 @@ class App(ttk.Frame):
 
         leftTop = Tkinter.Frame(left,width=100, height=100)
         leftTop.pack()
+        #leftMiddle = Tkinter.Frame(left,width=100, height=100)
+        #leftMiddle.pack()
         leftBottom = Tkinter.Frame(left,width=100, height=100)
         leftBottom.pack()
         
         left.add(leftTop)
+        #left.add(leftMiddle)
         left.add(leftBottom)
         
-        rightTop = Tkinter.Frame(right,width=100, height=100)
-        rightTop.pack()
-        rightBottom = Tkinter.Frame(right,width=100, height=100)
-        rightBottom.pack()
+        #rightTop = Tkinter.Frame(right,width=100, height=100)
+        #rightTop.pack()
+        #rightBottom = Tkinter.Frame(right,width=100, height=100)
+        #rightBottom.pack()
         
-        right.add(rightTop)
-        right.add(rightBottom)
+        #right.add(rightTop)
+        #right.add(rightBottom)
         
         # ---- Left side -----
+        frameProject = ProjectFrame.ProjectFrame(leftTop, self.model)
+        frameProject.pack(fill="both", expand="yes")
         
+        
+        
+        notebookLeft = ttk.Notebook(leftBottom)
+        notebookLeft.pack(fill="both", expand="yes")
+        
+        notebookLeft_n1 = Tkinter.PanedWindow(notebookLeft, orient="vertical")
+        notebookLeft_n1.config(sashwidth=10)
+        notebookLeft_n1.config(opaqueresize=False)
+        notebookLeft_n1.config(sashrelief="raised")
+        
+        frameFeature = FeaturesFrame.NotebookFeature(notebookLeft_n1, self.model)
+        frameFeature.pack(fill="both", expand="yes")
+        
+        frameChrom = ttk.Frame(notebookLeft_n1)
+        frameChrom.pack(fill="both", expand="yes")
+        frameChrom.columnconfigure(0,weight=1)
+        frameChrom.columnconfigure(1,weight=1)
+        frameChrom.rowconfigure(0,weight=1)
+        
+        notebookLeft_n1.add(frameFeature)
+        notebookLeft_n1.add(frameChrom)
+        
+        notebookLeft_n2 = TwoDView.TwoDView(notebookLeft, self.model)
+        
+        notebookLeft.add(notebookLeft_n1, text='FeatureList')
+        notebookLeft.add(notebookLeft_n2, text='2DView')
+        
+        chromFrame = ttk.Labelframe(frameChrom, text="Precursor Chromatogram")
+        chromFrame.grid(row=0, column=0, sticky="NWES")
+        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, self.model)
+        chromView.grid(row=0, column=0, sticky="NWES")
+        chromFrame.columnconfigure(0, weight=1)
+        chromFrame.rowconfigure(0, weight=1)
+
+        msFrame = ttk.Labelframe(frameChrom, text="Precursorspectrum")
+        msFrame.grid(row=0, column=1, sticky="NWES")
+        msView = FeaturePrecursorView.PrecursorView(msFrame, self.model)
+        msView.grid(row=0, column=0, sticky="NWES")
+        msFrame.columnconfigure(0, weight=1)
+        msFrame.rowconfigure(0, weight=1)
+        
+        # ---- Right side -----
+        notebook = ttk.Notebook(right)
+        notebook.pack(fill="both", expand="yes")
+        #n1 = NotebookIdentification.NotebookIdentification(notebook, self.model)
+        #n2 = NotebookScoring2.NotebookScoring(notebook, self.model)
+        
+        n1 = Tkinter.PanedWindow(notebook, orient="vertical")
+        n1.config(sashwidth=10)
+        n1.config(opaqueresize=False)
+        n1.config(sashrelief="raised")
+        
+        n1_top = NotebookIdentification.NotebookIdentification(n1, self.model)
+        n1_top.pack()
+        n1_middle = PeptideCoverageFrame.PeptideCoverageFrame(n1, self.model)
+        n1_middle.pack()
+        n1_bottom = ConsensusSpectrumFrame.ConsensusSpectrumFrame(n1, self.model)
+        n1_bottom.pack()
+        
+        n1.add(n1_top)
+        n1.add(n1_middle)
+        n1.add(n1_bottom)
+        
+        n2 = Tkinter.PanedWindow(notebook, orient="vertical")
+        n2.config(sashwidth=10)
+        n2.config(opaqueresize=False)
+        n2.config(sashrelief="raised")
+        
+        n2_top = NotebookScoring2.NotebookScoring(n2, self.model)
+        n2_top.pack()
+        
+        n2_bottom = SpectrumView2.SpectrumView(n2, self.model)
+        n2_bottom.pack()
+        
+        n2.add(n2_top)
+        n2.add(n2_bottom)
+        
+        notebook.add(n1, text='Identifications')
+        notebook.add(n2, text='Spectra')
+        
+        """
+        # ---- Left side -----
         notebookFeature = ttk.Notebook(leftTop)
         notebookFeature.pack(fill="both", expand="yes")
         
@@ -271,7 +358,7 @@ class App(ttk.Frame):
         
         
         self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
-
+        """
         self.model.classes["main"] = self
         
                

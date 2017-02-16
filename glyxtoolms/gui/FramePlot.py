@@ -492,8 +492,8 @@ class FramePlot(Tkinter.Frame, object):
         if self.action == None:
             return
         if self.action.get("name","") == "zoomin":
-            x1, y1, x2, y2 = self.canvas.coords(self.action ["rectangle"])
-            self.canvas.delete(self.action ["rectangle"])
+            x1, y1, x2, y2 = self.canvas.coords(self.action["rectangle"])
+            self.canvas.delete(self.action["rectangle"])
             self.zoom(x1, y1, x2, y2)
             self.action = None
 
