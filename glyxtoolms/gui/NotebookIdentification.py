@@ -28,9 +28,10 @@ class NotebookIdentification(ttk.Frame):
 
         columns = {"Mass":70, "error":70, "Peptide":160, "Glycan":160, "Status":80}
         self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan", "Status")
-        self.tree.column("#0", width=40)
-
-        self.tree.heading("#0", text="Nr.", command=lambda col='#0': self.sortColumn(col))
+        
+        self.tree.column("#0", width=80)
+        self.tree.heading("#0", text="Feature Nr", command=lambda col='#0': self.sortColumn(col))
+        
         for col in columns:
             self.tree.column(col, width=columns[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
@@ -61,12 +62,20 @@ class NotebookIdentification(ttk.Frame):
         self.tree.bind("a", lambda e: self.setStatus("Accepted"))
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
         self.tree.bind("r", lambda e: self.setStatus("Rejected"))
+        self.tree.bind("<Control-Key-a>", self.selectAllIdentifications)
 
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=0)
 
         self.model.classes["NotebookIdentification"] = self
+        
+    def selectAllIdentifications(self, event):
+        items = self.tree.get_children()
+        if len(items) == 0:
+            return
+        self.tree.selection_set(items)
+        self.clickedTree(None)
         
     def copyToClipboard(self, *arg, **args):
         # add header

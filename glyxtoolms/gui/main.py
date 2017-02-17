@@ -423,7 +423,7 @@ class OptionsFrame(Tkinter.Toplevel):
         self.minsize(600, 300)
         self.master = master
         self.title("Options")
-        self.config(bg="#d9d9d9")
+        #self.config(bg="#d9d9d9")
         self.model = model
         
         self.columnconfigure(0, weight=0)
@@ -442,11 +442,24 @@ class OptionsFrame(Tkinter.Toplevel):
         self.timeAxisVar = Tkinter.StringVar()
         self.timeAxisVar.set(self.model.timescale)
         
-        rbutton1 = Tkinter.Radiobutton(self, text="Timeaxis in seconds", variable=self.timeAxisVar, value="seconds")
-        rbutton2 = Tkinter.Radiobutton(self, text="Timeaxis in minutes", variable=self.timeAxisVar, value="minutes")
+        timeAxisLabel = Tkinter.Label(self, text="Timeaxis:")
+        timeAxisChoice1 = Tkinter.Radiobutton(self, text="In seconds", variable=self.timeAxisVar, value="seconds")
+        timeAxisChoice2 = Tkinter.Radiobutton(self, text="In minutes", variable=self.timeAxisVar, value="minutes")
         
-        rbutton1.grid(row=1, column=1, sticky="NWES")
-        rbutton2.grid(row=2, column=1, sticky="NWES")
+        timeAxisLabel.grid(row=1, column=0, sticky="NWS")
+        timeAxisChoice1.grid(row=1, column=1, sticky="NWS")
+        timeAxisChoice2.grid(row=2, column=1, sticky="NWS")
+        
+        self.errorVar = Tkinter.StringVar()
+        self.errorVar.set("Da")
+        
+        errorLabel = Tkinter.Label(self, text="Error:")
+        errorChoice1 = Tkinter.Radiobutton(self, text="In Dalton", variable=self.errorVar, value="Da")
+        errorChoice2 = Tkinter.Radiobutton(self, text="In ppm", variable=self.errorVar, value="ppm")
+        
+        errorLabel.grid(row=3, column=0, sticky="NWS")
+        errorChoice1.grid(row=3, column=1, sticky="NWS")
+        errorChoice2.grid(row=4, column=1, sticky="NWS")
         
         cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)        
         saveButton = Tkinter.Button(self, text="Save options", command=self.save)

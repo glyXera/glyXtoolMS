@@ -43,13 +43,13 @@ class NotebookFeature(ttk.Frame):
         scrollbar = Tkinter.Scrollbar(self)
         self.featureTree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
 
-        columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents")
-        self.featureTree["columns"] = columns
+        columns = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80}
+        self.featureTree["columns"] = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents")
         self.featureTree.column("#0", width=60)
-        self.featureTree.heading("#0", text="Feature",
+        self.featureTree.heading("#0", text="Feature Nr",
                                  command=lambda col='#0': self.sortFeatureColumn(col))
         for col in columns:
-            self.featureTree.column(col, width=80)
+            self.featureTree.column(col, width=columns[col])
             self.featureTree.heading(col,
                                      text=col,
                                      command=lambda col=col: self.sortFeatureColumn(col))
@@ -80,12 +80,21 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.bind("u", lambda e: self.setStatus("Unknown"))
         self.featureTree.bind("r", lambda e: self.setStatus("Rejected"))
         self.featureTree.bind("z", self.zoomToFeature)
+        self.featureTree.bind("<Control-Key-a>", self.selectAllFeatures)
         self.featureTree.bind("<Button-3>", self.popup)
         # Bindings influencing FeatureChromatogramView
         self.featureTree.bind("<Left>", self.goLeft)
         self.featureTree.bind("<Right>", self.goRight)
 
         self.model.classes["NotebookFeature"] = self
+        
+        
+    def selectAllFeatures(self, event):
+        items = self.featureTree.get_children()
+        if len(items) == 0:
+            return
+        self.featureTree.selection_set(items)
+        self.clickedFeatureTree(None)
     
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)
@@ -361,6 +370,7 @@ class NotebookFeature(ttk.Frame):
     def clickedFeatureTree(self, event):
         # collect features and update IdentificationFrame
         features = self.getSelectedFeatures()
+        self.model.classes["PeptideCoverageFrame"].init(None)
         self.model.classes["NotebookIdentification"].updateTree(features)
         self.model.classes["NotebookScoring"].updateTree(features)
         self.plotSelectedFeatures(features)
