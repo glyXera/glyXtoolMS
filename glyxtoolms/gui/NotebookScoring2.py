@@ -14,32 +14,38 @@ class NotebookScoring(ttk.Frame):
 
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        #self.aMenu.add_command(label="Accepted", 
-        #                       command=lambda x="Accepted": self.setStatus(x))
-        #self.aMenu.add_command(label="Rejected",
-        #                       command=lambda x="Rejected": self.setStatus(x))
-        #self.aMenu.add_command(label="Deleted",
-        #                       command=lambda x="Unknown": self.setStatus(x))
 
         # layout self
-        self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=0)
+        self.rowconfigure(0,weight=0)
+        self.rowconfigure(1,weight=1)
 
         # show treeview of mzML file MS/MS and MS
         scrollbar = ttk.Scrollbar(self)
         self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
 
-        columns = ("RT", "Mass", "Charge", "Score", "Is Glyco", "Status")
-        self.tree["columns"] = columns
+        self.columns = ("RT", "Mass", "Charge", "Score", "Is Glyco", "Status")
+        self.columnsWidth =  {"RT":80, "Mass":80, "Charge":80, "Score":80, "Is Glyco":80, "Status":80}
+        self.tree["columns"] = self.columns
         self.tree.column("#0", width=100)
         self.tree.heading("#0", text="Spectrum Nr.", command=lambda col='#0': self.sortColumn(col))
-        for col in columns:
-            self.tree.column(col, width=80)
+        self.showColumns = {}
+        for name in self.columns:
+            self.showColumns[name] = Tkinter.BooleanVar()
+            self.showColumns[name].set(True)
+            self.showColumns[name].trace("w", self.columnVisibilityChanged)
+        
+        for col in self.columns:
+            self.tree.column(col, width=self.columnsWidth[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
 
-        self.tree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
-
-        scrollbar.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        button = Tkinter.Button(self,image=self.model.resources["filter"])
+        
+        button.grid(row=0, column=1)
+        self.tree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=1, column=1, sticky="NWES")
+        
         scrollbar.config(command=self.tree.yview)
 
         self.treeIds = {}
@@ -47,15 +53,7 @@ class NotebookScoring(ttk.Frame):
         # treeview style
         self.tree.tag_configure('oddUnknown', background='Moccasin')
         self.tree.tag_configure('evenUnknown', background='PeachPuff')
-        
-        #self.tree.tag_configure('oddDeleted', background='LightSalmon')
-        #self.tree.tag_configure('evenDeleted', background='Salmon')
-        
-        #self.tree.tag_configure('oddAccepted', background='PaleGreen')
-        #self.tree.tag_configure('evenAccepted', background='YellowGreen')
-        
-        #self.tree.tag_configure('oddRejected', background='LightBlue')
-        #self.tree.tag_configure('evenRejected', background='SkyBlue')
+    
         
         self.tree.tag_configure('oddGlycopeptide', background='PaleGreen')
         self.tree.tag_configure('evenGlycopeptide', background='YellowGreen')
@@ -116,8 +114,41 @@ class NotebookScoring(ttk.Frame):
             taglist = list(self.tree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, spectrum.status)
             self.tree.item(item, tags=taglist)
-        
+
+    def columnVisibilityChanged(self, *arg, **args):
+        header = []
+        for columnname in self.columns:
+            if self.showColumns[columnname].get() == True:
+                header.append(columnname)
+        self.tree["displaycolumns"] = tuple(header)
+        space = self.grid_bbox(column=0, row=0, col2=0, row2=0)[2]
+        width = space/(len(header)+1)
+        rest = space%(len(header)+1)
+        for column in ["#0"] + header:
+            self.tree.column(column, width=width+rest)
+            rest = 0
+
     def popup(self, event):
+        area = self.tree.identify_region(event.x, event.y)
+        self.aMenu.delete(0,"end")
+        if area == "nothing":
+            return
+        elif area == "heading" or area == "separator":
+            for name in self.columns:
+                self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
+        else:
+            self.aMenu.add_command(label="Set to Glycopeptide", 
+                                   command=lambda x="Glycopeptide": self.setStatus(x))
+            self.aMenu.add_command(label="Set to NonGlycopeptide",
+                                   command=lambda x="NonGlycopeptide": self.setStatus(x))
+            self.aMenu.add_command(label="Set to PoorGlycopeptide",
+                                   command=lambda x="PoorGlycopeptide": self.setStatus(x))
+            self.aMenu.add_command(label="Set to PoorNonGlycopeptide",
+                                   command=lambda x="PoorNonGlycopeptide": self.setStatus(x))
+            self.aMenu.add_command(label="Set to Unknown",
+                                   command=lambda x="Unknown": self.setStatus(x))
+            #self.aMenu.add_command(label="Copy to Clipboard",
+            #                       command=self.copyToClipboard)
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)

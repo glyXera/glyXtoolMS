@@ -141,6 +141,10 @@ class DataModel(object):
         self.resources["ruler"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/eye.gif')
         self.resources["eye"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/drop_down.gif')
+        self.resources["drop_down"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/filter.gif')
+        self.resources["filter"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
 
 
 class Chromatogram(object):

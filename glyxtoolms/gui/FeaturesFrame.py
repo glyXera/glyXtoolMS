@@ -15,48 +15,46 @@ class NotebookFeature(ttk.Frame):
         ttk.Frame.__init__(self, master=master)
         self.master = master
         self.model = model
-        self.columnconfigure(0,weight=1)
-        self.columnconfigure(1,weight=0)
-        self.rowconfigure(0,weight=1)
+        
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=0)
+        self.rowconfigure(0,weight=0)
+        self.rowconfigure(1,weight=1)
 
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        self.aMenu.add_command(label="Set to Accepted", 
-                               command=lambda x="Accepted": self.setStatus(x))
-        self.aMenu.add_command(label="Set to  Rejected",
-                               command=lambda x="Rejected": self.setStatus(x))
-        self.aMenu.add_command(label="Set to Unknown",
-                               command=lambda x="Unknown": self.setStatus(x))
-        self.aMenu.add_separator()
-        self.aMenu.add_command(label="Change Feature",
-                               command=self.changeFeature)
-        self.aMenu.add_command(label="Copy Feature",
-                               command=self.copyFeature)
-        self.aMenu.add_command(label="Add Identification",
-                               command=self.addIdentification)
-                                                      
-                               
-                               
+
 
         # show treeview of mzML file MS/MS and MS
         # ------------------- Feature Tree ----------------------------#
 
         scrollbar = Tkinter.Scrollbar(self)
         self.featureTree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
-
-        columns = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80}
-        self.featureTree["columns"] = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents")
+        
+        self.columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents")
+        self.columnsWidth = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80}
+        self.showColumns = {}
+        for name in self.columns:
+            self.showColumns[name] = Tkinter.BooleanVar()
+            self.showColumns[name].set(True)
+            self.showColumns[name].trace("w", self.columnVisibilityChanged)
+        
+        self.featureTree["columns"] = self.columns
         self.featureTree.column("#0", width=60)
         self.featureTree.heading("#0", text="Feature Nr",
                                  command=lambda col='#0': self.sortFeatureColumn(col))
-        for col in columns:
-            self.featureTree.column(col, width=columns[col])
+        for col in self.columns:
+            self.featureTree.column(col, width=self.columnsWidth[col])
             self.featureTree.heading(col,
                                      text=col,
                                      command=lambda col=col: self.sortFeatureColumn(col))
 
-        self.featureTree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        
 
-        scrollbar.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        button = Tkinter.Button(self,image=self.model.resources["filter"])
+        button.grid(row=0, column=1)
+        self.featureTree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=1, column=1, sticky=("N", "W", "E", "S"))
+        
         scrollbar.config(command=self.featureTree.yview)
 
         self.featureTreeIds = {}
@@ -87,8 +85,20 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.bind("<Right>", self.goRight)
 
         self.model.classes["NotebookFeature"] = self
-        
-        
+
+    def columnVisibilityChanged(self, *arg, **args):
+        header = []
+        for columnname in self.columns:
+            if self.showColumns[columnname].get() == True:
+                header.append(columnname)
+        self.featureTree["displaycolumns"] = tuple(header)
+        space = self.grid_bbox(column=0, row=0, col2=0, row2=0)[2]
+        width = space/(len(header)+1)
+        rest = space%(len(header)+1)
+        for column in ["#0"] + header:
+            self.featureTree.column(column, width=width+rest)
+            rest = 0
+
     def selectAllFeatures(self, event):
         items = self.featureTree.get_children()
         if len(items) == 0:
@@ -97,6 +107,27 @@ class NotebookFeature(ttk.Frame):
         self.clickedFeatureTree(None)
     
     def popup(self, event):
+        area = self.featureTree.identify_region(event.x, event.y)
+        self.aMenu.delete(0,"end")
+        if area == "nothing":
+            return
+        elif area == "heading" or area == "separator":
+            for name in self.columns:
+                self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
+        else:
+            self.aMenu.add_command(label="Set to Accepted", 
+                                   command=lambda x="Accepted": self.setStatus(x))
+            self.aMenu.add_command(label="Set to  Rejected",
+                                   command=lambda x="Rejected": self.setStatus(x))
+            self.aMenu.add_command(label="Set to Unknown",
+                                   command=lambda x="Unknown": self.setStatus(x))
+            self.aMenu.add_separator()
+            self.aMenu.add_command(label="Change Feature",
+                                   command=self.changeFeature)
+            self.aMenu.add_command(label="Copy Feature",
+                                   command=self.copyFeature)
+            self.aMenu.add_command(label="Add Identification",
+                                   command=self.addIdentification)
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)

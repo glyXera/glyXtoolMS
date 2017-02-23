@@ -10,36 +10,39 @@ class NotebookIdentification(ttk.Frame):
         self.master = master
         self.model = model
         
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=0)
+        self.rowconfigure(0,weight=0)
+        self.rowconfigure(1,weight=1)
+        
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        self.aMenu.add_command(label="Set to Accepted", 
-                               command=lambda x="Accepted": self.setStatus(x))
-        self.aMenu.add_command(label="Set to Rejected",
-                               command=lambda x="Rejected": self.setStatus(x))
-        self.aMenu.add_command(label="Set to Unknown",
-                               command=lambda x="Unknown": self.setStatus(x))
-        self.aMenu.add_command(label="Copy to Clipboard",
-                               command=self.copyToClipboard)
-                               
 
         # show treeview of mzML file MS/MS and MS
+        button = Tkinter.Button(self,image=self.model.resources["filter"])
         scrollbar = Tkinter.Scrollbar(self)
         self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set, selectmode='extended')
+        self.columns = ("Mass", "error", "Peptide", "Glycan", "Status")
+        self.columnsWidth = {"Mass":70, "error":70, "Peptide":160, "Glycan":160, "Status":80}
+        self.showColumns = {}
+        for name in self.columns:
+            self.showColumns[name] = Tkinter.BooleanVar()
+            self.showColumns[name].set(True)
+            self.showColumns[name].trace("w", self.columnVisibilityChanged)
 
-        columns = {"Mass":70, "error":70, "Peptide":160, "Glycan":160, "Status":80}
-        self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan", "Status")
-        
         self.tree.column("#0", width=80)
         self.tree.heading("#0", text="Feature Nr", command=lambda col='#0': self.sortColumn(col))
         
-        for col in columns:
-            self.tree.column(col, width=columns[col])
+        self.tree["columns"] = self.columns
+        for col in self.columns:
+            self.tree.column(col, width=self.columnsWidth[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
 
-        self.tree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        self.tree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
 
-        scrollbar.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=1, column=1, sticky="NWES")
         scrollbar.config(command=self.tree.yview)
+        button.grid(row=0, column=1)
 
         self.treeIds = {}
 
@@ -64,12 +67,23 @@ class NotebookIdentification(ttk.Frame):
         self.tree.bind("r", lambda e: self.setStatus("Rejected"))
         self.tree.bind("<Control-Key-a>", self.selectAllIdentifications)
 
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=0)
+
 
         self.model.classes["NotebookIdentification"] = self
         
+    def columnVisibilityChanged(self, *arg, **args):
+        header = []
+        for columnname in self.columns:
+            if self.showColumns[columnname].get() == True:
+                header.append(columnname)
+        self.tree["displaycolumns"] = tuple(header)
+        space = self.grid_bbox(column=0, row=0, col2=0, row2=0)[2]
+        width = space/(len(header)+1)
+        rest = space%(len(header)+1)
+        for column in ["#0"] + header:
+            self.tree.column(column, width=width+rest)
+            rest = 0
+
     def selectAllIdentifications(self, event):
         items = self.tree.get_children()
         if len(items) == 0:
@@ -122,6 +136,22 @@ class NotebookIdentification(ttk.Frame):
             self.tree.item(item, tags=taglist)
         
     def popup(self, event):
+        area = self.tree.identify_region(event.x, event.y)
+        self.aMenu.delete(0,"end")
+        if area == "nothing":
+            return
+        elif area == "heading" or area == "separator":
+            for name in self.columns:
+                self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
+        else:
+            self.aMenu.add_command(label="Set to Accepted", 
+                                   command=lambda x="Accepted": self.setStatus(x))
+            self.aMenu.add_command(label="Set to Rejected",
+                                   command=lambda x="Rejected": self.setStatus(x))
+            self.aMenu.add_command(label="Set to Unknown",
+                                   command=lambda x="Unknown": self.setStatus(x))
+            self.aMenu.add_command(label="Copy to Clipboard",
+                                   command=self.copyToClipboard)
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
@@ -209,7 +239,6 @@ class NotebookIdentification(ttk.Frame):
             return
 
         # insert all glycomod hits
-
         index = 0
         for hit in analysis.analysis.glycoModHits:
             

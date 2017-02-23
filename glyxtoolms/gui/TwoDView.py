@@ -28,8 +28,17 @@ class TwoDView(FramePlot.FramePlot):
                           ('pressed', '!focus', '#d9d9d9'),
                           ('active', '#d9d9d9')])
 
-        # Events
+        self.visible = {}
+        for name in ["Glycopeptide spectra", 
+                      "Non-Glycopeptide spectra", 
+                      "Glycopeptide features", 
+                      "Non-Glycopeptide features"]:
+            self.visible[name] = Tkinter.BooleanVar()
+            self.visible[name].set(True)
+            self.visible[name].trace("w", self.visbilityChanged)
+        
         self.canvas.bind("<Button-1>", self.eventMouseClick, "+")
+        # Events
         #self.canvas.bind("<Left>", self.setButtonValue)
         #self.canvas.bind("<Right>", self.setButtonValue)
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
@@ -133,6 +142,27 @@ class TwoDView(FramePlot.FramePlot):
         self.ov10.set(1)
         self.ov11.set(0)
         """
+        
+        # create popup menu
+        self.aMenu = Tkinter.Menu(self, tearoff=0)
+        self.canvas.bind("<Button-3>", self.popup)
+    
+    def visbilityChanged(self, *arg, **args):
+        self.paintObject()
+
+    def popup(self, event):
+
+        self.aMenu.delete(0,"end")
+        for name in self.visible:
+            self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.visible[name])
+
+        self.aMenu.post(event.x_root, event.y_root)
+        self.aMenu.focus_set()
+        self.aMenu.bind("<FocusOut>", self.removePopup)
+        
+    def removePopup(self,event):
+        if self.focus_get() != self.aMenu:
+            self.aMenu.unpost()
 
     def setButtonValue(self, i):
         state = getattr(self, "ov"+str(i)).get()
@@ -259,6 +289,14 @@ class TwoDView(FramePlot.FramePlot):
                     break
             nrFeatureHits = max(nrFeatureHits)
             
+            if spectrum.isGlycopeptide:
+                if self.visible["Glycopeptide spectra"].get() == False:
+                    continue
+                color = colorGlycoOneHit
+            else:
+                if self.visible["Non-Glycopeptide spectra"].get() == False:
+                    continue
+                color = colorNonGlyco
             """
             nr = 1
             if spectrum.isGlycopeptide:
@@ -273,8 +311,8 @@ class TwoDView(FramePlot.FramePlot):
             else:
                 nr *= 7
             if nr == 5:
-                if self.ov6.get() == 0:
-                    continue
+                #if self.ov6.get() == 0:
+                #    continue
                 if nrFeatureHits == 0:
                     color = colorGlycoNoHit
                 elif nrFeatureHits == 1:
@@ -282,8 +320,8 @@ class TwoDView(FramePlot.FramePlot):
                 else:
                     color = colorGlycoMultipleHits
             elif nr == 7:
-                if self.ov7.get() == 0:
-                    continue
+                #if self.ov7.get() == 0:
+                #    continue
                 if nrFeatureHits == 0:
                     color = colorGlycoNoHit
                 elif nrFeatureHits == 1:
@@ -291,8 +329,8 @@ class TwoDView(FramePlot.FramePlot):
                 else:
                     color = colorGlycoMultipleHits
             elif nr == 3:
-                if self.ov10.get() == 0:
-                    continue
+                #if self.ov10.get() == 0:
+                #    continue
                 if nrFeatureHits == 0:
                     color = colorGlycoNoHit
                 elif nrFeatureHits == 1:
@@ -300,21 +338,21 @@ class TwoDView(FramePlot.FramePlot):
                 else:
                     color = colorGlycoMultipleHits
             elif nr == 10:
-                if self.ov8.get() == 0:
-                    continue
+                #if self.ov8.get() == 0:
+                #    continue
                 color = colorNonGlyco
             elif nr == 14:
-                if self.ov9.get() == 0:
-                    continue
+                #if self.ov9.get() == 0:
+                #    continue
                 color = colorNonGlyco
             else:
-                if self.ov11.get() == 0:
-                    continue
+                #if self.ov11.get() == 0:
+                #    continue
                 color = colorNonGlyco
             """
             x = self.convAtoX(spectrum.rt)
             y = self.convBtoY(spectrum.precursorMass)
-            color = "red"
+            #color = "red"
             item = self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill=color)
 
     def paintObject(self):
