@@ -93,6 +93,8 @@ class PeptideCoverageFrame(ttk.Frame):
         self.menuVar.set(choices[0])
         for choice in choices:
             self.aMenu['menu'].add_command(label=choice, command=Tkinter._setit(self.menuVar, choice))
+        # clear
+        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([])
     
     def eventMouseMotion(self, event):
         self.canvas.focus_set()

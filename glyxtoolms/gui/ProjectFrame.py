@@ -109,7 +109,7 @@ class ProjectFrame(ttk.Frame):
         projects = ttk.Frame(self)
         projects.grid(row=1, column=0, sticky="NWES")
 
-        yscrollbar = ttk.Scrollbar(projects, orient=Tkinter.VERTICAL)
+        yscrollbar = Tkinter.Scrollbar(projects, orient=Tkinter.VERTICAL)
 
         self.projectTree = ttk.Treeview(projects,
                                         yscrollcommand=yscrollbar.set)

@@ -38,6 +38,7 @@ from glyxtoolms.gui import FeatureChromatogramView
 from glyxtoolms.gui import TwoDView
 from glyxtoolms.gui import SpectrumView2
 from glyxtoolms.gui import PeptideCoverageFrame
+from glyxtoolms.gui import OxoniumIonPlot
 
 class App(ttk.Frame):
 
@@ -71,6 +72,7 @@ class App(ttk.Frame):
 
         statisticsMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         statisticsMenu.add_command(label="Scorehistogram", command=self.showHistogram)
+        statisticsMenu.add_command(label="Oxoniumion Plot", command=self.showOxoniumPlot)
         self.menubar.add_cascade(label="Statistics", menu=statisticsMenu)
 
         filterMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
@@ -389,6 +391,9 @@ class App(ttk.Frame):
         HistogramFrame(self.master, self.model)
         return
         
+    def showOxoniumPlot(self):
+        OxoniumFrame(self.master, self.model)
+        
     def showFilterOptions(self):
         FilterPanel.FilterPanel(self.master, self.model)
         
@@ -411,7 +416,7 @@ class App(ttk.Frame):
 def run():
     global app
     root = Tkinter.Tk()
-    root.title("glyXtool-MS Viewer")
+    root.title("glyXtool-MS Evaluator")
     app = App(root)
     root.mainloop()
     return app
@@ -568,4 +573,13 @@ class HistogramFrame(Tkinter.Toplevel):
             print "cannot convert"
             self.v1.set(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())
 
+class OxoniumFrame(Tkinter.Toplevel):
 
+    def __init__(self, master, model):
+        Tkinter.Toplevel.__init__(self, master=master)
+        self.master = master
+        self.title("Oxoniumion Plot")
+        self.config(bg="#d9d9d9")
+        self.model = model
+        self.view = OxoniumIonPlot.OxoniumIonPlot(self, model)
+        self.view.grid(row=0, column=0, columnspan=2, sticky="NW")
