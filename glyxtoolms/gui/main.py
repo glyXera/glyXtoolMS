@@ -51,6 +51,7 @@ class App(ttk.Frame):
         self.master.config(menu=self.menubar)
         self.master.config(bg="#d9d9d9")
         self.model = DataModel.DataModel()
+        self.toplevel = {} # store references to other toplevel windows
 
         self.model.root = master
         
@@ -78,114 +79,7 @@ class App(ttk.Frame):
         filterMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         filterMenu.add_command(label="Set Filter Options", command=self.showFilterOptions)
         self.menubar.add_cascade(label="Filter", menu=filterMenu) # Index 4 in menubar
-        
-        #toolMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
-        #menubar.add_cascade(label="Tool", menu=toolMenu)
-        
-        """
-        # Divide left and right
-        panes = Tkinter.PanedWindow(master, orient="vertical")
-        panes.config(sashwidth=10)
-        panes.config(opaqueresize=False)
-        panes.config(sashrelief="raised")
 
-        panes.pack(fill="both", expand="yes")
-        top = Tkinter.PanedWindow(panes, orient="horizontal")
-        top.pack(fill="both", expand="yes")
-        top.config(sashwidth=10)
-        top.config(opaqueresize=False)
-        top.config(sashrelief="raised")
-        
-        bottom = ttk.Notebook(panes)
-        bottom.pack(fill="both", expand="yes")
-        panes.add(top)
-        panes.add(bottom)
-        
-        topLeft = ttk.Notebook(top)
-        topLeft.pack(fill="both", expand="yes")
-        
-        n1_0 = ProjectFrame.ProjectFrame(topLeft, self.model)
-        n1_1 = FeaturesFrame.NotebookFeature(topLeft, self.model)
-        n1_2 = TwoDView.TwoDView(topLeft, self.model)
-        
-        topLeft.add(n1_0, text='Projects')
-        topLeft.add(n1_1, text='FeatureList')
-        topLeft.add(n1_2, text='2D View')
-        
-        
-        
-        # TopRight
-        
-        topRight = Tkinter.Frame(top)
-        topRight.pack(fill="both", expand="yes")
-        
-        top.add(topLeft)
-        top.add(topRight)
-        
-        topRight.columnconfigure(0, weight=1)
-        topRight.columnconfigure(1, weight=1)
-        topRight.rowconfigure(0, weight=1)
-        topRight.rowconfigure(1, weight=0)
-        
-        chromFrame = ttk.Labelframe(topRight, text="Precursor Chromatogram")
-        chromFrame.grid(row=0, column=0, sticky="NWES")
-        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, self.model)
-        chromView.grid(row=0, column=0, sticky="NWES")
-        chromFrame.columnconfigure(0, weight=1)
-        chromFrame.rowconfigure(0, weight=1)
-
-        msFrame = ttk.Labelframe(topRight, text="Precursorspectrum")
-        msFrame.grid(row=0, column=1, sticky="NWES")
-        msView = FeaturePrecursorView.PrecursorView(msFrame, self.model)
-        msView.grid(row=0, column=0, sticky="NWES")
-        msFrame.columnconfigure(0, weight=1)
-        msFrame.rowconfigure(0, weight=1)
-        
-        covFrame = ttk.Labelframe(topRight, text="Peptide Coverage")
-        covFrame.grid(row=1, column=0, columnspan=2, sticky="NWES")
-        covView = PeptideCoverageFrame.PeptideCoverageFrame(covFrame, self.model)
-        covView.grid(row=0, column=0, sticky="NWES")
-        covFrame.columnconfigure(0, weight=1)
-        covFrame.rowconfigure(0, weight=0)
-        
-        # Bottom
-        notebook_b1 = Tkinter.PanedWindow(bottom, orient="horizontal")
-        notebook_b1.config(sashwidth=10)
-        notebook_b1.config(opaqueresize=False)
-        notebook_b1.config(sashrelief="raised")
-        notebook_b2 = Tkinter.PanedWindow(bottom, orient="horizontal")
-        notebook_b2.config(sashwidth=10)
-        notebook_b2.config(opaqueresize=False)
-        notebook_b2.config(sashrelief="raised")
-        
-        bottom.add(notebook_b1, text='Identifications')
-        bottom.add(notebook_b2, text='Spectra')
-        
-        # Identification Frame
-        identificationFrame = NotebookIdentification.NotebookIdentification(notebook_b1, self.model)
-        identificationFrame.pack(fill="both", expand="yes")
-        notebook_b1.add(identificationFrame)
-        
-        consensusFrame = ConsensusSpectrumFrame.ConsensusSpectrumFrame(notebook_b1, self.model)
-        consensusFrame.pack(fill="both", expand="yes")
-        notebook_b1.add(consensusFrame)
-        
-        # Spectrum Frame
-        scoringFrame = NotebookScoring2.NotebookScoring(notebook_b2, self.model)
-        scoringFrame.pack(fill="both", expand="yes")
-        notebook_b2.add(scoringFrame)
-        
-        
-        spectrumFrame = SpectrumView2.SpectrumView(notebook_b2, self.model)
-        spectrumFrame.pack(fill="both", expand="yes")
-        notebook_b2.add(spectrumFrame)
-        
-        self.model.classes["main"] = self
-        
-        #self.spectrumFrame2.pack(fill="both", expand="yes")
-        #self.spectrumFrame2.grid(row=0,column=0, sticky="NWES")  
-        
-        """
         # Divide left and right
         panes = Tkinter.PanedWindow(master, orient="horizontal")
         panes.config(sashwidth=10)
@@ -210,29 +104,16 @@ class App(ttk.Frame):
 
         leftTop = Tkinter.Frame(left,width=100, height=100)
         leftTop.pack()
-        #leftMiddle = Tkinter.Frame(left,width=100, height=100)
-        #leftMiddle.pack()
         leftBottom = Tkinter.Frame(left,width=100, height=100)
         leftBottom.pack()
         
         left.add(leftTop)
-        #left.add(leftMiddle)
         left.add(leftBottom)
-        
-        #rightTop = Tkinter.Frame(right,width=100, height=100)
-        #rightTop.pack()
-        #rightBottom = Tkinter.Frame(right,width=100, height=100)
-        #rightBottom.pack()
-        
-        #right.add(rightTop)
-        #right.add(rightBottom)
         
         # ---- Left side -----
         frameProject = ProjectFrame.ProjectFrame(leftTop, self.model)
         frameProject.pack(fill="both", expand="yes")
-        
-        
-        
+
         notebookLeft = ttk.Notebook(leftBottom)
         notebookLeft.pack(fill="both", expand="yes")
         
@@ -275,8 +156,6 @@ class App(ttk.Frame):
         # ---- Right side -----
         notebook = ttk.Notebook(right)
         notebook.pack(fill="both", expand="yes")
-        #n1 = NotebookIdentification.NotebookIdentification(notebook, self.model)
-        #n2 = NotebookScoring2.NotebookScoring(notebook, self.model)
         
         n1 = Tkinter.PanedWindow(notebook, orient="vertical")
         n1.config(sashwidth=10)
@@ -310,57 +189,7 @@ class App(ttk.Frame):
         
         notebook.add(n1, text='Identifications')
         notebook.add(n2, text='Spectra')
-        
-        """
-        # ---- Left side -----
-        notebookFeature = ttk.Notebook(leftTop)
-        notebookFeature.pack(fill="both", expand="yes")
-        
-        n1_0 = ProjectFrame.ProjectFrame(notebookFeature, self.model)
-        n1_1 = FeaturesFrame.NotebookFeature(notebookFeature, self.model)
-        n1_2 = TwoDView.TwoDView(notebookFeature, self.model)
-        
-        notebookFeature.add(n1_0, text='Projects')
-        notebookFeature.add(n1_1, text='FeatureList')
-        notebookFeature.add(n1_2, text='2D View')
-        
-        self.notebook = ttk.Notebook(leftBottom)
-        self.notebook.pack(fill="both", expand="yes")
-        n1 = NotebookIdentification.NotebookIdentification(self.notebook, self.model)
-        n2 = NotebookScoring2.NotebookScoring(self.notebook, self.model)
-        
-        
-        self.notebook.add(n1, text='Identifications')
-        self.notebook.add(n2, text='Spectra')
-        
-        # ---- Right side -----
-        rightBottom.columnconfigure(0,weight=1)
-        rightBottom.rowconfigure(0,weight=1)
-        self.spectrumFrame1 = ConsensusSpectrumFrame.ConsensusSpectrumFrame(rightBottom, self.model)
-        self.spectrumFrame1.grid(row=0,column=0, sticky="NWES")
-        #self.spectrumFrame1.pack(fill="both", expand="yes")
-        
-        self.spectrumFrame2 = SpectrumView2.SpectrumView(rightBottom, self.model)
-        #self.spectrumFrame2.pack(fill="both", expand="yes")
-        self.spectrumFrame2.grid(row=0,column=0, sticky="NWES")    
-        
-        chromFrame = ttk.Labelframe(rightTop, text="Precursor Chromatogram")
-        chromFrame.grid(row=0, column=0, sticky="NWES")
-        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, self.model)
-        chromView.grid(row=0, column=0, sticky="NWES")
-        chromFrame.columnconfigure(0, weight=1)
-        chromFrame.rowconfigure(0, weight=1)
 
-        msFrame = ttk.Labelframe(rightTop, text="Precursorspectrum")
-        msFrame.grid(row=0, column=1, sticky="NWES")
-        msView = FeaturePrecursorView.PrecursorView(msFrame, self.model)
-        msView.grid(row=0, column=0, sticky="NWES")
-        msFrame.columnconfigure(0, weight=1)
-        msFrame.rowconfigure(0, weight=1)
-        
-        
-        self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
-        """
         self.model.classes["main"] = self
         
                
@@ -392,7 +221,10 @@ class App(ttk.Frame):
         return
         
     def showOxoniumPlot(self):
-        OxoniumFrame(self.master, self.model)
+        if "OxoniumFrame" in self.toplevel:
+            self.toplevel["OxoniumFrame"].destroy()
+        frame = OxoniumFrame(self, self.model)
+        self.toplevel["OxoniumFrame"] = frame
         
     def showFilterOptions(self):
         FilterPanel.FilterPanel(self.master, self.model)
@@ -582,4 +414,24 @@ class OxoniumFrame(Tkinter.Toplevel):
         self.config(bg="#d9d9d9")
         self.model = model
         self.view = OxoniumIonPlot.OxoniumIonPlot(self, model)
-        self.view.grid(row=0, column=0, columnspan=2, sticky="NW")
+        self.view.grid(row=0, column=0, sticky="NWSE")
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.focus_set()
+        self.transient(master)
+        self.lift()
+        self.wm_deiconify()
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        # get selected features
+        features = self.model.classes["NotebookFeature"].getSelectedFeatures()
+        self.view.init(features=features, keepZoom=True)
+            
+    def on_closing(self):
+        if "OxoniumIonPlot" in self.model.classes:
+            self.model.classes.pop("OxoniumIonPlot")
+        if "OxoniumFrame" in self.master.toplevel:
+            self.master.toplevel.pop("OxoniumFrame")
+        self.destroy()
+
+
+        

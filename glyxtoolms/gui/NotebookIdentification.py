@@ -288,8 +288,8 @@ class NotebookIdentification(ttk.Frame):
             hit = self.treeIds[item]
             self.model.classes["NotebookFeature"].plotSelectedFeatures([hit.feature], hit)
             self.model.classes["PeptideCoverageFrame"].init(hit)
-            if "OxoniumIonPlot" in self.model.classes:
-                self.model.classes["OxoniumIonPlot"].init(features=[hit.feature])
+            #if "OxoniumIonPlot" in self.model.classes:
+            #    self.model.classes["OxoniumIonPlot"].init(features=[hit.feature])
             #self.model.classes["ConsensusSpectrumFrame"].init(hit.feature, hit)
         else:
             features = set()
@@ -299,8 +299,8 @@ class NotebookIdentification(ttk.Frame):
             features = list(features)
             self.model.classes["NotebookFeature"].plotSelectedFeatures(features, None)
             self.model.classes["PeptideCoverageFrame"].init(None)
-            if "OxoniumIonPlot" in self.model.classes:
-                self.model.classes["OxoniumIonPlot"].init(features=features)
+            #if "OxoniumIonPlot" in self.model.classes:
+            #    self.model.classes["OxoniumIonPlot"].init(features=features)
             #if len(features) == 1:
             #    self.model.classes["ConsensusSpectrumFrame"].init(features[0], None)
             

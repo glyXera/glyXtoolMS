@@ -582,7 +582,66 @@ class FramePlot(Tkinter.Frame, object):
 
         self.paintObject()
         self._paintAxis()
+        
+    def _paintXAxis(self, labels = {}):
+        # create axis
+        self.canvas.create_line(self.convAtoX(self.viewXMin),
+                                self.convBtoY(self.viewYMin),
+                                self.convAtoX(self.viewXMax)+10,
+                                self.convBtoY(self.viewYMin),
+                                tags=("axis", ), arrow="last")
+        # search scale X
+        start, end, diff, exp = findScale(self.viewXMin, self.viewXMax,
+                                          self.NrXScales)
+        while start < end:
+            if start > self.viewXMin and start < self.viewXMax:
+                x = self.convAtoX(start)
+                y = self.convBtoY(self.viewYMin)
+                if self.xTypeTime == True and self.model.timescale == "minutes":
+                    self.canvas.create_text((x, y+5),
+                                            text=shortNr(start/60.0, exp-2),
+                                            anchor="n")
+                else:
+                    self.canvas.create_text((x, y+5),
+                                            text=shortNr(start, exp),
+                                            anchor="n")
+                self.canvas.create_line(x, y, x, y+4)
+            start += diff
+        
+        # write axis description
+        xText = self.xTitle
+        if self.xTypeTime == True:
+            if self.model.timescale == "minutes":
+                xText = "rt [min]"
+            else:
+                xText = "rt [s]"
+        item = self.canvas.create_text(self.convAtoX((self.viewXMin+self.viewXMax)/2.0),
+                                       self.height-self.borderBottom/3.0,
+                                       text=xText)
 
+    def _paintYAxis(self):
+        self.canvas.create_line(self.convAtoX(self.viewXMin),
+                                self.convBtoY(self.viewYMin),
+                                self.convAtoX(self.viewXMin),
+                                self.convBtoY(self.viewYMax)-10,
+                                tags=("axis", ), arrow="last")
+        # search scale Y
+        start, end, diff, exp = findScale(self.viewYMin, self.viewYMax,
+                                          self.NrYScales)
+        while start < end:
+            if start > self.viewYMin and start < self.viewYMax:
+                x = self.convAtoX(self.viewXMin)
+                y = self.convBtoY(start)
+                self.canvas.create_text((x-5, y),
+                                        text=shortNr(start, exp),
+                                        anchor="e")
+                self.canvas.create_line(x-4, y, x, y)
+            start += diff
+
+        item = self.canvas.create_text(self.borderLeft,
+                                       self.borderTop/2.0,
+                                       text=self.yTitle)
+        
     def _paintAxis(self):
 
         # overpaint possible overflows
@@ -606,65 +665,8 @@ class FramePlot(Tkinter.Frame, object):
                                      fill=self.canvas["background"],
                                      outline=self.canvas["background"],
                                      width=0)
-
-        # create axis
-        self.canvas.create_line(self.convAtoX(self.viewXMin),
-                                self.convBtoY(self.viewYMin),
-                                self.convAtoX(self.viewXMax)+10,
-                                self.convBtoY(self.viewYMin),
-                                tags=("axis", ), arrow="last")
-        self.canvas.create_line(self.convAtoX(self.viewXMin),
-                                self.convBtoY(self.viewYMin),
-                                self.convAtoX(self.viewXMin),
-                                self.convBtoY(self.viewYMax)-10,
-                                tags=("axis", ), arrow="last")
-
-        # search scale X
-        start, end, diff, exp = findScale(self.viewXMin, self.viewXMax,
-                                          self.NrXScales)
-        while start < end:
-            if start > self.viewXMin and start < self.viewXMax:
-                x = self.convAtoX(start)
-                y = self.convBtoY(self.viewYMin)
-                if self.xTypeTime == True and self.model.timescale == "minutes":
-                    self.canvas.create_text((x, y+5),
-                                            text=shortNr(start/60.0, exp-2),
-                                            anchor="n")
-                else:
-                    self.canvas.create_text((x, y+5),
-                                            text=shortNr(start, exp),
-                                            anchor="n")
-                self.canvas.create_line(x, y, x, y+4)
-            start += diff
-
-        # search scale Y
-        start, end, diff, exp = findScale(self.viewYMin, self.viewYMax,
-                                          self.NrYScales)
-        while start < end:
-            if start > self.viewYMin and start < self.viewYMax:
-                x = self.convAtoX(self.viewXMin)
-                y = self.convBtoY(start)
-                self.canvas.create_text((x-5, y),
-                                        text=shortNr(start, exp),
-                                        anchor="e")
-                self.canvas.create_line(x-4, y, x, y)
-            start += diff
-
-        # write axis description
-        
-        xText = self.xTitle
-        if self.xTypeTime == True:
-            if self.model.timescale == "minutes":
-                xText = "rt [min]"
-            else:
-                xText = "rt [s]"
-        item = self.canvas.create_text(self.convAtoX((self.viewXMin+self.viewXMax)/2.0),
-                                       self.height-self.borderBottom/3.0,
-                                       text=xText)
-
-        item = self.canvas.create_text(self.borderLeft,
-                                       self.borderTop/2.0,
-                                       text=self.yTitle)
+        self._paintXAxis()
+        self._paintYAxis()
 
 
     def resetZoom(self, event):
