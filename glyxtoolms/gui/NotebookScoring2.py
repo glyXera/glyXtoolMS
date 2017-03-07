@@ -278,7 +278,7 @@ class NotebookScoring(ttk.Frame):
 
     def clickedTree(self, event):
         selection = self.tree.selection()
-        if len(selection) != 1:
+        if len(selection) == 0:
             return
         item = selection[0]
         spec, spectrum = self.treeIds[item]
@@ -288,12 +288,12 @@ class NotebookScoring(ttk.Frame):
 
         # init spectrum view
         self.model.classes["SpectrumView"].initSpectrum(ms2)
-
-        # init precursor spectrum view
-        #self.model.classes["PrecursorView"].initSpectrum(ms1, mz, charge, low, high)
-
-        # init chromatogram view
-        #self.model.classes["ChromatogramView"].initChromatogram(rtLow, rtHigh, ms2.getRT())
+        spectra = []
+        for item in selection:
+            spec, spectrum = self.treeIds[item]
+            spectra.append(spectrum)
+        if "OxoniumIonPlot" in self.model.classes:
+            self.model.classes["OxoniumIonPlot"].init(spectra=spectra)
 
     def setSelectedSpectrum(self, index):
         for itemSpectra in self.treeIds:

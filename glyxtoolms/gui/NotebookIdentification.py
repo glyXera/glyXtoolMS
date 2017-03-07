@@ -288,21 +288,20 @@ class NotebookIdentification(ttk.Frame):
             hit = self.treeIds[item]
             self.model.classes["NotebookFeature"].plotSelectedFeatures([hit.feature], hit)
             self.model.classes["PeptideCoverageFrame"].init(hit)
-            #if "OxoniumIonPlot" in self.model.classes:
-            #    self.model.classes["OxoniumIonPlot"].init(features=[hit.feature])
-            #self.model.classes["ConsensusSpectrumFrame"].init(hit.feature, hit)
+            if "OxoniumIonPlot" in self.model.classes:
+                self.model.classes["OxoniumIonPlot"].init(identifications=[hit])
         else:
             features = set()
+            hits = []
             for item in selection:
                 hit = self.treeIds[item]
+                hits.append(hit)
                 features.add(hit.feature)
             features = list(features)
             self.model.classes["NotebookFeature"].plotSelectedFeatures(features, None)
             self.model.classes["PeptideCoverageFrame"].init(None)
-            #if "OxoniumIonPlot" in self.model.classes:
-            #    self.model.classes["OxoniumIonPlot"].init(features=features)
-            #if len(features) == 1:
-            #    self.model.classes["ConsensusSpectrumFrame"].init(features[0], None)
+            if "OxoniumIonPlot" in self.model.classes:
+                self.model.classes["OxoniumIonPlot"].init(identifications=hits)
             
 
     def deleteIdentification(self, event):

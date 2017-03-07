@@ -424,7 +424,7 @@ class OxoniumFrame(Tkinter.Toplevel):
         self.protocol("WM_DELETE_WINDOW", self.on_closing)
         # get selected features
         features = self.model.classes["NotebookFeature"].getSelectedFeatures()
-        self.view.init(features=features, keepZoom=True)
+        self.view.init(features=features)
             
     def on_closing(self):
         if "OxoniumIonPlot" in self.model.classes:

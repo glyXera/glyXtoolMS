@@ -405,7 +405,7 @@ class NotebookFeature(ttk.Frame):
         self.model.classes["NotebookIdentification"].updateTree(features)
         self.model.classes["NotebookScoring"].updateTree(features)
         if "OxoniumIonPlot" in self.model.classes:
-            self.model.classes["OxoniumIonPlot"].init(features=features, keepZoom=True)
+            self.model.classes["OxoniumIonPlot"].init(features=features)
         self.plotSelectedFeatures(features)
         
     def plotSelectedFeatures(self, features, hit=None):

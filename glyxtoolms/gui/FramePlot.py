@@ -238,8 +238,8 @@ class FramePlot(Tkinter.Frame, object):
         #saveButton = ttk.Button(self, text="Save Plot", command=self.savePlot)
         #saveButton.grid(row=5, column=1, sticky="NS")
 
-        self.calcScales()
-        self._paintAxis()
+        #self.calcScales()
+        #self._paintAxis()
 
         
     def toggle(self):
