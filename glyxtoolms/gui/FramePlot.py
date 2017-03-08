@@ -10,7 +10,6 @@ class Observe(Tkinter.Button):
         Tkinter.Button.__init__(self, master=master, text=text)
         
     def pack(self, *arg):
-        print "pack called"
         Tkinter.Button.pack(self, arg)
 
 class ToggleButton(Tkinter.Button):
@@ -100,31 +99,20 @@ class SidePanel(Tkinter.Frame, object):
         self.panels = {}
         # add spacer frame to force pack updates
         nullframe = Tkinter.Frame(self, bd=0)
-        #nullframe.pack(side="bottom")
         nullframe.pack(side="bottom", anchor="n", fill="y", expand="yes")
-        #nullframe.grid(row=1000, column=0, sticky="NSEW")
-        #self.rowconfigure(1000, weight=0)
-        #self.rowconfigure(0, weight=1)
         
     def addContextPanel(self, buttonname, panel):
         self.panels[buttonname] = panel
 
     def activatePanels(self,buttonnames):
-        #row = 0
         for name in self.panels:
             if name in buttonnames:
                 if not self.panels[name].winfo_ismapped():
                     # activate panel
                     self.panels[name].pack(side="top", anchor="n", fill="y", expand="yes")
-                    #self.panels[name].pack(side="top")
-                    
-                    #self.panels[name].grid(row=row, column=0, sticky="NSEW")
-                    #self.panels[name].update()
-                    #row += 1
             elif self.panels[name].winfo_ismapped():
                 # deactivate panel
                 self.panels[name].pack_forget()
-                #self.panels[name].grid_forget()
 
 class FramePlot(Tkinter.Frame, object):
 
@@ -226,24 +214,12 @@ class FramePlot(Tkinter.Frame, object):
         
         # Add coords and Canvasname to panel
         panelCoords = self.toolbar.addPanel("coords", side="right")
-        #panelCoords.config(bg=self.toolbar.cget("bg"))
         labelName = Tkinter.Label(panelCoords, text=self.identifier())
-        #labelName.config(bg=panelCoords.cget("bg"))
         labelName.grid(row=0, column=0, sticky="NE")
         
         self.coord = Tkinter.StringVar()
         l = Tkinter.Label(panelCoords, textvariable=self.coord)
         l.grid(row=1, column=0, sticky="NE")
-        
-        #saveButton = ttk.Button(self, text="Save Plot", command=self.savePlot)
-        #saveButton.grid(row=5, column=1, sticky="NS")
-
-        #self.calcScales()
-        #self._paintAxis()
-
-        
-    def toggle(self):
-        print "foo"
         
     def scrollX(self, *args):
         if args[0] == '-1':

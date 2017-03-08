@@ -145,6 +145,8 @@ class DataModel(object):
         self.resources["drop_down"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/filter.gif')
         self.resources["filter"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/ox.gif')
+        self.resources["oxonium"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
 
 
 class Chromatogram(object):

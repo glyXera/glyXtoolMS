@@ -25,10 +25,29 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         self.borderLeft = 100
         self.visible = {}
         self.legend = {}
-        
+
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
         self.canvas.bind("<Button-3>", self.popup)
+        
+        # add sidepanel for selection
+        self.sidePanelSelection = SelectionSidePanel(self.sidepanel, self)
+        self.sidepanel.addContextPanel("oxonium", self.sidePanelSelection)
+        
+        # add selection panel toggle
+        self.selectionButton = self.toolbar.addButton("oxonium","selection", "default")
+        # add trace to ruler button toggles
+        self.selectionButton.active.trace("w", self.selectionPanelToggled)
+        
+    #def parseOxoniumion(self, ionname):
+        
+
+        
+    def selectionPanelToggled(self, *arg, **args):
+        if self.selectionButton.active.get() == False:
+            self._paintCanvas()
+        else:
+            self.sidePanelSelection.update()
     
     def visbilityChanged(self, *arg, **args):
         self.initCanvas(keepZoom=False)
@@ -36,7 +55,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
     def popup(self, event):
 
         self.aMenu.delete(0,"end")
-        for name in self.visible:
+        for name in self.names:
             self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.visible[name])
 
         self.aMenu.post(event.x_root, event.y_root)
@@ -269,4 +288,87 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 sizes.append(tkFont.Font(font='TkDefaultFont').measure(text))
             size = max(sizes)
             self.borderRight = size+50
+        
+        if self.selectionButton.active.get() == True:
+            self.sidePanelSelection.update()
         self.initCanvas(keepZoom=keepZoom)
+        
+        
+class SelectionSidePanel(Tkinter.Frame, object):
+    def __init__(self, master, framePlot):
+        Tkinter.Frame.__init__(self, master=master)
+        self.master = master
+        self.framePlot = framePlot
+
+        self.rowconfigure(0, weight=1)
+        self.columnconfigure(0, weight=1)
+        
+        self.scrollbar = Tkinter.Scrollbar(self)
+        self.scrollbar.grid(row=0, column=1, sticky="WNS")
+        self.canvas = Tkinter.Canvas(self, yscrollcommand=self.scrollbar.set)
+        self.canvas.config(highlightthickness=0)
+        #self.canvas.grid(row=0, column=0, sticky="NSWE")
+        self.canvas.grid(row=0, column=0, rowspan=2, sticky="NSWE")
+
+        self.frame = Tkinter.Frame(self.canvas)
+        self.canvas.create_window(0, 0, anchor="nw", window=self.frame)
+
+        self.scrollbar.config(command=self.canvas.yview)
+        
+        self.empty = Tkinter.Canvas(self, width=10, height=0)
+        self.empty.grid(row=1, column=1, sticky="WNS")
+        self.empty.config(highlightthickness=0)
+
+        self.frame.columnconfigure(1,weight=1)
+        self.frame.rowconfigure(0,weight=0)
+        self.frame.rowconfigure(1,weight=1)
+        
+        self.canvas.bind("<Configure>", self.on_resize, "+")
+        self.frame.bind("<Configure>", self.on_resize, "+")
+        
+        self.frameAnnotation = Tkinter.LabelFrame(self.frame,text="Show Oxoniumions")
+        self.frameAnnotation.grid(row=0,column=0, sticky="NEW", padx=2)
+        
+        self.annotationContent = Tkinter.Frame(self.frameAnnotation)
+        self.annotationContent.grid(row=0,column=0)
+        b = Tkinter.Label(self.annotationContent, text="None availabe")
+        b.pack(side="top", anchor="center")
+        self.update()
+
+        
+    def radioGroupChanged(self, *arg, **args):
+        if self.currentAnnotation == None:
+            self.entryText.config(state="disabled")
+            self.entryLookup.config(state="disabled")
+            self.entryMass.config(state="disabled")
+            return
+
+        self.entryLookup.config(state="readonly")
+        self.entryMass.config(state="readonly")
+        self.currentAnnotation.show = self.varRadio.get()        
+        if self.currentAnnotation.show == "text":
+            self.entryText.config(state="normal")
+        else:
+            self.entryText.config(state="disabled")
+        self.framePlot._paintCanvas()
+        
+    def on_resize(self,event):
+        self.frame.update_idletasks()
+        size = self.canvas.bbox("all")
+        self.empty.config(height=event.height -size[3])
+        self.canvas.config(height=size[3], width=size[2])
+        self.canvas.config(scrollregion=size)
+        
+    def update(self):
+        self.annotationContent.destroy()
+        
+        self.annotationContent = Tkinter.Frame(self.frameAnnotation)
+        self.annotationContent.grid(row=0,column=0)
+        if len(self.framePlot.names) == 0:
+            b = Tkinter.Label(self.annotationContent, text="None availabe")
+            b.pack(side="top", anchor="center")
+            return
+        for name in self.framePlot.names:
+            c = Tkinter.Checkbutton(self.annotationContent, text=name, variable=self.framePlot.visible[name])
+            c.pack(side="top", anchor="nw")
+            
