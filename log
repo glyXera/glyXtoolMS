@@ -1,0 +1,128 @@
+diff --git a/glyxtoolms/gui/ConsensusSpectrumFrame.py b/glyxtoolms/gui/ConsensusSpectrumFrame.py
+index 902cca0..2fb84fb 100644
+--- a/glyxtoolms/gui/ConsensusSpectrumFrame.py
++++ b/glyxtoolms/gui/ConsensusSpectrumFrame.py
+@@ -2,6 +2,7 @@ import ttk
+ import Tkinter
+ from glyxtoolms.gui import AnnotatedPlot
+ from glyxtoolms.gui import Appearance
++import tkFont
+ 
+ 
+ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
+@@ -164,21 +165,32 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
+         # sort textinfo
+         viewable = sorted(viewable, key=lambda t: t[1])
+         # plot items
+-
++        # get font size
++        size = abs(tkFont.Font(font='TkDefaultFont').config()["size"])
+         for textinfo in viewable:
+             if N > 0 and len(items) >= N:
+                 break
+             x, y, text = textinfo
+-            item = self.canvas.create_text((x, y,), text=text,
+-                                           fill="blue violet",
+-                                           anchor="s", justify="center")
+-            # check bounds of other items
+-            bbox = self.canvas.bbox(item)
+-            overlap = set(self.canvas.find_overlapping(*bbox))
+-            if len(overlap.intersection(items)) == 0:
+-                items.add(item)
++            splitText = text.split("\n")[::-1]
++            tempItems = set()
++            hasOverlap = False
++            for i, part in enumerate(splitText):
++                item = self.canvas.create_text((x, y-size*i), text=part,
++                                               fill="blue violet",
++                                               anchor="s", justify="center")
++                tempItems.add(item)
++                
++                # check bounds of other items
++                bbox = self.canvas.bbox(item)
++                overlap = set(self.canvas.find_overlapping(*bbox))
++                if len(overlap.intersection(items)) != 0:
++                    hasOverlap = True
++                    break
++            if hasOverlap == False:
++                items = items.union(tempItems)
+             else:
+-                self.canvas.delete(item)
++                for item in tempItems:
++                    self.canvas.delete(item)
+         return items
+ 
+     def plotSelectedFragments(self, fragments=None):
+diff --git a/glyxtoolms/gui/DataModel.py b/glyxtoolms/gui/DataModel.py
+index 34571d2..faf5618 100644
+--- a/glyxtoolms/gui/DataModel.py
++++ b/glyxtoolms/gui/DataModel.py
+@@ -36,7 +36,7 @@ class DataModel(object):
+         self.currentAnalysis = None
+         self.filters = {"Identification":[], "Features":[], "Scoring":[]} # stores filter used to filter data
+         self.classes = {} # Functionhandler - each class should register itself here
+-        
++        #self.textsize = {"default":{"axis:12, }} #container for textsizes of various canvases
+         self.resources = {}
+ 
+         # read settings
+diff --git a/glyxtoolms/gui/FramePlot.py b/glyxtoolms/gui/FramePlot.py
+index 471c6bb..88fecd3 100644
+--- a/glyxtoolms/gui/FramePlot.py
++++ b/glyxtoolms/gui/FramePlot.py
+@@ -3,6 +3,7 @@ import Tkinter
+ import math
+ import os
+ import tkFileDialog
++import canvasvg
+ 
+ class Observe(Tkinter.Button):
+     
+@@ -267,14 +268,24 @@ class FramePlot(Tkinter.Frame, object):
+         if self.model.currentAnalysis == None:
+             return
+         options = {}
+-        options['filetypes'] = [('post script', '.eps'), ]
++        options['filetypes'] = [('Post Script', '.eps'), ('Scalable Vector Graphics', '.svg'),]
+         workingdir = os.path.dirname(self.model.currentAnalysis.path)
+         options['initialdir'] = workingdir
+         options['parent'] = self
+         filename = tkFileDialog.asksaveasfilename(**options)
+         if filename == "":
+             return
+-        self.canvas.postscript(file=filename, height=self.height, width=self.width)
++        if filename.endswith(".eps"):
++            self.canvas.postscript(file=filename, height=self.height, width=self.width)
++        else:
++            doc = canvasvg.SVGdocument()
++            for element in canvasvg.convert(doc, self.canvas):
++                doc.documentElement.appendChild(element)
++            
++            f = file(filename, "w")
++            f.write(doc.toprettyxml())
++            f.close()
++        
+         
+     def on_resize(self,event):
+         self.width = event.width
+diff --git a/glyxtoolms/gui/OxoniumIonPlot.py b/glyxtoolms/gui/OxoniumIonPlot.py
+index 712502f..6fb0e06 100644
+--- a/glyxtoolms/gui/OxoniumIonPlot.py
++++ b/glyxtoolms/gui/OxoniumIonPlot.py
+@@ -139,7 +139,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
+         self.bMax *= 1.1
+         self.aMin *= 1.1
+ 
+-    def paintObject(self):
++    def paintObject(self):     
+         if len(self.data) == 0:
+             return
+         height = 1/float(len(self.data))
+@@ -262,7 +262,6 @@ class OxoniumIonPlot(FramePlot.FramePlot):
+         elif len(spectra) > 0:
+             self._init_spectra(spectra)
+         
+-        
+         # add new oxonium ions to visibility
+         for name in self.names:
+             if name not in self.visible:

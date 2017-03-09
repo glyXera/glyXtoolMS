@@ -2,6 +2,7 @@ import ttk
 import Tkinter
 from glyxtoolms.gui import AnnotatedPlot
 from glyxtoolms.gui import Appearance
+import tkFont
 
 
 class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
@@ -164,21 +165,32 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         # sort textinfo
         viewable = sorted(viewable, key=lambda t: t[1])
         # plot items
-
+        # get font size
+        size = abs(tkFont.Font(font='TkDefaultFont').config()["size"])
         for textinfo in viewable:
             if N > 0 and len(items) >= N:
                 break
             x, y, text = textinfo
-            item = self.canvas.create_text((x, y,), text=text,
-                                           fill="blue violet",
-                                           anchor="s", justify="center")
-            # check bounds of other items
-            bbox = self.canvas.bbox(item)
-            overlap = set(self.canvas.find_overlapping(*bbox))
-            if len(overlap.intersection(items)) == 0:
-                items.add(item)
+            splitText = text.split("\n")[::-1]
+            tempItems = set()
+            hasOverlap = False
+            for i, part in enumerate(splitText):
+                item = self.canvas.create_text((x, y-size*i), text=part,
+                                               fill="blue violet",
+                                               anchor="s", justify="center")
+                tempItems.add(item)
+                
+                # check bounds of other items
+                bbox = self.canvas.bbox(item)
+                overlap = set(self.canvas.find_overlapping(*bbox))
+                if len(overlap.intersection(items)) != 0:
+                    hasOverlap = True
+                    break
+            if hasOverlap == False:
+                items = items.union(tempItems)
             else:
-                self.canvas.delete(item)
+                for item in tempItems:
+                    self.canvas.delete(item)
         return items
 
     def plotSelectedFragments(self, fragments=None):

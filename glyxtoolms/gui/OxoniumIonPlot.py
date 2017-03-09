@@ -139,7 +139,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         self.bMax *= 1.1
         self.aMin *= 1.1
 
-    def paintObject(self):
+    def paintObject(self):     
         if len(self.data) == 0:
             return
         height = 1/float(len(self.data))
@@ -261,7 +261,6 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             self._init_features(features)
         elif len(spectra) > 0:
             self._init_spectra(spectra)
-        
         
         # add new oxonium ions to visibility
         for name in self.names:

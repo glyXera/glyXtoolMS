@@ -3,6 +3,7 @@ import Tkinter
 import math
 import os
 import tkFileDialog
+import canvasvg
 
 class Observe(Tkinter.Button):
     
@@ -267,14 +268,24 @@ class FramePlot(Tkinter.Frame, object):
         if self.model.currentAnalysis == None:
             return
         options = {}
-        options['filetypes'] = [('post script', '.eps'), ]
+        options['filetypes'] = [('Post Script', '.eps'), ('Scalable Vector Graphics', '.svg'),]
         workingdir = os.path.dirname(self.model.currentAnalysis.path)
         options['initialdir'] = workingdir
         options['parent'] = self
         filename = tkFileDialog.asksaveasfilename(**options)
         if filename == "":
             return
-        self.canvas.postscript(file=filename, height=self.height, width=self.width)
+        if filename.endswith(".eps"):
+            self.canvas.postscript(file=filename, height=self.height, width=self.width)
+        else:
+            doc = canvasvg.SVGdocument()
+            for element in canvasvg.convert(doc, self.canvas):
+                doc.documentElement.appendChild(element)
+            
+            f = file(filename, "w")
+            f.write(doc.toprettyxml())
+            f.close()
+        
         
     def on_resize(self,event):
         self.width = event.width

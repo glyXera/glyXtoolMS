@@ -36,7 +36,7 @@ class DataModel(object):
         self.currentAnalysis = None
         self.filters = {"Identification":[], "Features":[], "Scoring":[]} # stores filter used to filter data
         self.classes = {} # Functionhandler - each class should register itself here
-        
+        #self.textsize = {"default":{"axis:12, }} #container for textsizes of various canvases
         self.resources = {}
 
         # read settings
