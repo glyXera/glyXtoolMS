@@ -245,6 +245,8 @@ def annotateSpectrumWithFragments(peptide, spectrum, tolerance, maxCharge):
     pepGlcNAcIon = pepIon+glyxtoolms.masses.GLYCAN["HEXNAC"]
     pepNH3 = pepIon-glyxtoolms.masses.MASS["N"] - 3*glyxtoolms.masses.MASS["H"]
     pep83 = pepIon + glyxtoolms.masses.calcMassFromElements({"C":4, "H":5, "N":1, "O":1})
+    pepHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]
+    pepHexHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]*2
     
     # determine all peptide modification variants
     bestVariant = (None, {})
@@ -259,12 +261,16 @@ def annotateSpectrumWithFragments(peptide, spectrum, tolerance, maxCharge):
             pepGlcNAcIonMass = calcChargedMass(pepGlcNAcIon,charge)
             pepNH3Mass = calcChargedMass(pepNH3,charge)
             pep83Mass = calcChargedMass(pep83,charge)
+            pepHexMass = calcChargedMass(pepHex,charge)
+            pep2HexMass = calcChargedMass(pepHexHex,charge)
             
             chargeName = "+("+str(charge)+"H+)"
             fragments["peptide"+chargeName] = (pepIonMass, peptide.sequence+chargeName, "pep")
             fragments["peptide+HexNAc"+chargeName] = (pepGlcNAcIonMass, peptide.sequence+"+HexNAC"+chargeName, "pep")
             fragments["peptide-NH3"+chargeName] = (pepNH3Mass, peptide.sequence+"-NH3"+chargeName, "pep")
             fragments["peptide+HexNAC0.2X"+chargeName] = (pep83Mass, peptide.sequence+"+HexNAC0.2X"+chargeName, "pep")
+            fragments["peptide+Hex"+chargeName] = (pepHexMass, peptide.sequence+"+Hex"+chargeName, "pep")
+            fragments["peptide+2Hex"+chargeName] = (pep2HexMass, peptide.sequence+"+2Hex"+chargeName, "pep")
         
         # search for the existence of each fragment within the spectrum
         found_fragments = {}
