@@ -51,7 +51,7 @@ class App(ttk.Frame):
         self.master.config(menu=self.menubar)
         self.master.config(bg="#d9d9d9")
         self.model = DataModel.DataModel()
-        self.toplevel = {} # store references to other toplevel windows
+        
 
         self.model.root = master
         
@@ -221,10 +221,10 @@ class App(ttk.Frame):
         return
         
     def showOxoniumPlot(self):
-        if "OxoniumFrame" in self.toplevel:
-            self.toplevel["OxoniumFrame"].destroy()
+        if "OxoniumFrame" in self.model.toplevel:
+            self.model.toplevel["OxoniumFrame"].destroy()
         frame = OxoniumFrame(self, self.model)
-        self.toplevel["OxoniumFrame"] = frame
+        self.model.toplevel["OxoniumFrame"] = frame
         
     def showFilterOptions(self):
         FilterPanel.FilterPanel(self.master, self.model)
@@ -429,8 +429,8 @@ class OxoniumFrame(Tkinter.Toplevel):
     def on_closing(self):
         if "OxoniumIonPlot" in self.model.classes:
             self.model.classes.pop("OxoniumIonPlot")
-        if "OxoniumFrame" in self.master.toplevel:
-            self.master.toplevel.pop("OxoniumFrame")
+        if "OxoniumFrame" in self.model.toplevel:
+            self.model.toplevel.pop("OxoniumFrame")
         self.destroy()
 
 

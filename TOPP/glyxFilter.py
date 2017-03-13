@@ -225,7 +225,7 @@ def parseOxoniumIons(options):
     if options.hasFucose == "true":
         oxoniumIons['(dHex)1(H+)1'] = {'charge':1, 'depends':['(dHex)1(H2O)-1(H+)1', '(Hex)1(H2O)-1(H+)1']}
         oxoniumIons['(dHex)1(H2O)-1(H+)1'] = {'charge':1, 'depends':['(dHex)1(H+)1']}
-        oxoniumIons['(HexNAc)1(Hex)1(dHex)1(H+)1'] = {'charge':1, 'depends':['(Hex)1(H+)1']}
+        oxoniumIons['(HexNAc)1(Hex)1(dHex)1(H+)1'] = {'charge':1}
 
     # Fucose and Sialic acid
     if options.hasNANA == "true" and options.hasFucose == "true":

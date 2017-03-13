@@ -12,6 +12,6 @@ class Checkbutton(Tkinter.Checkbutton):
         
 class Label(Tkinter.Label):
     def __init__(self, *arg, **args):
-        Tkinter.Checkbutton.__init__(self, *arg, **args)
+        Tkinter.Label.__init__(self, *arg, **args)
         self.config(bg="#d9d9d9")
     

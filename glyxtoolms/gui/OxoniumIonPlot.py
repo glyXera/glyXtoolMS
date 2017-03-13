@@ -22,7 +22,6 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         self.colorindex = 0
         self.colors = ["red", "blue", "green", "orange"]
         self.allowZoom = True
-        self.borderLeft = 100
         self.visible = {}
         self.legend = {}
 
@@ -72,7 +71,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                                 self.convBtoY(self.viewYMin),
                                 self.convAtoX(self.viewXMin),
                                 self.convBtoY(self.viewYMax)-10,
-                                tags=("axis", ), arrow="last")
+                                tags=("axis", ))
         index = 0
         for name in self.names:
             if self.visible[name].get() == False:
@@ -83,13 +82,15 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 y = self.convBtoY(start)
                 self.canvas.create_text((x-5, y),
                                         text=name,
-                                        anchor="e")
+                                        anchor="e",
+                                        font=self.options["AxisNumbering"]["font"])
                 self.canvas.create_line(x-4, y, x, y)
             index += 1
 
-        item = self.canvas.create_text(self.borderLeft,
-                                       self.borderTop/2.0,
-                                       text=self.yTitle)
+        item = self.canvas.create_text(self.options["Margins"]["left"],
+                                       self.options["Margins"]["top"]/2.0,
+                                       text=self.yTitle,
+                                       font=self.options["AxisLabel"]["font"])
         # write legend
         y_legend = self.convBtoY(self.viewYMax)-10
         i = 0
@@ -98,14 +99,17 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             i += 1
             if i == 6:
                 legend = "..."
-            self.canvas.create_text(x0+20,
-                                    y_legend,
-                                    text=legend,
-                                    anchor="w")
+            item = self.canvas.create_text(x0+20,
+                                           y_legend,
+                                           text=legend,
+                                           font=self.options["Legend"]["font"],
+                                           anchor="nw")
             if i == 6:
                 break
-            self.canvas.create_rectangle(x0, y_legend-5, x0+10, y_legend+5, fill=self.legend[legend])
-            y_legend += 20
+            bbox = self.canvas.bbox(item)
+            y = (bbox[1]+bbox[3])/2.0
+            self.canvas.create_rectangle(x0, y-5, x0+10, y+5, fill=self.legend[legend])
+            y_legend = bbox[3]
 
     def getNewColor(self):
         self.colorindex += 1
@@ -270,23 +274,23 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 self.visible[name].trace("w", self.visbilityChanged)
         
         # calculate space for oxonium names
-        self.borderLeft = 100
+        self.options["Margins"]["left"] = 100
         if len(self.names) > 0:
             sizes = []
             for name in self.names:
-                sizes.append(tkFont.Font(font='TkDefaultFont').measure(name))
+                sizes.append(self.options["AxisNumbering"]["font"].measure(name))
             size = max(sizes)
             if size > 80:
-                self.borderLeft = size+20
+                self.options["Margins"]["left"] = size+20
                 
         # calculate space for legend
-        self.borderRight = 50
+        self.options["Margins"]["right"] = 50
         if len(self.legend) > 0:
             sizes = []
             for text in self.legend:
-                sizes.append(tkFont.Font(font='TkDefaultFont').measure(text))
+                sizes.append(self.options["Legend"]["font"].measure(text))
             size = max(sizes)
-            self.borderRight = size+50
+            self.options["Margins"]["right"] = size+50
         
         if self.selectionButton.active.get() == True:
             self.sidePanelSelection.update()

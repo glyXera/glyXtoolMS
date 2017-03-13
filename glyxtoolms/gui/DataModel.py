@@ -38,6 +38,7 @@ class DataModel(object):
         self.classes = {} # Functionhandler - each class should register itself here
         #self.textsize = {"default":{"axis:12, }} #container for textsizes of various canvases
         self.resources = {}
+        self.toplevel = {} # store references to other toplevel windows
 
         # read settings
         self.readSettings()
@@ -147,6 +148,8 @@ class DataModel(object):
         self.resources["filter"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/ox.gif')
         self.resources["oxonium"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/options.gif')
+        self.resources["options"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
 
 
 class Chromatogram(object):

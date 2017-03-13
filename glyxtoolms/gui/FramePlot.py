@@ -4,6 +4,8 @@ import math
 import os
 import tkFileDialog
 import canvasvg
+import tkFont
+from glyxtoolms.gui import Appearance
 
 class Observe(Tkinter.Button):
     
@@ -65,7 +67,7 @@ class Toolbar(Tkinter.Frame):
         assert panelname not in self.panels
         if panel == None:
             panel = Tkinter.Frame(self)
-        panel.pack(side=side)        
+        panel.pack(side=side,anchor="n")        
         self.panels[panelname] = panel
         return panel
 
@@ -74,7 +76,7 @@ class Toolbar(Tkinter.Frame):
         button = ToggleButton(self.panels[panelname], self,
                               self.model.resources[imagepath], 
                               groupname, imagepath, cursor=cursor)
-        button.pack(side=side)
+        button.pack(side=side, anchor="n")
         return button
         
 
@@ -154,10 +156,10 @@ class FramePlot(Tkinter.Frame, object):
         self.height = 0
         self.width = 0
 
-        self.borderLeft = 100
-        self.borderRight = 50
-        self.borderTop = 50
-        self.borderBottom = 50
+        #self.borderLeft = 100
+        #self.borderRight = 50
+        #self.borderTop = 50
+        #self.borderBottom = 50
 
         self.columnconfigure(0,weight=1)
         self.columnconfigure(1,weight=0)
@@ -213,15 +215,36 @@ class FramePlot(Tkinter.Frame, object):
         self.toolbar.addButton("zoom_out","single", "default", cursor="")
         self.toolbar.addButton("zoom_auto","single", "default", cursor="")
         
+        panelOptions = self.toolbar.addPanel("options", side="right")
+        self.toolbar.addButton("options","right", "options")
+        
         # Add coords and Canvasname to panel
         panelCoords = self.toolbar.addPanel("coords", side="right")
         labelName = Tkinter.Label(panelCoords, text=self.identifier())
         labelName.grid(row=0, column=0, sticky="NE")
         
         self.coord = Tkinter.StringVar()
-        l = Tkinter.Label(panelCoords, textvariable=self.coord)
+        l = Tkinter.Label(master=panelCoords, textvariable=self.coord)
         l.grid(row=1, column=0, sticky="NE")
         
+        self.options = {}
+        self.setDefaultOptions()
+        
+    def setDefaultOptions(self):
+        self.options = {}
+        self.options["AxisLabel"] = {}
+        self.options["AxisLabel"]["font"] = tkFont.Font(family="Arial",size=12)
+        self.options["AxisNumbering"] = {}
+        self.options["AxisNumbering"]["font"] = tkFont.Font(family="Arial",size=12)
+        self.options["Legend"] = {}
+        self.options["Legend"]["show"] = True
+        self.options["Legend"]["font"] = tkFont.Font(family="Arial",size=12)
+        self.options["Margins"] = {}
+        self.options["Margins"]["left"] = 100
+        self.options["Margins"]["right"] = 50
+        self.options["Margins"]["bottom"] = 50
+        self.options["Margins"]["top"] = 50
+
     def scrollX(self, *args):
         if args[0] == '-1':
             self.keyLeft(None)
@@ -413,6 +436,10 @@ class FramePlot(Tkinter.Frame, object):
                 self.viewYMax = self.bMax
             self.toolbar.deactivateGroup("single")
             self._paintCanvas(addToHistory=False)
+        elif self.toolbar.active.get("right", "") == "options":
+            self.toolbar.deactivateGroup("right")
+            optionsFrame = OptionsFrame(self, self.model)
+            self.createOptions(optionsFrame)
                 
     def eventButton1(self, event):
         self.canvas.focus_set()
@@ -504,8 +531,8 @@ class FramePlot(Tkinter.Frame, object):
         if baseY == 0.0:
             baseY = 1.0
             self.viewYMax = self.viewYMin+1
-        self.slopeA = (self.width-self.borderLeft-self.borderRight)/baseX
-        self.slopeB = (self.height-self.borderTop-self.borderBottom)/baseY
+        self.slopeA = (self.width-self.options["Margins"]["left"]-self.options["Margins"]["right"])/baseX
+        self.slopeB = (self.height-self.options["Margins"]["top"]-self.options["Margins"]["bottom"])/baseY
         
         self.slopeA = self.slopeA
         
@@ -529,7 +556,7 @@ class FramePlot(Tkinter.Frame, object):
         self.vbar.set(lowY, highY)
 
     def convAtoX(self, A):
-        return self.borderLeft+self.slopeA*(A-self.viewXMin)
+        return self.options["Margins"]["left"]+self.slopeA*(A-self.viewXMin)
             
     def timeConversion(self):
         if self.xTypeTime == True and self.model.timescale == "minutes":
@@ -538,17 +565,17 @@ class FramePlot(Tkinter.Frame, object):
             return 1.0
 
     def convBtoY(self, B):
-        return self.height-self.borderBottom-self.slopeB*(B-self.viewYMin)
+        return self.height-self.options["Margins"]["bottom"]-self.slopeB*(B-self.viewYMin)
 
     def convXtoA(self, X):
         if self.allowZoom == False:
             return X
-        return (X-self.borderLeft)/self.slopeA+self.viewXMin
+        return (X-self.options["Margins"]["left"])/self.slopeA+self.viewXMin
 
     def convYtoB(self, Y):
         if self.allowZoom == False:
             return Y
-        return (self.height-self.borderBottom-Y)/self.slopeB+self.viewYMin
+        return (self.height-self.options["Margins"]["bottom"]-Y)/self.slopeB+self.viewYMin
 
     def initCanvas(self, keepZoom=False):
         self.setMaxValues()
@@ -587,11 +614,13 @@ class FramePlot(Tkinter.Frame, object):
                 if self.xTypeTime == True and self.model.timescale == "minutes":
                     self.canvas.create_text((x, y+5),
                                             text=shortNr(start/60.0, exp-2),
-                                            anchor="n")
+                                            anchor="n",
+                                            font=self.options["AxisNumbering"]["font"])
                 else:
                     self.canvas.create_text((x, y+5),
                                             text=shortNr(start, exp),
-                                            anchor="n")
+                                            anchor="n",
+                                            font=self.options["AxisNumbering"]["font"])
                 self.canvas.create_line(x, y, x, y+4)
             start += diff
         
@@ -603,8 +632,9 @@ class FramePlot(Tkinter.Frame, object):
             else:
                 xText = "rt [s]"
         item = self.canvas.create_text(self.convAtoX((self.viewXMin+self.viewXMax)/2.0),
-                                       self.height-self.borderBottom/3.0,
-                                       text=xText)
+                                       self.height-self.options["Margins"]["bottom"]/3.0,
+                                       text=xText,
+                                       font=self.options["AxisLabel"]["font"])
 
     def _paintYAxis(self):
         self.canvas.create_line(self.convAtoX(self.viewXMin),
@@ -621,33 +651,35 @@ class FramePlot(Tkinter.Frame, object):
                 y = self.convBtoY(start)
                 self.canvas.create_text((x-5, y),
                                         text=shortNr(start, exp),
-                                        anchor="e")
+                                        anchor="e",
+                                        font=self.options["AxisNumbering"]["font"])
                 self.canvas.create_line(x-4, y, x, y)
             start += diff
 
-        item = self.canvas.create_text(self.borderLeft,
-                                       self.borderTop/2.0,
-                                       text=self.yTitle)
+        item = self.canvas.create_text(self.options["Margins"]["left"],
+                                       self.options["Margins"]["top"]/2.0,
+                                       text=self.yTitle,
+                                       font=self.options["AxisLabel"]["font"])
         
     def _paintAxis(self):
 
         # overpaint possible overflows
         self.canvas.create_rectangle(0, 0,
-                                     self.borderLeft, self.height,
+                                     self.options["Margins"]["left"], self.height,
                                      fill=self.canvas["background"],
                                      outline=self.canvas["background"],
                                      width=0)
-        self.canvas.create_rectangle(self.width-self.borderRight,
+        self.canvas.create_rectangle(self.width-self.options["Margins"]["right"],
                                      0, self.width, self.height,
                                      fill=self.canvas["background"],
                                      outline=self.canvas["background"],
                                      width=0)
         self.canvas.create_rectangle(0, 0,
-                                     self.width, self.borderTop,
+                                     self.width, self.options["Margins"]["top"],
                                      fill=self.canvas["background"],
                                      outline=self.canvas["background"],
                                      width=0)
-        self.canvas.create_rectangle(0, self.height-self.borderBottom,
+        self.canvas.create_rectangle(0, self.height-self.options["Margins"]["bottom"],
                                      self.width, self.height+1,
                                      fill=self.canvas["background"],
                                      outline=self.canvas["background"],
@@ -741,6 +773,20 @@ class FramePlot(Tkinter.Frame, object):
             return
         self.viewXMin, self.viewXMax, self.viewYMin, self.viewYMax = a, b, c, d
         self._paintCanvas()
+        
+    def createOptions(self, optionsFrame):
+        optionsFrame.addPlotMargins()
+        frameAxis = optionsFrame.addLabelFrame("Axis")
+        optionsFrame.addFont(frameAxis, "AxisLabel", "Label Font Size: ")
+        optionsFrame.addFont(frameAxis, "AxisNumbering", "Numbering Font Size: ")
+        
+        frameLegend = optionsFrame.addLabelFrame("Legend")
+        optionsFrame.addFont(frameLegend, "Legend", "Font Size: ")
+        
+        
+        #self.options["Legend"] = {}
+        #self.options["Legend"]["show"] = True
+        #self.options["Legend"]["font"] = tkFont.Font(family="Arial",size=12)
 
 def shortNr(nr, exp):
     # shorten nr if precision is necessary
@@ -768,3 +814,128 @@ def findScale(start, end, NrScales):
     startAxis = math.floor(start/diff)*diff
     endAxis = math.ceil(end/diff)*diff
     return startAxis, endAxis, diff, exp
+    
+class OptionsFrame(Tkinter.Toplevel):
+
+    def __init__(self, master, model):
+        Tkinter.Toplevel.__init__(self, master=master)
+        self.master = master
+        self.title("Plotting Options")
+        self.config(bg="#d9d9d9")
+        self.model = model
+        self.variables = {}
+        self.i = 0
+        self.frameRow = {}
+        self.oldValues = {}
+        for optionname in self.master.options:
+            self.oldValues[optionname] = {}
+            for key in self.master.options[optionname]:
+                self.oldValues[optionname][key] = self.master.options[optionname][key]
+
+        if self.getName() in self.model.toplevel:
+            self.model.toplevel[self.getName()].destroy()
+        self.model.toplevel[self.getName()] = self
+        
+        self.focus_set()
+        self.transient(master)
+        self.lift()
+        self.wm_deiconify()
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        self.columnconfigure(2, weight=1)
+        self.rowconfigure(0, weight=1)
+        
+        defaultButton = Tkinter.Button(self, text="Use Default", command=self.setDefault)  
+        defaultButton.grid(row=10, column=0, sticky="NWES")
+        
+        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)
+        cancelButton.grid(row=10, column=1, sticky="NWES")
+             
+        saveButton = Tkinter.Button(self, text="Save", command=self.save)
+        saveButton.grid(row=10, column=2, sticky="NWES")
+    
+        
+    def addPlotMargins(self):
+        frame = self.addLabelFrame(text="Margins")
+        for name in ["left", "right", "bottom", "top"]:
+            label = Appearance.Label(frame, text=name+" Margin: ")
+            label.grid(row=frame.row,column=0, sticky="NW")
+            var = Tkinter.IntVar()
+            var.set(self.master.options["Margins"][name])
+            var.trace("w", lambda a,b,c,d=name:self.setMargin(a,b,c,d))
+            entry = Tkinter.Entry(frame, textvariable=var)
+            entry.grid(row=frame.row,column=1, sticky="NW")
+            entry.config(bg="white")
+            self.addVariable("Margins", name, var)
+            var.entry = entry
+            frame.row += 1
+        
+    def addLabelFrame(self, text):
+        frame = ttk.Labelframe(self, text=text)
+        frame.grid(row=self.i,column=0, columnspan=3, sticky="NSEW")
+        self.i += 1
+        frame.row = 0
+        return frame
+        
+    def addVariable(self, optionname, variablename, var):
+        if not optionname in self.variables:
+            self.variables[optionname] = {}
+        self.variables[optionname][variablename] = var
+        
+    def addFont(self, frame, optionname, text):
+        label = Appearance.Label(frame, text=text)
+        label.grid(row=frame.row,column=0, sticky="NW")
+        var = Tkinter.IntVar()
+        var.set(self.master.options[optionname]["font"].config()["size"])
+        entry = Tkinter.Entry(frame, textvariable=var)
+        entry.grid(row=frame.row,column=1, sticky="NW")
+        entry.config(bg="white")
+        var.trace("w", lambda a,b,c,d=optionname:self.setFontSize(a,b,c,d))
+        self.addVariable(optionname, "font", var)
+        var.entry = entry
+        frame.row += 1
+        
+    def setFontSize(self, a,b,c, optionname):
+        var = self.variables[optionname]["font"]
+        try:
+            size = int(var.get())
+            var.entry.config(bg="white")
+            self.master.options[optionname]["font"] = tkFont.Font(family="Arial",
+                                                      size=size)
+            self.master._paintCanvas(False)
+        except:
+            var.entry.config(bg="red")
+            
+    def setMargin(self, a,b,c, name):
+        var = self.variables["Margins"][name]
+        try:
+            value = int(var.get())
+            var.entry.config(bg="white")
+            self.master.options["Margins"][name] = value
+            self.master._paintCanvas(False)
+        except:
+            var.entry.config(bg="red")
+
+    def getName(self):
+        return "PlotOptionsFrame"
+    
+    def on_closing(self):
+        if self.getName() in self.model.classes:
+            self.model.toplevel.pop(self.getName())
+        self.destroy()
+        
+    def cancel(self):
+        self.master.options = self.oldValues
+        self.master._paintCanvas(False)
+        self.on_closing()
+    
+    def save(self):
+        self.on_closing()
+        
+    def setDefault(self):
+        self.master.setDefaultOptions()
+        self.master._paintCanvas(False)
+        frame = OptionsFrame(self.master, self.model)
+        frame.master.createOptions(frame)
+        self.destroy()
+        
+
