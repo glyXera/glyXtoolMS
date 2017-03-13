@@ -51,6 +51,9 @@ def main(options):
         pepIon = hit.peptide.mass+glyxtoolms.masses.MASS["H+"]
         pepGlcNAcIon = pepIon+glyxtoolms.masses.GLYCAN["HEXNAC"]
         pepNH3 = pepIon-glyxtoolms.masses.MASS["N"] - 3*glyxtoolms.masses.MASS["H"]
+        pepHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]
+        pepHexHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]*2
+        
 
         # search for hits in spectra
         foundA = 0
@@ -64,8 +67,10 @@ def main(options):
         foundA = countMassInSpectra(pepIon,tolerance,spectraList)
         foundB = countMassInSpectra(pepGlcNAcIon,tolerance,spectraList)
         foundC = countMassInSpectra(pepNH3,tolerance,spectraList)
+        foundD = countMassInSpectra(pepHex,tolerance,spectraList)
+        foundE = countMassInSpectra(pepHexHex,tolerance,spectraList)
         
-        if foundA + foundB + foundC == 0:
+        if foundA + foundB + foundC + foundD + foundE == 0:
             continue
         hit.fragments = {}
         if foundA > 0:
@@ -86,6 +91,18 @@ def main(options):
             fragment["sequence"] = hit.peptide.sequence+"-NH3"
             fragment["counts"] = foundC
             hit.fragments["peptide-NH3"] = fragment
+        if foundD > 0:
+            fragment = {}
+            fragment["mass"] = pepHex
+            fragment["sequence"] = hit.peptide.sequence+"+Hex"
+            fragment["counts"] = foundD
+            hit.fragments["peptide+Hex"] = fragment
+        if foundE > 0:
+            fragment = {}
+            fragment["mass"] = pepHexHex
+            fragment["sequence"] = hit.peptide.sequence+"+2Hex"
+            fragment["counts"] = foundE
+            hit.fragments["peptide+2Hex"] = fragment
         # search for peptide fragments
         p = hit.peptide
         fragmenthits = (None,{})
