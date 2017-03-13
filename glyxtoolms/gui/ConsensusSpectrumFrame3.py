@@ -37,7 +37,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.grid_columnconfigure(0, weight=1)
 
         # register class
-        self.model.classes["ConsensusSpectrumFrame"] = self
+        self.model.classes["ConsensusSpectrumFrame3"] = self
         
         # register additional button bindings
         self.canvas.bind("<Button-2>", self.button2, "+")
