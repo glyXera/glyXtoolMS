@@ -63,7 +63,7 @@ class PeptideCoverageFrame(ttk.Frame):
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)
         self.canvas.bind("<Configure>", self.on_resize)
-        self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
+        #self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
         self.canvas.bind("<Control-s>", self.savePlot, "+")
 
         self.menuVar = Tkinter.StringVar(self)
@@ -81,7 +81,7 @@ class PeptideCoverageFrame(ttk.Frame):
             return
         name = self.menuVar.get()
         if name in self.hit.fragments:
-            self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([name])
+            self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([name],zoomIn=True)
         
     def setMenuChoices(self, choices):
         self.aMenu['menu'].delete(0, 'end')
@@ -94,10 +94,10 @@ class PeptideCoverageFrame(ttk.Frame):
         for choice in choices:
             self.aMenu['menu'].add_command(label=choice, command=Tkinter._setit(self.menuVar, choice))
         # clear
-        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([])
+        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([],zoomIn=False)
     
-    def eventMouseMotion(self, event):
-        self.canvas.focus_set()
+    #def eventMouseMotion(self, event):
+    #    self.canvas.focus_set()
     
     def savePlot(self, event):
         if self.model.currentAnalysis == None:
@@ -117,7 +117,7 @@ class PeptideCoverageFrame(ttk.Frame):
         self.height = event.height
         #self.canvas.config(width=self.width, height=self.height)
         self.paint_canvas()
-        self.colorIndex()
+        self.colorIndex(zoomIn=False)
 
     def init(self, hit):
         analysis = self.model.currentAnalysis
@@ -280,16 +280,16 @@ class PeptideCoverageFrame(ttk.Frame):
             if item in self.coverage:
                 key = self.coverage[item]
                 self.indexList.add(key)
-        self.colorIndex()
+        self.colorIndex(zoomIn=True)
 
-    def colorIndex(self):
+    def colorIndex(self,zoomIn=False):
         found = []
         for index in self.indexList:
             found += self.fragmentCoverage[index]
             for item in self.coverage:
                 if self.coverage[item] == index:
                     self.canvas.itemconfigure(item, fill="red")
-        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found)
+        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found,zoomIn=True)
 
 
 

@@ -761,6 +761,17 @@ class FramePlot(Tkinter.Frame, object):
         self.viewXMax = x2
         self.viewYMin = y1
         self.viewYMax = y2
+
+        # check maximal parameters
+        if self.viewXMax > self.aMax:
+            self.viewXMax = self.aMax
+        if self.viewXMin < self.aMin:
+            self.viewXMin = self.aMin
+        if self.viewYMax > self.bMax:
+            self.viewYMax = self.bMax
+        if self.viewYMin < self.bMin:
+            self.viewYMin = self.bMin
+        
         self._paintCanvas()
 
     def zoomBack(self, event):

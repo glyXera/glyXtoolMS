@@ -289,7 +289,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                     self.canvas.delete(item)
         return items
 
-    def plotSelectedFragments(self, fragments=None):
+    def plotSelectedFragments(self, fragments=None, zoomIn=False):
         # remove previous fragment selections
         self.canvas.delete("fragmentSelection")
         if fragments != None:
@@ -298,11 +298,31 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             return
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
+        plotting = []
         for ionname in self.selectedFragments:
             mz = self.hit.fragments[ionname]["mass"]
             pMZ = self.convAtoX(mz)
+            plotting.append(mz)
             self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax,
                                     tags=("fragmentSelection", ),
                                     fill="cyan")
         self.canvas.tag_lower("fragmentSelection", "peak")
+        # set zoom
+        if zoomIn == False:
+            return
+        if len(plotting) == 0:
+            return
+        minPlot = min(plotting)
+        maxPlot = max(plotting)
+        if self.viewXMin <= minPlot and maxPlot <= self.viewXMax:
+            return
+        # find minimal zoom
+        widthNow = abs(self.viewXMax-self.viewXMin) 
+        widthFrag = abs(minPlot-minPlot)
+        diff = (widthNow - widthFrag)/2.0
+        if diff < widthFrag/20.0:
+            diff = widthFrag/20.0
+        self.viewXMin = minPlot-diff
+        self.viewXMax = maxPlot+diff
+        self._paintCanvas()
 
