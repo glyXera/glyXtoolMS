@@ -836,7 +836,7 @@ class OptionsFrame(Tkinter.Toplevel):
         self.model = model
         self.variables = {}
         self.i = 0
-        self.frameRow = {}
+        self.frames = {}
         self.oldValues = {}
         for optionname in self.master.options:
             self.oldValues[optionname] = {}
@@ -885,7 +885,13 @@ class OptionsFrame(Tkinter.Toplevel):
         frame.grid(row=self.i,column=0, columnspan=3, sticky="NSEW")
         self.i += 1
         frame.row = 0
+        self.frames[text] = frame
         return frame
+        
+    def getLabelFrame(self, text):
+        if not text in self.frames:
+            return self.addLabelFrame(text)
+        return self.frames[text]
         
     def addVariable(self, optionname, variablename, var):
         if not optionname in self.variables:

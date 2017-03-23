@@ -6,7 +6,8 @@ import os
 import tkFileDialog
 from glyxtoolms.gui import FramePlot
 import glyxtoolms
-
+import re
+from glyxtoolms.gui import Appearance
 
 class OxoniumIonPlot(FramePlot.FramePlot):
     
@@ -37,9 +38,85 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         self.selectionButton = self.toolbar.addButton("oxonium","selection", "default")
         # add trace to ruler button toggles
         self.selectionButton.active.trace("w", self.selectionPanelToggled)
+        self.plotOrder = ["HexNAc", "Hex", "dHex", "NeuAc", "NeuGc", "H2O"]
+
         
-    #def parseOxoniumion(self, ionname):
+    def setDefaultOptions(self):
+        super(OxoniumIonPlot, self).setDefaultOptions()
+        self.options["AxisLabel"]["showPicto"] = True
+
+    def createOptions(self, optionsFrame):
+        def togglePictogram(a,b,c, var):
+            self.options["AxisLabel"]["showPicto"] = var.get()
+            self._paintCanvas(False)
         
+        super(OxoniumIonPlot, self).createOptions(optionsFrame)
+        frameAxis = optionsFrame.getLabelFrame("Axis")
+        
+        pictogramVar = Tkinter.BooleanVar()
+        pictogramVar.set(self.options["AxisLabel"]["showPicto"])
+        optionsFrame.addVariable("AxisLabel", "showPicto", pictogramVar)
+        c = Appearance.Checkbutton(frameAxis, text="Use Glycan Pictograms", variable=pictogramVar)
+        c.grid(row=frameAxis.row, column=0, columnspan=2, sticky="NWS")
+        frameAxis.row += 1
+        pictogramVar.trace("w", lambda a,b,c,d=pictogramVar: togglePictogram(a,b,c,d))
+
+    def parseOxoniumion(self, name):
+        units = {}
+        for unit in re.findall("\(.+?\)-?\d+",name):
+            glycan, amount = unit.split(")")
+            glycan = glycan[1:]
+            amount = int(amount)
+            if amount == 0:
+                continue
+            units[glycan] = amount
+        return units
+    
+    def paintOxoniumion(self, x, y, name):
+        units = self.parseOxoniumion(name)
+        units.pop("H+")
+        # use size of font to assume shape sizes
+        size = self.options["AxisNumbering"]["font"].config()["size"]
+        h = size/2.0
+        x = x -10
+        for unit in units:
+            assert unit in self.plotOrder
+        for unit in self.plotOrder[::-1]:
+            if unit not in units:
+                continue
+            amount = units[unit]
+            if unit == "H2O":
+                
+                text = "H2O"
+                if amount < -1:
+                   text = str(amount)+text
+                elif amount == -1:
+                    text = "-"+text
+                elif amount == 1:
+                    text = "+"+text
+                else:
+                    text = "+" +str(amount)+text
+                self.canvas.create_text((x, y),
+                                        text=text,
+                                        anchor="e",
+                                        font=self.options["AxisNumbering"]["font"])
+                # measure new x
+                x = x - self.options["AxisNumbering"]["font"].measure(text)-2
+            else:
+                for i in range(0, amount):
+                    if unit == "HexNAc":
+                        self.canvas.create_rectangle(x,y-h,x-size, y+h)
+                    elif unit == "Hex":
+                        self.canvas.create_oval(x,y-h,x-size, y+h)
+                    elif unit == "dHex":
+                        self.canvas.create_polygon(x,y+h,x-size,y+h,x-h,y-h, fill="red", outline="black")
+                    elif unit == "NeuAc":
+                        self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="violet", outline="black")
+                    elif unit == "NeuGc":
+                        self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="azure", outline="black")
+
+                    x = x - size -2
+        return x
 
         
     def selectionPanelToggled(self, *arg, **args):
@@ -72,6 +149,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                                 self.convAtoX(self.viewXMin),
                                 self.convBtoY(self.viewYMax)-10,
                                 tags=("axis", ))
+
         index = 0
         for name in self.names:
             if self.visible[name].get() == False:
@@ -80,10 +158,14 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             if start > self.viewYMin and start < self.viewYMax:
                 x = self.convAtoX(self.viewXMin)
                 y = self.convBtoY(start)
-                self.canvas.create_text((x-5, y),
-                                        text=name,
-                                        anchor="e",
-                                        font=self.options["AxisNumbering"]["font"])
+                y2 = self.convBtoY(start+1)
+                if self.options["AxisLabel"]["showPicto"] == True:
+                    self.paintOxoniumion(x,y, name)
+                else:
+                    self.canvas.create_text((x-5, y),
+                                            text=name,
+                                            anchor="e",
+                                            font=self.options["AxisNumbering"]["font"])
                 self.canvas.create_line(x-4, y, x, y)
             index += 1
 
@@ -140,7 +222,6 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                     self.aMin = intensityMin
         self.bMax = len([name for name in self.names if self.visible[name].get() == True])*2
         self.aMax *= 1.1
-        self.bMax *= 1.1
         self.aMin *= 1.1
 
     def paintObject(self):     
@@ -273,13 +354,35 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 self.visible[name].set(True)
                 self.visible[name].trace("w", self.visbilityChanged)
         
+        if self.selectionButton.active.get() == True:
+            self.sidePanelSelection.update()
+        self.initCanvas(keepZoom=keepZoom)
+    
+    
+    def _paintCanvas(self, addToHistory=True):
+        """ Overwrite method to include margin calculation """
+        if addToHistory == True:
+            self.zoomHistory.append((self.viewXMin, self.viewXMax, self.viewYMin, self.viewYMax))
+
+        
+        self.calculateMargins()
+        self.calcScales()
+        self.canvas.delete(Tkinter.ALL)
+        self.paintObject()
+        self._paintAxis()
+        
+    def calculateMargins(self):
         # calculate space for oxonium names
         self.options["Margins"]["left"] = 100
         if len(self.names) > 0:
             sizes = []
-            for name in self.names:
-                sizes.append(self.options["AxisNumbering"]["font"].measure(name))
-            size = max(sizes)
+            if self.options["AxisLabel"]["showPicto"] == True:
+                for name in self.names:
+                    sizes.append(abs(self.paintOxoniumion(0,0,name)))
+            else:
+                for name in self.names:
+                    sizes.append(self.options["AxisNumbering"]["font"].measure(name))
+            size = max(sizes)+10
             if size > 80:
                 self.options["Margins"]["left"] = size+20
                 
@@ -291,11 +394,6 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 sizes.append(self.options["Legend"]["font"].measure(text))
             size = max(sizes)
             self.options["Margins"]["right"] = size+50
-        
-        if self.selectionButton.active.get() == True:
-            self.sidePanelSelection.update()
-        self.initCanvas(keepZoom=keepZoom)
-        
         
 class SelectionSidePanel(Tkinter.Frame, object):
     def __init__(self, master, framePlot):
@@ -310,7 +408,6 @@ class SelectionSidePanel(Tkinter.Frame, object):
         self.scrollbar.grid(row=0, column=1, sticky="WNS")
         self.canvas = Tkinter.Canvas(self, yscrollcommand=self.scrollbar.set)
         self.canvas.config(highlightthickness=0)
-        #self.canvas.grid(row=0, column=0, sticky="NSWE")
         self.canvas.grid(row=0, column=0, rowspan=2, sticky="NSWE")
 
         self.frame = Tkinter.Frame(self.canvas)
