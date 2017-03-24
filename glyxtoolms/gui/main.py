@@ -21,7 +21,9 @@ GUI:
 import Tkinter
 import ttk
 import tkFileDialog
+import pyperclip
 
+from glyxtoolms.gui import Appearance
 from glyxtoolms.gui import DataModel
 from glyxtoolms.gui import ProjectFrame
 from glyxtoolms.gui import NotebookScoring2
@@ -257,52 +259,86 @@ class OptionsFrame(Tkinter.Toplevel):
 
     def __init__(self, master, model):
         Tkinter.Toplevel.__init__(self, master=master)
-        self.minsize(600, 300)
+        #self.minsize(600, 300)
         self.master = master
         self.title("Options")
         #self.config(bg="#d9d9d9")
         self.model = model
         
-        self.columnconfigure(0, weight=0)
-        self.columnconfigure(1, weight=0)
-        self.columnconfigure(2, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=0)
+        self.rowconfigure(1, weight=0)
+        self.rowconfigure(2, weight=0)
+        self.rowconfigure(3, weight=0)
+        self.rowconfigure(4, weight=1)
         
-        buttonWorkspace = Tkinter.Button(self, text="Set workspace", command=self.setWorkspace)
+        self.columnconfigure(0, weight=1)
+        
+        frameWorkspace = ttk.Labelframe(self, text="Set Workspace")
+        frameWorkspace.grid(row=0, column=0, sticky="NWES")
+        frameWorkspace.columnconfigure(0, weight=0)
+        frameWorkspace.columnconfigure(1, weight=1)
+        buttonWorkspace = Tkinter.Button(frameWorkspace, text="Set workspace", command=self.setWorkspace)
         
         self.workspaceVar = Tkinter.StringVar()
         self.workspaceVar.set(self.model.workingdir)
-        entryWorkspace = Tkinter.Entry(self, textvariable=self.workspaceVar)
+        entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
         
         buttonWorkspace.grid(row=0, column=0, sticky="NWES")
-        entryWorkspace.grid(row=0, column=1, columnspan=2, sticky="NWES")
+        entryWorkspace.grid(row=0, column=1, sticky="NWES")
+        
+        frameTimeAxis = ttk.Labelframe(self, text="Timeaxis")
+        frameTimeAxis.grid(row=1, column=0, sticky="NWES")
         
         self.timeAxisVar = Tkinter.StringVar()
         self.timeAxisVar.set(self.model.timescale)
         
-        timeAxisLabel = Tkinter.Label(self, text="Timeaxis:")
-        timeAxisChoice1 = Tkinter.Radiobutton(self, text="In seconds", variable=self.timeAxisVar, value="seconds")
-        timeAxisChoice2 = Tkinter.Radiobutton(self, text="In minutes", variable=self.timeAxisVar, value="minutes")
+        timeAxisChoice1 = Appearance.Radiobutton(frameTimeAxis, text="In seconds", variable=self.timeAxisVar, value="seconds")
+        timeAxisChoice2 = Appearance.Radiobutton(frameTimeAxis, text="In minutes", variable=self.timeAxisVar, value="minutes")
         
-        timeAxisLabel.grid(row=1, column=0, sticky="NWS")
-        timeAxisChoice1.grid(row=1, column=1, sticky="NWS")
-        timeAxisChoice2.grid(row=2, column=1, sticky="NWS")
+        timeAxisChoice1.grid(row=0, column=0, sticky="NWS")
+        timeAxisChoice2.grid(row=0, column=1, sticky="NWS")
+        
+        frameError = ttk.Labelframe(self, text="Mass Error")
+        frameError.grid(row=2, column=0, sticky="NWES")
         
         self.errorVar = Tkinter.StringVar()
-        self.errorVar.set("Da")
+        self.errorVar.set(self.model.errorType)
         
-        errorLabel = Tkinter.Label(self, text="Error:")
-        errorChoice1 = Tkinter.Radiobutton(self, text="In Dalton", variable=self.errorVar, value="Da")
-        errorChoice2 = Tkinter.Radiobutton(self, text="In ppm", variable=self.errorVar, value="ppm")
+        errorChoice1 = Appearance.Radiobutton(frameError, text="In Dalton", variable=self.errorVar, value="Da")
+        errorChoice2 = Appearance.Radiobutton(frameError, text="In ppm", variable=self.errorVar, value="ppm")
         
-        errorLabel.grid(row=3, column=0, sticky="NWS")
-        errorChoice1.grid(row=3, column=1, sticky="NWS")
-        errorChoice2.grid(row=4, column=1, sticky="NWS")
+        errorChoice1.grid(row=0, column=0, sticky="NWS")
+        errorChoice2.grid(row=0, column=1, sticky="NWS")
         
-        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)        
-        saveButton = Tkinter.Button(self, text="Save options", command=self.save)
+        frameClipboard = ttk.Labelframe(self, text="Clipboard")
+        frameClipboard.grid(row=3, column=0, sticky="NWES")
+        
+        self.clipVar = Tkinter.StringVar()
+        self.clipVar.set(self.model.clipboard)
+        
+        boards = ('osx','qt','xclip','xsel','klipper','windows')
+        # test which boards are available here
+        avlBoards = []
+        for board in boards:
+            try:
+                pyperclip.set_clipboard(board)
+                avlBoards.append(board)
+            except:
+                pass
+        avlBoards = ['Tkinter'] + avlBoards
+        for i, board in enumerate(avlBoards):
+            clipboardChoice = Appearance.Radiobutton(frameClipboard, text=board, variable=self.clipVar, value=board)
+            clipboardChoice.grid(row=5+i/3, column=1+i%3, sticky="NWS")
+        
+        frameButtons = ttk.Frame(self)
+        frameButtons.grid(row=4, column=0, sticky="NWES")
+        
+        cancelButton = Tkinter.Button(frameButtons, text="Cancel", command=self.cancel)        
+        saveButton = Tkinter.Button(frameButtons, text="Save options", command=self.save)
 
-        cancelButton.grid(row=10, column=0, sticky="NWES")
-        saveButton.grid(row=10, column=1, sticky="NWES")
+        cancelButton.grid(row=0, column=0, sticky="NWES")
+        saveButton.grid(row=0, column=1, sticky="NWES")
 
         
     def setWorkspace(self):
@@ -321,7 +357,13 @@ class OptionsFrame(Tkinter.Toplevel):
     def save(self):
         self.model.workingdir = self.workspaceVar.get()
         self.model.timescale = self.timeAxisVar.get()
+        self.model.clipboard = self.clipVar.get()
+        self.model.errorType = self.errorVar.get()
         self.model.saveSettings()
+        # update plots
+        self.model.classes["NotebookIdentification"].updateTree()
+        self.model.classes["NotebookFeature"].updateFeatureTree()
+        
         self.destroy()
         
         

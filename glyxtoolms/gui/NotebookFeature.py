@@ -45,6 +45,9 @@ class NotebookFeature(ttk.Frame):
                                command=self.copyFeature)
         self.aMenu.add_command(label="Add Identification",
                                command=self.addIdentification)
+        self.aMenu.add_separator()
+        self.aMenu.add_command(label="Copy to Clipboard",
+                               command=self.copyToClipboard)
                                                       
                                
                                
@@ -177,6 +180,31 @@ class NotebookFeature(ttk.Frame):
             taglist = list(self.featureTree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, feature.status)
             self.featureTree.item(item, tags=taglist)
+            
+    def copyToClipboard(self, *arg, **args):
+        # add header
+        line = ["Feature Nr"]
+        line += self.featureTree["columns"]
+        text = "\t".join(line) + "\n"
+        for item in self.featureTree.selection():
+            line = []
+            line.append(content["text"]
+            line += content["values"]
+            #hit = self.treeIds[item]
+            #line = []
+            #line.append(content["text"])
+            #line.append(str(round(hit.feature.mz,4)))
+            #line.append(str(hit.feature.charge))
+            #line.append(str(round(hit.feature.rt,2)))
+            #line.append(str(round(hit.feature.intensity,2)))
+            #line += content["values"]
+            text += "\t".join(line) + "\n"
+        try:
+            self.model.saveToClipboard(text)
+            tkMessageBox.showinfo("Saved Table to Clipboard", "Table Data are saved to the Clipboard")
+        except:
+            tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
+            raise
     
     def changeFeature(self):
         selection = self.featureTree.selection()

@@ -32,6 +32,7 @@ class NotebookFeature(ttk.Frame):
         
         self.columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents")
         self.columnsWidth = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80}
+        self.columnNames = {"RT":"RT", "MZ":"MZ [Da]", "Charge":"Charge", "Best Score":"Best Score", "Nr Spectra":"Nr Spectra", "Status": "Status", "Nr. Idents":"Nr. Idents"}
         self.showColumns = {}
         for name in self.columns:
             self.showColumns[name] = Tkinter.BooleanVar()
@@ -48,7 +49,7 @@ class NotebookFeature(ttk.Frame):
                                      text=col,
                                      command=lambda col=col: self.sortFeatureColumn(col))
 
-        
+        self.setHeadingNames()
 
         button = Tkinter.Button(self,image=self.model.resources["filter"])
         button.grid(row=0, column=1)
@@ -85,6 +86,16 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.bind("<Right>", self.goRight)
 
         self.model.classes["NotebookFeature"] = self
+        
+    def setHeadingNames(self):
+        
+        if self.model.timescale == "minutes":
+            self.columnNames["RT"] = "RT [min]"
+        else:
+            self.columnNames["RT"] = "RT [s]"
+
+        for col in self.columnNames:
+            self.featureTree.heading(col, text=self.columnNames.get(col, col))
 
     def columnVisibilityChanged(self, *arg, **args):
         header = []
@@ -128,6 +139,9 @@ class NotebookFeature(ttk.Frame):
                                    command=self.copyFeature)
             self.aMenu.add_command(label="Add Identification",
                                    command=self.addIdentification)
+            self.aMenu.add_separator()
+            self.aMenu.add_command(label="Copy to Clipboard",
+                                   command=self.copyToClipboard)
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
@@ -138,6 +152,33 @@ class NotebookFeature(ttk.Frame):
                 self.aMenu.unpost()
         except:
             pass
+            
+    def copyToClipboard(self, *arg, **args):
+        # get active columns
+        header = ["Feature Nr"]
+        active = []
+        for columnname in self.columns:
+            isActive = self.showColumns[columnname].get()
+            active.append(isActive)
+            if isActive == True:
+                header.append(self.columnNames.get(columnname,columnname))
+        
+        # add header
+        text = "\t".join(header) + "\n"
+        for item in self.featureTree.selection():
+            content = self.featureTree.item(item)
+            line = []
+            line.append(content["text"])
+            for isActive,value in zip(active,content["values"]):
+                if isActive:
+                    line.append(str(value))
+            text += "\t".join(line) + "\n"
+        try:
+            self.model.saveToClipboard(text)
+            tkMessageBox.showinfo("Saved Table to Clipboard", "Table Data are saved to the Clipboard")
+        except:
+            tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
+            raise
             
     def goLeft(self, event):
         self.model.classes["FeatureChromatogramView"].goLeft(event)
@@ -295,7 +336,7 @@ class NotebookFeature(ttk.Frame):
         # clear tree
         self.featureTree.delete(*self.featureTree.get_children())
         self.featureTreeIds = {}
-
+        self.setHeadingNames()
         project = self.model.currentProject
 
         if project == None:

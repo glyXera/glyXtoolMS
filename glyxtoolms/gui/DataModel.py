@@ -6,6 +6,7 @@ from pkg_resources import resource_stream
 import pickle
 import base64
 import Tkinter
+import pyperclip
 
 class FilterMass:
     
@@ -29,6 +30,9 @@ class DataModel(object):
 
         self.workingdir = ""
         self.timescale = "seconds"
+        # possible clipboards: ('Tkinter','osx','gtk','qt','xclip','xsel','klipper','windows')
+        self.clipboard = "Tkinter" # Switch indicating clipboard to use
+        self.errorType = "Da"
         self.debug = None
         self.root = None
         self.projects = {}
@@ -112,6 +116,10 @@ class DataModel(object):
         self.workingdir = config["DEFAULT"]["workingdir"]
         if "timescale" in config["DEFAULT"]:
             self.timescale = config["DEFAULT"]["timescale"]
+        if "clipboard" in config["DEFAULT"]:
+            self.clipboard = config["DEFAULT"]["clipboard"]
+        if "errorType" in config["DEFAULT"]:
+            self.errorType = config["DEFAULT"]["errorType"]
             
 
     def saveSettings(self):
@@ -121,6 +129,9 @@ class DataModel(object):
         config["DEFAULT"] = {}
         config["DEFAULT"]["workingdir"] = self.workingdir
         config["DEFAULT"]["timescale"] = self.timescale
+        config["DEFAULT"]["clipboard"] = self.clipboard
+        config["DEFAULT"]["errorType"] = self.errorType
+
         with open(settingspath, 'w') as configfile:
             config.write(configfile)
             
@@ -150,6 +161,18 @@ class DataModel(object):
         self.resources["oxonium"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/options.gif')
         self.resources["options"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        
+    def saveToClipboard(self, text):
+        # ('Tkinter','osx','gtk','qt','xclip','xsel','klipper','windows')
+        if self.clipboard == "Tkinter":
+            print "saving to clipboard using Tkinter method"
+            self.root.clipboard_clear()
+            self.root.clipboard_append(text)
+        else:
+            print "saving to clipboard using xsel"
+            pyperclip.set_clipboard(self.clipboard)
+            pyperclip.copy(text)
+            
 
 
 class Chromatogram(object):
