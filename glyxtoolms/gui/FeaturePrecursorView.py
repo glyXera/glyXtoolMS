@@ -32,9 +32,6 @@ class PrecursorView(FramePlot.FramePlot):
         self.aMenu.add_command(label="Cancel",
                                command=lambda x="Cancel": self.setBorder(x))
 
-        # link function
-        self.model.classes["FeaturePrecursorView"] = self
-
     def setBorder(self,status):
         self.aMenu.unpost()
         self.aMenu.grab_release()

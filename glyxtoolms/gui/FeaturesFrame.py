@@ -84,8 +84,8 @@ class NotebookFeature(ttk.Frame):
         # Bindings influencing FeatureChromatogramView
         self.featureTree.bind("<Left>", self.goLeft)
         self.featureTree.bind("<Right>", self.goRight)
-
-        self.model.classes["NotebookFeature"] = self
+        
+        self.model.registerClass("NotebookFeature",self)
         
     def setHeadingNames(self):
         

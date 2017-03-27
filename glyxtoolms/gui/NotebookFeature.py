@@ -100,7 +100,7 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.bind("<Left>", self.goLeft)
         self.featureTree.bind("<Right>", self.goRight)
 
-        self.model.classes["NotebookFeature"] = self
+        self.model.registerClass("NotebookFeature", self)
 
         # ------------------- Spectrum Tree ---------------------------#
         self.spectrumTreeIds = {}

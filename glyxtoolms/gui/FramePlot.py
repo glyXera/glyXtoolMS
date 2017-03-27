@@ -230,6 +230,9 @@ class FramePlot(Tkinter.Frame, object):
         self.options = {}
         self.setDefaultOptions()
         
+        # register class:
+        self.model.registerClass(self.identifier(), self)
+        
     def setDefaultOptions(self):
         self.options = {}
         self.options["AxisLabel"] = {}
@@ -402,6 +405,7 @@ class FramePlot(Tkinter.Frame, object):
         self._paintCanvas(addToHistory=False)
 
     def identifier(self):
+        raise Exception("Overwrite this function returning a unique identifier")
         return "Frameplot"
 
     def setMaxValues(self):

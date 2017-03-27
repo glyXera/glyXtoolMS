@@ -14,9 +14,6 @@ class TwoDView(FramePlot.FramePlot):
         self.xTypeTime = True
         self.featureItems = {}
         self.currentFeatures = []
-
-        # link function
-        self.model.classes["TwoDView"] = self
         
         s = ttk.Style()
 
@@ -403,7 +400,7 @@ class TwoDView(FramePlot.FramePlot):
             self.model.classes["NotebookFeature"].selectFeature(nearest)
 
     def identifier(self):
-        return "2DView"
+        return "TwoDView"
 
 
 

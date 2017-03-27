@@ -50,6 +50,11 @@ class DataModel(object):
         # read resources
         self.loadResources()
         
+    def registerClass(self, name, theClass):
+        #if name in self.classes:
+        #    raise Exception("A class with the name "+name+" is already registered!")
+        self.classes[name] = theClass
+        
     def runFilters(self): # check filters
         hasActiveFilter = False
         for key in self.filters:

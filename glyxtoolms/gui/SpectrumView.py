@@ -25,9 +25,6 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         self.grid_rowconfigure(0, weight=1)
         self.grid_columnconfigure(0, weight=1)
 
-        # link function
-        self.model.classes["SpectrumView"] = self
-
     def setMaxValues(self):
         """ Recalculate Min/Max Values for the plot """
         self.aMax = -1

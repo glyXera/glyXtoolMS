@@ -74,7 +74,7 @@ class PeptideCoverageFrame(ttk.Frame):
         self.setMenuChoices([])
 
         # link function
-        self.model.classes["PeptideCoverageFrame"] = self
+        self.model.registerClass("PeptideCoverageFrame", self)
         
     def plotSingleFragment(self, *args):
         if self.hit == None:

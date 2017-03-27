@@ -13,9 +13,6 @@ class ChromatogramView(FramePlot.FramePlot):
         self.NrXScales = 3.0
         self.rt = None
 
-        # link function
-        self.model.classes["ChromatogramView"] = self
-
         # Events
         #self.canvas.bind("<Left>", self.sayHi)
         #self.canvas.bind("<Right>", self.sayHi)

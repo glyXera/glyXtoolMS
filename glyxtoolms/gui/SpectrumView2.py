@@ -34,9 +34,6 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         self.annotations = {}
         self.currentAnnotation = None
         self.referenceMass = 0
-
-        # link function
-        self.model.classes["SpectrumView"] = self
         
         self.canvas.bind("<Button-2>", self.button2, "+")
         

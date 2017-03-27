@@ -10,13 +10,11 @@ import re
 from glyxtoolms.gui import Appearance
 
 class OxoniumIonPlot(FramePlot.FramePlot):
-    
-
 
     def __init__(self, master, model, xTitle="", yTitle=""):
         FramePlot.FramePlot.__init__(self, master, model, xTitle="Normalized Intensity",
                                      yTitle="Oxonium Ions")
-        self.model.classes["OxoniumIonPlot"] = self
+        
         self.data = []
         self.sdev = []
         self.names = []
@@ -39,6 +37,9 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         # add trace to ruler button toggles
         self.selectionButton.active.trace("w", self.selectionPanelToggled)
         self.plotOrder = ["HexNAc", "Hex", "dHex", "NeuAc", "NeuGc", "H2O"]
+        
+    def identifier(self):
+        return "OxoniumIonPlot"
 
         
     def setDefaultOptions(self):

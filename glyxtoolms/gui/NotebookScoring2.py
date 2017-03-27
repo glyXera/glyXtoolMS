@@ -79,7 +79,7 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("m", lambda e: self.setStatus("PoorNonGlycopeptide"))
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
 
-        self.model.classes["NotebookScoring"] = self
+        self.model.registerClass("NotebookScoring", self)
 
     def setStatus(self,status):
         # get currently active hit

@@ -77,7 +77,7 @@ class NotebookIdentification(ttk.Frame):
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
         self.tree.bind("r", lambda e: self.setStatus("Rejected"))
 
-        self.model.classes["NotebookIdentification"] = self
+        self.model.registerClass("NotebookIdentification", self)
         
     def setHeadingNames(self):
         if self.model.errorType == "Da":

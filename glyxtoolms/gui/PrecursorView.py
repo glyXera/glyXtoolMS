@@ -16,8 +16,6 @@ class PrecursorView(FramePlot.FramePlot):
         self.precursormass = 0.0
         self.NrXScales = 3.0
 
-        self.model.classes["PrecursorView"] = self
-
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1

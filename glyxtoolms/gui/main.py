@@ -192,8 +192,7 @@ class App(ttk.Frame):
         notebook.add(n1, text='Identifications')
         notebook.add(n2, text='Spectra')
 
-        self.model.classes["main"] = self
-        
+        self.model.registerClass("main", self)
                
     def setActiveFilterHint(self, hasActiveFilter):
         if hasActiveFilter == True:
@@ -253,6 +252,7 @@ def run():
     root.title("glyXtool-MS Evaluator")
     app = App(root)
     root.mainloop()
+    print app.model.classes.keys()
     return app
 
 class OptionsFrame(Tkinter.Toplevel):

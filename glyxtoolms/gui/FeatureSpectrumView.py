@@ -38,21 +38,7 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
         self.currentAnnotation = None
         self.referenceMass = 0
 
-        # link function
-        self.model.classes["FeatureSpectrumView"] = self
-        
         self.canvas.bind("<Button-2>", self.button2, "+")
-        
-        #self.canvas.bind("<Button-1>", self.button1Pressed, "+")
-        #self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
-        #self.canvas.bind("<B1-Motion>", self.button3Motion, "+")
-
-        
-        #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
-        #self.canvas.bind("<ButtonRelease-3>", self.button3Released, "+")
-        #self.canvas.bind("<B3-Motion>", self.button3Motion, "+")
-        
-        #self.canvas.bind("<Delete>", self.deleteAnnotation, "+")
 
     def identifier(self):
         return "FeatureSpectrumView"

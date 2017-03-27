@@ -15,9 +15,6 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         self.logScore = 0.0
         self.NrXScales = 5.0
 
-        # link function
-        self.model.classes["IdentificationStatsFrame"] = self
-
     def setMaxValues(self):
         self.aMax = -1
         #self.aMin = -1
@@ -88,5 +85,5 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         self.initCanvas(keepZoom=True)
 
     def identifier(self):
-        return "IdentificationErrorView"
+        return "IdentificationStatsFrame"
 

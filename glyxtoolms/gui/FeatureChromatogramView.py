@@ -27,10 +27,6 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         
         self.xTypeTime = True
 
-        # link function
-        self.model.classes["FeatureChromatogramView"] = self
-        
-
         # Events
         self.canvas.bind("<Left>", self.goLeft)
         self.canvas.bind("<Right>", self.goRight)
