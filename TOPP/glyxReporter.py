@@ -32,7 +32,40 @@ def generateGlycosylationSiteKey(peptide):
     for nr,amino in sorted(peptide.glycosylationSites):
         parts.append(amino + str(nr+1)) # correct counting of amino acids
     return "/".join(parts)
-    
+
+
+def generateFragmentString(names):
+    pep = []
+    y = []
+    b = []
+    yb = []
+    other = []
+
+    for name in names:
+        if "peptide" in name:
+            pep.append(name)
+        elif re.match("^y\d+b\d+",name):
+            yb.append(name)
+        elif re.match("^b\d+", name):
+            b.append(name)
+        elif re.match("^y\d+", name):
+            y.append(name)
+        else:
+            other.append(name)
+    collect = []
+    if len(pep) > 0:
+        collect.append(",".join(sorted(pep)))
+    if len(y) > 0:
+        collect.append(",".join(sorted(y)))
+    if len(b) > 0:
+        collect.append(",".join(sorted(b)))
+    if len(yb) > 0:
+        collect.append(",".join(sorted(yb)))
+    if len(other) > 0:
+        collect.append(",".join(sorted(other)))
+    string = "|".join(collect)
+    return string
+
 def main(options): 
 
     # parse analysis file
@@ -71,27 +104,23 @@ def main(options):
         
         if not error.startswith("-"):
             error = "+"+error
-        if charge > 0:
-            charge = str(charge)+"+"
-        else:
-            charge = str(charge)+"-"
-
         
         # generate glycosite
         glycoSiteKey = generateGlycosylationSiteKey(peptide)
         
         dataHit = {}
-        dataHit["peptide"] = peptide.toString()
-        dataHit["glycan"] = g.toString()
+        dataHit["Peptide"] = peptide.toString()
+        dataHit["Glycan"] = g.toString()
         dataHit["m peptide"] = str(round(peptide.mass,4))
         dataHit["m glycan"] = str(round(g.mass,4))
-        dataHit["rt"] = str(round(feature.getRT()/60.0,1))
+        dataHit["RT"] = str(round(feature.getRT()/60.0,1))
         dataHit["m/z"] = str(round(mass,4))
-        dataHit["z"] = charge
-        dataHit["protID"] = peptide.proteinID
-        dataHit["sites"] = glycoSiteKey
-        dataHit["status"] = h.status
-        dataHit["intensity"] = str(feature.intensity)
+        dataHit["Charge"] = str(charge)
+        dataHit["ProtID"] = peptide.proteinID
+        dataHit["Sites"] = glycoSiteKey
+        dataHit["Status"] = h.status
+        dataHit["Intensity"] = str(feature.intensity)
+        dataHit["Fragments"] = generateFragmentString(h.fragments.keys())
         identificationData.append(dataHit)
 
     wb = xlwt.Workbook()
@@ -135,29 +164,40 @@ def main(options):
     
     row = 0
     ws2.write(row, 0, "Feature Nr")
-    ws2.write(row, 1, "RT [min]")
-    ws2.write(row, 2, "Mass [Th]")
-    ws2.write(row, 3, "Charge")
-    ws2.write(row, 4, "LogScore")
+    ws2.write(row, 1, "RT apx [min]")
+    ws2.write(row, 2, "RT min [min]")
+    ws2.write(row, 3, "RT max [min]")
+    ws2.write(row, 4, "m/z")
+    ws2.write(row, 5, "Charge")
+    ws2.write(row, 6, "Intensity")
+    ws2.write(row, 7, "best LogScore")
+    ws2.write(row, 8, "Nr. Identifications")
+    ws2.write(row, 9, "Status")
     
     featNr = 0
     for featureID in features:
         feature = features[featureID]
         featNr += 1
-        # get spectra
-        for specID in feature.getSpectraIds():
-            row += 1
-            spectrum = spectra[specID]
-            ws2.write(row, 0, featNr)
-            ws2.write(row, 1, round(spectrum.getRT()/60.0, 2))
-            ws2.write(row, 2, round(feature.getMZ(), 4))
-            ws2.write(row, 3, int(feature.getCharge()))
-            ws2.write(row, 4, round(spectrum.getLogScore(), 3))
+        row += 1
+        ws2.write(row, 0, featNr)
+        ws2.write(row, 1, round(feature.getRT()/60.0, 2))
+        ws2.write(row, 2, round(feature.minRT/60.0, 2))
+        ws2.write(row, 3, round(feature.maxRT/60.0, 2))
+        ws2.write(row, 4, round(feature.getMZ(), 4))
+        ws2.write(row, 5, int(feature.getCharge()))
+        ws2.write(row, 6, str(feature.intensity))
+        scores = [10.0]
+        for s in feature.spectra:
+            scores.append(s.logScore)
+        ws2.write(row, 7, min(scores))
+        ws2.write(row, 8, len(feature.hits))
+        ws2.write(row, 9, feature.status)
+
     # ---------------------- Identifications --------------------------#
     ws3 = wb.add_sheet("Identifications")
 
     # header
-    header = ["peptide","glycan","m peptide","m glycan","rt","m/z","z","protID","sites","status", "intensity"]
+    header = ["Peptide","Glycan","m peptide","m glycan","RT","m/z","Charge","ProtID","Sites","Status", "Intensity", "Fragments"]
     for col,name in enumerate(header):
         ws3.write(0, col, name)
     row = 1
