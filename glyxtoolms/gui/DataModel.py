@@ -317,12 +317,9 @@ class ContainerAnalysisFile(object):
                               glyxtoolms.masses.MASS["H+"]*(feature.charge-1))
             diff = mass- precursormass
             hit.error = diff
-        
-        # remove possible identifications
-        
+
         # update views
         #self.model.classes["TwoDView"].paintObject()
         self.model.classes["NotebookFeature"].updateFeature(feature)
-        self.model.classes["NotebookFeature"].updateSpectrumTree()
         self.model.classes["NotebookFeature"].clickedFeatureTree(None)
 

@@ -252,7 +252,6 @@ def run():
     root.title("glyXtool-MS Evaluator")
     app = App(root)
     root.mainloop()
-    print app.model.classes.keys()
     return app
 
 class OptionsFrame(Tkinter.Toplevel):
