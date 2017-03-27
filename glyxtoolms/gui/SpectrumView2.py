@@ -49,7 +49,7 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         #self.canvas.bind("<Delete>", self.deleteAnnotation, "+")
 
     def identifier(self):
-        return "SpectrumView2"
+        return "SpectrumView"
 
     def initSpectrum(self, spec):
         if spec == None:
