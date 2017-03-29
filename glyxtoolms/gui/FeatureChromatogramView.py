@@ -195,8 +195,8 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         
     def plotPrecursorSpectrum(self, index):
         if self.chrom == None:
-            self.model.classes["FeaturePrecursorView"].init(None,
-                                                None,
+            self.model.classes["FeaturePrecursorView"].init([],
+                                                [],
                                                 self.feature,
                                                 self.minMZView,
                                                 self.maxMZView)

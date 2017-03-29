@@ -14,9 +14,9 @@ class PrecursorView(FramePlot.FramePlot):
         self.master = master
         self.specArray = None
         self.NrXScales = 3.0
-        self.spectrum = None
+        self.spectrum = []
         self.feature = None
-        self.base = None
+        self.base = []
         
         # Events
         self.canvas.bind("<ButtonRelease-3>", self.popup)
@@ -92,7 +92,7 @@ class PrecursorView(FramePlot.FramePlot):
             pass
 
     def setMaxValues(self):
-        if self.spectrum == None:
+        if len(self.spectrum) == 0:
             return
         try:
             self.bMax = max(self.spectrum)
@@ -104,7 +104,7 @@ class PrecursorView(FramePlot.FramePlot):
             self.aMax = 1
 
     def paintObject(self):
-        if self.spectrum == None:
+        if len(self.spectrum) == 0:
             return
         if self.feature == None:
             return
@@ -215,7 +215,7 @@ class PrecursorView(FramePlot.FramePlot):
         self.viewXMin = minMZ
         self.viewXMax = maxMZ
         self.viewYMin = 0
-        if self.spectrum != None and sum(spectrumYArray) > 0:
+        if len(self.spectrum) > 0 and sum(spectrumYArray) > 0:
             self.viewYMax = max(spectrumYArray)
         self.initCanvas(keepZoom=True)
 
