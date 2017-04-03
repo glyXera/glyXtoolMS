@@ -16,8 +16,8 @@ def handle_args(argv=None):
     parser.add_argument("--inFasta", dest="infile",help="File input - Protein sequences as .fasta file")
     parser.add_argument("--out", dest="outfile",help="File output Glycopeptide file .xml")
     parser.add_argument("--enzymes", dest="enzymes",help="Digestion enzymes: Comma separated list of [Trypsin, AspN]")
-    parser.add_argument("--cystTreatment", dest="cystTreatment",help="Cystein treatment (C): Either None, Iodacetic acid or Iodoacetamide")
-    parser.add_argument("--modifications", dest="modifications",help="variable modifications: List of [Oxidation(M), AcrylamideAdduct(C)], Carbamylation(N-Term)")
+    parser.add_argument("--maxNrModifications", dest="maxNrModifications",help="Nr of maximum allowed modifications. CYS_CAM, CYS_CM are excluded. Unlimited with -1.")
+    parser.add_argument("--modifications", dest="modifications",help="variable modifications: List of [None,AMID,CAM,CYS_CAM,NTERM_CAM,CM,CYS_CM,DEAM,ASN_DEAM,GLN_DEAM,DEHYDR,SER_DEHYDR,THR_DEHYDR,DIOX,TRP_DIOX,TYR_DIOX,MSO,OX,TRP_OX,TYR_OX,CYS_PAM,PHOS,SER_PHOS,THR_PHOS,TYR_PHOS")
     parser.add_argument("--glycosylation", dest="glycosylation",help="Glycosylation: List of [N-Glycosylation,O-Glycosylation]")
     parser.add_argument("--missedCleavageSites", dest="missedCleavageSites",help="maximum missed cleavage sites")
                 
@@ -42,32 +42,16 @@ def main(options):
     print "setting digest parameters"
     proteinDigest = glyxtoolms.lib.ProteinDigest()
     
-    if options.cystTreatment == "None":
-        proteinDigest.setCarbamidation(False)
-        proteinDigest.setCarboxylation(False)
-    elif options.cystTreatment == "Iodacetic acid":
-        parameters.modifications.append(options.cystTreatment)
-        proteinDigest.setCarbamidation(False)
-        proteinDigest.setCarboxylation(True)
-    elif options.cystTreatment == "Iodoacetamide":
-        parameters.modifications.append(options.cystTreatment)
-        proteinDigest.setCarbamidation(True)
-        proteinDigest.setCarboxylation(False)
-    else:
-        raise Exception("Unspecified Cystein treatment!")
+    proteinDigest.setMaxModifications(int(options.maxNrModifications))
+    # TODO: Set modModifications in parameters
+    
 
     for modification in options.modifications.split(" "):
-        if modification == "Oxidation(M)":
-            proteinDigest.setOxidation(True)
-        elif modification == "AcrylamideAdduct(C)":
-            proteinDigest.setAcrylamideAdducts(True)
-        elif modification == "Carbamylation(N-Term)":
-            proteinDigest.setNTermCarbamylation(True)
-        elif modification == "None":
+        if modification.lower() == "none":
             continue
-        else:
-            raise Exception("Unknown modification used!")
-        parameters.modifications.append(modification)
+        proteinDigest.addModification(modification)
+    
+    parameters.modifications = list(proteinDigest.modifications)
     
     missedCleavages = int(options.missedCleavageSites)
     parameters.missedCleavages = missedCleavages
