@@ -115,9 +115,9 @@ class Protein(object):
         peptide.start = start
         peptide.end = end
         peptide.proteinID = self.identifier
-        for mod, amino, pos in self.modifications:
+        for modname, amino, pos in self.modifications:
             if start <= pos and pos < end:
-                peptide.modifications.append((mod, amino, pos))
+                peptide.addModification(modname, position=pos)
         return peptide
         
 class Glycopeptide:
@@ -137,7 +137,7 @@ class Glycopeptide:
         for name, amino, pos in modifications:
             assert name in glyxtoolms.masses.PROTEINMODIFICATION
             assert amino == self.peptide.sequence[pos]
-            self.peptide.modifications.append((name, amino, pos))
+            self.peptide.addModification(name, position=pos)
         self.peptide.mass = glyxtoolms.masses.calcPeptideMass(self.peptide)
         # generate glycan
         self.glycan = glyxtoolms.lib.Glycan(glycancomposition)
@@ -202,7 +202,6 @@ class ProteinDigest(object):
                         if Y[j,e] < 0:
                             isValid = False
             return isValid
-        
         try:
             sequence = peptide.sequence
         except AttributeError:
@@ -234,11 +233,11 @@ class ProteinDigest(object):
                 data[i] = possible
                 
         # remove already modified sites
-        for mod, pos in peptide.modifications:
-            if pos == -1:
+        for mod in peptide.modifications:
+            if mod.position == -1:
                 continue
-            if pos in data:
-                data.pop(pos)
+            if mod.position in data:
+                data.pop(mod.position)
         
         # generate matrix
         keys = sorted(data.keys())
@@ -315,7 +314,16 @@ class ProteinDigest(object):
                 amount = target[modname]
                 if amount == 0:
                     continue
-                newPeptide.modifications += [(modname, -1)]*target[modname]
+                for i in range(0,target[modname]):
+                    newPeptide.addModification(modname)
+                    
+            # solve modifications as much as possible
+            try:
+                newPeptide.solveModifications()
+            
+            except:
+                print newPeptide.toString()
+                raise
 
             # calc peptide mass
             newPeptide.mass = glyxtoolms.masses.calcPeptideMass(newPeptide)

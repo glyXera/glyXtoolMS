@@ -259,7 +259,8 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         for mod in glyxtoolms.masses.PROTEINMODIFICATION:
             content = glyxtoolms.masses.PROTEINMODIFICATION[mod]
             # generate peptide variant with added modification
-            copypeptide.modifications = self.peptide.modifications + [(mod, -1)]
+            copypeptide.modifications = list(peptide.modifications)
+            copypeptide.addModification(mod)
             if copypeptide.testModificationValidity() == False:
                 continue
             mass = content.get("mass", 0.0)
@@ -276,7 +277,8 @@ class AddIdentificationFrame(Tkinter.Toplevel):
                                            tags=("predefined",))
         for mod in self.ownModifications:
             # generate peptide variant with added modification
-            copypeptide.modifications = self.peptide.modifications + [(mod, -1)]
+            copypeptide.modifications = list(peptide.modifications)
+            copypeptide.addModification(mod)
             if copypeptide.testModificationValidity() == False:
                 continue
             # parse composition again, and calulate mass
@@ -296,11 +298,11 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.b2.config(state=Tkinter.DISABLED)
         if self.peptide == None:
             return
-        for mod, pos in sorted(self.peptide.modifications, key=lambda x:x[1]):
-            if pos == -1:
+        for mod in sorted(self.peptide.modifications, key=lambda x:x[1]):
+            if mod.position == -1:
                 text = "?"
             else:
-                text = str(pos+1)
+                text = str(mod.position+1)
             item = self.treeModRight.insert("", "end", text=text,
                                                values=(mod,))
     def addModification(self):
@@ -322,7 +324,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             pos = -1
         else:
             pos = int(pos) - 1
-        self.peptide.modifications.append((mod, pos))
+        self.peptide.addModification(mod, position=pos)
         self.peptideVar.set(self.peptide.toString())
         
     def removeModification(self):
@@ -333,14 +335,15 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             return
         item = selection[0]
         pos = self.treeModRight.item(item, "text")
-        mod = self.treeModRight.item(item, "values")[0]
+        modname = self.treeModRight.item(item, "values")[0]
         if pos == "?":
             pos = -1
         else:
             pos = int(pos)-1
-        ident = (mod, pos)
-        if ident in self.peptide.modifications:
-            self.peptide.modifications.remove(ident)
+        for mod in self.peptide.modifications:
+            if mod.name == modname and mod.position == pos:
+                self.peptide.modifications.remove(mod)
+                break
         self.peptideVar.set(self.peptide.toString())
 
     def clickedTreeLeft(self, event):
@@ -365,14 +368,14 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         
         # get available positions on the peptide
         copypeptide = self.peptide.copy()
-        copypeptide.modifications = self.peptide.modifications + [(mod, -1)]
+        copypeptide.addModification(mod)
         positions = set()
         for modificationlist in glyxtoolms.fragmentation.getModificationVariants(copypeptide):
             for a,b in modificationlist:
                 if a.upper() == mod.upper():
                     positions.add(b)
         
-        taken = set([b for a,b in self.peptide.modifications if b != -1])
+        taken = set([mod.position for mod in self.peptide.modifications if mod.position != -1])
 
         item = self.treeModMiddle.insert("", "end", text="?", values=("?",))
         for i in range(0, len(self.peptide.sequence)):

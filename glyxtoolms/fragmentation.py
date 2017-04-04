@@ -67,22 +67,15 @@ class Composition(dict):
 
 def getModificationVariants(peptide):
     modify = []
-    for mod, pos in peptide.modifications:
-        if pos != -1:
+    for mod in peptide.modifications:
+        if mod.position != -1:
             x = set()
-            x.add((mod, pos))
+            x.add((mod.name, mod.position))
             modify.append(x)
         else:
-            # get possible target positions
-            targets = glyxtoolms.masses.getModificationTargets(mod)
             positions = set()
-            for pos, amino in enumerate(peptide.sequence):
-                if amino in targets:
-                    positions.add((mod, pos))
-            if "NTERM" in targets:
-                positions.add((mod, 0))
-            if "CTERM" in targets:
-                positions.add((mod, len(peptide.sequence)-1))
+            for pos in mod.positions:
+                positions.add((mod.name, pos))
             modify.append(positions)
 
     def isValidPermutation(permutation):
@@ -107,11 +100,11 @@ def generatePeptideFragments(peptide):
 
     # assure that modifications are localized and have a known composition
     modifications = {}
-    for mod, pos in peptide.modifications:
-        assert pos > -1
-        assert pos not in modifications
-        amino = peptide.sequence[pos]
-        modifications[pos] = (mod, amino)
+    for mod in peptide.modifications:
+        assert mod.position > -1
+        assert mod.position not in modifications
+        amino = peptide.sequence[mod.position]
+        modifications[mod.position] = (mod.name, amino)
     
     data = {}
     for i in range(0, len(sequence)):
@@ -251,9 +244,12 @@ def annotateSpectrumWithFragments(peptide, spectrum, tolerance, maxCharge):
     # determine all peptide modification variants
     bestVariant = (None, {})
     
-    for i in glyxtoolms.fragmentation.getModificationVariants(peptide):
+    for modificationset in glyxtoolms.fragmentation.getModificationVariants(peptide):
         pepvariant = peptide.copy()
-        pepvariant.modifications = i
+        pepvariant.modifications = []
+        for modname, pos in modificationset:
+            pepvariant.addModification(modname,position=pos)
+        
         fragments = glyxtoolms.fragmentation.generatePeptideFragments(pepvariant)
         # add peptide + HexNAc variants
         for charge in range(1, maxCharge):

@@ -303,9 +303,8 @@ def calcPeptideMass(peptide):
     # TODO: Checks for modification consistency
     # a) amount of amino acids must be in sequence
     # b) a given position (except -1) can only be
-    for modification in peptide.modifications:
-        mod = modification[0]
-        composition = getModificationComposition(mod)
+    for mod in peptide.modifications:
+        composition = getModificationComposition(mod.name)
         mass += calcMassFromElements(composition)
     return mass
 
@@ -467,7 +466,7 @@ def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
         #print shift, masses[shift]/maxProb*100
     return sumProb, monoMass, trans
 
-def getElementComposition(peptide, glycan):
+def getElementComposition(peptide, glycan): # currently not working, du to change in modification definition
     # calculate element composition
     elements = {}
     def addElements(elements, name, amount):
@@ -486,8 +485,10 @@ def getElementComposition(peptide, glycan):
         addElements(elements, aminoacid, amount)
         addElements(elements, "H2O", -1*amount)
 
-    for modification in peptide.modifications:
-        addElements(elements, modification[0], 1)
+    for mod in peptide.modifications:
+        comp = PROTEINMODIFICATION[mod.name]["composition"]
+        for elementname in comp:
+            elements[elementname] = elements.get(elementname, 0) + comp[elementname]
 
 
     # b) glycan
