@@ -6,9 +6,8 @@ from glyxtoolms.gui import Appearance
 
 class PrecursorView(FramePlot.FramePlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="m/z",
+    def __init__(self, master, model):
+        FramePlot.FramePlot.__init__(self, master, model, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master
@@ -16,20 +15,6 @@ class PrecursorView(FramePlot.FramePlot):
         self.charge = 0
         self.precursormass = 0.0
         self.NrXScales = 3.0
-
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        self.model.classes["PrecursorView"] = self
 
     def setMaxValues(self):
         self.aMax = -1
@@ -119,4 +104,4 @@ class PrecursorView(FramePlot.FramePlot):
         self.initCanvas(keepZoom=True)
 
     def identifier(self):
-        return "SpectrumView"
+        return "PrecursorView"

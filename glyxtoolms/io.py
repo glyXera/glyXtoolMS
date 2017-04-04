@@ -17,14 +17,30 @@ from lxml import etree as ET
 import re
 import numpy as np
 import glyxtoolms
+   
 
 class Annotation(object):
     
     def __init__(self):
         self.x1 = 0
         self.x2 = 0
-        self.y = 0
+        #self.y = 0
         self.text = ""
+        self.lookup = ""
+        self.series = ""
+        self.show = "lookup" #{"mass", "lookup", "text", "none"}
+        #self.nr = 0
+        self.level = 0
+        self.items = {}
+        self.valid = True
+        
+class AnnotationSeries(object):
+    
+    def __init__(self):
+        self.name = "None"
+        self.color = "black"
+        self.hidden = False
+        self.annotations = []
 
 class GlyxXMLSpectrum(object):
     """ Define the GlyxXMLSpectrum as used in the glyML format """
@@ -301,6 +317,9 @@ class GlyxXMLFeature(object):
         new.consensus = list(self.consensus)
         new.hits = set(self.hits)
         return new
+        
+    def addConsensusPeak(self, x, y):
+        self.consensus.append(GlyxXMLConsensusPeak(x,y))
 
 class XMLGlycan(object):
 
@@ -333,7 +352,7 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self._version_ = "0.0.9" # current version
+        self._version_ = "0.1.1" # current version
         self.version = self._version_ # will be overwritten by file
 
     def _parseParameters(self, xmlParameters):
@@ -405,14 +424,16 @@ class GlyxXMLFile(object):
             if self.version > "0.0.5":
                 spectrum.status = s.find("./status").text
             if self.version > "0.0.7":
-                spectrum.annotations = []
-                for xmlAnn in s.findall("./annotations/annotation"):
-                    ann = Annotation()
-                    ann.text = xmlAnn.find("./text").text
-                    ann.x1 = float(xmlAnn.find("./x1").text)
-                    ann.x2 = float(xmlAnn.find("./x2").text)
-                    ann.y = float(xmlAnn.find("./y").text)
-                    spectrum.annotations.append(ann)
+                self._parseAnnotations(s, spectrum)
+                #spectrum.annotations = {}
+                #annotations = []
+                #for xmlAnn in s.findall("./annotations/annotation"):
+                #    ann = Annotation()
+                #    ann.text = xmlAnn.find("./text").text
+                #    ann.x1 = float(xmlAnn.find("./x1").text)
+                #    ann.x2 = float(xmlAnn.find("./x2").text)
+                #spectrum.annotations["NoName"] = annotations
+                
             spectra.append(spectrum)
 
         return spectra
@@ -502,19 +523,7 @@ class GlyxXMLFile(object):
                     xmlIonIntensity = ET.SubElement(xmlIon, "intensity")
                     xmlIonIntensity.text = str(ions[glycan][ionName]["intensity"])
             # write spectrum annotations
-            xmlAnnotations = ET.SubElement(xmlSpectrum, "annotations")
-            for annotation in spectrum.annotations:
-                xmlAnn = ET.SubElement(xmlAnnotations, "annotation")
-                xmlAnnText = ET.SubElement(xmlAnn, "text")
-                xmlAnnText.text = annotation.text
-                xmlAnnX1 = ET.SubElement(xmlAnn, "x1")
-                xmlAnnX1.text = str(annotation.x1)
-                xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
-                xmlAnnX2.text = str(annotation.x2)
-                xmlAnnY = ET.SubElement(xmlAnn, "y")
-                xmlAnnY.text = str(annotation.y)
-            
-
+            self._writeAnnotations(xmlSpectrum, spectrum)
 
 
     def _writeFeatures(self, xmlFeatures):
@@ -569,19 +578,9 @@ class GlyxXMLFile(object):
             xmlStatus = ET.SubElement(xmlFeature, "status")
             xmlStatus.text = feature.status
             
-            xmlAnnotations = ET.SubElement(xmlFeature, "annotations")
-            for annotation in feature.annotations:
-                xmlAnn = ET.SubElement(xmlAnnotations, "annotation")
-                xmlAnnText = ET.SubElement(xmlAnn, "text")
-                xmlAnnText.text = annotation.text
-                xmlAnnX1 = ET.SubElement(xmlAnn, "x1")
-                xmlAnnX1.text = str(annotation.x1)
-                xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
-                xmlAnnX2.text = str(annotation.x2)
-                xmlAnnY = ET.SubElement(xmlAnn, "y")
-                xmlAnnY.text = str(annotation.y)
+            # write annotations
+            self._writeAnnotations(xmlFeature, feature)
             
-
 
 
     def _writeGlycoModHits(self, xmlGlycoModHits):
@@ -691,18 +690,70 @@ class GlyxXMLFile(object):
                     raise
             if self.version > "0.0.5":
                 feature.status = xmlFeature.find("./status").text
+            
             if self.version > "0.0.7":
-                feature.annotations = []
-                for xmlAnn in xmlFeature.findall("./annotations/annotation"):
+                self._parseAnnotations(xmlFeature, feature)
+                #feature.annotations = []
+                #for xmlAnn in xmlFeature.findall("./annotations/annotation"):
+                #    ann = Annotation()
+                #    ann.text = xmlAnn.find("./text").text
+                #    ann.x1 = float(xmlAnn.find("./x1").text)
+                #    ann.x2 = float(xmlAnn.find("./x2").text)
+                #    ann.y = float(xmlAnn.find("./y").text)
+                #    feature.annotations.append(ann)
+            features.append(feature)
+
+        return features
+
+    def _writeAnnotations(self, xmlAnnotationParent, parent):
+        xmlAnnotations = ET.SubElement(xmlAnnotationParent, "annotations")
+        for seriesName in parent.annotations:
+            series = parent.annotations[seriesName]
+            if len(series.annotations) == 0:
+                continue
+            xmlSeries = ET.SubElement(xmlAnnotations, "series", name=seriesName, color=series.color)
+            for annotation in series.annotations:
+                xmlAnn = ET.SubElement(xmlSeries, "annotation")
+                xmlAnnText = ET.SubElement(xmlAnn, "text")
+                xmlAnnText.text = annotation.text
+                xmlAnnX1 = ET.SubElement(xmlAnn, "x1")
+                xmlAnnX1.text = str(annotation.x1)
+                xmlAnnX2 = ET.SubElement(xmlAnn, "x2")
+                xmlAnnX2.text = str(annotation.x2)
+                xmlAnnShow = ET.SubElement(xmlAnn, "show")
+                xmlAnnShow.text = str(annotation.show)
+                
+    def _parseAnnotations(self,xmlAnnotationParent, parent):
+        parent.annotations = {}
+        if self.version < "0.1.0":
+            series = AnnotationSeries()
+            series.name = "None"
+            seriesAnnotations = []
+            for xmlAnn in xmlAnnotationParent.findall("./annotations/annotation"):
+                ann = Annotation()
+                ann.text = xmlAnn.find("./text").text
+                ann.x1 = float(xmlAnn.find("./x1").text)
+                ann.x2 = float(xmlAnn.find("./x2").text)
+                ann.series = series.name
+                series.annotations.append(ann)
+            if len(series.annotations) > 0:
+                parent.annotations[series.name] = series
+        else:
+            for xmlSeries in xmlAnnotationParent.findall("./annotations/series"):
+                series = AnnotationSeries()
+                series.name = xmlSeries.get("name")
+                series.color = xmlSeries.get("color")
+                for xmlAnn in xmlSeries.findall("./annotation"):
                     ann = Annotation()
                     ann.text = xmlAnn.find("./text").text
                     ann.x1 = float(xmlAnn.find("./x1").text)
                     ann.x2 = float(xmlAnn.find("./x2").text)
-                    ann.y = float(xmlAnn.find("./y").text)
-                    feature.annotations.append(ann)
-            features.append(feature)
-
-        return features
+                    if self.version > "0.1.0":
+                        ann.show = xmlAnn.find("./show").text
+                    ann.series = series.name
+                    series.annotations.append(ann)
+                if len(series.annotations) > 0:
+                    parent.annotations[series.name] = series
 
     def writeToFile(self, path):
         xmlRoot = ET.Element("glyxXML")
@@ -783,6 +834,81 @@ class GlyxXMLFile(object):
 
     def addFeature(self, glyxXMLFeature):
         self.features.append(glyxXMLFeature)
+        
+class PeptideModification(object):
+    
+    def __init__(self):
+        self.name = ""
+        self.position = -1 # If position is undefined, set to -1, otherwise set to amino acid position
+        self.positions = set() # Available positions if position is undefined
+        self.peptide = None # Link to peptide
+        
+    def copy(self):
+        new = PeptideModification()
+        new.name = self.name
+        new.position = self.position
+        new.positions = set(self.positions)
+        new.peptide = self.peptide
+        return new
+
+    def _parse(self, xmlModification, peptide=None):
+        if peptide != None:
+            self.peptide = peptide
+        self.name = xmlModification.find("./name").text
+        self.position = int(xmlModification.find("./position").text)
+        if self.position != -1:
+            return
+        find_positions = xmlModification.find("./positions")
+        if find_positions is not None:
+            self.positions = set([int(x) for x in find_positions.text.split(",")])
+        if len(self.positions) > 1:
+            return
+        elif len(self.positions) == 1:
+            self.position = self.positions.pop()
+            return
+        # aquire new target positions
+        self.findModificationTargets()
+        if len(self.positions) == 1:
+            self.position = self.positions.pop()
+            
+    def findModificationTargets(self):
+        # find already occupied positions
+        occupied = set()
+        for mod in self.peptide.modifications:
+            if mod.position > -1:
+                occupied.add(mod.position)
+        targets = glyxtoolms.masses.PROTEINMODIFICATION[self.name]["targets"]
+        positions = set()
+        for pos, amino in enumerate(self.peptide.sequence):
+            if pos in occupied:
+                continue
+            if pos == 0 and "NTERM" in targets:
+                positions.add(pos)
+            elif pos == len(self.peptide.sequence)-1 and "CTERM" in targets:
+                positions.add(pos)
+            elif amino in targets:
+                positions.add(pos)
+        if len(positions) == 0:
+            raise Exception("No modification site found!")
+        elif len(positions) == 1:
+            self.position = positions.pop()
+            self.positions = set()
+        else:
+            self.positions = positions
+
+    def _write(self, xmlModification):
+        
+        xmlName = ET.SubElement(xmlModification, "name")
+        xmlName.text = self.name
+        
+        xmlPosition = ET.SubElement(xmlModification, "position")
+        xmlPosition.text = str(self.position)
+        
+        if self.position == -1:
+            xmlPositions = ET.SubElement(xmlModification, "positions")
+            xmlPositions.text = ",".join([str(x) for x in self.positions])
+        return
+        
 
 
 class XMLPeptide(object):
@@ -806,21 +932,40 @@ class XMLPeptide(object):
         new.modifications = self.modifications
         new.glycosylationSites = self.glycosylationSites
         return new
+        
+    def addModification(self, name, position=-1, positions=set()):
+        mod = PeptideModification()
+        mod.name = name
+        mod.position = position
+        mod.positions = positions
+        mod.peptide = self
+        if position == -1 and len(positions) == 0:
+            mod.findModificationTargets()
+        self.modifications.append(mod)
 
     def toString(self):
         s = self.sequence
         modi = {}
-        for mod, pos in sorted(self.modifications, key=lambda x:x[1], reverse=True):
-            if pos == -1:
-                modi[mod] = modi.get(mod, 0) + 1
+        for mod in sorted(self.modifications, key=lambda x:x.position, reverse=True):
+            if mod.position == -1:
+                modi[mod.name] = modi.get(mod.name, []) + [mod]
             else:
-                s = s[:pos+1] + "("+mod+")"+ s[pos+1:]
-        for mod in modi:
-            s += " ("+mod+")"+str(modi[mod])
+                s = s[:mod.position+1] + "("+mod.name+")"+ s[mod.position+1:]
+                
+        for name in sorted(modi.keys()):
+            # collect set of positions
+            positions = set()
+            
+            for mod in modi[name]:
+                positions = positions.union(mod.positions)
+                
+            positions = ",".join([str(x+1) for x in sorted(positions)])
+            
+            s += " "+str(len(modi[name])) + "x"+name+"("+ positions +")"
         return s
         
     def fromString(self, string):
-        """ Peptide sequence: EE(Cys_CAM)QFNS(+CHO)TF(-OH)R Cys_CAM(-1) MSO(-1)  """
+        """ Peptide sequence: EE(Cys_CAM)QFNS(+CHO)TF(-OH)R 1xCys_CAM(2,3) 2xMSO(4,5,6)  """
         string = string.strip()
         sp = string.split(" ")
         
@@ -835,34 +980,57 @@ class XMLPeptide(object):
             letter = rawsequence[i]
             if letter == "(":
                 currentlyInMod = True
-                mod = ""
+                modname = ""
                 pos = e
                 continue
             elif letter == ")":
                 currentlyInMod = False
-                self.modifications.append((mod, pos))
+                mod = PeptideModification()
+                mod.peptide = self
+                mod.name = modname
+                mod.position = pos
+                self.modifications.append(mod)
                 continue
             if currentlyInMod == False:
                 assert letter in glyxtoolms.masses.AMINOACID
                 self.sequence += letter
                 e += 1
             else:
-                mod += letter
+                modname += letter
 
         for modstring in sp[1:]:
-            # check if modification is properly separated
-             # check if mod is like CAM(-1,-1) or (CAM)1
-            for match in re.findall(".+?\([,\d\W]+\)", modstring):
-                mod = re.search("[A-z]+\(", match).group()[:-1].upper()
-                assert mod in glyxtoolms.masses.PROTEINMODIFICATION
-                for posstring in re.search("\(.+\)", match).group()[1:-1].split(","):
-                        pos = int(posstring)
-                        self.modifications.append((mod, pos))
-            for match in re.findall("\(.+?\)\d+", modstring):
-                mod = re.search("\(.+?\)", match).group()[1:-1].upper()
-                amount =  int(re.search("\d+$", match).group())
-                for i in range(0, amount):
-                    self.modifications.append((mod,  -1))
+            # 2xCAM(1,2)
+            # 2xCAM
+            # extract amount
+            amount_match = re.match("^\d+x",modstring)
+            if not amount_match:
+                raise Exception("Unsupported Modification input!")
+            amount = int(modstring[:amount_match.end()-1])
+            
+            if re.match("^\d+x.+\(.+\)$",modstring):
+                name_match = re.match("^\d+x.+\(",modstring)
+                name = modstring[amount_match.end():name_match.end()-1]
+                sp = modstring[name_match.end():-1].split(",")
+                positions = set([int(i)-1 for i in sp])
+            else:
+                name = modstring[amount_match.end():]
+                positions = set()
+            # test modification validity
+
+            # construct modifications
+            for i in range(0,amount):
+                mod = PeptideModification()
+                mod.peptide = self
+                mod.name = name
+                mod.position = -1
+                if len(positions) == 1:
+                    mod.position = positions.pop()
+                elif len(positions) > 0:
+                    mod.positions = positions
+                else:
+                    mod.findModificationTargets()
+                    positions = mod.positions
+                self.modifications.append(mod)
         
         self.mass = glyxtoolms.masses.calcPeptideMass(self)
         
@@ -871,19 +1039,13 @@ class XMLPeptide(object):
         if len(self.modifications) == 0:
             return True
         X = []
-        for mod,pos in self.modifications:
+        for mod in self.modifications:
             line = [0]*len(self.sequence)
-            if pos > -1:
-                line[pos] = 1
-            else:
-                targets = glyxtoolms.masses.getModificationTargets(mod)
-                if "NTERM" in targets:
-                    line[0] = 1
-                if "CTERM" in targets:
-                    line[-1] = 1   
-                for pos,amino in enumerate(self.sequence):
-                    if amino in targets:
-                        line[pos] = 1
+            if mod.position > -1:
+                line[mod.position] = 1
+            else: 
+                for pos in mod.positions:
+                    line[pos] = 1
             X.append(line)
 
         matrix = np.array(X)
@@ -912,6 +1074,112 @@ class XMLPeptide(object):
             if sum(matrix[:,col]) > 1:
                 return False
         return True
+        
+    def solveModifications(self):
+        if len(self.modifications) == 0:
+            return
+        data = {}
+        target = {}
+        ismodified = set()
+        for mod in self.modifications:
+            if mod.position != -1:
+                ismodified.add(mod.position)
+
+        variableMods = {}
+        for mod in self.modifications:
+            if mod.position == -1:
+                variableMods[mod.name] = variableMods.get(mod.name, []) + [mod]
+                target[mod.name] = target.get(mod.name,0) +1
+                for position in mod.positions:
+                    if position in ismodified:
+                        continue
+                    data[position] = data.get(position, set())
+                    data[position].add(mod.name)
+                    
+        if len(variableMods) == 0:
+            return
+
+        keys = sorted(data.keys())
+        mods = set()
+        for key in data:
+            for mod in data[key]:
+                mods.add(mod)
+
+        mods = sorted(mods)
+        matrix = []
+        for mod in mods:
+            line = []
+            for key in keys:
+                if mod in data[key]:
+                    line.append(1)
+                else:
+                    line.append(0)
+            matrix.append(line)
+            
+        A = np.matrix(matrix)
+
+        # solve matrix with given target as much as possible
+        # transfer target
+        y = []
+        for mod in mods:
+            y.append(target.get(mod,0))
+            
+        # check if row sum is smaller than target, if equal a solution is possible
+        #todo = set()
+        h,w = A.shape
+        todo = set(range(0,h))
+        while len(todo) > 0:
+            i1 = todo.pop()
+            s = A[i1,:].sum()
+            t = y[i1]
+            if t > s:
+                raise Exception("Target larger than available space")
+            if t == 0:
+                # set amino acids to zero
+                for e2 in range(0,w):
+                    A[i1,e2] = 0
+            elif t == s:
+                # set other positions to zero
+                for e2 in range(0,w):
+                    if A[i1,e2] == 0:
+                        continue
+                    for i2 in range(0,h):
+                        if i2 == i1:
+                            continue
+                        if A[i2,e2] > 0:
+                            A[i2,e2] = 0
+                            todo.add(i2)
+        # collect result
+        result = {}
+        for i1 in range(0,h):
+            s = A[i1,:].sum()
+            t = y[i1]
+            if t == 0:
+                continue
+            # collect positions
+            positions = set()
+            for e2 in range(0,w):
+                if A[i1,e2] == 1:
+                    positions.add(keys[e2])
+            
+            if s == t:
+                line = []
+                for pos in positions:
+                    line.append(set([pos]))
+            else:
+                line = [positions]*t
+            mod = mods[i1]
+            result[mod] = line
+
+        # transfer results to variable Modifications
+        for modname in result:
+            for mod, r in zip(variableMods[modname],result[modname]):
+                if len(r) == 1:
+                    mod.position = r.pop()
+                    mod.positions = set()
+                else:
+                    mod.position = -1
+                    mod.positions = r
 
     def _parse(self, xmlPeptide):
         self.proteinID = xmlPeptide.find("./proteinId").text
@@ -922,9 +1190,9 @@ class XMLPeptide(object):
 
 
         for xmlMod in xmlPeptide.findall("./modifications/modification"):
-            name = xmlMod.find("./name").text
-            pos = int(xmlMod.find("./position").text)
-            self.modifications.append((name, pos))
+            mod = PeptideModification()
+            mod._parse(xmlMod,self)
+            self.modifications.append(mod)
 
         for xmlSite in xmlPeptide.findall("./glycosylationsites/glycosylationsite"):
             typ = xmlSite.find("./type").text
@@ -949,14 +1217,9 @@ class XMLPeptide(object):
         xmlMass.text = str(self.mass)
 
         xmlModifications = ET.SubElement(xmlPeptide, "modifications")
-        for mod, pos in self.modifications:
+        for mod in self.modifications:
             xmlMod = ET.SubElement(xmlModifications, "modification")
-
-            xmlModName = ET.SubElement(xmlMod, "name")
-            xmlModName.text = mod
-
-            xmlModPos = ET.SubElement(xmlMod, "position")
-            xmlModPos.text = str(pos)
+            mod._write(xmlMod)
 
         xmlSites = ET.SubElement(xmlPeptide, "glycosylationsites")
         for pos, typ in self.glycosylationSites:
@@ -1057,3 +1320,35 @@ class XMLPeptideFile(object):
         self.parameters = parameters
         self.peptides = peptides
         return
+
+class GlycanCompositionFile(object):
+    
+    def __init__(self):
+        self.glycans = []
+        self.version = "1.0"
+        
+    def read(self, path):
+        f = file(path,"r")
+        self.glycans = []
+        self.version = "1.0"
+        for line in f:
+            line = line.strip()
+            if line.startswith("#"): # comment
+                if line.startswith("#version:"):
+                    self.version = line.split(":")[1]
+                continue
+            elif "," in line:
+                typ,glycanstring = line.split(",")
+                assert typ in ["?", "N", "O"]
+                glycan = glyxtoolms.lib.Glycan(glycanstring.strip(),typ=typ.strip())
+            else:
+                glycan = glyxtoolms.lib.Glycan(line)
+            self.glycans.append(glycan)
+        f.close()
+    
+    def write(self,path):
+        f = file(path,"w")
+        f.write("#version:"+self.version+"\n")
+        for glycan in self.glycans:
+            f.write(glycan.typ + "," + glycan.toString() + "\n")
+        f.close()

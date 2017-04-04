@@ -67,22 +67,15 @@ class Composition(dict):
 
 def getModificationVariants(peptide):
     modify = []
-    for mod, pos in peptide.modifications:
-        if pos != -1:
+    for mod in peptide.modifications:
+        if mod.position != -1:
             x = set()
-            x.add((mod, pos))
+            x.add((mod.name, mod.position))
             modify.append(x)
         else:
-            # get possible target positions
-            targets = glyxtoolms.masses.getModificationTargets(mod)
             positions = set()
-            for pos, amino in enumerate(peptide.sequence):
-                if amino in targets:
-                    positions.add((mod, pos))
-            if "NTERM" in targets:
-                positions.add((mod, 0))
-            if "CTERM" in targets:
-                positions.add((mod, len(peptide.sequence)-1))
+            for pos in mod.positions:
+                positions.add((mod.name, pos))
             modify.append(positions)
 
     def isValidPermutation(permutation):
@@ -107,11 +100,27 @@ def generatePeptideFragments(peptide):
 
     # assure that modifications are localized and have a known composition
     modifications = {}
-    for mod, pos in peptide.modifications:
-        assert pos > -1
-        assert pos not in modifications
+    for mod in peptide.modifications:
+        assert mod.position > -1
+        assert mod.position not in modifications
+        amino = peptide.sequence[mod.position]
+        modifications[mod.position] = (mod.name, amino)
+    
+    # collect glycosylationsite positions
+    glycosylationsSites = set()
+    for site,typ in peptide.glycosylationSites:
+        pos = site-peptide.start
+        assert 0 <= pos < len(peptide.sequence)
         amino = peptide.sequence[pos]
-        modifications[pos] = (mod, amino)
+        if typ == "N":
+            assert amino == "N"
+        elif typ == "O":
+            assert amino == "S" or amino == "T"
+        glycosylationsSites.add(pos)
+    if len(glycosylationsSites) == 0:
+        for pos, amino in enumerate(peptide.sequence):
+            if amino in ["N", "s", "T"]:
+                glycosylationsSites.add(pos)
     
     data = {}
     for i in range(0, len(sequence)):
@@ -139,12 +148,13 @@ def generatePeptideFragments(peptide):
 
         bNH3 = b - {"N":1, "H":3}
         bH2O = b - {"O":1, "H":2}
-        bHEXNAC = b + glyxtoolms.masses.COMPOSITION["HEXNAC"]
+        bHEXNAC = b + glyxtoolms.masses.COMPOSITION["HEXNAC"] - {"H":2, "O":1}
 
         if i < len(sequence)-1: # generate a,b and c ions
             key = str(i+1)
             data["b"+key] = (b.mass(), peptidestring, "b")
-            data["b"+key+"+HexNAc"] = (bHEXNAC.mass(), peptidestring+"+HexNac", "b")
+            if min(glycosylationsSites) <= i:
+                data["b"+key+"+HexNAc"] = (bHEXNAC.mass(), peptidestring+"+HexNac", "b")
             
             if ("R" in sequence or
                 "K" in sequence or
@@ -174,13 +184,14 @@ def generatePeptideFragments(peptide):
         yNH3 = y - {"N":1, "H":3}
         yH2O = y - {"O":1, "H":2}
 
-        yHEXNAC = y + glyxtoolms.masses.COMPOSITION["HEXNAC"]
+        yHEXNAC = y + glyxtoolms.masses.COMPOSITION["HEXNAC"] - {"H":2, "O":1}
 
         key = str(len(sequence)-i)
 
         if i > 0:
             data["y"+key] = (y.mass(), peptidestring, "y")
-            data["y"+key+"+HexNAc"] = (yHEXNAC.mass(), peptidestring+"+HexNac", "y")
+            if max(glycosylationsSites) >= i:
+                data["y"+key+"+HexNAc"] = (yHEXNAC.mass(), peptidestring+"+HexNac", "y")
             if ("R" in sequence or
                 "K" in sequence or
                 "Q" in sequence or
@@ -245,13 +256,18 @@ def annotateSpectrumWithFragments(peptide, spectrum, tolerance, maxCharge):
     pepGlcNAcIon = pepIon+glyxtoolms.masses.GLYCAN["HEXNAC"]
     pepNH3 = pepIon-glyxtoolms.masses.MASS["N"] - 3*glyxtoolms.masses.MASS["H"]
     pep83 = pepIon + glyxtoolms.masses.calcMassFromElements({"C":4, "H":5, "N":1, "O":1})
+    pepHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]
+    pepHexHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]*2
     
     # determine all peptide modification variants
     bestVariant = (None, {})
     
-    for i in glyxtoolms.fragmentation.getModificationVariants(peptide):
+    for modificationset in glyxtoolms.fragmentation.getModificationVariants(peptide):
         pepvariant = peptide.copy()
-        pepvariant.modifications = i
+        pepvariant.modifications = []
+        for modname, pos in modificationset:
+            pepvariant.addModification(modname,position=pos)
+        
         fragments = glyxtoolms.fragmentation.generatePeptideFragments(pepvariant)
         # add peptide + HexNAc variants
         for charge in range(1, maxCharge):
@@ -259,12 +275,16 @@ def annotateSpectrumWithFragments(peptide, spectrum, tolerance, maxCharge):
             pepGlcNAcIonMass = calcChargedMass(pepGlcNAcIon,charge)
             pepNH3Mass = calcChargedMass(pepNH3,charge)
             pep83Mass = calcChargedMass(pep83,charge)
+            pepHexMass = calcChargedMass(pepHex,charge)
+            pep2HexMass = calcChargedMass(pepHexHex,charge)
             
             chargeName = "+("+str(charge)+"H+)"
             fragments["peptide"+chargeName] = (pepIonMass, peptide.sequence+chargeName, "pep")
             fragments["peptide+HexNAc"+chargeName] = (pepGlcNAcIonMass, peptide.sequence+"+HexNAC"+chargeName, "pep")
             fragments["peptide-NH3"+chargeName] = (pepNH3Mass, peptide.sequence+"-NH3"+chargeName, "pep")
             fragments["peptide+HexNAC0.2X"+chargeName] = (pep83Mass, peptide.sequence+"+HexNAC0.2X"+chargeName, "pep")
+            fragments["peptide+Hex"+chargeName] = (pepHexMass, peptide.sequence+"+Hex"+chargeName, "pep")
+            fragments["peptide+2Hex"+chargeName] = (pep2HexMass, peptide.sequence+"+2Hex"+chargeName, "pep")
         
         # search for the existence of each fragment within the spectrum
         found_fragments = {}

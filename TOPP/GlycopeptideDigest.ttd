@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>PeptideDigestor</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/GlycopeptideDigest.py --inFasta "%2" --out "%3" --enzymes "%4" --cystTreatment "%5" --modifications "%6" --glycosylation "%7" --missedCleavageSites "%8"</cloptions>
+		  <cloptions> "%1"/GlycopeptideDigest.py --inFasta "%2" --out "%3" --enzymes "%4" --maxNrModifications "%5" --modifications "%6" --glycosylation "%7" --missedCleavageSites "%8"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -28,7 +28,7 @@
 			<mapping id="2" cl="%%inFasta" />
 			<mapping id="3" cl="%%out" />
 			<mapping id="4" cl="%%enzymes" />
-            <mapping id="5" cl="%%cystTreatment" />
+            <mapping id="5" cl="%%maxNrModifications" />
             <mapping id="6" cl="%%modifications" />
             <mapping id="7" cl="%%glycosylation" />
             <mapping id="8" cl="%%missedCleavageSites" />                                               			
@@ -38,8 +38,8 @@
 			<ITEM name="inFasta" value="" type="string" tags="input file" restrictions="*.fasta" description="File input Proteinsequences, only .fasta allowed"/>
 			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.xml" description="File output peptide sequence file .xml"/>
             <ITEMLIST name="enzymes" value="[]" type="string" restrictions="Trypsin,Trypsin/P,AspN,AspN2,Unspecific,NoDigest" description="Digestion enzymes"/>
-            <ITEM name="cystTreatment" value="None" type="string" restrictions="None,Iodacetic acid,Iodoacetamide" description="Cystein treatment (C)"/>
-            <ITEMLIST name="modifications" value="[]" type="string" restrictions="None,Oxidation(M),AcrylamideAdduct(C),Carbamylation(N-Term)" description="variable modifications"/>
+            <ITEM name="maxNrModifications" value="2" type="int" description="Nr of maximum allowed modifications. CYS_CAM, CYS_CM are excluded. Unlimited with -1."/>
+            <ITEMLIST name="modifications" value="[]" type="string" restrictions="None,AMID,CAM,CYS_CAM,NTERM_CAM,CM,CYS_CM,DEAM,ASN_DEAM,GLN_DEAM,DEHYDR,SER_DEHYDR,THR_DEHYDR,DIOX,TRP_DIOX,TYR_DIOX,MSO,OX,TRP_OX,TYR_OX,CYS_PAM,PHOS,SER_PHOS,THR_PHOS,TYR_PHOS" description="variable modifications"/>
             <ITEMLIST name="glycosylation" value="[]" type="string" restrictions="N-Glycosylation,O-Glycosylation" description="glycosylation"/>
             <ITEM name="missedCleavageSites" value="0" type="int" description="maximum missed cleavage sites"/>
 		  </ini_param>

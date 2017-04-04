@@ -16,43 +16,24 @@ class Annotation(object):
         self.items = {}
         self.selected = ""
 """
-class Peak:
-    
-    def __init__(self,x,y):
-        self.x = x
-        self.y = y
 
 class SpectrumView(AnnotatedPlot.AnnotatedPlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="m/z",
+    def __init__(self, master, model):
+        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master
         self.spec = None # Link to raw spectrum
         self.spectrum = None # Link to current spectrum score
 
-        self.peaksByItem = {}
+        #self.peaksByItem = {}
+        self.clearAnnotatableList()
+        
         self.annotationItems = {}
-        self.annotations = []
+        self.annotations = {}
         self.currentAnnotation = None
         self.referenceMass = 0
-
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # link function
-        self.model.classes["SpectrumView"] = self
         
         self.canvas.bind("<Button-2>", self.button2, "+")
         
@@ -77,7 +58,8 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
              self.annotations = self.model.currentAnalysis.spectraIds[spec.getNativeID()].annotations
         self.spec = spec
         self.referenceMass = 0
-        self.peaksByItem = {}
+        #self.peaksByItem = {}
+        self.clearAnnotatableList()
         self.annotationItems = {}
         self.currentAnnotation = None
         self.initCanvas()
@@ -111,7 +93,7 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
                 continue
             if intens < self.viewYMin:
                 continue
-            peaks.append(Peak(mz,intens))
+            peaks.append(AnnotatedPlot.Annotatable(mz,intens))
 
         # sort peaks after highest intensity
         peaks.sort(reverse=True, key=lambda p: p.y)
@@ -136,7 +118,8 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         scoredPeaks = []
         annotationText = []
         annotationMass = []
-        self.peaksByItem = {}
+        self.clearAnnotatableList()
+
         for p in peaks:
             # check if peak is a scored peak
             pMZ = self.convAtoX(p.x)
@@ -148,7 +131,7 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
                 annotationText.append((pMZ, pInt, fragment+"\n"+masstext))
             else:
                 item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="black")
-                self.peaksByItem[item] = p
+                self.addAnnotatableItem(item, p)
                 annotationMass.append((pMZ, pInt, masstext))
 
             self.allowZoom = True
@@ -159,7 +142,7 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
             pMZ = self.convAtoX(p.x)
             pInt = self.convBtoY(p.y)
             item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="red")
-            self.peaksByItem[item] = p
+            self.addAnnotatableItem(item, p)
 
         items = self.plotText(annotationText, set(), 0)
         items = self.plotText(annotationMass, items, 5)

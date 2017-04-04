@@ -17,7 +17,7 @@ class ExtensionScoring(ttk.Labelframe):
         chromFrame.rowconfigure(0, weight=1)
         chromFrame.columnconfigure(0, weight=1)
         
-        chromView = ChromatogramView.ChromatogramView(chromFrame, model, height=300, width=400)
+        chromView = ChromatogramView.ChromatogramView(chromFrame, model)
         chromView.grid(row=0, column=0, sticky="NWES")
 
         msFrame = ttk.Labelframe(self, text="Precursorspectrum")
@@ -25,7 +25,7 @@ class ExtensionScoring(ttk.Labelframe):
         msFrame.rowconfigure(0, weight=1)
         msFrame.columnconfigure(0, weight=1)
 
-        msView = PrecursorView.PrecursorView(msFrame, model, height=300, width=400)
+        msView = PrecursorView.PrecursorView(msFrame, model)
         msView.grid(row=0, column=0, sticky="NWES")
 
         msmsFrame = ttk.Labelframe(self, text="MS/MS Spectrum")
@@ -33,7 +33,7 @@ class ExtensionScoring(ttk.Labelframe):
         msmsFrame.rowconfigure(0, weight=1)
         msmsFrame.columnconfigure(0, weight=1)
         
-        msmsView = SpectrumView2.SpectrumView(msmsFrame, model, height=300, width=800)
+        msmsView = SpectrumView2.SpectrumView(msmsFrame, model)
         msmsView.grid(row=0, column=0, sticky="NWES")
 
         self.rowconfigure(0, weight=1)

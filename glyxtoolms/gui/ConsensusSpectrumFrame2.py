@@ -6,9 +6,8 @@ from glyxtoolms.gui import Appearance
 
 class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="m/z",
+    def __init__(self, master, model):
+        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master
@@ -21,24 +20,9 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.referenceMass = 0
         
         self.annotationItems = {}
-        self.annotations = []
+        self.annotations = {}
         self.currentAnnotation = None
         self.peaksByItem = {}
-        
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # register class
-        self.model.classes["ConsensusSpectrumFrame2"] = self
         
         # register additional button bindings
         self.canvas.bind("<Button-2>", self.button2, "+")

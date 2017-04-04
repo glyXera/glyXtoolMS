@@ -3,6 +3,7 @@ from itertools import product
 import copy
 import glyxtoolms
 import pyopenms
+import numpy as np
 
 class Histogram(object):
 
@@ -98,7 +99,6 @@ class Protein(object):
             self.modifications.append((name, sequence[pos], pos))
             diff += x.end()-x.start()
         self.sequence = re.sub(r"\(.+?\)", "", sequence)
-
         # check aminoacids and modifications
         try:
             for s in self.sequence:
@@ -115,55 +115,97 @@ class Protein(object):
         peptide.start = start
         peptide.end = end
         peptide.proteinID = self.identifier
-        for mod, amino, pos in self.modifications:
+        for modname, amino, pos in self.modifications:
             if start <= pos and pos < end:
-                peptide.modifications.append((mod, amino, pos))
+                peptide.addModification(modname, position=pos)
         return peptide
+        
+class Glycopeptide:
+    
+    def __init__(self,peptidesequence, glycancomposition, modifications=list()):
+        """
+        peptidesequence, glycancomposition, peptidemodifications
+        modifications as list with (modificationname, aminoacid, position)
+        """
+        # generate peptide
+        self.peptide = glyxtoolms.io.XMLPeptide()
+        for s in peptidesequence:
+            assert s in glyxtoolms.masses.AMINOACID
+        self.peptide.sequence = peptidesequence
+        
+        # add modifications
+        for name, amino, pos in modifications:
+            assert name in glyxtoolms.masses.PROTEINMODIFICATION
+            assert amino == self.peptide.sequence[pos]
+            self.peptide.addModification(name, position=pos)
+        self.peptide.mass = glyxtoolms.masses.calcPeptideMass(self.peptide)
+        # generate glycan
+        self.glycan = glyxtoolms.lib.Glycan(glycancomposition)
+        
+    def calcIonMass(self, charge):
+        # TODO: Extend for Sodium and Potassium
+        if charge < 1:
+            return self.peptide.mass + self.glycan.mass
+        else:
+            return (self.peptide.mass + self.glycan.mass + charge*glyxtoolms.masses.MASS["H+"]) / float(charge)
+       
 
 class ProteinDigest(object):
 
     def __init__(self):
 
-        self.carbamidation = False
-        self.carboxylation = False
-        self.oxidation = False
-        self.carbamylation_N_Term = False
-        self.acrylamideAdducts = False
+        #self.carbamidation = False
+        #self.carboxylation = False
+        #self.oxidation = False
+        #self.carbamylation_N_Term = False
+        #self.acrylamideAdducts = False
+        
+        self.modifications = set()
         self.breakpoints = []
         self.protein = None
+        self.maxModifications = -1
+        
+    def setMaxModifications(self, maxMod):
+        self.maxModifications = maxMod
 
-
-    def setCarbamidation(self, boolean):
-        if boolean == True:
-            self.carbamidation = True
-            self.carboxylation = False
-        else:
-            self.carbamidation = False
-
-    def setCarboxylation(self, boolean): # Iodoacetic acid
-        if boolean == True:
-            self.carboxylation = True
-            self.carbamidation = False
-        else:
-            self.carboxylation = False
-
-    def setAcrylamideAdducts(self, boolean):
-        self.acrylamideAdducts = boolean
-
-    def setOxidation(self, boolean):
-        self.oxidation = boolean
-
-    def setNTermCarbamylation(self, boolean):
-        self.carbamylation_N_Term = boolean
+    
+    def addModification(self, modname):
+        assert modname in glyxtoolms.masses.PROTEINMODIFICATION
+        assert len(glyxtoolms.masses.PROTEINMODIFICATION[modname].get("targets", [])) > 0
+        self.modifications.add(modname)
 
     def calcPeptideMasses(self, peptide):
 
-
+        def checkPeptideValidity(Y, Y_names, target):
+            Y = Y.copy()
+            Ycopy = Y.copy()
+            
+            isValid = True
+            for i in range(0,len(Y)):
+                name = Y_names[i]
+                amount = target[name]
+                maxAmount = Y[i,i]
+                if amount > maxAmount:
+                    isValid = False
+                Y[i,i] = amount
+                for e in range(i+1,len(Y)):
+                    overlap = Y[i,e]
+                    free = maxAmount - overlap
+                    # check if overlap is consumed
+                    if amount <= free:
+                        continue
+                    # overlap is consumed, propagate forward
+                    for j in range(i, len(Y)):
+                        if Ycopy[j,e] == 0:
+                            continue
+                        Y[j,e] = Y[j,e] - overlap
+                        if Y[j,e] < 0:
+                            isValid = False
+            return isValid
         try:
             sequence = peptide.sequence
         except AttributeError:
             raise Exception("missing attribute 'sequence'! (String)")
-
         try:
             start = peptide.start
         except AttributeError:
@@ -174,61 +216,121 @@ class ProteinDigest(object):
         except AttributeError:
             raise Exception("missing attribute 'end'! (Integer)")
 
-
-        # count Nr of Cysteine
-        c = sequence.count("C")
-
-        # count Nr of Methionine
-        m = sequence.count("M")
-
-        # substract already specified modifications
-        for mod, pos in peptide.modifications:
-            if pos == -1:
+        # calc modification data        
+        data = {}
+        for i,amino in enumerate(sequence):
+            possible = set()
+            for modname in self.modifications:
+                mod = glyxtoolms.masses.PROTEINMODIFICATION[modname]
+                for target in mod["targets"]:
+                    if i == 0 and target == "NTERM":
+                        possible.add(modname)
+                    elif i == len(sequence)-1 and target == "CTERM":
+                        possible.add(modname)
+                    elif amino == target: 
+                        possible.add(modname)
+            if len(possible) > 0:
+                data[i] = possible
+                
+        # remove already modified sites
+        for mod in peptide.modifications:
+            if mod.position == -1:
                 continue
-            amino = peptide.sequence[pos]
-            if amino == "C":
-                c -= 1
-            elif amino == "M":
-                m -= 1
+            if mod.position in data:
+                data.pop(mod.position)
+        
+        # generate matrix
+        keys = sorted(data.keys())
+        mods = set()
+        for key in data:
+            for mod in data[key]:
+                mods.add(mod)
 
-        N_Cys_CAM = 0
-        N_Cys_CM = 0
-        N_Cys_PAM = 0
-        N_MSO = 0
-        N_NTERM_CAM = 0
-        if self.carbamidation == True:
-            N_Cys_CAM = c
-        elif self.carboxylation == True:
-            N_Cys_CM = c
-        if self.acrylamideAdducts == True:
-            N_Cys_PAM = c
-        if self.oxidation == True:
-            N_MSO = m
-        if self.carbamylation_N_Term == True:
-            N_NTERM_CAM = 1
-        # make permutations
+        mods = sorted(mods)
+         
+        matrix = []
+        for mod in mods:
+            line = []
+            for key in keys:
+                if mod in data[key]:
+                    line.append(1)
+                else:
+                    line.append(0)
+            matrix.append(line)
+            
+        A = np.matrix(matrix)        
+        AA_T = np.dot(A,A.T)
+        
+        # decompose matrix into independent and dependent matrices
+
+        independent = []
+        s = len(AA_T)
+
+        for i in range(0,s):
+            isIndependent = True
+            for e in range(0,s):
+                if i != e and AA_T[i,e] != 0:
+                    isIndependent = False
+                    break
+            if isIndependent == True:
+                independent.append(i)
+
+        # extract linear dependent matrix
+        Y = np.delete(AA_T, independent, axis=0)
+        Y = np.delete(Y, independent, axis=1)
+        names = np.array(mods)
+        Y_names = np.delete(names, independent, axis=0)
+        
+        # create permutation matrix of each modification
+        perm = []
+        diag = AA_T.diagonal()
+        for i in range(0,diag.size):
+            N_mod = diag[0,i]
+            if self.maxModifications > -1 and N_mod > self.maxModifications:
+                N_mod = self.maxModifications
+            perm.append(range(0,int(N_mod)+1))
+        
         masses = []
-        for variationslist in product(range(0, N_Cys_CAM+1),
-                                       range(0, N_Cys_CM+1),
-                                       range(0, N_Cys_PAM+1),
-                                       range(0, N_MSO+1),
-                                       range(0, N_NTERM_CAM+1)):
-            cys_CAM, cys_CM, cys_PAM, MSO, nterm_CAM = variationslist
-            if cys_CAM+cys_CM+cys_PAM > c:
+        for ii in product(*perm):
+            isValid = True
+            target = {}
+            N_mods = 0
+            for amount, name in zip(ii, mods):
+                target[name] = amount
+                if name != "CYS_CAM" and name != "CYS_CM":
+                    N_mods += amount
+            # check if more modifications are on than allowed
+            if self.maxModifications > -1 and N_mods > self.maxModifications:
+                continue
+                
+            # check dependent targets
+            isValid = checkPeptideValidity(Y, Y_names, target)
+            if isValid == False:
                 continue
 
+            # create new peptide
             newPeptide = copy.deepcopy(peptide)
+            for modname in target:
+                amount = target[modname]
+                if amount == 0:
+                    continue
+                for i in range(0,target[modname]):
+                    newPeptide.addModification(modname)
+                    
+            # solve modifications as much as possible
+            try:
+                newPeptide.solveModifications()
+            
+            except:
+                print newPeptide.toString()
+                raise
 
-            newPeptide.modifications += [("CYS_CAM", -1)]*cys_CAM
-            newPeptide.modifications += [("CYS_CM", -1)]*cys_CM
-            newPeptide.modifications += [("CYS_PAM", -1)]*cys_PAM
-            newPeptide.modifications += [("MSO", -1)]*MSO
-            newPeptide.modifications += [("NTERM_CAM", 0)]*nterm_CAM
             # calc peptide mass
             newPeptide.mass = glyxtoolms.masses.calcPeptideMass(newPeptide)
             masses.append(newPeptide)
-
+        
         return masses
+
 
     def newDigest(self, protein):
         self.protein = protein
@@ -364,10 +466,10 @@ msCompositionOrder = [
 
 class Glycan(glyxtoolms.io.XMLGlycan):
 
-    def __init__(self, composition=None):
+    def __init__(self, composition=None, typ="?"):
         super(Glycan, self).__init__()
         self.composition = composition
-        self.typ = None
+        self.typ = typ
         self.glycosylationSite = None
         self.linearCode = ""
         self.structure = None
@@ -453,7 +555,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
 
     def getComposition(self, typ="N"):
         comp = self.sugar.copy()
-        if typ == "N" and self.checkNCore() == "core":
+        if typ == "N" and self.hasNCore() == True:
             comp["HEX"] -= 3
             comp["HEXNAC"] -= 2
             composition = "(GlcNAc)2 (Man)3 + "
@@ -475,23 +577,13 @@ class Glycan(glyxtoolms.io.XMLGlycan):
         return result
 
 
-    def checkNCore(self): # ouput: "None", "sub", "core"
-        # Core: 2 HexNac + 3 Hex
-        # Subcore:
-        # 2 / 3
-        # 2/2
-        # 2/1
-        #2/0
-        # 1/0
+    def hasNCore(self):
+        """ Checks if the compositin contains 2 HexNac and 3 Hexose to build N-Glycan core """ 
         hexnac = self.sugar["HEXNAC"]
         hexose = self.sugar["HEX"]
         if hexnac >= 2 and hexose >= 3:
-            return "core"
-        if hexnac >= 2:
-            return "sub"
-        if hexnac == 1 and hexose == 0:
-            return "sub"
-        return "none"
+            return True
+        return False
 
 
 

@@ -38,15 +38,13 @@ def main(options):
     pepFile.loadFromFile(options.infilePeptide)
     # Glycan file
     glycans = []
-    glycanFile = file(options.infileGlycan,"r")
-    for line in glycanFile:
-        glycan = glyxtoolms.lib.Glycan(line[:-1])
+    glycanFile = glyxtoolms.io.GlycanCompositionFile()
+    glycanFile.read(options.infileGlycan)
+    for glycan in glycanFile.glycans:
         glycans.append((glycan.mass,glycan))
-    glycanFile.close()
 
     # sort glycan file for faster comparison
     glycans.sort()
-
     
     # remove old hits
     keepHits = []
@@ -70,6 +68,12 @@ def main(options):
         precursorMass = feature.getMZ()*feature.getCharge()-glyxtoolms.masses.MASS["H+"]*(feature.getCharge()-1)
         found = False
         for peptide in pepFile.peptides:
+            # collect glycosylation types for peptide
+            glycosites = set()
+            glycosites.add("?")
+            for pos,site in peptide.glycosylationSites:
+                glycosites.add(site)
+            
             for glycanmass, glycan in glycans:
                 mass = peptide.mass+glycanmass+glyxtoolms.masses.MASS["H+"]
                 diff = mass-precursorMass
@@ -77,6 +81,10 @@ def main(options):
                     break
                 if abs(diff) > tolerance:
                     continue
+                # check if glycan type can exist on the peptides glycosylationsites
+                if glycan.typ not in glycosites:
+                    continue
+                    
                 # check if an accepted hit exists already for feature
                 #~ key = peptide.toString() + ":"+glycan.toString()
                 #~ if feature.id in accepted.get(key, set()):

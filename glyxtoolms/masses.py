@@ -56,7 +56,8 @@ PROTEINMODIFICATION["CYS_CM"] = {"mass": 58.005479,
                                  "targets": {"C"},
                                  "composition":{'C': 2, 'H': 2, 'O': 2}
                                 }
-PROTEINMODIFICATION["CM"] = {"mass": 58.005479, 
+PROTEINMODIFICATION["CM"] = {"mass": 58.005479,
+                             "targets": {"C"},
                              "composition":{'C': 2, 'H': 2, 'O': 2}
                             }
 # Cys_PAM Acrylamide Adduct
@@ -66,7 +67,7 @@ PROTEINMODIFICATION["CYS_PAM"] = {"mass": 71.03712,
                                  }
 PROTEINMODIFICATION["PAM"] = {"mass": 71.03712}
 
-PROTEINMODIFICATION["MSO"] = {"mass": 15.994915, 
+PROTEINMODIFICATION["MSO"] = {"mass": 15.9949, 
                               "targets": {"M"},
                               "composition":{'O': 1}
                              } # MSO
@@ -77,9 +78,6 @@ PROTEINMODIFICATION["AMID"] = {"mass": -0.9840,
                                "targets": {"CTERM"},
                                "composition":{'H': 1, 'O': -1, 'N': 1}
                               } # Amidation
-PROTEINMODIFICATION["DEAM"] = {"mass": 0.9840,
-                               "composition":{'H': -1, 'O': 1, 'N': -1}
-                              } # Deamidation
 PROTEINMODIFICATION["HYDR"] = {"mass": 15.9949,
                                "composition":{'O': 1}
                               } # Hydroxylation
@@ -87,8 +85,91 @@ PROTEINMODIFICATION["METH"] = {"mass": 14.0157,
                                "composition":{'C': 1, 'H': 2}
                               } # Methylation
 PROTEINMODIFICATION["PHOS"] = {"mass": 79.9663,
+                               "targets": {"S", "T", "Y"},
                                "composition":{'P': 1, 'O': 3, 'H': 1}
                               } # Phosphorylation
+PROTEINMODIFICATION["SER_PHOS"] = {"mass": 79.9663,
+                              "targets": {"S"},
+                               "composition":{'P': 1, 'O': 3, 'H': 1}
+                             } # Phosphorylation Serine
+PROTEINMODIFICATION["THR_PHOS"] = {"mass": 79.9663,
+                              "targets": {"T"},
+                               "composition":{'P': 1, 'O': 3, 'H': 1}
+                             } # Phosphorylation Threonin
+PROTEINMODIFICATION["TYR_PHOS"] = {"mass": 79.9663,
+                              "targets": {"Y"},
+                               "composition":{'P': 1, 'O': 3, 'H': 1}
+                             } # Phosphorylation Tyrosin
+                              
+PROTEINMODIFICATION["DEHYDR"] = {"mass": -18.0106,
+                              "targets": {"S", "T"},
+                               "composition":{'H': -2, 'O': -1}
+                             } # Dehydration Serine
+PROTEINMODIFICATION["SER_DEHYDR"] = {"mass": -18.0106,
+                              "targets": {"S"},
+                               "composition":{'H': -2, 'O': -1}
+                             } # Dehydration Serine
+PROTEINMODIFICATION["THR_DEHYDR"] = {"mass": -18.0106,
+                              "targets": {"T"},
+                               "composition":{'H': -2, 'O': -1}
+                             } # Dehydration Threonin
+
+PROTEINMODIFICATION["DEAM"] = {"mass": 0.9840,
+                               "targets": {"N", "Q"},
+                               "composition":{'H': -1, 'O': 1, 'N': -1}
+                              } # Deamidation
+PROTEINMODIFICATION["ASN_DEAM"] = {"mass": 0.9840,
+                               "targets": {"N"},
+                               "composition":{'H': -1, 'O': 1, 'N': -1}
+                              } # Deamidation Asparagine
+PROTEINMODIFICATION["GLN_DEAM"] = {"mass": 0.9840,
+                               "targets": {"Q"},
+                               "composition":{'H': -1, 'O': 1, 'N': -1}
+                              } # Deamidation Glutamine
+                              
+PROTEINMODIFICATION["OX"] = {"mass": 15.9949,
+                              "targets": {"W", "Y"},
+                               "composition":{'O': 1} 
+                              } # Oxidation Tyrosin
+                              
+PROTEINMODIFICATION["TRP_OX"] = {"mass": 15.9949,
+                              "targets": {"W"},
+                               "composition":{'O': 1} 
+                              } # Oxidation Tyrosin
+                              
+PROTEINMODIFICATION["TYR_OX"] = {"mass": 15.9949,
+                              "targets": {"Y"},
+                               "composition":{'O': 1} 
+                              } # Oxidation Tyrosin
+                              
+PROTEINMODIFICATION["DIOX"] = {"mass": 31.9899,
+                              "targets": {"W", "Y"},
+                               "composition":{'O': 2} 
+                              } # Dioxidation Tyrosin
+                              
+PROTEINMODIFICATION["TRP_DIOX"] = {"mass": 31.9899,
+                              "targets": {"W"},
+                               "composition":{'O': 2} 
+                              } # Dioxidation Tyrosin
+                              
+PROTEINMODIFICATION["TYR_DIOX"] = {"mass": 31.9899,
+                              "targets": {"Y"},
+                               "composition":{'O': 2} 
+                              } # Dioxidation Tyrosin                              
+
+def getModificationNames():
+    """ Return a sorted list of Modification names. 
+    Only contains modifications with targets declaration"""
+    def sort_names(name):
+        if "_" in name:
+            amino, mod = name.split("_")
+            return mod, amino
+        return name, " "
+    names = set()
+    for key in PROTEINMODIFICATION:
+        if "targets" in PROTEINMODIFICATION[key]:
+            names.add(key)
+    return sorted(names, key=sort_names)
 
 
 def getModificationTargets(modification):
@@ -222,9 +303,8 @@ def calcPeptideMass(peptide):
     # TODO: Checks for modification consistency
     # a) amount of amino acids must be in sequence
     # b) a given position (except -1) can only be
-    for modification in peptide.modifications:
-        mod = modification[0]
-        composition = getModificationComposition(mod)
+    for mod in peptide.modifications:
+        composition = getModificationComposition(mod.name)
         mass += calcMassFromElements(composition)
     return mass
 
@@ -386,7 +466,7 @@ def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
         #print shift, masses[shift]/maxProb*100
     return sumProb, monoMass, trans
 
-def getElementComposition(peptide, glycan):
+def getElementComposition(peptide, glycan): # currently not working, du to change in modification definition
     # calculate element composition
     elements = {}
     def addElements(elements, name, amount):
@@ -405,8 +485,10 @@ def getElementComposition(peptide, glycan):
         addElements(elements, aminoacid, amount)
         addElements(elements, "H2O", -1*amount)
 
-    for modification in peptide.modifications:
-        addElements(elements, modification[0], 1)
+    for mod in peptide.modifications:
+        comp = PROTEINMODIFICATION[mod.name]["composition"]
+        for elementname in comp:
+            elements[elementname] = elements.get(elementname, 0) + comp[elementname]
 
 
     # b) glycan

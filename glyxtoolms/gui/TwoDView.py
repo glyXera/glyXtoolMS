@@ -6,31 +6,14 @@ from glyxtoolms.gui import Appearance
 
 class TwoDView(FramePlot.FramePlot):
 
-    def __init__(self, master, model, height=300, width=300):
-        FramePlot.FramePlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="rt [s]",
+    def __init__(self, master, model):
+        FramePlot.FramePlot.__init__(self, master, model, xTitle="rt [s]",
                                      yTitle="m/z")
 
         self.master = master
-        
         self.xTypeTime = True
-        
         self.featureItems = {}
-
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # link function
-        self.model.classes["TwoDView"] = self
+        self.currentFeatures = []
         
         s = ttk.Style()
 
@@ -42,13 +25,22 @@ class TwoDView(FramePlot.FramePlot):
                           ('pressed', '!focus', '#d9d9d9'),
                           ('active', '#d9d9d9')])
 
-        # Events
+        self.visible = {}
+        for name in ["Glycopeptide spectra", 
+                      "Non-Glycopeptide spectra", 
+                      "Glycopeptide features", 
+                      "Non-Glycopeptide features"]:
+            self.visible[name] = Tkinter.BooleanVar()
+            self.visible[name].set(True)
+            self.visible[name].trace("w", self.visbilityChanged)
+        
         self.canvas.bind("<Button-1>", self.eventMouseClick, "+")
+        # Events
         #self.canvas.bind("<Left>", self.setButtonValue)
         #self.canvas.bind("<Right>", self.setButtonValue)
         #self.canvas.bind("<Button-1>", self.setSpectrumPointer)
-
-        optionsFrame = ttk.Labelframe(self, text="Plot Options")
+        """
+        optionsFrame = ttk.Labelframe(master, text="Plot Options")
         optionsFrame.grid(row=0, column=1, sticky="NS")
 
         self.ov1 = Tkinter.IntVar()
@@ -146,7 +138,28 @@ class TwoDView(FramePlot.FramePlot):
         self.ov9.set(1)
         self.ov10.set(1)
         self.ov11.set(0)
+        """
+        
+        # create popup menu
+        self.aMenu = Tkinter.Menu(self, tearoff=0)
+        self.canvas.bind("<Button-3>", self.popup)
+    
+    def visbilityChanged(self, *arg, **args):
+        self.paintObject()
 
+    def popup(self, event):
+
+        self.aMenu.delete(0,"end")
+        for name in self.visible:
+            self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.visible[name])
+
+        self.aMenu.post(event.x_root, event.y_root)
+        self.aMenu.focus_set()
+        self.aMenu.bind("<FocusOut>", self.removePopup)
+        
+    def removePopup(self,event):
+        if self.focus_get() != self.aMenu:
+            self.aMenu.unpost()
 
     def setButtonValue(self, i):
         state = getattr(self, "ov"+str(i)).get()
@@ -187,13 +200,7 @@ class TwoDView(FramePlot.FramePlot):
         self.aMax *= 1.1
         self.bMax *= 1.1
 
-    def plotFeatureLine(self):
-        # plot feature line
-        if self.model.currentAnalysis == None:
-            return
-        feature = self.model.currentAnalysis.currentFeature
-        if feature == None:
-            return
+    def plotFeatureLine(self, feature):
         if feature.passesFilter == False:
                 return
         rt1, rt2, mz1, mz2 = feature.getBoundingBox()
@@ -217,10 +224,13 @@ class TwoDView(FramePlot.FramePlot):
         if self.model.currentAnalysis.analysis == None:
             return
         self.featureItems = {}
-        self.plotFeatureLine()
+        for feature in self.currentFeatures:
+            self.plotFeatureLine(feature)
+            
         for feature in self.model.currentAnalysis.analysis.features:
             if feature.passesFilter == False:
                 continue
+            
             rt1, rt2, mz1, mz2 = feature.getBoundingBox()
             rt1 = self.convAtoX(rt1)
             rt2 = self.convAtoX(rt2)
@@ -236,7 +246,7 @@ class TwoDView(FramePlot.FramePlot):
             xy += [rt2, mz2]
             xy += [rt1, mz2]
             xy += [rt1, mz1]
-            if self.model.currentAnalysis.currentFeature == feature:
+            if feature in self.currentFeatures:
                 color = "purple"
             elif feature.getId().startswith("own"):
                 color = "orange"
@@ -275,7 +285,16 @@ class TwoDView(FramePlot.FramePlot):
                     hasCharge = True
                     break
             nrFeatureHits = max(nrFeatureHits)
-
+            
+            if spectrum.isGlycopeptide:
+                if self.visible["Glycopeptide spectra"].get() == False:
+                    continue
+                color = colorGlycoOneHit
+            else:
+                if self.visible["Non-Glycopeptide spectra"].get() == False:
+                    continue
+                color = colorNonGlyco
+            """
             nr = 1
             if spectrum.isGlycopeptide:
                 nr *= 1
@@ -289,8 +308,8 @@ class TwoDView(FramePlot.FramePlot):
             else:
                 nr *= 7
             if nr == 5:
-                if self.ov6.get() == 0:
-                    continue
+                #if self.ov6.get() == 0:
+                #    continue
                 if nrFeatureHits == 0:
                     color = colorGlycoNoHit
                 elif nrFeatureHits == 1:
@@ -298,8 +317,8 @@ class TwoDView(FramePlot.FramePlot):
                 else:
                     color = colorGlycoMultipleHits
             elif nr == 7:
-                if self.ov7.get() == 0:
-                    continue
+                #if self.ov7.get() == 0:
+                #    continue
                 if nrFeatureHits == 0:
                     color = colorGlycoNoHit
                 elif nrFeatureHits == 1:
@@ -307,8 +326,8 @@ class TwoDView(FramePlot.FramePlot):
                 else:
                     color = colorGlycoMultipleHits
             elif nr == 3:
-                if self.ov10.get() == 0:
-                    continue
+                #if self.ov10.get() == 0:
+                #    continue
                 if nrFeatureHits == 0:
                     color = colorGlycoNoHit
                 elif nrFeatureHits == 1:
@@ -316,20 +335,21 @@ class TwoDView(FramePlot.FramePlot):
                 else:
                     color = colorGlycoMultipleHits
             elif nr == 10:
-                if self.ov8.get() == 0:
-                    continue
+                #if self.ov8.get() == 0:
+                #    continue
                 color = colorNonGlyco
             elif nr == 14:
-                if self.ov9.get() == 0:
-                    continue
+                #if self.ov9.get() == 0:
+                #    continue
                 color = colorNonGlyco
             else:
-                if self.ov11.get() == 0:
-                    continue
+                #if self.ov11.get() == 0:
+                #    continue
                 color = colorNonGlyco
-
+            """
             x = self.convAtoX(spectrum.rt)
             y = self.convBtoY(spectrum.precursorMass)
+            #color = "red"
             item = self.canvas.create_oval(x-diam, y-diam, x+diam, y+diam, fill=color)
 
     def paintObject(self):
@@ -344,14 +364,17 @@ class TwoDView(FramePlot.FramePlot):
 
         self.allowZoom = True
 
-    def init(self, keepZoom=False):
+    def init(self, features=[], keepZoom=False):
         if self.model.currentAnalysis == None:
             return
         if self.model.currentAnalysis.analysis == None:
             return
+        self.currentFeatures = features
         self.initCanvas(keepZoom=keepZoom)
         
     def eventMouseClick(self, event):
+        if self.toolbar.active.get("toggle", "") != "": # TODO create real action
+            return
         # clear color from all items
         self.canvas.itemconfigure("site", fill="black")
 
@@ -373,10 +396,11 @@ class TwoDView(FramePlot.FramePlot):
                     distn = dist
         if nearest != None:
             self.model.currentAnalysis.currentFeature = nearest
+            self.currentFeatures = [nearest]
             self.model.classes["NotebookFeature"].selectFeature(nearest)
 
     def identifier(self):
-        return "2DView"
+        return "TwoDView"
 
 
 

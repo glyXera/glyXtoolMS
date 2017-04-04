@@ -144,6 +144,7 @@ class Feature:
         self.pattern = {}
                 
     def extendRTDomain(self, ms1, tolerance, cutoff=20.0, maxRTspan=10000):
+        
         # get highest spectrum as origin
         msBest = max(self.ms2, key = lambda ms: ms.result["sum"])
         self.rt = msBest.rt1
@@ -166,8 +167,6 @@ class Feature:
         while i > 0:
             i -= 1
             spec = ms1[i]
-            if spec.getRT() > minRT:
-                continue
             intensities = []
             for e, mz in enumerate(msBest.result["x"]):
                 sumInt = 0
@@ -203,13 +202,10 @@ class Feature:
             if err > 35: # TODO: Handle spray loss spectra
                 break
                 
-        
         i = start-1
         while i < len(ms1)-1:
             i += 1
             spec = ms1[i]
-            if spec.getRT() < maxRT:
-                continue
             intensities = []
             for e, mz in enumerate(msBest.result["x"]):
                 sumInt = 0
@@ -315,7 +311,7 @@ def main(options):
         link.nativeId = spec1.getNativeID()
         link.peaks = peaks
         links.append(link)
-    
+
     print "could not find suitable starting pattern for ", noresult, "spectra from ", len(ms2) 
     timed("group precursors",starttime)
     # group precursors
@@ -349,7 +345,7 @@ def main(options):
             for link in current.near:
                 if link.feature == None:
                     working.add(link)
-    
+
     timed("calculate precursor positions",starttime)
     # calculate mz and charge of feature
     for feature in features:

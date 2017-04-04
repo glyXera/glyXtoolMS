@@ -1,7 +1,12 @@
 import ttk
 import Tkinter
+import tkFileDialog
+import tkMessageBox
+import os
+import pyperclip
 
 import glyxtoolms
+
 
 class NotebookIdentification(ttk.Frame):
 
@@ -10,32 +15,45 @@ class NotebookIdentification(ttk.Frame):
         self.master = master
         self.model = model
         
+        self.features = []
+        
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=0)
+        self.rowconfigure(0,weight=0)
+        self.rowconfigure(1,weight=1)
+        
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        self.aMenu.add_command(label="Set to Accepted", 
-                               command=lambda x="Accepted": self.setStatus(x))
-        self.aMenu.add_command(label="Set to Rejected",
-                               command=lambda x="Rejected": self.setStatus(x))
-        self.aMenu.add_command(label="Set to Unknown",
-                               command=lambda x="Unknown": self.setStatus(x))
 
         # show treeview of mzML file MS/MS and MS
+        button = Tkinter.Button(self,image=self.model.resources["filter"])
         scrollbar = Tkinter.Scrollbar(self)
-        self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
+        self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set, selectmode='extended')
+        self.columns = ("Mass", "error", "Peptide", "Glycan", "Status")
+        self.columnNames = {"Mass":"Mass [Da]", "error":"Error", "Peptide":"Peptide", "Glycan":"Glycan", "Status":"Status"}
+        self.columnsWidth = {"Mass":70, "error":80, "Peptide":150, "Glycan":160, "Status":80}
+        self.showColumns = {}
+        for name in self.columns:
+            self.showColumns[name] = Tkinter.BooleanVar()
+            self.showColumns[name].set(True)
+            self.showColumns[name].trace("w", self.columnVisibilityChanged)
 
-        columns = {"Mass":70, "error":70, "Peptide":160, "Glycan":160, "Status":80}
-        self.tree["columns"] = ("Mass", "error", "Peptide", "Glycan", "Status")
-        self.tree.column("#0", width=40)
-
-        self.tree.heading("#0", text="Nr.", command=lambda col='#0': self.sortColumn(col))
-        for col in columns:
-            self.tree.column(col, width=columns[col])
+        self.tree.column("#0", width=80)
+        self.tree.heading("#0", text="Feature Nr", command=lambda col='#0': self.sortColumn(col))
+        
+        
+        self.tree["columns"] = self.columns
+        for col in self.columns:
+            self.tree.column(col, width=self.columnsWidth[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
+            
+        self.setHeadingNames()
 
-        self.tree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        self.tree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
 
-        scrollbar.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=1, column=1, sticky="NWES")
         scrollbar.config(command=self.tree.yview)
+        button.grid(row=0, column=1)
 
         self.treeIds = {}
 
@@ -59,11 +77,65 @@ class NotebookIdentification(ttk.Frame):
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
         self.tree.bind("r", lambda e: self.setStatus("Rejected"))
 
-        self.rowconfigure(0, weight=1)
-        self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=0)
+        self.model.registerClass("NotebookIdentification", self)
+        
+    def setHeadingNames(self):
+        if self.model.errorType == "Da":
+            self.columnNames["error"] = "Error [Da]"
+        else:
+            self.columnNames["error"] = "Error [ppm]"
+        for col in self.columnNames:
+            self.tree.heading(col, text=self.columnNames.get(col, col))
+        
+    def columnVisibilityChanged(self, *arg, **args):
+        header = []
+        for columnname in self.columns:
+            if self.showColumns[columnname].get() == True:
+                header.append(columnname)
+        self.tree["displaycolumns"] = tuple(header)
+        space = self.grid_bbox(column=0, row=0, col2=0, row2=0)[2]
+        width = space/(len(header)+1)
+        rest = space%(len(header)+1)
+        for column in ["#0"] + header:
+            self.tree.column(column, width=width+rest)
+            rest = 0
 
-        self.model.classes["NotebookIdentification"] = self
+    def selectAllIdentifications(self, event):
+        items = self.tree.get_children()
+        if len(items) == 0:
+            return
+        self.tree.selection_set(items)
+        self.clickedTree(None)
+        
+    def copyToClipboard(self, *arg, **args):
+        # get active columns
+        header = ["Feature Nr"]
+        active = []
+        for columnname in self.columns:
+            isActive = self.showColumns[columnname].get()
+            active.append(isActive)
+            if isActive == True:
+                header.append(self.columnNames.get(columnname,columnname))
+
+        # add header
+        text = "\t".join(header) + "\n"
+        for item in self.tree.selection():
+            content = self.tree.item(item)
+            line = []
+            line.append(content["text"])
+            for isActive,value in zip(active,content["values"]):
+                if isActive:
+                    line.append(str(value))
+            text += "\t".join(line) + "\n"
+        try:
+            self.model.saveToClipboard(text)
+            tkMessageBox.showinfo("Saved Table to Clipboard", "Table Data are saved to the Clipboard")
+        except:
+            tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
+            raise
+        
+        
+        
 
     def setStatus(self,status):
         # get currently active hit
@@ -89,13 +161,33 @@ class NotebookIdentification(ttk.Frame):
             self.tree.item(item, tags=taglist)
         
     def popup(self, event):
+        area = self.tree.identify_region(event.x, event.y)
+        self.aMenu.delete(0,"end")
+        if area == "nothing":
+            return
+        elif area == "heading" or area == "separator":
+            for name in self.columns:
+                self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
+        else:
+            self.aMenu.add_command(label="Set to Accepted", 
+                                   command=lambda x="Accepted": self.setStatus(x))
+            self.aMenu.add_command(label="Set to Rejected",
+                                   command=lambda x="Rejected": self.setStatus(x))
+            self.aMenu.add_command(label="Set to Unknown",
+                                   command=lambda x="Unknown": self.setStatus(x))
+            self.aMenu.add_separator()
+            self.aMenu.add_command(label="Copy to Clipboard",
+                                   command=self.copyToClipboard)
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
         
     def removePopup(self,event):
-        if self.focus_get() != self.aMenu:
-            self.aMenu.unpost()
+        try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
+            if self.focus_get() != self.aMenu:
+                self.aMenu.unpost()
+        except:
+            pass # Brrrr
 
     def sortColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
@@ -157,11 +249,14 @@ class NotebookIdentification(ttk.Frame):
         return taglist
 
 
-    def updateTree(self):
-
+    def updateTree(self, features=None):
+        """ Supply list of features that should be shown. 
+        If 'None' is supplied, the currently shown features are updated """
         # clear tree
         self.tree.delete(*self.tree.get_children())
         self.treeIds = {}
+        
+        self.setHeadingNames()
 
         project = self.model.currentProject
 
@@ -175,11 +270,19 @@ class NotebookIdentification(ttk.Frame):
 
         if analysis == None:
             return
+            
+        # check supplied features
+        if features is not None:
+            self.features = features
+            
 
         # insert all glycomod hits
-
         index = 0
         for hit in analysis.analysis.glycoModHits:
+            
+            # select hits only present in given features
+            if hit.feature not in self.features:
+                continue
             
             # check if hit passes filters
             if hit.passesFilter == False:
@@ -198,9 +301,14 @@ class NotebookIdentification(ttk.Frame):
             else:
                 taglist = ("odd" + hit.status, "odd")
             index += 1
+            # error
+            if self.model.errorType == "Da":
+                error = round(hit.error, 4)
+            else:
+                error = round(hit.error/float(feature.getMZ())*1E6, 1)
             itemSpectra = self.tree.insert("", "end", text=name,
                                            values=(round(mass, 4),
-                                                   round(hit.error, 4),
+                                                   error,
                                                    peptide,
                                                    glycan.toString(),
                                                    hit.status),
@@ -215,18 +323,29 @@ class NotebookIdentification(ttk.Frame):
         analysis.sorting["NotebookIdentification"] = (sortingColumn, not reverse)
         self.sortColumn(sortingColumn)
 
-        # update Extention
-        self.model.classes["IdentificationStatsFrame"].init()
-
     def clickedTree(self, event):
         selection = self.tree.selection()
-        if len(selection) == 0:
-            return
-        elif len(selection) == 1:
+
+        if len(selection) == 1:
             item = selection[0]
-            self.model.classes["NotebookFeature"].setSelectedFeature(self.tree.item(item, "text"))
-            self.model.classes["ConsensusSpectrumFrame"].init(self.treeIds[item])
-            self.model.classes["PeptideCoverageFrame"].init(self.treeIds[item])
+            hit = self.treeIds[item]
+            self.model.classes["NotebookFeature"].plotSelectedFeatures([hit.feature], hit)
+            self.model.classes["PeptideCoverageFrame"].init(hit)
+            if "OxoniumIonPlot" in self.model.classes:
+                self.model.classes["OxoniumIonPlot"].init(identifications=[hit])
+        else:
+            features = set()
+            hits = []
+            for item in selection:
+                hit = self.treeIds[item]
+                hits.append(hit)
+                features.add(hit.feature)
+            features = list(features)
+            self.model.classes["NotebookFeature"].plotSelectedFeatures(features, None)
+            self.model.classes["PeptideCoverageFrame"].init(None)
+            if "OxoniumIonPlot" in self.model.classes:
+                self.model.classes["OxoniumIonPlot"].init(identifications=hits)
+            
 
     def deleteIdentification(self, event):
         selection = self.tree.selection()

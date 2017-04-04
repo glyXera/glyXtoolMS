@@ -6,9 +6,8 @@ from glyxtoolms.gui import Appearance
 
 class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="m/z",
+    def __init__(self, master, model):
+        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master
@@ -20,7 +19,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.referenceMass = 0
         
         self.annotationItems = {}
-        self.annotations = []
+        self.annotations = {}
         self.currentAnnotation = None
         self.peaksByItem = {}
         
@@ -33,11 +32,9 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         c.grid(row=5, column=0, sticky="NS")
 
 
-        self.grid_rowconfigure(0, weight=1)
+        self.grid_rowconfigure(0, weight=0)
+        self.grid_rowconfigure(1, weight=1)
         self.grid_columnconfigure(0, weight=1)
-
-        # register class
-        self.model.classes["ConsensusSpectrumFrame3"] = self
         
         # register additional button bindings
         self.canvas.bind("<Button-2>", self.button2, "+")

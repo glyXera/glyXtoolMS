@@ -6,27 +6,12 @@ from glyxtoolms.gui import Appearance
 
 class ChromatogramView(FramePlot.FramePlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="rt [s]", yTitle="Intensity [counts]")
+    def __init__(self, master, model):
+        FramePlot.FramePlot.__init__(self, master, model, xTitle="rt [s]", yTitle="Intensity [counts]")
 
         self.master = master
         self.NrXScales = 3.0
         self.rt = None
-
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # link function
-        self.model.classes["ChromatogramView"] = self
 
         # Events
         #self.canvas.bind("<Left>", self.sayHi)

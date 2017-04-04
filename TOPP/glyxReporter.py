@@ -1,3 +1,8 @@
+import sys
+import glyxtoolms
+import xlwt
+import re
+
 def handle_args(argv=None):
     import argparse
     usage = "\nReporter for analysis file"
@@ -22,12 +27,45 @@ def parseComposition(comp):
         string += names[unit] + str(amount)
     return string
       
-def generateGlycoylationSiteKey(peptide):
+def generateGlycosylationSiteKey(peptide):
     parts = []
     for nr,amino in sorted(peptide.glycosylationSites):
         parts.append(amino + str(nr+1)) # correct counting of amino acids
     return "/".join(parts)
-    
+
+
+def generateFragmentString(names):
+    pep = []
+    y = []
+    b = []
+    yb = []
+    other = []
+
+    for name in names:
+        if "peptide" in name:
+            pep.append(name)
+        elif re.match("^y\d+b\d+",name):
+            yb.append(name)
+        elif re.match("^b\d+", name):
+            b.append(name)
+        elif re.match("^y\d+", name):
+            y.append(name)
+        else:
+            other.append(name)
+    collect = []
+    if len(pep) > 0:
+        collect.append(",".join(sorted(pep)))
+    if len(y) > 0:
+        collect.append(",".join(sorted(y)))
+    if len(b) > 0:
+        collect.append(",".join(sorted(b)))
+    if len(yb) > 0:
+        collect.append(",".join(sorted(yb)))
+    if len(other) > 0:
+        collect.append(",".join(sorted(other)))
+    string = "|".join(collect)
+    return string
+
 def main(options): 
 
     # parse analysis file
@@ -45,50 +83,45 @@ def main(options):
         spectra[spectrum.getNativeId()] = spectrum
     
     # get hits
-    data = {}
-    comps = {}
-    glycoSites = {}
-    peptideMasses = {}
+    identificationData = []
     for h in fin.glycoModHits:
-        if not h.status in data:
-            data[h.status] = {}
-        #if h.status == "Rejected":
-        #    continue
-        #if h.status == "Deleted":
-        #    continue       
         feature = features[h.featureID]
-        #if feature.status == "Rejected":
-        #    continue
-        #if feature.status == "Deleted":
-        #    continue
+
         peptide = h.peptide
         glycan = h.glycan
-        charge = feature.getCharge()
-        rt = feature.getRT()
+        
+        # convert glycan to check  consistency of glycancomposition and mass
+        g = glyxtoolms.lib.Glycan(glycan.composition)
+
         # calculate theoretical glycopeptide mass
+        charge = feature.getCharge()
         mass = (peptide.mass+
-                glycan.mass+
+                g.mass+
                 glyxtoolms.masses.MASS["H+"]*charge)/charge
 
-        comp = glycan.composition
-        comp = glycan.composition
-        comps[comp] = glycan.mass
-        seq = peptide.toString()
-        peptideMasses[seq] = peptide.mass+glyxtoolms.masses.MASS["H+"]
+        error = str(round(h.error,4))
+        
+        
+        if not error.startswith("-"):
+            error = "+"+error
         
         # generate glycosite
-        glycoSiteKey = generateGlycoylationSiteKey(peptide)
-        glycoSites[seq] = (peptide.proteinID, glycoSiteKey)
+        glycoSiteKey = generateGlycosylationSiteKey(peptide)
         
-        if not seq in data[h.status]:
-            data[h.status][seq] = {}
-        if not comp in data[h.status][seq]:
-            data[h.status][seq][comp] = set()
-        data[h.status][seq][comp].add("{}({})[{}]".format(str(round(mass,1)),str(charge),str(round(rt/60.0,1))))
-        
-
-    # write output
-    compsHeader = sorted(list(comps))
+        dataHit = {}
+        dataHit["Peptide"] = peptide.toString()
+        dataHit["Glycan"] = g.toString()
+        dataHit["m peptide"] = str(round(peptide.mass,4))
+        dataHit["m glycan"] = str(round(g.mass,4))
+        dataHit["RT"] = str(round(feature.getRT()/60.0,1))
+        dataHit["m/z"] = str(round(mass,4))
+        dataHit["Charge"] = str(charge)
+        dataHit["ProtID"] = peptide.proteinID
+        dataHit["Sites"] = glycoSiteKey
+        dataHit["Status"] = h.status
+        dataHit["Intensity"] = str(feature.intensity)
+        dataHit["Fragments"] = generateFragmentString(h.fragments.keys())
+        identificationData.append(dataHit)
 
     wb = xlwt.Workbook()
     # -------------------------- Spectra -----------------------------#
@@ -131,59 +164,49 @@ def main(options):
     
     row = 0
     ws2.write(row, 0, "Feature Nr")
-    ws2.write(row, 1, "RT [min]")
-    ws2.write(row, 2, "Mass [Th]")
-    ws2.write(row, 3, "Charge")
-    ws2.write(row, 4, "LogScore")
+    ws2.write(row, 1, "RT apx [min]")
+    ws2.write(row, 2, "RT min [min]")
+    ws2.write(row, 3, "RT max [min]")
+    ws2.write(row, 4, "m/z")
+    ws2.write(row, 5, "Charge")
+    ws2.write(row, 6, "Intensity")
+    ws2.write(row, 7, "best LogScore")
+    ws2.write(row, 8, "Nr. Identifications")
+    ws2.write(row, 9, "Status")
     
     featNr = 0
     for featureID in features:
         feature = features[featureID]
         featNr += 1
-        # get spectra
-        for specID in feature.getSpectraIds():
-            row += 1
-            spectrum = spectra[specID]
-            ws2.write(row, 0, featNr)
-            ws2.write(row, 1, round(spectrum.getRT()/60.0, 2))
-            ws2.write(row, 2, round(feature.getMZ(), 4))
-            ws2.write(row, 3, int(feature.getCharge()))
-            ws2.write(row, 4, round(spectrum.getLogScore(), 3))
+        row += 1
+        ws2.write(row, 0, featNr)
+        ws2.write(row, 1, round(feature.getRT()/60.0, 2))
+        ws2.write(row, 2, round(feature.minRT/60.0, 2))
+        ws2.write(row, 3, round(feature.maxRT/60.0, 2))
+        ws2.write(row, 4, round(feature.getMZ(), 4))
+        ws2.write(row, 5, int(feature.getCharge()))
+        ws2.write(row, 6, str(feature.intensity))
+        scores = [10.0]
+        for s in feature.spectra:
+            scores.append(s.logScore)
+        ws2.write(row, 7, min(scores))
+        ws2.write(row, 8, len(feature.hits))
+        ws2.write(row, 9, feature.status)
+
     # ---------------------- Identifications --------------------------#
-    
     ws3 = wb.add_sheet("Identifications")
-    row = 0
-    for status in data:
-        # write header
-        ws3.write(row, 0, status)
-        for col,comp in enumerate(["Protein", "GlycoSite", "Peptide", "Peptidemass"]+compsHeader):
-            ws3.write(row+1, col, comp)
-        
-        for col,comp in enumerate(compsHeader):
-            ws3.write(row, col+4, round(comps[comp], 1))
-        
-        row +=1
-        for seq in data[status]:
-            row += 1
-            # write sequence
-            ws3.write(row, 0, glycoSites[seq][0])
-            ws3.write(row, 1, glycoSites[seq][1])
-            ws3.write(row, 2, seq)
-            ws3.write(row, 3, round(peptideMasses[seq], 2))
-            col = 3
-            for comp in compsHeader:
-                col += 1
-                print 
-                if comp in data[status][seq]:
-                    ws3.write(row, col, ";".join(data[status][seq][comp]))
-        row += 3
+
+    # header
+    header = ["Peptide","Glycan","m peptide","m glycan","RT","m/z","Charge","ProtID","Sites","Status", "Intensity", "Fragments"]
+    for col,name in enumerate(header):
+        ws3.write(0, col, name)
+    row = 1
+    for hit in identificationData:
+        for col,name in enumerate(header):
+            ws3.write(row, col, hit[name])
+        row += 1
+    # Save excel sheet
     wb.save(options.outfile)
-
-
-import sys
-import glyxtoolms
-import xlwt
-import re
 
 if __name__ == "__main__":
     options = handle_args()

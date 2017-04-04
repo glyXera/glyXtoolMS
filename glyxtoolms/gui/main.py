@@ -1,43 +1,46 @@
 """
 Viewer for analysis file
-a) MS/MS spectra, annotation
-b) scored spectra
-c) scored features
-d) Histogram
-
 GUI:
 |---------------------------------------------------|
 |         Menubar                                   |
 |---------------------------------------------------|
-|   Project   |  tab structure, context dependend   |
-|   control   |                                     |
-|             |                                     |
-|-------------|                                     |
-| ProjectView |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
-|             |                                     |
+| Feature list | 2D View  | Chroma    |  Isotope    |
+|                         | togram    |  pattern    |
+|                         |           |             |
+|                         |           |             |
+|-------------------------|-------------------------|
+| Identifications|Spectra |  Spectrumview           |
+|                         |                         |
+|                         |   Consensusspectrum     |
+|                         |   or                    |
+|                         |   single spectrum       |
+|                         |   depending on tab      |
 |---------------------------------------------------|
 """
 
 import Tkinter
 import ttk
 import tkFileDialog
+import pyperclip
 
+from glyxtoolms.gui import Appearance
 from glyxtoolms.gui import DataModel
 from glyxtoolms.gui import ProjectFrame
-from glyxtoolms.gui import NotebookScoring
-from glyxtoolms.gui import NotebookFeature
+from glyxtoolms.gui import NotebookScoring2
+from glyxtoolms.gui import FeaturesFrame
 from glyxtoolms.gui import NotebookIdentification
 from glyxtoolms.gui import ExtensionScoring
 from glyxtoolms.gui import ExtensionFeature
 from glyxtoolms.gui import HistogramView
 from glyxtoolms.gui import ExtensionIdentification
 from glyxtoolms.gui import FilterPanel
+from glyxtoolms.gui import ConsensusSpectrumFrame
+from glyxtoolms.gui import FeaturePrecursorView
+from glyxtoolms.gui import FeatureChromatogramView
+from glyxtoolms.gui import TwoDView
+from glyxtoolms.gui import SpectrumView2
+from glyxtoolms.gui import PeptideCoverageFrame
+from glyxtoolms.gui import OxoniumIonPlot
 
 class App(ttk.Frame):
 
@@ -50,9 +53,10 @@ class App(ttk.Frame):
         self.master.config(menu=self.menubar)
         self.master.config(bg="#d9d9d9")
         self.model = DataModel.DataModel()
+        
 
         self.model.root = master
-
+        
         filemenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         #filemenu.add_command(label="Set workspace", command=self.setWorkspace)
         filemenu.add_command(label="Options", command=self.setOptions)
@@ -71,83 +75,125 @@ class App(ttk.Frame):
 
         statisticsMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         statisticsMenu.add_command(label="Scorehistogram", command=self.showHistogram)
+        statisticsMenu.add_command(label="Oxoniumion Plot", command=self.showOxoniumPlot)
         self.menubar.add_cascade(label="Statistics", menu=statisticsMenu)
 
         filterMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         filterMenu.add_command(label="Set Filter Options", command=self.showFilterOptions)
         self.menubar.add_cascade(label="Filter", menu=filterMenu) # Index 4 in menubar
-        
-        #toolMenu = Tkinter.Menu(menubar, tearoff=0, bg="#d9d9d9")
-        #menubar.add_cascade(label="Tool", menu=toolMenu)
-        
-        panes = Tkinter.PanedWindow(master)
+
+        # Divide left and right
+        panes = Tkinter.PanedWindow(master, orient="horizontal")
         panes.config(sashwidth=10)
         panes.config(opaqueresize=False)
         panes.config(sashrelief="raised")
-
         panes.pack(fill="both", expand="yes")
+        
+        left = Tkinter.PanedWindow(panes, orient="vertical")
+        left.pack(fill="both", expand="yes")
+        left.config(sashwidth=10)
+        left.config(opaqueresize=False)
+        left.config(sashrelief="raised")
 
-        left = Tkinter.Frame(panes)
-        left.pack()
-
-        right = Tkinter.Frame(panes)
-        right.pack()
+        right = Tkinter.PanedWindow(panes, orient="vertical")
+        right.pack(fill="both", expand="yes")
+        right.config(sashwidth=10)
+        right.config(opaqueresize=False)
+        right.config(sashrelief="raised")
 
         panes.add(left)
         panes.add(right)
 
-        frameProject = ttk.Labelframe(left, text="Projects")
-        projectFrame = ProjectFrame.ProjectFrame(frameProject, self.model)
-        projectFrame.pack(fill="both", expand="yes")
+        leftTop = Tkinter.Frame(left,width=100, height=100)
+        leftTop.pack()
+        leftBottom = Tkinter.Frame(left,width=100, height=100)
+        leftBottom.pack()
         
-        frameProject.grid(row=0, column=0, sticky="NWES")
-
-
-        frameNotebook = ttk.Labelframe(left, text="Analysis")
-        frameNotebook.grid(row=1, column=0, sticky=("NWES"))
-        frameNotebook.columnconfigure(0, weight=1)
-        frameNotebook.rowconfigure(0, weight=1)
-
-
-        self.notebook = ttk.Notebook(frameNotebook)
-
-        n1 = NotebookIdentification.NotebookIdentification(self.notebook, self.model)
-        n2 = NotebookFeature.NotebookFeature(self.notebook, self.model)
-        n3 = NotebookScoring.NotebookScoring(self.notebook, self.model)
+        left.add(leftTop)
+        left.add(leftBottom)
         
-        
-        self.notebook.add(n1, text='1. Identification')
-        self.notebook.add(n2, text='2. Features')
-        self.notebook.add(n3, text='3. Scoring')
+        # ---- Left side -----
+        frameProject = ProjectFrame.ProjectFrame(leftTop, self.model)
+        frameProject.pack(fill="both", expand="yes")
 
-        self.notebook.grid(row=0, column=0, sticky="NWES")
-        self.notebook.columnconfigure(0, weight=1)
+        notebookLeft = ttk.Notebook(leftBottom)
+        notebookLeft.pack(fill="both", expand="yes")
+        
+        notebookLeft_n1 = Tkinter.PanedWindow(notebookLeft, orient="vertical")
+        notebookLeft_n1.config(sashwidth=10)
+        notebookLeft_n1.config(opaqueresize=False)
+        notebookLeft_n1.config(sashrelief="raised")
+        
+        frameFeature = FeaturesFrame.NotebookFeature(notebookLeft_n1, self.model)
+        frameFeature.pack(fill="both", expand="yes")
+        
+        frameChrom = ttk.Frame(notebookLeft_n1)
+        frameChrom.pack(fill="both", expand="yes")
+        frameChrom.columnconfigure(0,weight=1)
+        frameChrom.columnconfigure(1,weight=1)
+        frameChrom.rowconfigure(0,weight=1)
+        
+        notebookLeft_n1.add(frameFeature)
+        notebookLeft_n1.add(frameChrom)
+        
+        notebookLeft_n2 = TwoDView.TwoDView(notebookLeft, self.model)
+        
+        notebookLeft.add(notebookLeft_n1, text='FeatureList')
+        notebookLeft.add(notebookLeft_n2, text='2DView')
+        
+        chromFrame = ttk.Labelframe(frameChrom, text="Precursor Chromatogram")
+        chromFrame.grid(row=0, column=0, sticky="NWES")
+        chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, self.model)
+        chromView.grid(row=0, column=0, sticky="NWES")
+        chromFrame.columnconfigure(0, weight=1)
+        chromFrame.rowconfigure(0, weight=1)
 
-        self.notebook.bind("<<NotebookTabChanged>>", self.changedNotebook)
+        msFrame = ttk.Labelframe(frameChrom, text="Precursorspectrum")
+        msFrame.grid(row=0, column=1, sticky="NWES")
+        msView = FeaturePrecursorView.PrecursorView(msFrame, self.model)
+        msView.grid(row=0, column=0, sticky="NWES")
+        msFrame.columnconfigure(0, weight=1)
+        msFrame.rowconfigure(0, weight=1)
+        
+        # ---- Right side -----
+        notebook = ttk.Notebook(right)
+        notebook.pack(fill="both", expand="yes")
+        
+        n1 = Tkinter.PanedWindow(notebook, orient="vertical")
+        n1.config(sashwidth=10)
+        n1.config(opaqueresize=False)
+        n1.config(sashrelief="raised")
+        
+        n1_top = NotebookIdentification.NotebookIdentification(n1, self.model)
+        n1_top.pack()
+        n1_middle = PeptideCoverageFrame.PeptideCoverageFrame(n1, self.model)
+        n1_middle.pack()
+        n1_bottom = ConsensusSpectrumFrame.ConsensusSpectrumFrame(n1, self.model)
+        n1_bottom.pack()
+        
+        n1.add(n1_top)
+        n1.add(n1_middle)
+        n1.add(n1_bottom)
+        
+        n2 = Tkinter.PanedWindow(notebook, orient="vertical")
+        n2.config(sashwidth=10)
+        n2.config(opaqueresize=False)
+        n2.config(sashrelief="raised")
+        
+        n2_top = NotebookScoring2.NotebookScoring(n2, self.model)
+        n2_top.pack()
+        
+        n2_bottom = SpectrumView2.SpectrumView(n2, self.model)
+        n2_bottom.pack()
+        
+        n2.add(n2_top)
+        n2.add(n2_bottom)
+        
+        notebook.add(n1, text='Identifications')
+        notebook.add(n2, text='Spectra')
 
-
-
-        # Add extention frames
-        
-        self.e1 = ExtensionIdentification.ExtensionIdentification(right, self.model, '1. Identification')
-        self.e1.grid(row=0, column=0, sticky="NWES")
-        
-        self.e2 = ExtensionFeature.ExtensionFeature(right, self.model, '2. Features')
-        self.e2.grid(row=0, column=0, sticky="NWES")
-        
-        self.e3 = ExtensionScoring.ExtensionScoring(right, self.model, '3. Scoring')
-        self.e3.grid(row=0, column=0, sticky="NWES")
-        
-        
-        left.columnconfigure(0, weight=1)
-        left.rowconfigure(0, weight=0)
-        left.rowconfigure(1, weight=1)
-        right.columnconfigure(0, weight=1)
-        right.rowconfigure(0, weight=1)
-        
-        # register class in Datamodel
-        self.model.classes["main"] = self
-        
+        self.model.registerClass("main", self)
+               
     def setActiveFilterHint(self, hasActiveFilter):
         if hasActiveFilter == True:
             self.menubar.entryconfig(4, background="#e60000")
@@ -159,18 +205,13 @@ class App(ttk.Frame):
 
     def changedNotebook(self, event):
         idx = self.notebook.select()
-        # hide all extensions
-        self.e1.lower()
-        self.e2.lower()
-        self.e3.lower()
-        # show selected extension
         text = self.notebook.tab(idx, "text")
-        if "1" in text:
-            self.e1.lift()
-        elif "2" in text:
-            self.e2.lift()
-        elif "3" in text:
-            self.e3.lift()
+        if text == "Identifications":
+            self.spectrumFrame1.lift()
+            self.spectrumFrame2.lower()
+        else:
+            self.spectrumFrame1.lower()
+            self.spectrumFrame2.lift()
 
     def showHistogram(self):
         if self.model.currentAnalysis == None:
@@ -179,6 +220,12 @@ class App(ttk.Frame):
             return
         HistogramFrame(self.master, self.model)
         return
+        
+    def showOxoniumPlot(self):
+        if "OxoniumFrame" in self.model.toplevel:
+            self.model.toplevel["OxoniumFrame"].destroy()
+        frame = OxoniumFrame(self, self.model)
+        self.model.toplevel["OxoniumFrame"] = frame
         
     def showFilterOptions(self):
         FilterPanel.FilterPanel(self.master, self.model)
@@ -202,7 +249,7 @@ class App(ttk.Frame):
 def run():
     global app
     root = Tkinter.Tk()
-    root.title("glyXtool-MS Viewer")
+    root.title("glyXtool-MS Evaluator")
     app = App(root)
     root.mainloop()
     return app
@@ -211,39 +258,86 @@ class OptionsFrame(Tkinter.Toplevel):
 
     def __init__(self, master, model):
         Tkinter.Toplevel.__init__(self, master=master)
-        self.minsize(600, 300)
+        #self.minsize(600, 300)
         self.master = master
         self.title("Options")
-        self.config(bg="#d9d9d9")
+        #self.config(bg="#d9d9d9")
         self.model = model
         
-        self.columnconfigure(0, weight=0)
-        self.columnconfigure(1, weight=0)
-        self.columnconfigure(2, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=0)
+        self.rowconfigure(1, weight=0)
+        self.rowconfigure(2, weight=0)
+        self.rowconfigure(3, weight=0)
+        self.rowconfigure(4, weight=1)
         
-        buttonWorkspace = Tkinter.Button(self, text="Set workspace", command=self.setWorkspace)
+        self.columnconfigure(0, weight=1)
+        
+        frameWorkspace = ttk.Labelframe(self, text="Set Workspace")
+        frameWorkspace.grid(row=0, column=0, sticky="NWES")
+        frameWorkspace.columnconfigure(0, weight=0)
+        frameWorkspace.columnconfigure(1, weight=1)
+        buttonWorkspace = Tkinter.Button(frameWorkspace, text="Set workspace", command=self.setWorkspace)
         
         self.workspaceVar = Tkinter.StringVar()
         self.workspaceVar.set(self.model.workingdir)
-        entryWorkspace = Tkinter.Entry(self, textvariable=self.workspaceVar)
+        entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
         
         buttonWorkspace.grid(row=0, column=0, sticky="NWES")
-        entryWorkspace.grid(row=0, column=1, columnspan=2, sticky="NWES")
+        entryWorkspace.grid(row=0, column=1, sticky="NWES")
+        
+        frameTimeAxis = ttk.Labelframe(self, text="Timeaxis")
+        frameTimeAxis.grid(row=1, column=0, sticky="NWES")
         
         self.timeAxisVar = Tkinter.StringVar()
         self.timeAxisVar.set(self.model.timescale)
         
-        rbutton1 = Tkinter.Radiobutton(self, text="Timeaxis in seconds", variable=self.timeAxisVar, value="seconds")
-        rbutton2 = Tkinter.Radiobutton(self, text="Timeaxis in minutes", variable=self.timeAxisVar, value="minutes")
+        timeAxisChoice1 = Appearance.Radiobutton(frameTimeAxis, text="In seconds", variable=self.timeAxisVar, value="seconds")
+        timeAxisChoice2 = Appearance.Radiobutton(frameTimeAxis, text="In minutes", variable=self.timeAxisVar, value="minutes")
         
-        rbutton1.grid(row=1, column=1, sticky="NWES")
-        rbutton2.grid(row=2, column=1, sticky="NWES")
+        timeAxisChoice1.grid(row=0, column=0, sticky="NWS")
+        timeAxisChoice2.grid(row=0, column=1, sticky="NWS")
         
-        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)        
-        saveButton = Tkinter.Button(self, text="Save options", command=self.save)
+        frameError = ttk.Labelframe(self, text="Mass Error")
+        frameError.grid(row=2, column=0, sticky="NWES")
+        
+        self.errorVar = Tkinter.StringVar()
+        self.errorVar.set(self.model.errorType)
+        
+        errorChoice1 = Appearance.Radiobutton(frameError, text="In Dalton", variable=self.errorVar, value="Da")
+        errorChoice2 = Appearance.Radiobutton(frameError, text="In ppm", variable=self.errorVar, value="ppm")
+        
+        errorChoice1.grid(row=0, column=0, sticky="NWS")
+        errorChoice2.grid(row=0, column=1, sticky="NWS")
+        
+        frameClipboard = ttk.Labelframe(self, text="Clipboard")
+        frameClipboard.grid(row=3, column=0, sticky="NWES")
+        
+        self.clipVar = Tkinter.StringVar()
+        self.clipVar.set(self.model.clipboard)
+        
+        boards = ('osx','qt','xclip','xsel','klipper','windows')
+        # test which boards are available here
+        avlBoards = []
+        for board in boards:
+            try:
+                pyperclip.set_clipboard(board)
+                avlBoards.append(board)
+            except:
+                pass
+        avlBoards = ['Tkinter'] + avlBoards
+        for i, board in enumerate(avlBoards):
+            clipboardChoice = Appearance.Radiobutton(frameClipboard, text=board, variable=self.clipVar, value=board)
+            clipboardChoice.grid(row=5+i/3, column=1+i%3, sticky="NWS")
+        
+        frameButtons = ttk.Frame(self)
+        frameButtons.grid(row=4, column=0, sticky="NWES")
+        
+        cancelButton = Tkinter.Button(frameButtons, text="Cancel", command=self.cancel)        
+        saveButton = Tkinter.Button(frameButtons, text="Save options", command=self.save)
 
-        cancelButton.grid(row=10, column=0, sticky="NWES")
-        saveButton.grid(row=10, column=1, sticky="NWES")
+        cancelButton.grid(row=0, column=0, sticky="NWES")
+        saveButton.grid(row=0, column=1, sticky="NWES")
 
         
     def setWorkspace(self):
@@ -262,7 +356,13 @@ class OptionsFrame(Tkinter.Toplevel):
     def save(self):
         self.model.workingdir = self.workspaceVar.get()
         self.model.timescale = self.timeAxisVar.get()
+        self.model.clipboard = self.clipVar.get()
+        self.model.errorType = self.errorVar.get()
         self.model.saveSettings()
+        # update plots
+        self.model.classes["NotebookIdentification"].updateTree()
+        self.model.classes["NotebookFeature"].updateFeatureTree()
+        
         self.destroy()
         
         
@@ -346,4 +446,33 @@ class HistogramFrame(Tkinter.Toplevel):
             print "cannot convert"
             self.v1.set(self.model.currentAnalysis.analysis.parameters.getScoreThreshold())
 
+class OxoniumFrame(Tkinter.Toplevel):
 
+    def __init__(self, master, model):
+        Tkinter.Toplevel.__init__(self, master=master)
+        self.master = master
+        self.title("Oxoniumion Plot")
+        self.config(bg="#d9d9d9")
+        self.model = model
+        self.view = OxoniumIonPlot.OxoniumIonPlot(self, model)
+        self.view.grid(row=0, column=0, sticky="NWSE")
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=1)
+        self.focus_set()
+        self.transient(master)
+        self.lift()
+        self.wm_deiconify()
+        self.protocol("WM_DELETE_WINDOW", self.on_closing)
+        # get selected features
+        features = self.model.classes["NotebookFeature"].getSelectedFeatures()
+        self.view.init(features=features)
+            
+    def on_closing(self):
+        if "OxoniumIonPlot" in self.model.classes:
+            self.model.classes.pop("OxoniumIonPlot")
+        if "OxoniumFrame" in self.model.toplevel:
+            self.model.toplevel.pop("OxoniumFrame")
+        self.destroy()
+
+
+        

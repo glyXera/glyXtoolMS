@@ -9,8 +9,10 @@ from glyxtoolms.gui import Appearance
 class HistogramView(FramePlot.FramePlot, glyxtoolms.lib.Histogram):
 
     def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="Glyco Score", yTitle="Counts")
+        FramePlot.FramePlot.__init__(self, master, model, xTitle="Glyco Score", yTitle="Counts")
         glyxtoolms.lib.Histogram.__init__(self, 0.2)
+        self.canvas.config(height=height)
+        self.canvas.config(width=width)
 
         self.master = master
         self.logScore = 0.0

@@ -14,83 +14,38 @@ class NotebookScoring(ttk.Frame):
 
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        #self.aMenu.add_command(label="Accepted", 
-        #                       command=lambda x="Accepted": self.setStatus(x))
-        #self.aMenu.add_command(label="Rejected",
-        #                       command=lambda x="Rejected": self.setStatus(x))
-        #self.aMenu.add_command(label="Deleted",
-        #                       command=lambda x="Unknown": self.setStatus(x))
 
         # layout self
-        self.rowconfigure(0, weight=0) # frameSpectrum
-        self.rowconfigure(1, weight=1) # frameTree
         self.columnconfigure(0, weight=1)
-
-        frameSpectrum = ttk.Labelframe(self, text="Spectrum")
-        frameSpectrum.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
-        frameSpectrum.columnconfigure(0, weight=1)
-
-        frameTree = ttk.Labelframe(self, text="MS/MS Spectra")
-        frameTree.grid(row=1, column=0, sticky=("N", "W", "E", "S"))
-        frameTree.columnconfigure(0, weight=1)
-        frameTree.columnconfigure(1, weight=0)
-
-        l1 = ttk.Label(frameSpectrum, text="Spectrum-Id:")
-        l1.grid(row=0, column=0, sticky="NE")
-        self.v1 = Tkinter.StringVar()
-        self.c1 = ttk.Label(frameSpectrum, textvariable=self.v1)
-        self.c1.grid(row=0, column=1, sticky="NW")
-
-        l2 = ttk.Label(frameSpectrum, text="RT:")
-        l2.grid(row=1, column=0, sticky="NE")
-        self.v2 = Tkinter.StringVar()
-        self.c2 = ttk.Entry(frameSpectrum, textvariable=self.v2)
-        self.c2.grid(row=1, column=1, sticky="NW")
-
-        l3 = ttk.Label(frameSpectrum, text="Precursormass:")
-        l3.grid(row=2, column=0, sticky="NE")
-        self.v3 = Tkinter.StringVar()
-        self.c3 = ttk.Entry(frameSpectrum, textvariable=self.v3)
-        self.c3.grid(row=2, column=1, sticky="NW")
-
-        l4 = ttk.Label(frameSpectrum, text="Precursorcharge:")
-        l4.grid(row=3, column=0, sticky="NE")
-        self.v4 = Tkinter.StringVar()
-        self.c4 = ttk.Entry(frameSpectrum, textvariable=self.v4)
-        self.c4.grid(row=3, column=1, sticky="NW")
-
-        l5 = ttk.Label(frameSpectrum, text="Score:")
-        l5.grid(row=4, column=0, sticky="NE")
-        self.v5 = Tkinter.StringVar()
-        self.c5 = ttk.Entry(frameSpectrum, textvariable=self.v5)
-        self.c5.grid(row=4, column=1, sticky="NW")
-
-        l6 = ttk.Label(frameSpectrum, text="Is Glycopeptide:")
-        l6.grid(row=5, column=0, sticky="NE")
-        self.v6 = Tkinter.IntVar()
-        self.c6 = glyxtoolms.gui.Appearance.Checkbutton(frameSpectrum, variable=self.v6)
-
-        #self.c6 = Tkinter.Checkbutton(frameSpectrum, variable=self.v6)
-        self.c6.grid(row=5, column=1)
-
-        b1 = ttk.Button(frameSpectrum, text="save Changes", command=self.saveChanges)
-        b1.grid(row=4, rowspan=2, column=2)
+        self.columnconfigure(1, weight=0)
+        self.rowconfigure(0,weight=0)
+        self.rowconfigure(1,weight=1)
 
         # show treeview of mzML file MS/MS and MS
-        scrollbar = ttk.Scrollbar(frameTree)
-        self.tree = ttk.Treeview(frameTree, yscrollcommand=scrollbar.set)
+        scrollbar = ttk.Scrollbar(self)
+        self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
 
-        columns = ("RT", "Mass", "Charge", "Score", "Is Glyco", "Status")
-        self.tree["columns"] = columns
+        self.columns = ("RT", "Mass", "Charge", "Score", "Is Glyco", "Status")
+        self.columnsWidth =  {"RT":80, "Mass":80, "Charge":80, "Score":80, "Is Glyco":80, "Status":80}
+        self.tree["columns"] = self.columns
         self.tree.column("#0", width=100)
         self.tree.heading("#0", text="Spectrum Nr.", command=lambda col='#0': self.sortColumn(col))
-        for col in columns:
-            self.tree.column(col, width=80)
+        self.showColumns = {}
+        for name in self.columns:
+            self.showColumns[name] = Tkinter.BooleanVar()
+            self.showColumns[name].set(True)
+            self.showColumns[name].trace("w", self.columnVisibilityChanged)
+        
+        for col in self.columns:
+            self.tree.column(col, width=self.columnsWidth[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
 
-        self.tree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
-
-        scrollbar.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        button = Tkinter.Button(self,image=self.model.resources["filter"])
+        
+        button.grid(row=0, column=1)
+        self.tree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=1, column=1, sticky="NWES")
+        
         scrollbar.config(command=self.tree.yview)
 
         self.treeIds = {}
@@ -98,15 +53,7 @@ class NotebookScoring(ttk.Frame):
         # treeview style
         self.tree.tag_configure('oddUnknown', background='Moccasin')
         self.tree.tag_configure('evenUnknown', background='PeachPuff')
-        
-        #self.tree.tag_configure('oddDeleted', background='LightSalmon')
-        #self.tree.tag_configure('evenDeleted', background='Salmon')
-        
-        #self.tree.tag_configure('oddAccepted', background='PaleGreen')
-        #self.tree.tag_configure('evenAccepted', background='YellowGreen')
-        
-        #self.tree.tag_configure('oddRejected', background='LightBlue')
-        #self.tree.tag_configure('evenRejected', background='SkyBlue')
+    
         
         self.tree.tag_configure('oddGlycopeptide', background='PaleGreen')
         self.tree.tag_configure('evenGlycopeptide', background='YellowGreen')
@@ -133,9 +80,6 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
 
         self.model.registerClass("NotebookScoring", self)
-        
-        # layout frameTree
-        frameTree.rowconfigure(0, weight=1)
 
     def setStatus(self,status):
         # get currently active hit
@@ -170,8 +114,41 @@ class NotebookScoring(ttk.Frame):
             taglist = list(self.tree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, spectrum.status)
             self.tree.item(item, tags=taglist)
-        
+
+    def columnVisibilityChanged(self, *arg, **args):
+        header = []
+        for columnname in self.columns:
+            if self.showColumns[columnname].get() == True:
+                header.append(columnname)
+        self.tree["displaycolumns"] = tuple(header)
+        space = self.grid_bbox(column=0, row=0, col2=0, row2=0)[2]
+        width = space/(len(header)+1)
+        rest = space%(len(header)+1)
+        for column in ["#0"] + header:
+            self.tree.column(column, width=width+rest)
+            rest = 0
+
     def popup(self, event):
+        area = self.tree.identify_region(event.x, event.y)
+        self.aMenu.delete(0,"end")
+        if area == "nothing":
+            return
+        elif area == "heading" or area == "separator":
+            for name in self.columns:
+                self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
+        else:
+            self.aMenu.add_command(label="Set to Glycopeptide", 
+                                   command=lambda x="Glycopeptide": self.setStatus(x))
+            self.aMenu.add_command(label="Set to NonGlycopeptide",
+                                   command=lambda x="NonGlycopeptide": self.setStatus(x))
+            self.aMenu.add_command(label="Set to PoorGlycopeptide",
+                                   command=lambda x="PoorGlycopeptide": self.setStatus(x))
+            self.aMenu.add_command(label="Set to PoorNonGlycopeptide",
+                                   command=lambda x="PoorNonGlycopeptide": self.setStatus(x))
+            self.aMenu.add_command(label="Set to Unknown",
+                                   command=lambda x="Unknown": self.setStatus(x))
+            #self.aMenu.add_command(label="Copy to Clipboard",
+            #                       command=self.copyToClipboard)
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
@@ -238,8 +215,7 @@ class NotebookScoring(ttk.Frame):
             self.tree.item(k, tags=taglist)
 
 
-    def updateTree(self):
-
+    def updateTree(self, features):
         # clear tree
         self.tree.delete(*self.tree.get_children())
         self.treeIds = {}
@@ -261,6 +237,14 @@ class NotebookScoring(ttk.Frame):
 
         index = 0
         for spec, spectrum in analysis.data:
+            # check if 
+            contains = False
+            for feature in spectrum.features:
+                if feature in features:
+                    contains = True
+                    break
+            if contains == False:
+                continue
             if index%2 == 0:
                 taglist = ("even" + spectrum.status, "even")
             else:
@@ -294,104 +278,22 @@ class NotebookScoring(ttk.Frame):
 
     def clickedTree(self, event):
         selection = self.tree.selection()
-        if len(selection) != 1:
-            return
-        item = selection[0]
-        spec, spectrum = self.treeIds[item]
-
-        # set values of spectrum
-        self.v1.set(spectrum.nativeId)
-        self.v2.set(round(spectrum.rt, 1))
-        self.v3.set(round(spectrum.precursorMass, 4))
-        self.v4.set(spectrum.precursorCharge)
-        self.v5.set(round(spectrum.logScore, 2))
-        self.v6.set(spectrum.isGlycopeptide)
-
-        # make calculations
-        ms2, ms1 = self.model.currentProject.mzMLFile.experimentIds[spectrum.nativeId]
-        mz = spectrum.precursorMass
-        charge = spectrum.precursorCharge
-        p = ms2.getPrecursors()[0]
-        low = p.getIsolationWindowLowerOffset()
-        high = p.getIsolationWindowUpperOffset()
-        if low == 0:
-            low = 2
-        if high == 0:
-            high = 2
-        low = mz-low
-        high = mz+high
-
-        #rtLow = ms1.getRT()-100
-        #rtHigh = ms1.getRT()+100
-
-        # create chromatogram
-        c = glyxtoolms.gui.DataModel.Chromatogram()
-        c.plot = True
-        c.name = "test"
-        c.rangeLow = mz-0.1
-        if charge != 0:
-            c.rangeHigh = mz+3/abs(float(charge))+0.1
-        else:
-            c.rangeHigh = mz+1+0.1
-        c.rt = []
-        c.intensity = []
-        c.msLevel = 1
-        c.selected = True
-        if len(spectrum.chromatogramSpectra) == 0:
-            print "no chromatogram spectra", spectrum
-            return
-        rtLow = spectrum.chromatogramSpectra[0].getRT()
-        rtHigh = spectrum.chromatogramSpectra[-1].getRT()
-
-        for spec in spectrum.chromatogramSpectra:
-            c.rt.append(spec.getRT())
-            peaks = spec.get_peaks()
-            if hasattr(peaks, "shape"):
-                mzArray = peaks[:, 0]
-                intensArray = peaks[:, 1]
-            else:
-                mzArray, intensArray = peaks
-            # get intensity in range
-            choice = np.logical_and(np.greater(mzArray, c.rangeLow),
-                                    np.less(mzArray, c.rangeHigh))
-            c.intensity.append(np.extract(choice, intensArray).sum())
-
-        # set chromatogram within analysis
-        self.model.currentAnalysis.chromatograms[c.name] = c
-        self.model.currentAnalysis.selectedChromatogram = c
-
-        # init spectrum view
-        self.model.classes["SpectrumView"].initSpectrum(ms2)
-
-        # init precursor spectrum view
-        self.model.classes["PrecursorView"].initSpectrum(ms1, mz, charge, low, high)
-
-        # init chromatogram view
-        self.model.classes["ChromatogramView"].initChromatogram(rtLow, rtHigh, ms2.getRT())
-
-    def saveChanges(self):
-        selection = self.tree.selection()
         if len(selection) == 0:
             return
         item = selection[0]
         spec, spectrum = self.treeIds[item]
 
-        spectrum.rt = float(self.v2.get())
-        spectrum.precursorMass = float(self.v3.get())
-        spectrum.precursorCharge = int(self.v4.get())
-        spectrum.logScore = float(self.v5.get())
-        spectrum.isGlycopeptide = bool(self.v6.get())
+        # make calculations
+        ms2, ms1 = self.model.currentProject.mzMLFile.experimentIds[spectrum.nativeId]
 
-        # change values in table view
-        isGlycopeptide = "no"
-        if spectrum.isGlycopeptide:
-            isGlycopeptide = "yes"
-        self.tree.item(item,
-                       values=(round(spectrum.rt, 1),
-                               round(spectrum.precursorMass, 4),
-                               spectrum.precursorCharge,
-                               round(spectrum.logScore, 2),
-                               isGlycopeptide))
+        # init spectrum view
+        self.model.classes["SpectrumView"].initSpectrum(ms2)
+        spectra = []
+        for item in selection:
+            spec, spectrum = self.treeIds[item]
+            spectra.append(spectrum)
+        if "OxoniumIonPlot" in self.model.classes:
+            self.model.classes["OxoniumIonPlot"].init(spectra=spectra)
 
     def setSelectedSpectrum(self, index):
         for itemSpectra in self.treeIds:

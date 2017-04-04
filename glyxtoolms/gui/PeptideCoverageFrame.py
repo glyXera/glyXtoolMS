@@ -31,7 +31,7 @@ def parseYFragment(name, length):
 
 class PeptideCoverageFrame(ttk.Frame):
 
-    def __init__(self, master, model, height=300, width=800):
+    def __init__(self, master, model):
         ttk.Frame.__init__(self, master=master)
 
         self.master = master
@@ -42,27 +42,28 @@ class PeptideCoverageFrame(ttk.Frame):
         self.fragmentCoverage = {}
         self.indexList = set()
 
-        self.height = height
-        self.width = width
-
-        self.canvas = Tkinter.Canvas(self, width=self.width, height=self.height)
+        self.height = 0
+        self.width = 0
+        
+        self.rowconfigure(0, weight=0, minsize=38)
+        self.rowconfigure(1, weight=1)
+        self.columnconfigure(0, weight=1)
+        self.columnconfigure(1, weight=0)
+        
+        self.canvas = Tkinter.Canvas(self, height=100)
         self.canvas.config(bg="white")
-        self.canvas.grid(row=1, column=0, sticky="NSEW")
+        #self.canvas.grid(row=1, column=0, sticky="NSEW")
         #self.canvas.pack(expand=True, fill="both")
         
         self.canvas.config(highlightthickness=0)
-        
-        #self.canvas.grid(row=0, column=0, sticky="NSEW")
+        self.canvas.grid(row=1, column=0, sticky="NSEW")
 
-        self.grid_rowconfigure(0, weight=0)
-        self.grid_rowconfigure(1, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-        self.grid_columnconfigure(1, weight=0)
+
 
         # Bindings
         self.canvas.bind("<Button-1>", self.eventMouseClick)
         self.canvas.bind("<Configure>", self.on_resize)
-        self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
+        #self.canvas.bind("<Motion>", self.eventMouseMotion, "+")
         self.canvas.bind("<Control-s>", self.savePlot, "+")
 
         self.menuVar = Tkinter.StringVar(self)
@@ -73,14 +74,14 @@ class PeptideCoverageFrame(ttk.Frame):
         self.setMenuChoices([])
 
         # link function
-        self.model.classes["PeptideCoverageFrame"] = self
+        self.model.registerClass("PeptideCoverageFrame", self)
         
     def plotSingleFragment(self, *args):
         if self.hit == None:
             return
         name = self.menuVar.get()
         if name in self.hit.fragments:
-            self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([name])
+            self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([name],zoomIn=True)
         
     def setMenuChoices(self, choices):
         self.aMenu['menu'].delete(0, 'end')
@@ -92,9 +93,11 @@ class PeptideCoverageFrame(ttk.Frame):
         self.menuVar.set(choices[0])
         for choice in choices:
             self.aMenu['menu'].add_command(label=choice, command=Tkinter._setit(self.menuVar, choice))
+        # clear
+        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([],zoomIn=False)
     
-    def eventMouseMotion(self, event):
-        self.canvas.focus_set()
+    #def eventMouseMotion(self, event):
+    #    self.canvas.focus_set()
     
     def savePlot(self, event):
         if self.model.currentAnalysis == None:
@@ -112,16 +115,13 @@ class PeptideCoverageFrame(ttk.Frame):
     def on_resize(self,event):
         self.width = event.width
         self.height = event.height
-        self.canvas.config(width=self.width, height=self.height)
+        #self.canvas.config(width=self.width, height=self.height)
         self.paint_canvas()
-        self.colorIndex()
+        self.colorIndex(zoomIn=False)
 
     def init(self, hit):
-
         analysis = self.model.currentAnalysis
         if analysis == None:
-            return
-        if hit.featureID not in analysis.featureIds:
             return
         self.hit = hit
         self.indexList = set()
@@ -129,6 +129,9 @@ class PeptideCoverageFrame(ttk.Frame):
         
 
     def paint_canvas(self):
+        
+        self.canvas.delete(Tkinter.ALL)
+        self.setMenuChoices([])
         if self.hit == None:
             return
         peptideSequence = self.hit.peptide.sequence
@@ -177,8 +180,6 @@ class PeptideCoverageFrame(ttk.Frame):
         if peptideLength in bSeries:
             bSeries.remove(peptideLength)
 
-        self.canvas.delete(Tkinter.ALL)
-
         # collect positions of glycosylationsites
         glycosites = set()
         for pos, typ in self.hit.peptide.glycosylationSites:
@@ -192,10 +193,11 @@ class PeptideCoverageFrame(ttk.Frame):
 
         # find fitting text size
         s = 0
-        for s in range(0, 100):
+        for s in range(0, self.height-20):
             font = tkFont.Font(family="Courier", size=s)
             if (font.measure(" ")+4)*len(text) > self.width:
                 break
+            
 
         s -= 1
         font = tkFont.Font(family="Courier", size=s)
@@ -278,17 +280,16 @@ class PeptideCoverageFrame(ttk.Frame):
             if item in self.coverage:
                 key = self.coverage[item]
                 self.indexList.add(key)
-        self.colorIndex()
+        self.colorIndex(zoomIn=True)
 
-    def colorIndex(self):
+    def colorIndex(self,zoomIn=False):
         found = []
         for index in self.indexList:
             found += self.fragmentCoverage[index]
             for item in self.coverage:
                 if self.coverage[item] == index:
                     self.canvas.itemconfigure(item, fill="red")
-
-        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found)
+        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found,zoomIn=True)
 
 
 

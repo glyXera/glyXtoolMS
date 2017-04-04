@@ -8,27 +8,15 @@ from glyxtoolms.gui import Appearance
 
 class PrecursorView(FramePlot.FramePlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height, width=width, xTitle="m/z", yTitle="Intensity [counts]")
+    def __init__(self, master, model):
+        FramePlot.FramePlot.__init__(self, master, model, xTitle="m/z", yTitle="Intensity [counts]")
 
         self.master = master
         self.specArray = None
         self.NrXScales = 3.0
-        self.spectrum = None
+        self.spectrum = []
         self.feature = None
-        self.base = None
-
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
+        self.base = []
         
         # Events
         self.canvas.bind("<ButtonRelease-3>", self.popup)
@@ -43,9 +31,6 @@ class PrecursorView(FramePlot.FramePlot):
                                command=lambda x="rightborder": self.setBorder(x))
         self.aMenu.add_command(label="Cancel",
                                command=lambda x="Cancel": self.setBorder(x))
-
-        # link function
-        self.model.classes["FeaturePrecursorView"] = self
 
     def setBorder(self,status):
         self.aMenu.unpost()
@@ -107,6 +92,8 @@ class PrecursorView(FramePlot.FramePlot):
             pass
 
     def setMaxValues(self):
+        if len(self.spectrum) == 0:
+            return
         try:
             self.bMax = max(self.spectrum)
         except:
@@ -117,7 +104,7 @@ class PrecursorView(FramePlot.FramePlot):
             self.aMax = 1
 
     def paintObject(self):
-        if self.spectrum == None:
+        if len(self.spectrum) == 0:
             return
         if self.feature == None:
             return
@@ -228,7 +215,7 @@ class PrecursorView(FramePlot.FramePlot):
         self.viewXMin = minMZ
         self.viewXMax = maxMZ
         self.viewYMin = 0
-        if sum(spectrumYArray) > 0:
+        if len(self.spectrum) > 0 and sum(spectrumYArray) > 0:
             self.viewYMax = max(spectrumYArray)
         self.initCanvas(keepZoom=True)
 

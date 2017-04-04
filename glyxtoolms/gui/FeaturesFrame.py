@@ -16,62 +16,46 @@ class NotebookFeature(ttk.Frame):
         self.master = master
         self.model = model
         
-        self.rowconfigure(0, weight=1)
-        self.rowconfigure(1, weight=0)
         self.columnconfigure(0, weight=1)
-        
-        frameFeature = ttk.Labelframe(self, text="Features")
-        frameFeature.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
-        frameFeature.rowconfigure(0, weight=1)
-        frameFeature.columnconfigure(0, weight=1)
-        frameFeature.columnconfigure(1, weight=0)
+        self.columnconfigure(1, weight=0)
+        self.rowconfigure(0,weight=0)
+        self.rowconfigure(1,weight=1)
 
-        frameSpectrum = ttk.Labelframe(self, text="Featurespectra")
-        frameSpectrum.grid(row=1, column=0, sticky=("N", "W", "E", "S"))
-        frameSpectrum.columnconfigure(0, weight=1)
-        frameSpectrum.columnconfigure(1, weight=0)
-        
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        self.aMenu.add_command(label="Set to Accepted", 
-                               command=lambda x="Accepted": self.setStatus(x))
-        self.aMenu.add_command(label="Set to  Rejected",
-                               command=lambda x="Rejected": self.setStatus(x))
-        self.aMenu.add_command(label="Set to Unknown",
-                               command=lambda x="Unknown": self.setStatus(x))
-        self.aMenu.add_separator()
-        self.aMenu.add_command(label="Change Feature",
-                               command=self.changeFeature)
-        self.aMenu.add_command(label="Copy Feature",
-                               command=self.copyFeature)
-        self.aMenu.add_command(label="Add Identification",
-                               command=self.addIdentification)
-        self.aMenu.add_separator()
-        self.aMenu.add_command(label="Copy to Clipboard",
-                               command=self.copyToClipboard)
-                                                      
-                               
-                               
+
 
         # show treeview of mzML file MS/MS and MS
         # ------------------- Feature Tree ----------------------------#
 
-        scrollbar = Tkinter.Scrollbar(frameFeature)
-        self.featureTree = ttk.Treeview(frameFeature, yscrollcommand=scrollbar.set)
-
-        columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents")
-        self.featureTree["columns"] = columns
+        scrollbar = Tkinter.Scrollbar(self)
+        self.featureTree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
+        
+        self.columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents")
+        self.columnsWidth = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80}
+        self.columnNames = {"RT":"RT", "MZ":"MZ [Da]", "Charge":"Charge", "Best Score":"Best Score", "Nr Spectra":"Nr Spectra", "Status": "Status", "Nr. Idents":"Nr. Idents"}
+        self.showColumns = {}
+        for name in self.columns:
+            self.showColumns[name] = Tkinter.BooleanVar()
+            self.showColumns[name].set(True)
+            self.showColumns[name].trace("w", self.columnVisibilityChanged)
+        
+        self.featureTree["columns"] = self.columns
         self.featureTree.column("#0", width=60)
-        self.featureTree.heading("#0", text="Feature",
+        self.featureTree.heading("#0", text="Feature Nr",
                                  command=lambda col='#0': self.sortFeatureColumn(col))
-        for col in columns:
-            self.featureTree.column(col, width=80)
+        for col in self.columns:
+            self.featureTree.column(col, width=self.columnsWidth[col])
             self.featureTree.heading(col,
                                      text=col,
                                      command=lambda col=col: self.sortFeatureColumn(col))
 
-        self.featureTree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        self.setHeadingNames()
 
-        scrollbar.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        button = Tkinter.Button(self,image=self.model.resources["filter"])
+        button.grid(row=0, column=1)
+        self.featureTree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
+        scrollbar.grid(row=1, column=1, sticky=("N", "W", "E", "S"))
+        
         scrollbar.config(command=self.featureTree.yview)
 
         self.featureTreeIds = {}
@@ -95,36 +79,69 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.bind("u", lambda e: self.setStatus("Unknown"))
         self.featureTree.bind("r", lambda e: self.setStatus("Rejected"))
         self.featureTree.bind("z", self.zoomToFeature)
+        self.featureTree.bind("<Control-Key-a>", self.selectAllFeatures)
         self.featureTree.bind("<Button-3>", self.popup)
         # Bindings influencing FeatureChromatogramView
         self.featureTree.bind("<Left>", self.goLeft)
         self.featureTree.bind("<Right>", self.goRight)
+        
+        self.model.registerClass("NotebookFeature",self)
+        
+    def setHeadingNames(self):
+        
+        if self.model.timescale == "minutes":
+            self.columnNames["RT"] = "RT [min]"
+        else:
+            self.columnNames["RT"] = "RT [s]"
 
-        self.model.registerClass("NotebookFeature", self)
+        for col in self.columnNames:
+            self.featureTree.heading(col, text=self.columnNames.get(col, col))
 
-        # ------------------- Spectrum Tree ---------------------------#
-        self.spectrumTreeIds = {}
+    def columnVisibilityChanged(self, *arg, **args):
+        header = []
+        for columnname in self.columns:
+            if self.showColumns[columnname].get() == True:
+                header.append(columnname)
+        self.featureTree["displaycolumns"] = tuple(header)
+        space = self.grid_bbox(column=0, row=0, col2=0, row2=0)[2]
+        width = space/(len(header)+1)
+        rest = space%(len(header)+1)
+        for column in ["#0"] + header:
+            self.featureTree.column(column, width=width+rest)
+            rest = 0
 
-        scrollbar = Tkinter.Scrollbar(frameSpectrum)
-        self.spectrumTree = ttk.Treeview(frameSpectrum, yscrollcommand=scrollbar.set)
-        columns = ("RT", "Mass", "Charge", "Score", "Is Glyco")
-        self.spectrumTree["columns"] = columns
-        self.spectrumTree.column("#0", width=100)
-        self.spectrumTree.heading("#0",
-                                  text="Spectrum Nr.",
-                                  command=lambda col='#0': self.sortSpectrumColumn(col))
-        for col in columns:
-            self.spectrumTree.column(col, width=80)
-            self.spectrumTree.heading(col, text=col,
-                                      command=lambda col=col: self.sortSpectrumColumn(col))
-
-        self.spectrumTree.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
-        scrollbar.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
-
-        scrollbar.config(command=self.spectrumTree.yview)
-        self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree)
+    def selectAllFeatures(self, event):
+        items = self.featureTree.get_children()
+        if len(items) == 0:
+            return
+        self.featureTree.selection_set(items)
+        self.clickedFeatureTree(None)
     
     def popup(self, event):
+        area = self.featureTree.identify_region(event.x, event.y)
+        self.aMenu.delete(0,"end")
+        if area == "nothing":
+            return
+        elif area == "heading" or area == "separator":
+            for name in self.columns:
+                self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
+        else:
+            self.aMenu.add_command(label="Set to Accepted", 
+                                   command=lambda x="Accepted": self.setStatus(x))
+            self.aMenu.add_command(label="Set to  Rejected",
+                                   command=lambda x="Rejected": self.setStatus(x))
+            self.aMenu.add_command(label="Set to Unknown",
+                                   command=lambda x="Unknown": self.setStatus(x))
+            self.aMenu.add_separator()
+            self.aMenu.add_command(label="Change Feature",
+                                   command=self.changeFeature)
+            self.aMenu.add_command(label="Copy Feature",
+                                   command=self.copyFeature)
+            self.aMenu.add_command(label="Add Identification",
+                                   command=self.addIdentification)
+            self.aMenu.add_separator()
+            self.aMenu.add_command(label="Copy to Clipboard",
+                                   command=self.copyToClipboard)
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
@@ -135,6 +152,33 @@ class NotebookFeature(ttk.Frame):
                 self.aMenu.unpost()
         except:
             pass
+            
+    def copyToClipboard(self, *arg, **args):
+        # get active columns
+        header = ["Feature Nr"]
+        active = []
+        for columnname in self.columns:
+            isActive = self.showColumns[columnname].get()
+            active.append(isActive)
+            if isActive == True:
+                header.append(self.columnNames.get(columnname,columnname))
+        
+        # add header
+        text = "\t".join(header) + "\n"
+        for item in self.featureTree.selection():
+            content = self.featureTree.item(item)
+            line = []
+            line.append(content["text"])
+            for isActive,value in zip(active,content["values"]):
+                if isActive:
+                    line.append(str(value))
+            text += "\t".join(line) + "\n"
+        try:
+            self.model.saveToClipboard(text)
+            tkMessageBox.showinfo("Saved Table to Clipboard", "Table Data are saved to the Clipboard")
+        except:
+            tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
+            raise
             
     def goLeft(self, event):
         self.model.classes["FeatureChromatogramView"].goLeft(event)
@@ -180,31 +224,6 @@ class NotebookFeature(ttk.Frame):
             taglist = list(self.featureTree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, feature.status)
             self.featureTree.item(item, tags=taglist)
-            
-    def copyToClipboard(self, *arg, **args):
-        # add header
-        line = ["Feature Nr"]
-        line += self.featureTree["columns"]
-        text = "\t".join(line) + "\n"
-        for item in self.featureTree.selection():
-            line = []
-            line.append(content["text"]
-            line += content["values"]
-            #hit = self.treeIds[item]
-            #line = []
-            #line.append(content["text"])
-            #line.append(str(round(hit.feature.mz,4)))
-            #line.append(str(hit.feature.charge))
-            #line.append(str(round(hit.feature.rt,2)))
-            #line.append(str(round(hit.feature.intensity,2)))
-            #line += content["values"]
-            text += "\t".join(line) + "\n"
-        try:
-            self.model.saveToClipboard(text)
-            tkMessageBox.showinfo("Saved Table to Clipboard", "Table Data are saved to the Clipboard")
-        except:
-            tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
-            raise
     
     def changeFeature(self):
         selection = self.featureTree.selection()
@@ -243,7 +262,7 @@ class NotebookFeature(ttk.Frame):
         # collect specta within features
         analysis.collectFeatureSpectra()
         self.updateFeatureTree()
-        self.model.classes["NotebookScoring"].updateTree()
+        self.model.classes["NotebookScoring"].updateTree([feature])
         tkMessageBox.showinfo("Feature Copied", "The feature has been copied!")
         
         
@@ -317,7 +336,7 @@ class NotebookFeature(ttk.Frame):
         # clear tree
         self.featureTree.delete(*self.featureTree.get_children())
         self.featureTreeIds = {}
-
+        self.setHeadingNames()
         project = self.model.currentProject
 
         if project == None:
@@ -411,22 +430,32 @@ class NotebookFeature(ttk.Frame):
                                            len(feature.getSpectraIds()),
                                            feature.status,
                                            len(feature.hits)))
-        
+    
+    def getSelectedFeatures(self):
+        selection = self.featureTree.selection()
+        features = []
+        for item in selection:
+            feature = self.featureTreeIds[item]
+            features.append(feature)
+        return features
 
     def clickedFeatureTree(self, event):
-        selection = self.featureTree.selection()
-        if len(selection) == 0:
-            # clear views
-            return
-        # update identification list
+        # collect features and update IdentificationFrame
+        features = self.getSelectedFeatures()
+        self.model.classes["PeptideCoverageFrame"].init(None)
+        self.model.classes["NotebookIdentification"].updateTree(features)
+        self.model.classes["NotebookScoring"].updateTree(features)
+        if "OxoniumIonPlot" in self.model.classes:
+            self.model.classes["OxoniumIonPlot"].init(features=features)
+        self.plotSelectedFeatures(features)
         
-        if len(selection) > 1:
-            # clear views
+    def plotSelectedFeatures(self, features, hit=None):
+        self.model.classes["TwoDView"].init(features, keepZoom=True)
+        if len(features) != 1:
+            self.model.classes["FeatureChromatogramView"].init(None, None, 0, 0, 0)
+            self.model.classes["ConsensusSpectrumFrame"].init(None, hit)
             return
-        item = selection[0]
-        feature = self.featureTreeIds[item]
-        self.model.currentAnalysis.currentFeature = feature
-
+        feature = features[0]
         # calculate spectrum and chromatogram
         exp = self.model.currentProject.mzMLFile.exp
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
@@ -487,10 +516,9 @@ class NotebookFeature(ttk.Frame):
         c.msLevel = 1
         c.selected = True
 
-        self.model.classes["TwoDView"].init(keepZoom=True)
-        self.updateSpectrumTree()
+        
         self.model.classes["FeatureChromatogramView"].init(c, feature, minMZView, maxMZView, index)
-        self.model.classes["ConsensusSpectrumFrame2"].init(feature)
+        self.model.classes["ConsensusSpectrumFrame"].init(feature, hit)
 
     def sortSpectrumColumn(self, col):
         if self.model == None or self.model.currentAnalysis == None:
@@ -530,87 +558,7 @@ class NotebookFeature(ttk.Frame):
             else:
                 taglist.append("oddrowFeature")
             self.spectrumTree.item(k, tags=taglist)
-            
 
-    def updateSpectrumTree(self):
-        # clear tree
-        self.spectrumTree.delete(*self.spectrumTree.get_children())
-
-        analysis = self.model.currentAnalysis
-
-        if analysis == None:
-            return
-
-        feature = analysis.currentFeature
-        if feature == None:
-            return
-        # insert all ms2 spectra
-        minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
-        index = 0
-        self.spectrumTreeIds = {}
-        for spec, spectrum in analysis.data:
-
-            # check if spectrum is linked to feature
-            if not spectrum.nativeId in feature.getSpectraIds():
-                if spectrum.rt < minRT:
-                    continue
-                if spectrum.rt > maxRT:
-                    continue
-                if spectrum.precursorMass < minMZ:
-                    continue
-                if spectrum.precursorMass > maxMZ:
-                    continue
-
-            index += 1
-            if index%2 == 0:
-                tag = ("oddrowFeature", )
-            else:
-                tag = ("evenrowFeature", )
-
-            isGlycopeptide = "no"
-            if spectrum.isGlycopeptide:
-                isGlycopeptide = "yes"
-            name = spectrum.index
-            if self.model.timescale == "minutes":
-                rt = round(spectrum.rt/60.0, 2)
-            else:
-                rt = round(spectrum.rt, 1)
-            itemSpectra = self.spectrumTree.insert("", "end", text=name,
-                                                   values=(rt,
-                                                           round(spectrum.precursorMass, 4),
-                                                           spectrum.precursorCharge,
-                                                           round(spectrum.logScore, 2),
-                                                           isGlycopeptide),
-                                                   tags=tag)
-            self.spectrumTreeIds[itemSpectra] = (spec, spectrum)
-
-        # apply possible sorting
-        if not "NotebookFeatureSpectra" in analysis.sorting:
-            analysis.sorting["NotebookFeatureSpectra"] = ("#0", False)
-        sortingColumn, reverse = analysis.sorting["NotebookFeatureSpectra"]
-        analysis.sorting["NotebookFeatureSpectra"] = (sortingColumn, not reverse)
-        self.sortSpectrumColumn(sortingColumn)
-        
-        children = self.spectrumTree.get_children('')
-        if len(children) > 0:
-            item = children[0]
-            self.spectrumTree.selection_set(item)
-            self.spectrumTree.see(item)
-
-    def clickedSpectrumTree(self, event):
-        selection = self.spectrumTree.selection()
-        if len(selection) == 0:
-            return
-        item = selection[0]
-        spec, spectrum = self.spectrumTreeIds[item]
-        self.model.classes["FeatureSpectrumView"].initSpectrum(spec)
-        self.model.classes["NotebookScoring"].setSelectedSpectrum(spectrum.index)
-        selection = self.featureTree.selection()
-        if len(selection) != 1:
-            return
-        feature = self.featureTreeIds[selection[0]]
-        if feature == None:
-            return
 
     def setSelectedFeature(self, index):
         for item in self.featureTreeIds:
@@ -746,3 +694,4 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
 
     def cancel(self):
         self.destroy()
+ 

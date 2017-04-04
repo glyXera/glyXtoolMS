@@ -24,9 +24,8 @@ class Peak:
 
 class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="m/z",
+    def __init__(self, master, model):
+        AnnotatedPlot.AnnotatedPlot.__init__(self, master, model, xTitle="m/z",
                                      yTitle="Intensity [counts]")
 
         self.master = master
@@ -39,33 +38,7 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
         self.currentAnnotation = None
         self.referenceMass = 0
 
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # link function
-        self.model.classes["FeatureSpectrumView"] = self
-        
         self.canvas.bind("<Button-2>", self.button2, "+")
-        
-        #self.canvas.bind("<Button-1>", self.button1Pressed, "+")
-        #self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
-        #self.canvas.bind("<B1-Motion>", self.button3Motion, "+")
-
-        
-        #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
-        #self.canvas.bind("<ButtonRelease-3>", self.button3Released, "+")
-        #self.canvas.bind("<B3-Motion>", self.button3Motion, "+")
-        
-        #self.canvas.bind("<Delete>", self.deleteAnnotation, "+")
 
     def identifier(self):
         return "FeatureSpectrumView"

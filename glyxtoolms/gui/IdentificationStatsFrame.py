@@ -7,29 +7,13 @@ import glyxtoolms
 
 class IdentificationStatsFrame(FramePlot.FramePlot):
 
-    def __init__(self, master, model, height=300, width=800):
-        FramePlot.FramePlot.__init__(self, master, model, height=height,
-                                     width=width, xTitle="FeatureNr",
+    def __init__(self, master, model):
+        FramePlot.FramePlot.__init__(self, master, model, xTitle="FeatureNr",
                                      yTitle="Error")
 
         self.master = master
         self.logScore = 0.0
         self.NrXScales = 5.0
-
-        self.coord = Tkinter.StringVar()
-        l = ttk.Label(self, textvariable=self.coord)
-        l.grid(row=4, column=0, sticky="NS")
-
-        self.keepZoom = Tkinter.IntVar()
-        c = Appearance.Checkbutton(self, text="keep zoom fixed", variable=self.keepZoom)
-        c.grid(row=5, column=0, sticky="NS")
-
-
-        self.grid_rowconfigure(0, weight=1)
-        self.grid_columnconfigure(0, weight=1)
-
-        # link function
-        self.model.classes["IdentificationStatsFrame"] = self
 
     def setMaxValues(self):
         self.aMax = -1
@@ -101,5 +85,5 @@ class IdentificationStatsFrame(FramePlot.FramePlot):
         self.initCanvas(keepZoom=True)
 
     def identifier(self):
-        return "IdentificationErrorView"
+        return "IdentificationStatsFrame"
 

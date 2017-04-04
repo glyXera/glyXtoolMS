@@ -109,7 +109,7 @@ class ProjectFrame(ttk.Frame):
         projects = ttk.Frame(self)
         projects.grid(row=1, column=0, sticky="NWES")
 
-        yscrollbar = ttk.Scrollbar(projects, orient=Tkinter.VERTICAL)
+        yscrollbar = Tkinter.Scrollbar(projects, orient=Tkinter.VERTICAL)
 
         self.projectTree = ttk.Treeview(projects,
                                         yscrollcommand=yscrollbar.set)
@@ -130,8 +130,10 @@ class ProjectFrame(ttk.Frame):
         #self.rowconfigure(1, minsize=200, weight=1)
         projects.columnconfigure(0, weight=1)
         projects.columnconfigure(1, weight=0)
+        projects.rowconfigure(0, weight=1)
         
         self.columnconfigure(0, weight=1)
+        self.rowconfigure(1, weight=1)
 
         # Events
         self.projectTree.bind("<<TreeviewSelect>>", self.clickedTree)
@@ -304,8 +306,8 @@ class ProjectFrame(ttk.Frame):
             self.b4.config(state=Tkinter.NORMAL)
             self.b5.config(state=Tkinter.NORMAL)
             self.model.runFilters()
-            self.model.classes["NotebookScoring"].updateTree()
-            self.model.classes["NotebookIdentification"].updateTree()
+            self.model.classes["NotebookScoring"].updateTree([])
+            self.model.classes["NotebookIdentification"].updateTree([])
             self.model.classes["NotebookFeature"].updateFeatureTree()
             self.model.classes["TwoDView"].init()
 
@@ -313,8 +315,8 @@ class ProjectFrame(ttk.Frame):
             self.model.currentAnalysis = None
             self.b4.config(state=Tkinter.DISABLED)
             self.b5.config(state=Tkinter.DISABLED)
-            self.model.classes["NotebookScoring"].updateTree()
-            self.model.classes["NotebookIdentification"].updateTree()
+            self.model.classes["NotebookScoring"].updateTree([])
+            self.model.classes["NotebookIdentification"].updateTree([])
             self.model.classes["NotebookFeature"].updateFeatureTree()
 
     def loadedMzMLFile(self, error, project):
@@ -407,8 +409,8 @@ class ProjectFrame(ttk.Frame):
                 spectrum.chromatogramSpectra.append(spec)
 
         # update Notebooks
-        self.model.classes["NotebookScoring"].updateTree()
-        self.model.classes["NotebookIdentification"].updateTree()
+        self.model.classes["NotebookScoring"].updateTree([])
+        self.model.classes["NotebookIdentification"].updateTree([])
         self.model.classes["NotebookFeature"].updateFeatureTree()
 
     def getSelectedItem(self):

@@ -6,6 +6,7 @@ from pkg_resources import resource_stream
 import pickle
 import base64
 import Tkinter
+import pyperclip
 
 class FilterMass:
     
@@ -29,6 +30,9 @@ class DataModel(object):
 
         self.workingdir = ""
         self.timescale = "seconds"
+        # possible clipboards: ('Tkinter','osx','gtk','qt','xclip','xsel','klipper','windows')
+        self.clipboard = "Tkinter" # Switch indicating clipboard to use
+        self.errorType = "Da"
         self.debug = None
         self.root = None
         self.projects = {}
@@ -36,14 +40,20 @@ class DataModel(object):
         self.currentAnalysis = None
         self.filters = {"Identification":[], "Features":[], "Scoring":[]} # stores filter used to filter data
         self.classes = {} # Functionhandler - each class should register itself here
-        
+        #self.textsize = {"default":{"axis:12, }} #container for textsizes of various canvases
         self.resources = {}
+        self.toplevel = {} # store references to other toplevel windows
 
         # read settings
         self.readSettings()
         
         # read resources
         self.loadResources()
+        
+    def registerClass(self, name, theClass):
+        #if name in self.classes:
+        #    raise Exception("A class with the name "+name+" is already registered!")
+        self.classes[name] = theClass
         
     def runFilters(self): # check filters
         hasActiveFilter = False
@@ -111,6 +121,10 @@ class DataModel(object):
         self.workingdir = config["DEFAULT"]["workingdir"]
         if "timescale" in config["DEFAULT"]:
             self.timescale = config["DEFAULT"]["timescale"]
+        if "clipboard" in config["DEFAULT"]:
+            self.clipboard = config["DEFAULT"]["clipboard"]
+        if "errorType" in config["DEFAULT"]:
+            self.errorType = config["DEFAULT"]["errorType"]
             
 
     def saveSettings(self):
@@ -120,6 +134,9 @@ class DataModel(object):
         config["DEFAULT"] = {}
         config["DEFAULT"]["workingdir"] = self.workingdir
         config["DEFAULT"]["timescale"] = self.timescale
+        config["DEFAULT"]["clipboard"] = self.clipboard
+        config["DEFAULT"]["errorType"] = self.errorType
+
         with open(settingspath, 'w') as configfile:
             config.write(configfile)
             
@@ -129,12 +146,39 @@ class DataModel(object):
         # get pickled res
         pickle_obj = resource_stream('glyxtoolms', 'gui/resources/isotope_confidence.pickle')
         self.resources["isotopes"] = pickle.load(pickle_obj)
+        stream = resource_stream('glyxtoolms', 'gui/resources/drag.gif')
+        self.resources["drag"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/zoom_in.gif')
         self.resources["zoom_in"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/zoom_out.gif')
         self.resources["zoom_out"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/zoom_auto.gif')
+        self.resources["zoom_auto"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/ruler.gif')
         self.resources["ruler"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/eye.gif')
+        self.resources["eye"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/drop_down.gif')
+        self.resources["drop_down"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/filter.gif')
+        self.resources["filter"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/ox.gif')
+        self.resources["oxonium"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        stream = resource_stream('glyxtoolms', 'gui/resources/options.gif')
+        self.resources["options"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
+        
+    def saveToClipboard(self, text):
+        # ('Tkinter','osx','gtk','qt','xclip','xsel','klipper','windows')
+        if self.clipboard == "Tkinter":
+            print "saving to clipboard using Tkinter method"
+            self.root.clipboard_clear()
+            self.root.clipboard_append(text)
+        else:
+            print "saving to clipboard using xsel"
+            pyperclip.set_clipboard(self.clipboard)
+            pyperclip.copy(text)
+            
+
 
 class Chromatogram(object):
 
@@ -266,11 +310,16 @@ class ContainerAnalysisFile(object):
                 feature.removeSpectrum(spectrum)
         # delete features that fall within bounds
         
-        # remove possible identifications
-        
+        # update identifications
+        for hit in feature.hits:
+            mass = hit.peptide.mass+hit.glycan.mass+glyxtoolms.masses.MASS["H+"]
+            precursormass = (feature.mz*feature.charge-
+                              glyxtoolms.masses.MASS["H+"]*(feature.charge-1))
+            diff = mass- precursormass
+            hit.error = diff
+
         # update views
         #self.model.classes["TwoDView"].paintObject()
         self.model.classes["NotebookFeature"].updateFeature(feature)
-        self.model.classes["NotebookFeature"].updateSpectrumTree()
         self.model.classes["NotebookFeature"].clickedFeatureTree(None)
 
