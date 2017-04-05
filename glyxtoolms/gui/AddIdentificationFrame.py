@@ -1,5 +1,6 @@
 import ttk
 import Tkinter
+import tkMessageBox
 
 import glyxtoolms
 from glyxtoolms.gui import ConsensusSpectrumFrame3
@@ -258,8 +259,10 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         copypeptide = self.peptide.copy()
         for mod in glyxtoolms.masses.PROTEINMODIFICATION:
             content = glyxtoolms.masses.PROTEINMODIFICATION[mod]
+            if "targets" not in content:
+                continue
             # generate peptide variant with added modification
-            copypeptide.modifications = list(peptide.modifications)
+            copypeptide.modifications = list(self.peptide.modifications)
             copypeptide.addModification(mod)
             if copypeptide.testModificationValidity() == False:
                 continue
@@ -275,19 +278,24 @@ class AddIdentificationFrame(Tkinter.Toplevel):
                                            text=mod,
                                            values=(str(round(mass,4)), targetstring),
                                            tags=("predefined",))
-        for mod in self.ownModifications:
+        for modname in self.ownModifications:
             # generate peptide variant with added modification
-            copypeptide.modifications = list(peptide.modifications)
-            copypeptide.addModification(mod)
+            copypeptide.modifications = list(self.peptide.modifications)
+            # get all possible free positions
+            taken = set([mod.position for mod in copypeptide.modifications if mod.position != -1])
+            free = set(range(0,len(copypeptide.sequence))).difference(taken)
+            if len(free) == 0:
+                continue
+            copypeptide.addModification(modname, positions=free)
             if copypeptide.testModificationValidity() == False:
                 continue
             # parse composition again, and calulate mass
-            comp = glyxtoolms.masses.getModificationComposition(mod)
+            comp = glyxtoolms.masses.getModificationComposition(modname)
             mass = glyxtoolms.masses.calcMassFromElements(comp)
             targetstring = "?"
             item = self.treeModLeft.insert("",
                                            "end",
-                                           text=mod,
+                                           text=modname,
                                            values=(str(round(mass,4)), targetstring),
                                            tags=("own",))
 
@@ -298,13 +306,13 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.b2.config(state=Tkinter.DISABLED)
         if self.peptide == None:
             return
-        for mod in sorted(self.peptide.modifications, key=lambda x:x[1]):
+        for mod in sorted(self.peptide.modifications, key=lambda x:x.position):
             if mod.position == -1:
                 text = "?"
             else:
                 text = str(mod.position+1)
             item = self.treeModRight.insert("", "end", text=text,
-                                               values=(mod,))
+                                               values=(mod.name,))
     def addModification(self):
         if self.peptide == None:
             return
@@ -312,7 +320,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         if len(selectionLeft) == 0:
             return
         itemLeft = selectionLeft[0]
-        mod = self.treeModLeft.item(itemLeft, "text")
+        modname = self.treeModLeft.item(itemLeft, "text")
         
         selectionMiddle = self.treeModMiddle.selection()
         if len(selectionMiddle) == 0:
@@ -324,7 +332,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             pos = -1
         else:
             pos = int(pos) - 1
-        self.peptide.addModification(mod, position=pos)
+        self.peptide.addModification(modname, position=pos)
         self.peptideVar.set(self.peptide.toString())
         
     def removeModification(self):
@@ -359,24 +367,25 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         if len(selection) == 0:
             return
         item = selection[0]
-        mod = self.treeModLeft.item(item, "text")
+        modname = self.treeModLeft.item(item, "text")
         
-        if mod in self.ownModifications:
+        copypeptide = self.peptide.copy()
+        if modname in self.ownModifications:
+            taken = set([mod.position for mod in copypeptide.modifications if mod.position != -1])
+            free = set(range(0,len(copypeptide.sequence))).difference(taken)
+            copypeptide.addModification(modname, positions=free)
             self.b4.config(state=Tkinter.NORMAL)
         else:
+            copypeptide.addModification(modname)
             self.b4.config(state=Tkinter.DISABLED)
         
         # get available positions on the peptide
-        copypeptide = self.peptide.copy()
-        copypeptide.addModification(mod)
         positions = set()
         for modificationlist in glyxtoolms.fragmentation.getModificationVariants(copypeptide):
             for a,b in modificationlist:
-                if a.upper() == mod.upper():
+                if a.upper() == modname.upper():
                     positions.add(b)
-        
         taken = set([mod.position for mod in self.peptide.modifications if mod.position != -1])
-
         item = self.treeModMiddle.insert("", "end", text="?", values=("?",))
         for i in range(0, len(self.peptide.sequence)):
             if i in taken:
@@ -446,6 +455,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
     
     def addIdentification(self):
         if self.valid == False:
+            tkMessageBox.showerror("Invalid Identification", "Identification is invalid, please provide correct peptide and glycan input!",parent=self)
             return
             
         mass = self.peptide.mass+self.glycan.mass+glyxtoolms.masses.MASS["H+"]
@@ -457,6 +467,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         hit.error = diff
         hit.feature = self.feature
         hit.fragments = self.frameSpec.fragments
+        self.feature.hits.add(hit)
             
         self.model.currentAnalysis.analysis.glycoModHits.append(hit)
         
@@ -464,10 +475,10 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.model.runFilters()
         self.model.classes["NotebookFeature"].updateFeatureTree()
         self.model.classes["NotebookIdentification"].updateTree()
+        tkMessageBox.showinfo("Added new Identification", "Sucessfully added new Identification!")
 
     def cancel(self):
         self.destroy()
-
 
 class ElementBox(Tkinter.Frame):
     

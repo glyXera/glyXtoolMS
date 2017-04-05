@@ -889,7 +889,8 @@ class PeptideModification(object):
             elif amino in targets:
                 positions.add(pos)
         if len(positions) == 0:
-            raise Exception("No modification site found!")
+            self.position = -1
+            self.positions = set()
         elif len(positions) == 1:
             self.position = positions.pop()
             self.positions = set()
@@ -929,7 +930,9 @@ class XMLPeptide(object):
         new.start = self.start
         new.end = self.end
         new.mass = self.mass
-        new.modifications = self.modifications
+        new.modifications = []
+        for mod in self.modifications:
+            new.modifications.append(mod.copy())
         new.glycosylationSites = self.glycosylationSites
         return new
         
@@ -942,6 +945,7 @@ class XMLPeptide(object):
         if position == -1 and len(positions) == 0:
             mod.findModificationTargets()
         self.modifications.append(mod)
+        return mod
 
     def toString(self):
         s = self.sequence

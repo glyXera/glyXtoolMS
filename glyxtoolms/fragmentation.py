@@ -153,7 +153,7 @@ def generatePeptideFragments(peptide):
         if i < len(sequence)-1: # generate a,b and c ions
             key = str(i+1)
             data["b"+key] = (b.mass(), peptidestring, "b")
-            if min(glycosylationsSites) <= i:
+            if len(glycosylationsSites) > 0 and min(glycosylationsSites) <= i:
                 data["b"+key+"+HexNAc"] = (bHEXNAC.mass(), peptidestring+"+HexNac", "b")
             
             if ("R" in sequence or
@@ -190,7 +190,7 @@ def generatePeptideFragments(peptide):
 
         if i > 0:
             data["y"+key] = (y.mass(), peptidestring, "y")
-            if max(glycosylationsSites) >= i:
+            if len(glycosylationsSites) > 0 and max(glycosylationsSites) >= i:
                 data["y"+key+"+HexNAc"] = (yHEXNAC.mass(), peptidestring+"+HexNac", "y")
             if ("R" in sequence or
                 "K" in sequence or
