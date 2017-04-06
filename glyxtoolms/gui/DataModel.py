@@ -22,7 +22,7 @@ class FilterMass:
 
 class DataModel(object):
 
-    def __init__(self):
+    def __init__(self, root=None):
 
         #for s in range(10,100):
         #    font = tkFont.Font(family="Courier",size=s)
@@ -34,8 +34,10 @@ class DataModel(object):
         self.clipboard = "Tkinter" # Switch indicating clipboard to use
         self.errorType = "Da"
         self.debug = None
-        self.root = None
+        self.root = root
         self.projects = {}
+        self.options = {}
+        self.optionsConverter = {}
         self.currentProject = None
         self.currentAnalysis = None
         self.filters = {"Identification":[], "Features":[], "Scoring":[]} # stores filter used to filter data
@@ -43,7 +45,11 @@ class DataModel(object):
         #self.textsize = {"default":{"axis:12, }} #container for textsizes of various canvases
         self.resources = {}
         self.toplevel = {} # store references to other toplevel windows
-
+        self.configfile = None
+        
+        # register converter functions for settings
+        self.registerOptionsConverterFunctions()
+        
         # read settings
         self.readSettings()
         
@@ -54,6 +60,39 @@ class DataModel(object):
         #if name in self.classes:
         #    raise Exception("A class with the name "+name+" is already registered!")
         self.classes[name] = theClass
+
+    def registerOptionsConverterFunctions(self):
+        
+        def registerFunction(model, name, to_String, fromString):
+            if name in model.optionsConverter:
+                return
+            model.optionsConverter[name] = {}
+            model.optionsConverter[name]["toString"] = to_String
+            model.optionsConverter[name]["fromString"] = fromString
+            
+        def fontToString(font):
+            return font["family"] + ","+str(font["size"])
+            
+        def stringToFont(string):
+            family,size  = string.split(",")
+            return tkFont.Font(family=family,size=int(size))
+            
+        # register converters for options
+        registerFunction(self, "font", fontToString, stringToFont)
+        registerFunction(self, "show", str, bool)
+        registerFunction(self, "left", str, int)
+        registerFunction(self, "right", str, int)
+        registerFunction(self, "bottom", str, int)
+        registerFunction(self, "top", str, int)
+        registerFunction(self, "labelcolor", str, str)
+        registerFunction(self, "oxcolor", str, str)
+        registerFunction(self, "pepcolor", str, str)
+        registerFunction(self, "shownames", str, bool)
+        registerFunction(self, "showmasses", str, bool)
+        registerFunction(self, "showox", str, bool)
+        registerFunction(self, "showpep", str, bool)
+        registerFunction(self, "showpicto", str, bool)
+        
         
     def runFilters(self): # check filters
         hasActiveFilter = False
@@ -116,29 +155,91 @@ class DataModel(object):
         # Create settings if not exists
         if not os.path.exists(settingspath):
             self.saveSettings()
-        config = configparser.ConfigParser()
-        config.read(os.path.join(settingspath))
-        self.workingdir = config["DEFAULT"]["workingdir"]
-        if "timescale" in config["DEFAULT"]:
-            self.timescale = config["DEFAULT"]["timescale"]
-        if "clipboard" in config["DEFAULT"]:
-            self.clipboard = config["DEFAULT"]["clipboard"]
-        if "errorType" in config["DEFAULT"]:
-            self.errorType = config["DEFAULT"]["errorType"]
-            
+        self.configfile = configparser.ConfigParser()
+        self.configfile.read(os.path.join(settingspath))
+        
+        if "GENERAL" in self.configfile.sections():
+            section = self.configfile["GENERAL"]
+            self.workingdir = section["workingdir"]
+            if "timescale" in section:
+                self.timescale = section["timescale"]
+            if "clipboard" in section:
+                self.clipboard = section["clipboard"]
+            if "errorType" in section:
+                self.errorType = section["errorType"]
+                
+        if "PLOTOPTIONS" in self.configfile.sections():
+            section = self.configfile["PLOTOPTIONS"]
+            for key in section:
+                plotname, propty, typ = key.split(".")
+                if typ in self.optionsConverter:
+                    converter = self.optionsConverter[typ]["fromString"]
+                    value = section[key]
+                    self.options[plotname] = self.options.get(plotname, {})
+                    self.options[plotname][propty] = self.options[plotname].get(propty, {})
+                    self.options[plotname][propty][typ] = converter(value)
+                else:
+                    print "cannot load option", key
+   
+    def setLayout(self):
+        if self.configfile == None:
+            return
+        if "LAYOUT" not in self.configfile.sections():
+            return
+        if not "main" in self.classes:
+            return
+        geometry = self.configfile["LAYOUT"]["geometry"]
+        self.root.geometry(geometry)
+        coords = {}
+        for key in self.configfile["LAYOUT"]:
+            if key.startswith("sashposition."):
+                name = key.replace("sashposition.", "")
+                value = self.configfile["LAYOUT"][key]
+                x,y = value.split(",")
+                coords[name] = (int(x), int(y))
+        
+        self.classes["main"].setSashCoords(coords)
 
     def saveSettings(self):
+        if self.configfile == None:
+            self.configfile = configparser.ConfigParser()
+        self.configfile["GENERAL"] = {}
+        self.configfile["GENERAL"]["workingdir"] = self.workingdir
+        self.configfile["GENERAL"]["timescale"] = self.timescale
+        self.configfile["GENERAL"]["clipboard"] = self.clipboard
+        self.configfile["GENERAL"]["errorType"] = self.errorType
+
+        # write plotting setting 
+        self.configfile["PLOTOPTIONS"] = {}
+        for plotname in self.options:
+            for propty in self.options[plotname]:
+                for typ in self.options[plotname][propty]:
+                    value = self.options[plotname][propty][typ]
+                    optionname = plotname+"."+propty+"."+typ
+                    # convert value to string, based on the provided typ
+                    if typ in self.optionsConverter:
+                        converter = self.optionsConverter[typ]["toString"]
+                        self.configfile["PLOTOPTIONS"][optionname] = converter(value)
+                    else:
+                        print "cannot save option", optionname
+                        
+        # write sash coordinates
+        self.configfile["LAYOUT"] = {}
+        self.configfile["LAYOUT"]["geometry"] = self.root.geometry()
+        if "main" in self.classes:
+            coords = self.classes["main"].getSashCoords()
+            for key in coords:
+                x,y = coords[key]
+                self.configfile["LAYOUT"]["sashposition."+key] = str(x)+","+str(y)
+
         home = os.path.expanduser("~")
         settingspath = os.path.join(home, '.glyxtoolms.ini')
-        config = configparser.ConfigParser()
-        config["DEFAULT"] = {}
-        config["DEFAULT"]["workingdir"] = self.workingdir
-        config["DEFAULT"]["timescale"] = self.timescale
-        config["DEFAULT"]["clipboard"] = self.clipboard
-        config["DEFAULT"]["errorType"] = self.errorType
-
         with open(settingspath, 'w') as configfile:
-            config.write(configfile)
+            self.configfile.write(configfile)
+            
+        print "Settings saved to:", settingspath
+            
+
             
     def loadResources(self):
         

@@ -52,10 +52,12 @@ class App(ttk.Frame):
         self.menubar = Tkinter.Menu(self.master, bg="#d9d9d9")
         self.master.config(menu=self.menubar)
         self.master.config(bg="#d9d9d9")
-        self.model = DataModel.DataModel()
+        self.model = DataModel.DataModel(master)
         
-
-        self.model.root = master
+        self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
+        
+        # collect PanedWindows
+        self.paned = {}
         
         filemenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
         #filemenu.add_command(label="Set workspace", command=self.setWorkspace)
@@ -88,18 +90,21 @@ class App(ttk.Frame):
         panes.config(opaqueresize=False)
         panes.config(sashrelief="raised")
         panes.pack(fill="both", expand="yes")
+        self.paned["panes"] = panes
         
         left = Tkinter.PanedWindow(panes, orient="vertical")
         left.pack(fill="both", expand="yes")
         left.config(sashwidth=10)
         left.config(opaqueresize=False)
         left.config(sashrelief="raised")
+        self.paned["left"] = left
 
         right = Tkinter.PanedWindow(panes, orient="vertical")
         right.pack(fill="both", expand="yes")
-        right.config(sashwidth=10)
-        right.config(opaqueresize=False)
-        right.config(sashrelief="raised")
+        #right.config(sashwidth=10)
+        #right.config(opaqueresize=False)
+        #right.config(sashrelief="raised")
+        #self.paned["right"] = right
 
         panes.add(left)
         panes.add(right)
@@ -123,6 +128,7 @@ class App(ttk.Frame):
         notebookLeft_n1.config(sashwidth=10)
         notebookLeft_n1.config(opaqueresize=False)
         notebookLeft_n1.config(sashrelief="raised")
+        self.paned["notebookLeft_n1"] = notebookLeft_n1
         
         frameFeature = FeaturesFrame.NotebookFeature(notebookLeft_n1, self.model)
         frameFeature.pack(fill="both", expand="yes")
@@ -163,6 +169,7 @@ class App(ttk.Frame):
         n1.config(sashwidth=10)
         n1.config(opaqueresize=False)
         n1.config(sashrelief="raised")
+        self.paned["n1"] = n1
         
         n1_top = NotebookIdentification.NotebookIdentification(n1, self.model)
         n1_top.pack()
@@ -179,6 +186,7 @@ class App(ttk.Frame):
         n2.config(sashwidth=10)
         n2.config(opaqueresize=False)
         n2.config(sashrelief="raised")
+        self.paned["n2"] = n2
         
         n2_top = NotebookScoring2.NotebookScoring(n2, self.model)
         n2_top.pack()
@@ -193,7 +201,27 @@ class App(ttk.Frame):
         notebook.add(n2, text='Spectra')
 
         self.model.registerClass("main", self)
-               
+        
+        # set layout if stored in config
+        self.master.update_idletasks()
+        self.model.setLayout()
+        
+                
+    def getSashCoords(self):
+        coords = {}
+        for key in self.paned: 
+            for index in range(0, len(self.paned[key].panes())-1):
+                coord = self.paned[key].sash_coord(index)
+                coords[key+"."+str(index)] = coord
+        return coords
+        
+    def setSashCoords(self, coords):
+        for key in coords:
+            x,y = coords[key]
+            panename, index = key.split(".")
+            if panename in self.paned:
+                self.paned[panename].sash_place(int(index), x, y)
+
     def setActiveFilterHint(self, hasActiveFilter):
         if hasActiveFilter == True:
             self.menubar.entryconfig(4, background="#e60000")
@@ -245,6 +273,12 @@ class App(ttk.Frame):
         self.model.workingdir = path
         self.model.saveSettings()
         return
+        
+
+    def on_closing(self):
+        # save settings
+        self.model.saveSettings()
+        self.master.destroy()
 
 def run():
     global app

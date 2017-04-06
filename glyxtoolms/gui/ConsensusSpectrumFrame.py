@@ -30,20 +30,19 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.canvas.bind("<Button-3>", self.button3, "+")
         
         
-    def setDefaultOptions(self):
-        super(ConsensusSpectrumFrame, self).setDefaultOptions()
-        self.options["Annotations"] = {}
-        self.options["Annotations"]["font"] = tkFont.Font(family="Arial",size=10)
-        self.options["Annotations"]["labelColor"] = "blue violet"
-        self.options["Annotations"]["oxColor"] = "red"
-        self.options["Annotations"]["pepColor"] = "blue"
-        self.options["Annotations"]["showNames"] = True
-        self.options["Annotations"]["showMasses"] = True
-        self.options["Annotations"]["showOx"] = True
-        self.options["Annotations"]["showPep"] = True
-        
-        
-        
+    def getDefaultOptions(self):
+        options = super(ConsensusSpectrumFrame, self).getDefaultOptions()
+        options["annotations"] = {}
+        options["annotations"]["font"] = tkFont.Font(family="Arial",size=10)
+        options["annotations"]["labelcolor"] = "blue violet"
+        options["annotations"]["oxcolor"] = "red"
+        options["annotations"]["pepcolor"] = "blue"
+        options["annotations"]["shownames"] = True
+        options["annotations"]["showmasses"] = True
+        options["annotations"]["showox"] = True
+        options["annotations"]["showpep"] = True
+        return options
+    
     def createOptions(self, optionsFrame):
         def toggleVisbility(a,b,c,varname, var):
             self.options["Annotations"][varname] = var.get()
@@ -51,67 +50,67 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             
         super(ConsensusSpectrumFrame, self).createOptions(optionsFrame)
         frame = optionsFrame.addLabelFrame("Annotations")
-        optionsFrame.addFont(frame, "Annotations", "Size: ")
+        optionsFrame.addFont(frame, "annotations", "Size: ")
         
         nameVar = Tkinter.BooleanVar()
-        nameVar.set(self.options["Annotations"]["showNames"])
-        optionsFrame.addVariable("Annotations", "showNames", nameVar)
+        nameVar.set(self.options["annotations"]["shownames"])
+        optionsFrame.addVariable("annotations", "shownames", nameVar)
         c = Appearance.Checkbutton(frame, text="Show Names", variable=nameVar)
         c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
         frame.row += 1
         nameVar.trace("w", lambda a,b,c,d="showNames",e=nameVar: toggleVisbility(a,b,c,d,e))
         
         massVar = Tkinter.BooleanVar()
-        massVar.set(self.options["Annotations"]["showMasses"])
-        optionsFrame.addVariable("Annotations", "showMasses", massVar)
+        massVar.set(self.options["annotations"]["showmasses"])
+        optionsFrame.addVariable("annotations", "showmasses", massVar)
         c = Appearance.Checkbutton(frame, text="Show Mass Labels", variable=massVar)
         c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
         frame.row += 1
         massVar.trace("w", lambda a,b,c,d="showMasses",e=massVar: toggleVisbility(a,b,c,d,e))
         
         oxVar = Tkinter.BooleanVar()
-        oxVar.set(self.options["Annotations"]["showOx"])
-        optionsFrame.addVariable("Annotations", "showOx", oxVar)
+        oxVar.set(self.options["annotations"]["showox"])
+        optionsFrame.addVariable("annotations", "showox", oxVar)
         c = Appearance.Checkbutton(frame, text="Highlight Oxonium Ions and Losses", variable=oxVar)
         c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
         frame.row += 1
         oxVar.trace("w", lambda a,b,c,d="showOx",e=oxVar: toggleVisbility(a,b,c,d,e))
         
         pepVar = Tkinter.BooleanVar()
-        pepVar.set(self.options["Annotations"]["showPep"])
-        optionsFrame.addVariable("Annotations", "showPep", pepVar)
+        pepVar.set(self.options["annotations"]["showpep"])
+        optionsFrame.addVariable("annotations", "showpep", pepVar)
         c = Appearance.Checkbutton(frame, text="Highlight Peptide Fragments", variable=pepVar)
         c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
         frame.row += 1
-        pepVar.trace("w", lambda a,b,c,d="showPep",e=pepVar: toggleVisbility(a,b,c,d,e))
+        pepVar.trace("w", lambda a,b,c,d="showpep",e=pepVar: toggleVisbility(a,b,c,d,e))
         
         buttonColorLabel = Tkinter.Button(frame, text="Set Color")
         buttonColorLabel.grid(row=1, column=2,rowspan=2, sticky="NW")
-        buttonColorLabel.config(fg=self.options["Annotations"]["labelColor"])
-        buttonColorLabel.config(activeforeground=self.options["Annotations"]["labelColor"])
-        buttonColorLabel.config(command=lambda a="labelColor", b=buttonColorLabel: self.setColor(a,b))
+        buttonColorLabel.config(fg=self.options["annotations"]["labelcolor"])
+        buttonColorLabel.config(activeforeground=self.options["annotations"]["labelcolor"])
+        buttonColorLabel.config(command=lambda a="labelcolor", b=buttonColorLabel: self.setColor(a,b))
         #frame.row += 1
         
         buttonColorOx = Tkinter.Button(frame, text="Set Color")
         buttonColorOx.grid(row=3, column=2, sticky="NW")
-        buttonColorOx.config(fg=self.options["Annotations"]["oxColor"])
-        buttonColorOx.config(activeforeground=self.options["Annotations"]["oxColor"])
-        buttonColorOx.config(command=lambda a="oxColor", b=buttonColorOx: self.setColor(a,b))
+        buttonColorOx.config(fg=self.options["annotations"]["oxcolor"])
+        buttonColorOx.config(activeforeground=self.options["annotations"]["oxcolor"])
+        buttonColorOx.config(command=lambda a="oxcolor", b=buttonColorOx: self.setColor(a,b))
         #frame.row += 1
         
         buttonColorPep = Tkinter.Button(frame, text="Set Color")
         buttonColorPep.grid(row=4, column=2, sticky="NW")
-        buttonColorPep.config(fg=self.options["Annotations"]["pepColor"])
-        buttonColorPep.config(activeforeground=self.options["Annotations"]["pepColor"])
-        buttonColorPep.config(command=lambda a="pepColor", b=buttonColorPep: self.setColor(a,b))
+        buttonColorPep.config(fg=self.options["annotations"]["pepcolor"])
+        buttonColorPep.config(activeforeground=self.options["annotations"]["pepcolor"])
+        buttonColorPep.config(command=lambda a="pepcolor", b=buttonColorPep: self.setColor(a,b))
         #frame.row += 1
         
     def setColor(self, name, button):
-        color = askcolor(self.options["Annotations"][name])[1]
+        color = askcolor(self.options["annotations"][name])[1]
         
         if color == None:
             return
-        self.options["Annotations"][name] = color
+        self.options["annotations"][name] = color
         button.config(fg=color)
         button.config(activeforeground=color)
         self._paintCanvas(False)
@@ -176,14 +175,14 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             masstext = str(round(peak.x - self.referenceMass, 4))
             # check if a fragment exists for the peak
             foundGlycan = None
-            if self.options["Annotations"]["showOx"] == True:
+            if self.options["annotations"]["showox"] == True:
                 for ionname in glycanFragments:
                     if abs(glycanFragments[ionname]-peak.x) < 0.1:
                         foundGlycan = ionname
                         break
 
             foundPep = None
-            if self.options["Annotations"]["showPep"] == True:
+            if self.options["annotations"]["showpep"] == True:
                 if self.hit != None:
                     for key in self.hit.fragments:
                         if foundGlycan != None:
@@ -192,13 +191,13 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                             foundPep = key
                             break
             if foundGlycan != None and foundPep != None:
-                color = self.options["Annotations"]["oxColor"]
+                color = self.options["annotations"]["oxcolor"]
                 annotationText.append((pMZ, pInt, foundGlycan+"\n"+foundPep, masstext))
             elif foundGlycan != None:
-                color = self.options["Annotations"]["oxColor"]
+                color = self.options["annotations"]["oxcolor"]
                 annotationText.append((pMZ, pInt, foundGlycan, masstext))
             elif foundPep != None:
-                color = self.options["Annotations"]["pepColor"]
+                color = self.options["annotations"]["pepcolor"]
                 annotationText.append((pMZ, pInt, foundPep, masstext))
             else:
                 annotationMass.append((pMZ, pInt, "", masstext))
@@ -257,9 +256,9 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                 break
             x, y, namedText, massText = textinfo
             text = []
-            if self.options["Annotations"]["showNames"] == True:
+            if self.options["annotations"]["shownames"] == True:
                 text.append(namedText)
-            if self.options["Annotations"]["showMasses"] == True:
+            if self.options["annotations"]["showmasses"] == True:
                 text.append(massText)
             text = "\n".join(text)
             splitText = text.split("\n")[::-1]
@@ -267,8 +266,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             hasOverlap = False
             for part in splitText:
                 item = self.canvas.create_text((x, y), text=part,
-                                               fill=self.options["Annotations"]["labelColor"],
-                                               font = self.options["Annotations"]["font"],
+                                               fill=self.options["annotations"]["labelcolor"],
+                                               font = self.options["annotations"]["font"],
                                                anchor="s", justify="center")
                 tempItems.add(item)
                 

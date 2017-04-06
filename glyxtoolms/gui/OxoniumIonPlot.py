@@ -42,21 +42,24 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         return "OxoniumIonPlot"
 
         
-    def setDefaultOptions(self):
-        super(OxoniumIonPlot, self).setDefaultOptions()
-        self.options["AxisLabel"]["showPicto"] = True
+    def getDefaultOptions(self):
+        options = super(OxoniumIonPlot, self).getDefaultOptions()
+        options["axislabel"]["showpicto"] = True
+        return options
+        
+        
 
     def createOptions(self, optionsFrame):
         def togglePictogram(a,b,c, var):
-            self.options["AxisLabel"]["showPicto"] = var.get()
+            self.options["axislabel"]["showpicto"] = var.get()
             self._paintCanvas(False)
         
         super(OxoniumIonPlot, self).createOptions(optionsFrame)
         frameAxis = optionsFrame.getLabelFrame("Axis")
         
         pictogramVar = Tkinter.BooleanVar()
-        pictogramVar.set(self.options["AxisLabel"]["showPicto"])
-        optionsFrame.addVariable("AxisLabel", "showPicto", pictogramVar)
+        pictogramVar.set(self.options["axislabel"]["showpicto"])
+        optionsFrame.addVariable("axislabel", "showPicto", pictogramVar)
         c = Appearance.Checkbutton(frameAxis, text="Use Glycan Pictograms", variable=pictogramVar)
         c.grid(row=frameAxis.row, column=0, columnspan=2, sticky="NWS")
         frameAxis.row += 1
@@ -77,7 +80,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         units = self.parseOxoniumion(name)
         units.pop("H+")
         # use size of font to assume shape sizes
-        size = self.options["AxisNumbering"]["font"].config()["size"]
+        size = self.options["axisnumbering"]["font"].config()["size"]
         h = size/2.0
         x = x -10
         for unit in units:
@@ -100,9 +103,9 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 self.canvas.create_text((x, y),
                                         text=text,
                                         anchor="e",
-                                        font=self.options["AxisNumbering"]["font"])
+                                        font=self.options["axisnumbering"]["font"])
                 # measure new x
-                x = x - self.options["AxisNumbering"]["font"].measure(text)-2
+                x = x - self.options["axisnumbering"]["font"].measure(text)-2
             else:
                 for i in range(0, amount):
                     if unit == "HexNAc":
@@ -160,20 +163,20 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 x = self.convAtoX(self.viewXMin)
                 y = self.convBtoY(start)
                 y2 = self.convBtoY(start+1)
-                if self.options["AxisLabel"]["showPicto"] == True:
+                if self.options["axislabel"]["showpicto"] == True:
                     self.paintOxoniumion(x,y, name)
                 else:
                     self.canvas.create_text((x-5, y),
                                             text=name,
                                             anchor="e",
-                                            font=self.options["AxisNumbering"]["font"])
+                                            font=self.options["axisnumbering"]["font"])
                 self.canvas.create_line(x-4, y, x, y)
             index += 1
 
-        item = self.canvas.create_text(self.options["Margins"]["left"],
-                                       self.options["Margins"]["top"]/2.0,
+        item = self.canvas.create_text(self.options["margins"]["left"],
+                                       self.options["margins"]["top"]/2.0,
                                        text=self.yTitle,
-                                       font=self.options["AxisLabel"]["font"])
+                                       font=self.options["axislabel"]["font"])
         # write legend
         y_legend = self.convBtoY(self.viewYMax)-10
         i = 0
@@ -185,7 +188,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             item = self.canvas.create_text(x0+20,
                                            y_legend,
                                            text=legend,
-                                           font=self.options["Legend"]["font"],
+                                           font=self.options["legend"]["font"],
                                            anchor="nw")
             if i == 6:
                 break
@@ -374,27 +377,27 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         
     def calculateMargins(self):
         # calculate space for oxonium names
-        self.options["Margins"]["left"] = 100
+        self.options["margins"]["left"] = 100
         if len(self.names) > 0:
             sizes = []
-            if self.options["AxisLabel"]["showPicto"] == True:
+            if self.options["axislabel"]["showpicto"] == True:
                 for name in self.names:
                     sizes.append(abs(self.paintOxoniumion(0,0,name)))
             else:
                 for name in self.names:
-                    sizes.append(self.options["AxisNumbering"]["font"].measure(name))
+                    sizes.append(self.options["axisnumbering"]["font"].measure(name))
             size = max(sizes)+10
             if size > 80:
-                self.options["Margins"]["left"] = size+20
+                self.options["margins"]["left"] = size+20
                 
         # calculate space for legend
-        self.options["Margins"]["right"] = 50
+        self.options["margins"]["right"] = 50
         if len(self.legend) > 0:
             sizes = []
             for text in self.legend:
-                sizes.append(self.options["Legend"]["font"].measure(text))
+                sizes.append(self.options["legend"]["font"].measure(text))
             size = max(sizes)
-            self.options["Margins"]["right"] = size+50
+            self.options["margins"]["right"] = size+50
         
 class SelectionSidePanel(Tkinter.Frame, object):
     def __init__(self, master, framePlot):
