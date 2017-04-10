@@ -17,7 +17,6 @@ from lxml import etree as ET
 import re
 import numpy as np
 import glyxtoolms
-   
 
 class Annotation(object):
     
@@ -237,6 +236,7 @@ class GlyxXMLFeature(object):
         self.annotations = []
         self.consensus = []
         self.hits = set()
+        self.tags = set()
 
     def setId(self, id):
         self.id = id
@@ -316,6 +316,7 @@ class GlyxXMLFeature(object):
         new.annotations = list(self.annotations)
         new.consensus = list(self.consensus)
         new.hits = set(self.hits)
+        new.tags = set(self.tags)
         return new
         
     def addConsensusPeak(self, x, y):
@@ -338,12 +339,44 @@ class GlyxXMLGlycoModHit(object):
         self.error = 0.0
         self.status = ConfirmationStatus.Unknown
         self.fragments = {}
+        self.tags = set()
+        self.toolValues = {} # store values of new pipeline tools
 
 class GlyxXMLConsensusPeak(object):
 
     def __init__(self, x, y):
         self.x = x
         self.y = y
+        
+class ToolValue(object):
+    
+    def __init__(self):
+        self.name = ""
+        self.default = None
+        self.typ_desc = "str"
+        self.toString = str
+        self.fromString = str
+        
+    
+    def setDefaultValue(self, value):
+        self.default = value 
+        # get value type
+        typ = type(value)
+        self.toString = str
+        if typ == str:
+            self.typ_desc = "str"
+            self.fromString = str
+        elif typ == int:
+            self.typ_desc = "int"
+            self.fromString = int
+        elif typ == float:
+            self.typ_desc = "float"
+            self.fromString = float
+        elif typ == bool:
+            self.typ_desc = "bool"
+            self.fromString = bool
+        else:
+            raise Exception("Unknown tool value type!")
 
 class GlyxXMLFile(object):
     # Input/Output file of glyxXML file
@@ -352,8 +385,15 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
-        self._version_ = "0.1.1" # current version
+        self._version_ = "0.1.2" # current version
         self.version = self._version_ # will be overwritten by file
+        self.toolValueDefaults = {}
+        
+    def addToolValueDefault(self, toolname, defaultValue):
+        value = ToolValue()
+        value.name = toolname
+        value.setDefaultValue(defaultValue)
+        self.toolValueDefaults[toolname] = value
 
     def _parseParameters(self, xmlParameters):
         timestamp = xmlParameters.find("./timestamp").text
@@ -470,6 +510,8 @@ class GlyxXMLFile(object):
 
         xmlParametersScorethreshold = ET.SubElement(xmlParameters, "scorethreshold")
         xmlParametersScorethreshold.text = str(self.parameters.getScoreThreshold())
+        # write tool value defaults
+
 
     def _writeSpectra(self, xmlSpectra):
         for spectrum in self.spectra:
@@ -606,6 +648,9 @@ class GlyxXMLFile(object):
             
             xmlStatus = ET.SubElement(xmlHit, "status")
             xmlStatus.text = str(glycoModHit.status)
+            
+            self._writeTags(xmlHit, glycoModHit)
+            self._writeToolValues(xmlHit, glycoModHit)
 
             # write identified fragments
             fragments = glycoModHit.fragments
@@ -627,7 +672,7 @@ class GlyxXMLFile(object):
                 xmlFragmentCounts.text = str(fragments[fragmentname]["counts"])
 
 
-    def _parseGlycoModHits(self, xmlGlycoModHits):
+    def _parseGlycoModHits(self, xmlGlycoModHits, toolValueDefaults={}):
         hits = []
         for xmlHit in xmlGlycoModHits:
             hit = GlyxXMLGlycoModHit()
@@ -654,6 +699,9 @@ class GlyxXMLFile(object):
                     hit.fragments[fragmentname] = fragment
             if self.version > "0.0.5":
                 hit.status = xmlHit.find("./status").text
+            if self.version > "0.1.1":
+                self._parseTags(xmlHit, hit)
+                self._parseToolValues(xmlHit, hit, toolValueDefaults)
             hits.append(hit)
         return hits
 
@@ -754,6 +802,68 @@ class GlyxXMLFile(object):
                     series.annotations.append(ann)
                 if len(series.annotations) > 0:
                     parent.annotations[series.name] = series
+                    
+                    
+    def _writeTags(self, xmlTagsParent, parent):
+        xmlTags = ET.SubElement(xmlTagsParent, "tags")
+        for tag in parent.tags:
+             xmlTag = ET.SubElement(xmlTags, "tag", text=str(tag))
+    
+    def _parseTags(self,xmlTagsParent, parent):
+        parent.tags = set()
+        for xmlTag in xmlTagsParent.findall("./tags/tag"):
+            tag = xmlTag.get("text")
+            parent.tags.add(tag)
+        
+    def _writeToolValues(self, xmlToolValuesParent, parent):
+        xmlToolValues = ET.SubElement(xmlToolValuesParent, "toolvalues")
+        for toolname in parent.toolValues:
+            if not toolname in  self.toolValueDefaults:
+                raise Exception("Unregistered tool value!")
+            converter =  self.toolValueDefaults[toolname]
+            value = parent.toolValues[toolname]
+            xmlValue = ET.SubElement(xmlToolValues, "value", name=toolname, value=converter.toString(value))
+
+    def _parseToolValues(self,xmlToolValues, parent, toolValueDefaults):
+        parent.toolValues = {}
+        for xmlValue in xmlToolValues.findall("./toolvalues/value"):
+            toolname = xmlValue.get("name")
+            value_str = xmlValue.get("value")
+            if not toolname in toolValueDefaults:
+                raise Exception("Unregistered tool value!")
+            converter = toolValueDefaults[toolname]
+            parent.toolValues[toolname] = converter.fromString(value_str)
+
+    def _writeToolValueDefaults(self, xmlToolValues):
+        for toolname in self.toolValueDefaults:
+            toolValue = self.toolValueDefaults[toolname]
+            xmlValue = ET.SubElement(xmlToolValues, "tool", 
+                                     name=toolname,
+                                     type=toolValue.typ_desc,
+                                     default=toolValue.toString(toolValue.default))
+                                     
+    def _parseToolValueDefaults(self, xmlValueList):
+        values = {}
+        for xmlValue in xmlValueList:
+            toolname = xmlValue.get("name")
+            typ_desc = xmlValue.get("type")
+            default = xmlValue.get("default")
+            
+            if typ_desc == "str":
+                default = str(default)
+            elif typ_desc == "int":
+                default = int(default)
+            elif typ_desc == "float":
+                default = float(default)
+            elif typ_desc == "bool":
+                default = bool(default)
+            else:
+                raise Exception("Unknown tool value type!")
+            value = ToolValue()
+            value.name = toolname
+            value.setDefaultValue(default)
+            values[toolname] = value
+        return values
 
     def writeToFile(self, path):
         xmlRoot = ET.Element("glyxXML")
@@ -762,12 +872,15 @@ class GlyxXMLFile(object):
         xmlVersion.text = self._version_
 
         xmlParameters = ET.SubElement(xmlRoot, "parameters")
+        xmlToolValues = ET.SubElement(xmlRoot, "toolValues")
         xmlSpectra = ET.SubElement(xmlRoot, "spectra")
         xmlFeatures = ET.SubElement(xmlRoot, "features")
         xmlGlycomodHits = ET.SubElement(xmlRoot, "glycomod")
 
         # write parameters
         self._writeParameters(xmlParameters)
+        # write tool value defaults
+        self._writeToolValueDefaults(xmlToolValues)
         # write spectra
         self._writeSpectra(xmlSpectra)
         # write features
@@ -793,12 +906,14 @@ class GlyxXMLFile(object):
             self.version = version.text
         # read parameters
         parameters = self._parseParameters(root.find(".//parameters"))
+        # read tool value defaults
+        toolValueDefaults = self._parseToolValueDefaults(root.findall("./toolValues/tool"))
         # parse spectra
         spectra = self._parseSpectra(root.findall("./spectra/spectrum"))
         # parse features
         features = self._parseFeatures(root.findall("./features/feature"))
         # parse glycomod
-        glycoMod = self._parseGlycoModHits(root.findall("./glycomod/hit"))
+        glycoMod = self._parseGlycoModHits(root.findall("./glycomod/hit"), toolValueDefaults=toolValueDefaults)
         
         #Link all data
         specIDs = {}
@@ -822,6 +937,7 @@ class GlyxXMLFile(object):
         self.spectra = spectra
         self.features = features
         self.glycoModHits = glycoMod
+        self.toolValueDefaults = toolValueDefaults
 
     def setParameters(self, parameters):
         self.parameters = parameters
