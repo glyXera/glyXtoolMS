@@ -29,25 +29,8 @@ class NotebookIdentification(ttk.Frame):
         button = Tkinter.Button(self,image=self.model.resources["filter"])
         scrollbar = Tkinter.Scrollbar(self)
         self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set, selectmode='extended')
-        self.columns = ("Mass", "error", "Peptide", "Glycan", "Status")
-        self.columnNames = {"Mass":"Mass [Da]", "error":"Error", "Peptide":"Peptide", "Glycan":"Glycan", "Status":"Status"}
-        self.columnsWidth = {"Mass":70, "error":80, "Peptide":150, "Glycan":160, "Status":80}
-        self.showColumns = {}
-        for name in self.columns:
-            self.showColumns[name] = Tkinter.BooleanVar()
-            self.showColumns[name].set(True)
-            self.showColumns[name].trace("w", self.columnVisibilityChanged)
-
-        self.tree.column("#0", width=80)
-        self.tree.heading("#0", text="Feature Nr", command=lambda col='#0': self.sortColumn(col))
-        
-        
-        self.tree["columns"] = self.columns
-        for col in self.columns:
-            self.tree.column(col, width=self.columnsWidth[col])
-            self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
-            
-        self.setHeadingNames()
+    
+        self.initializeColumnHeader()
 
         self.tree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
 
@@ -79,17 +62,63 @@ class NotebookIdentification(ttk.Frame):
 
         self.model.registerClass("NotebookIdentification", self)
         
+    def initializeColumnHeader(self):
+        
+        self.columns = ["Mass", "error", "Peptide", "Glycan", "Status", "Tags"]
+        self.columnNames = {"Mass":"Mass [Da]", "error":"Error", "Peptide":"Peptide", "Glycan":"Glycan", "Status":"Status", "Tags":"Tags"}
+        self.columnsWidth = {"Mass":70, "error":80, "Peptide":150, "Glycan":160, "Status":80, "Tags":80}
+        self.toolNameOrder = []
+
+        self.showColumns = {}
+        for name in self.columns:
+            self.showColumns[name] = Tkinter.BooleanVar()
+            self.showColumns[name].set(True)
+            self.showColumns[name].trace("w", self.columnVisibilityChanged)
+
+        self.tree.column("#0", width=80)
+        self.tree.heading("#0", text="Feature Nr", command=lambda col='#0': self.sortColumn(col))
+        
+        
+        self.tree["columns"] = self.columns
+        for col in self.columns:
+            self.tree.column(col, width=self.columnsWidth[col])
+            self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
+            
+        self.setHeadingNames()
+        
+    def updateHeader(self):
+        # append possible ToolValue Columns and Tag column
+        if self.model.currentAnalysis != None and not "Tag" in self.columns:
+            for columnname in self.columns:
+                self.columnsWidth[columnname] = self.tree.column(columnname, "width")
+            for toolname in self.model.currentAnalysis.analysis.toolValueDefaults:
+                if toolname in self.columns:
+                    continue
+                self.toolNameOrder.append(toolname)
+                self.columns.append(toolname)
+                self.columnNames[toolname] = toolname
+                self.columnsWidth[toolname] = 80
+                self.showColumns[toolname] = Tkinter.BooleanVar()
+                self.showColumns[toolname].set(False)
+                self.showColumns[toolname].trace("w", self.columnVisibilityChanged)
+            self.tree["columns"] = self.columns    
+            self.setHeadingNames()
+            for columnname in self.columns:
+                self.tree.column(columnname, width=self.columnsWidth[columnname])
+        
     def setHeadingNames(self):
+        
         if self.model.errorType == "Da":
             self.columnNames["error"] = "Error [Da]"
         else:
             self.columnNames["error"] = "Error [ppm]"
         for col in self.columnNames:
-            self.tree.heading(col, text=self.columnNames.get(col, col))
+            self.tree.heading(col, text=self.columnNames.get(col, col),command=lambda col=col: self.sortColumn(col))
         
     def columnVisibilityChanged(self, *arg, **args):
         header = []
         for columnname in self.columns:
+            self.columnsWidth[columnname] = self.tree.column(columnname, "width")
             if self.showColumns[columnname].get() == True:
                 header.append(columnname)
         self.tree["displaycolumns"] = tuple(header)
@@ -209,6 +238,9 @@ class NotebookIdentification(ttk.Frame):
             l = [(abs(float(self.tree.set(k, col))), k) for k in self.tree.get_children('')]
         elif col == "#0":
             l = [(int(self.tree.item(k, "text")), k) for k in self.tree.get_children('')]
+        elif col in self.model.currentAnalysis.analysis.toolValueDefaults:
+            default = self.model.currentAnalysis.analysis.toolValueDefaults[col]
+            l = [(default.fromString(self.tree.set(k, col)), k) for k in self.tree.get_children('')]
         else:
             return
         l.sort(reverse=reverse)
@@ -306,12 +338,29 @@ class NotebookIdentification(ttk.Frame):
                 error = round(hit.error, 4)
             else:
                 error = round(hit.error/float(feature.getMZ())*1E6, 1)
+            tags = ", ".join(hit.tags)
+            
+            values=[round(mass, 4),
+                    error,
+                    peptide,
+                    glycan.toString(),
+                    hit.status,
+                    tags]
+                    
+            # add toolvalues
+            for toolname in self.toolNameOrder:
+                # get toolvalue default
+                toolValueDefault = analysis.analysis.toolValueDefaults.get(toolname, None)
+                if toolValueDefault == None:
+                    values.append("")
+                elif toolname in hit.toolValues:
+                    values.append(toolValueDefault.toString(hit.toolValues[toolname]))
+                else:
+                    # get default value
+                    values.append(toolValueDefault.toString(toolValueDefault.default))
+                    
             itemSpectra = self.tree.insert("", "end", text=name,
-                                           values=(round(mass, 4),
-                                                   error,
-                                                   peptide,
-                                                   glycan.toString(),
-                                                   hit.status),
+                                           values = values,
                                            tags=taglist)
             self.treeIds[itemSpectra] = hit
 

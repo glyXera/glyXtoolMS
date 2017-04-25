@@ -310,6 +310,7 @@ class ProjectFrame(ttk.Frame):
             self.model.classes["NotebookIdentification"].updateTree([])
             self.model.classes["NotebookFeature"].updateFeatureTree()
             self.model.classes["TwoDView"].init()
+            self.model.classes["NotebookIdentification"].updateHeader()
 
         else:
             self.model.currentAnalysis = None
