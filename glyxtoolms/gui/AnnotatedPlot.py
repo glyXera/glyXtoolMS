@@ -83,10 +83,14 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.selectedAnnotation = None
         self.mouseOverAnnotation = None
         
+        # create popup menu
+        self.aMenu = Tkinter.Menu(self, tearoff=0)
+        
         self.canvas.bind("<Button-1>", self.button1Pressed, "+")
         self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
         self.canvas.bind("<B1-Motion>", self.button1Motion, "+")
         self.canvas.bind("<Motion>", self.mouseMoveEvent, "+")
+        self.canvas.bind("<Button-3>", self.button3Pressed, "+")
         #self.canvas.bind("<Button-3>", self.showContextMenu)
         #self.canvas.bind("<Double-Button-1>", self.showAnnotationEdit)
         #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
@@ -104,11 +108,17 @@ class AnnotatedPlot(FramePlot.FramePlot):
         # add trace to ruler button toggles
         self.rulerbutton.active.trace("w", self.rulerToggled)
 
+    def initCanvas(self, keepZoom=False):
+        super(AnnotatedPlot, self).initCanvas(keepZoom)
+        if self.rulerbutton.active.get() == True:
+            self.sidepanel.panels["ruler"].update()
         
     def rulerToggled(self, *arg, **args):
         if self.rulerbutton.active.get() == False:
             self.setSelectedAnnotation(None)
             self._paintCanvas()
+        else:
+            self.sidepanel.panels["ruler"].update()
         
     def button1Motion(self, event):
         if self.rulerbutton.active.get() == False:
@@ -491,21 +501,107 @@ class AnnotatedPlot(FramePlot.FramePlot):
             self.setSelectedAnnotation(None)
             self._paintCanvas()
 
+    def removePopup(self,event):
+        try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
+            if self.focus_get() != self.aMenu:
+                self.aMenu.unpost()
+        except:
+            pass # Brrrr
+
     def button3Pressed(self, event):
+        
+        def defineNewAnnotation(x1, x2, annotation=None):
+            # create new annotation
+            a = glyxtoolms.io.Annotation()
+            if x1 > x2:
+                x1,x2 = x2,x1
+            a.x1 = x1
+            a.x2 = x2
+            a.text = ""
+            a.y = 0
+            if annotation == None:
+                # choose a default name series1, series2, etc
+                i = 1
+                while True:
+                    seriesName = "series"+str(i)
+                    if not seriesName in self.annotations:
+                        break
+                    i += 1
+            else:
+                seriesName = annotation.series
+            self.addAnnotation(a, seriesName)
+            self.setSelectedAnnotation(a)
+            self._paintCanvas()
+        
+        def searchMassDifference(mass, tolerance, annotation): # TODO get tolerance from user/analysis
+            # get series charge
+            if annotation == None:
+                chargeGoal = 0
+            else:
+                chargeGoal = self.annotations[annotation.series].charge
+            hits = {}
+            for peak in self.peaksByItem.values():
+                diff = peak.x - mass
+                for goal, name, charge,typ in self.model.massdifferences:
+                    if chargeGoal != 0 and chargeGoal != charge:
+                        continue
+                    error = abs(abs(diff)-goal)
+                    if error < tolerance:
+                        if diff < 0:
+                            sign = "-"
+                        else:
+                            sign = "+"
+                        hits[sign] = hits.get(sign, []) + [(error, charge, peak, name)]
+            for sign in hits:
+                hits[sign] = sorted(hits[sign], key=lambda x: (x[0],x[1]))
+            if len(hits) == 0:
+                return
+            self.aMenu.delete(0,"end")
+
+            for error, charge, peak, name in hits.get("-",[]):
+                self.aMenu.add_command(label="-"+name + " :" + str(round(error,4))+" Da ("+str(charge) + "+)",
+                                       command=lambda x1=mass,x2=peak.x: defineNewAnnotation(x1,x2,annotation))
+            self.aMenu.add_separator()
+            for error, charge, peak, name in hits.get("+",[]):
+                self.aMenu.add_command(label="+"+name + " :" + str(round(error,4))+" Da ("+str(charge) + "+)",
+                                       command=lambda x1=mass,x2=peak.x: defineNewAnnotation(x1,x2,annotation))
+            self.aMenu.post(event.x_root, event.y_root)
+            self.aMenu.focus_set()
+            self.aMenu.bind("<FocusOut>", self.removePopup)
+        
         if self.rulerbutton.active.get() == False:
             return
-        peak = self.findObjectAt(pixelX=event.x)["annotatable"]
-        y = self.convYtoB(event.y)
+        objects = self.findItemsAt(pixelX=event.x, pixelY=event.y,delta=10)
+        annotationItems = objects["annotation"]
+        annotatableItems = objects["annotatable"]
         
-        if peak is not None:
-            self.selectedAnnotation = glyxtoolms.io.Annotation()
-            self.selectedAnnotation.x1 = peak.x
-            self.selectedAnnotation.x2 = peak.x
-            self.selectedAnnotation.selected = "x2"
-            self.selectedAnnotation.y = y
-        else:
-            self.selectedAnnotation = None
-        self.paintCurrentAnnotation()
+        if len(annotationItems) > 0:
+            # collect text
+            text = {}
+            for item in annotationItems:
+                annotation = self.annotationItems[item]
+                key = annotation.items[item]
+                if not key in text or annotation == self.selectedAnnotation:
+                    text[key] = annotation
+            annotation = None
+            if "selected_x1" in text:
+                annotation = text["selected_x1"]
+                mass = annotation.x1
+            elif "selected_x2" in text:
+                annotation = text["selected_x2"]
+                mass = annotation.x2
+            if annotation != None:
+                searchMassDifference(mass, 0.1, annotation)
+            
+        if len(annotatableItems) > 0:
+            # select nearest annotatable
+            nearest = []
+            for item in annotatableItems:
+                annotatable = self.peaksByItem[item]
+                dist = abs(self.convAtoX(annotatable.x)-event.x)
+                nearest.append((dist, annotatable))
+            nearest = nearest[0][1]
+            searchMassDifference(nearest.x, 0.1, None)
 
     
     def button3Motion(self, event):
@@ -642,7 +738,9 @@ class AnnotatedPlot(FramePlot.FramePlot):
         if annotation.show == "text":
             annotationText = annotation.text
         elif annotation.show == "lookup":
-            annotationText = annotation.lookup
+            #annotationText = annotation.lookup
+            string = self.doMassDifferenceLookup(annotation)
+            annotationText = string
         elif annotation.show == "mass":
             mass = round(abs(annotation.x1-annotation.x2),4)
             annotationText = str(mass)
@@ -707,6 +805,20 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.annotationItems[item2] = annotation
         self.annotationItems[item3] = annotation
         self.annotationItems[item4] = annotation
+        
+    def doMassDifferenceLookup(self, annotation):
+        tolerance = 0.1 # Todo: Fix tolerance
+        massdifference = abs(annotation.x1-annotation.x2)
+        charge = self.annotations[annotation.series].charge
+        string = []
+        for mass, key, charge2, typ in self.model.massdifferences:
+            if charge != 0 and charge != charge2:
+                continue
+            error = abs(mass-massdifference)
+            if abs(mass-massdifference) <= tolerance:
+                string.append((error, key))
+        string = sorted(string)
+        return "; ".join([s for e,s in string])
 
 class EditAnnotationFrame(Tkinter.Toplevel):
 
@@ -789,8 +901,9 @@ class CheckboxList(Tkinter.Frame):
         
         self.frame.columnconfigure(0,weight=1, minsize=100) # 121
         self.frame.columnconfigure(1,weight=0, minsize=22) # 22
-        self.frame.columnconfigure(2,weight=0, minsize=27) # 27
-        self.frame.columnconfigure(3,weight=0, minsize=20) # 20
+        self.frame.columnconfigure(2,weight=0, minsize=22) # 22
+        self.frame.columnconfigure(3,weight=0, minsize=27) # 27
+        self.frame.columnconfigure(4,weight=0, minsize=20) # 20
         self.frame.rowconfigure(0,weight=1)
         
         self.row = 0
@@ -800,15 +913,18 @@ class CheckboxList(Tkinter.Frame):
         photo = Tkinter.PhotoImage(data=eye_icon)
         h1 = Tkinter.Label(self.frame, text="Name")
         h1.grid(row=self.row, column=0)
-        h2 = Tkinter.Label(self.frame, text="Color")
+        h2 = Tkinter.Label(self.frame, text="z")
         h2.grid(row=self.row, column=1)
-        h3 = Tkinter.Label(self.frame, image=photo, width=10, height=10)
-        h3.image = photo
+        h3 = Tkinter.Label(self.frame, text="Color")
         h3.grid(row=self.row, column=2)
+        h4 = Tkinter.Label(self.frame, image=photo, width=10, height=10)
+        h4.image = photo
+        h4.grid(row=self.row, column=3)
         
     def clear(self):
         for series in self.elements:
             self.elements[series]["entryName"].destroy()
+            self.elements[series]["entryCharge"].destroy()
             self.elements[series]["buttonColor"].destroy()
             self.elements[series]["checkShow"].destroy()
             self.elements[series]["buttonDelete"].destroy()
@@ -824,16 +940,22 @@ class CheckboxList(Tkinter.Frame):
         varName.set(series.name)
         varName.trace("w", lambda name, index, mode,x=series:self.eventNameChanged(x))
         
+        varCharge = Tkinter.StringVar()
+        entryCharge = Tkinter.Entry(self.frame, textvariable=varCharge, width=2)
+        entryCharge.grid(row=self.row, column=1)
+        entryCharge.config(bg="white")
+        varCharge.set(series.charge)
+        varCharge.trace("w", lambda name, index, mode,x=series:self.eventChargeChanged(x))
+        
         buttonColor = Tkinter.Button(self.frame, text=" ", padx=6, pady=1)
         buttonColor.config(command=lambda b=buttonColor, s=series: self.eventSetColor(b,series))
-        buttonColor.grid(row=self.row, column=1)
+        buttonColor.grid(row=self.row, column=2)
         buttonColor.config(bg=series.color)
         buttonColor.config(activebackground=series.color)
-        
-        
+
         varShow = Tkinter.IntVar()
         checkShow = Tkinter.Checkbutton(self.frame, variable=varShow)
-        checkShow.grid(row=self.row, column=2)
+        checkShow.grid(row=self.row, column=3)
         if series.hidden == True:
             varShow.set(0)
         else:
@@ -843,12 +965,14 @@ class CheckboxList(Tkinter.Frame):
             
         buttonDelete = Tkinter.Button(self.frame, text="X", padx=3, pady=0)
         buttonDelete.config(command=lambda x=series: self.eventDeleteSeries(x))
-        buttonDelete.grid(row=self.row, column=3)
+        buttonDelete.grid(row=self.row, column=4)
                 
         # add elements to list
         self.elements[series] = {}
         self.elements[series]["varName"] = varName
         self.elements[series]["entryName"] = entryName
+        self.elements[series]["varCharge"] = varCharge
+        self.elements[series]["entryCharge"] = entryCharge
         self.elements[series]["buttonColor"] = buttonColor
         self.elements[series]["varShow"] = varShow
         self.elements[series]["checkShow"] = checkShow
@@ -874,6 +998,7 @@ class CheckboxList(Tkinter.Frame):
         if ask == False:
             return
         self.elements[series]["entryName"].destroy()
+        self.elements[series]["entryCharge"].destroy()
         self.elements[series]["buttonColor"].destroy()
         self.elements[series]["checkShow"].destroy()
         self.elements[series]["buttonDelete"].destroy()
@@ -893,6 +1018,18 @@ class CheckboxList(Tkinter.Frame):
             series.color=color
             self.annotationspanel.update()
             self.framePlot._paintCanvas()
+            
+    def eventChargeChanged(self,changedSeries):
+        varCharge = self.elements[changedSeries]["varCharge"]
+        entryCharge = self.elements[changedSeries]["entryCharge"]
+        try:
+            value = int(varCharge.get())
+            changedSeries.charge = value
+            entryCharge.config(bg="white")
+            self.framePlot._paintCanvas()
+        except:
+            entryCharge.config(bg="red")
+        
         
     def eventNameChanged(self,changedSeries):
         # check all entries for names which are not unique or empty
@@ -925,6 +1062,8 @@ class CheckboxList(Tkinter.Frame):
                     annotation.series = newName
                 changedSeries.name = newName
                 self.annotationspanel.setAnnotation(self.annotationspanel.currentAnnotation)
+                
+                
 
 class AnnotationSidePanel(Tkinter.Frame, object):
     def __init__(self, master, framePlot):
@@ -962,7 +1101,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.frameAnnotation.grid(row=0,column=0, sticky="NEW", padx=2)
         
         self.annotationContent = Tkinter.Frame(self.frameAnnotation)
-        self.annotationContent.grid(row=0,column=0)
+        self.annotationContent.grid(row=0,column=0, sticky="NSEW")
         self.annotationContent.columnconfigure(0,weight=0)
         self.annotationContent.columnconfigure(1,weight=1)
         self.annotationContent.rowconfigure(0,weight=0)
@@ -993,7 +1132,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.buttonShowDiff.grid(row=0,column=0, sticky="NWS")
         
         self.varMass = Tkinter.StringVar()
-        self.entryMass= Tkinter.Entry(radioFrame, textvariable=self.varMass ,width=12)
+        self.entryMass= Tkinter.Entry(radioFrame, textvariable=self.varMass, width=14)
         self.entryMass.grid(row=0,column=1, padx=4, sticky="NSEW")
         self.entryMass.config(justify="right")
         
@@ -1001,7 +1140,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.buttonShowLookup.grid(row=1,column=0, sticky="NWS")
         
         self.varLookup = Tkinter.StringVar()
-        self.entryLookup= Tkinter.Entry(radioFrame, textvariable=self.varLookup ,width=12)
+        self.entryLookup= Tkinter.Entry(radioFrame, textvariable=self.varLookup ,width=14)
         self.entryLookup.grid(row=1,column=1, padx=4, sticky="NWES")
         
         self.buttonShowText = Tkinter.Radiobutton(radioFrame, text="Text", variable=self.varRadio, value="text")
@@ -1011,7 +1150,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.buttonShowNone.grid(row=3,column=0, sticky="NWS")
         
         self.varText = Tkinter.StringVar()
-        self.entryText = Tkinter.Entry(radioFrame, textvariable=self.varText ,width=12)
+        self.entryText = Tkinter.Entry(radioFrame, textvariable=self.varText ,width=14)
         self.entryText.config(bg="white")
         self.entryText.grid(row=2,column=1, padx=4, sticky="NWES")
         
@@ -1069,28 +1208,13 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             series = self.framePlot.annotations[seriesName]
             self.frameSeries.addSeries(series)
         self.buildMenu()
-        
-    def doMassDifferenceLookup(self, massdifference, tolerance):
-        string = []
-        for key in glyxtoolms.masses.GLYCAN:
-            mass = glyxtoolms.masses.GLYCAN[key]
-            error = abs(mass-massdifference)
-            if abs(mass-massdifference) <= tolerance:
-                string.append((error, key))
-        for key in glyxtoolms.masses.AMINOACID:
-            mass = glyxtoolms.masses.AMINOACID[key]
-            error = abs(mass-massdifference)
-            if abs(mass-massdifference) <= tolerance:
-                string.append((error, key))
-        string = sorted(string)
-        return "; ".join([s for e,s in string])
-
             
     def updateAnnotationMasses(self):
         if self.currentAnnotation == None:
             self.labelMass1.config(text=" - Da")
             self.labelMass2.config(text=" - Da")
             self.varMass.set("- Da")
+            self.varLookup.set("")
         else:
             m1 = str(round(self.currentAnnotation.x1,4))
             m2 = str(round(self.currentAnnotation.x2,4))
@@ -1098,7 +1222,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             self.labelMass1.config(text= m1 + " Da")
             self.labelMass2.config(text= m2 + " Da")
             self.varMass.set(m3 + " Da")
-            string = self.doMassDifferenceLookup(abs(self.currentAnnotation.x1-self.currentAnnotation.x2), 0.1)
+            string = self.framePlot.doMassDifferenceLookup(self.currentAnnotation)
             self.currentAnnotation.lookup = string
             self.varLookup.set(string)
             if self.currentAnnotation.valid == True:
@@ -1121,6 +1245,8 @@ class AnnotationSidePanel(Tkinter.Frame, object):
 
             self.entryMass.config(state="disabled")
             self.varText.set("")
+            self.varMass.set("- Da")
+            self.varLookup.set("")
             self.entryText.config(state="disabled")
             self.entryLookup.config(state="disabled")
             

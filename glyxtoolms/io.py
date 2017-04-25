@@ -40,6 +40,7 @@ class AnnotationSeries(object):
         self.color = "black"
         self.hidden = False
         self.annotations = []
+        self.charge = 0
 
 class GlyxXMLSpectrum(object):
     """ Define the GlyxXMLSpectrum as used in the glyML format """
@@ -759,7 +760,7 @@ class GlyxXMLFile(object):
             series = parent.annotations[seriesName]
             if len(series.annotations) == 0:
                 continue
-            xmlSeries = ET.SubElement(xmlAnnotations, "series", name=seriesName, color=series.color)
+            xmlSeries = ET.SubElement(xmlAnnotations, "series", name=seriesName, color=series.color, charge=str(series.charge))
             for annotation in series.annotations:
                 xmlAnn = ET.SubElement(xmlSeries, "annotation")
                 xmlAnnText = ET.SubElement(xmlAnn, "text")
@@ -791,6 +792,9 @@ class GlyxXMLFile(object):
                 series = AnnotationSeries()
                 series.name = xmlSeries.get("name")
                 series.color = xmlSeries.get("color")
+                seriesCharge = xmlSeries.get("charge")
+                if seriesCharge != None:
+                    series.charge = int(seriesCharge)
                 for xmlAnn in xmlSeries.findall("./annotation"):
                     ann = Annotation()
                     ann.text = xmlAnn.find("./text").text

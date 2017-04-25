@@ -47,6 +47,17 @@ class DataModel(object):
         self.toplevel = {} # store references to other toplevel windows
         self.configfile = None
         
+        self.massdifferences = [] # holds look list for annotations
+        # generate default mass list from masses.py
+        for key in glyxtoolms.masses.GLYCAN:
+            mass = glyxtoolms.masses.GLYCAN[key]
+            self.massdifferences.append((mass, key, 1, "glycan"))
+            self.massdifferences.append((mass/2.0, key, 2, "glycan"))
+        for key in glyxtoolms.masses.AMINOACID:
+            mass = glyxtoolms.masses.AMINOACID[key]
+            self.massdifferences.append((mass, key, 1, "aminoacid"))
+            self.massdifferences.append((mass/2.0, key, 2, "aminoacid"))
+        self.massdifferences = sorted(self.massdifferences)
         # register converter functions for settings
         self.registerOptionsConverterFunctions()
         
@@ -167,6 +178,7 @@ class DataModel(object):
                 self.clipboard = section["clipboard"]
             if "errorType" in section:
                 self.errorType = section["errorType"]
+            
                 
         if "PLOTOPTIONS" in self.configfile.sections():
             section = self.configfile["PLOTOPTIONS"]
@@ -180,6 +192,16 @@ class DataModel(object):
                     self.options[plotname][propty][typ] = converter(value)
                 else:
                     print "cannot load option", key
+                    
+        if "MASSDIFFERENCES" in self.configfile.sections():
+            section = self.configfile["MASSDIFFERENCES"]
+            self.massdifferences = []
+            for key in section:
+                mass, name, charge, typ = section[key].split(":")
+                mass = float(mass)
+                charge = int(charge)
+                self.massdifferences.append((mass, name, charge, typ))
+            self.massdifferences = sorted(self.massdifferences)
    
     def setLayout(self):
         if self.configfile == None:
@@ -208,6 +230,12 @@ class DataModel(object):
         self.configfile["GENERAL"]["timescale"] = self.timescale
         self.configfile["GENERAL"]["clipboard"] = self.clipboard
         self.configfile["GENERAL"]["errorType"] = self.errorType
+        
+        self.configfile["MASSDIFFERENCES"] = {}
+        i = 0
+        for mass, key, charge, typ in self.massdifferences:
+            i += 1
+            self.configfile["MASSDIFFERENCES"][str(i)] = str(mass)+":"+key+":"+str(charge)+":"+typ
 
         # write plotting setting 
         self.configfile["PLOTOPTIONS"] = {}
