@@ -1026,6 +1026,7 @@ class CheckboxList(Tkinter.Frame):
             value = int(varCharge.get())
             changedSeries.charge = value
             entryCharge.config(bg="white")
+            self.annotationspanel.updateAnnotationMasses()
             self.framePlot._paintCanvas()
         except:
             entryCharge.config(bg="red")

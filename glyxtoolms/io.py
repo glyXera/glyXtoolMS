@@ -680,9 +680,12 @@ class GlyxXMLFile(object):
             hit.featureID = str(xmlHit.find("./featureId").text)
             hit.error = float(xmlHit.find("./error").text)
 
-            glycan = XMLGlycan()
-            glycan.composition = str(xmlHit.find("./glycan/composition").text)
-            glycan.mass = float(xmlHit.find("./glycan/mass").text)
+            composition = str(xmlHit.find("./glycan/composition").text)
+            glycan = glyxtoolms.lib.Glycan(composition)
+            
+            #glycan = XMLGlycan()
+            #glycan.composition = str(xmlHit.find("./glycan/composition").text)
+            #glycan.mass = float(xmlHit.find("./glycan/mass").text)
             hit.glycan = glycan
 
             peptide = XMLPeptide()

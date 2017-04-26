@@ -4,6 +4,7 @@ import Tkinter
 import re
 import os
 import tkFileDialog
+import glyxtoolms
 
 def parseInternalFragment(name, length):
     match = re.match(r"^y\d+b\d+", name)
@@ -76,6 +77,14 @@ class PeptideCoverageFrame(ttk.Frame):
         # link function
         self.model.registerClass("PeptideCoverageFrame", self)
         
+        # debug
+        #g = glyxtoolms.lib.Glycopeptide("EEQFNSTFR", "H5N3F1Sa1Sg1")
+        #g.glycan.typ = "N"
+        #self.hit = glyxtoolms.io.GlyxXMLGlycoModHit()        
+        #self.hit.glycan = g.glycan
+        #self.hit.peptide = g.peptide
+        #self.paint_canvas()
+        
     def plotSingleFragment(self, *args):
         if self.hit == None:
             return
@@ -130,10 +139,126 @@ class PeptideCoverageFrame(ttk.Frame):
 
     def paint_canvas(self):
         
+        def drawSugarUnit(unit, x, y, size):
+            h = size/2.0
+            if unit == "HEXNAC":
+                self.canvas.create_rectangle(x,y-h,x-size, y+h)
+            if unit == "GLCNAC":
+                self.canvas.create_rectangle(x,y-h,x-size, y+h, fill="blue", outline="black")
+            if unit == "GALNAC":
+                self.canvas.create_rectangle(x,y-h,x-size, y+h, fill="yellow", outline="black")
+            elif unit == "HEX":
+                self.canvas.create_oval(x,y-h,x-size, y+h)
+            elif unit == "MAN":
+                self.canvas.create_oval(x,y-h,x-size, y+h, fill="green", outline="black")
+            elif unit == "DHEX":
+                self.canvas.create_polygon(x,y+h,x-size,y+h,x-h,y-h, fill="red", outline="black")
+            elif unit == "NEUAC":
+                self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="violet", outline="black")
+            elif unit == "NEUGC":
+                self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="azure", outline="black")
+
+        
         self.canvas.delete(Tkinter.ALL)
         self.setMenuChoices([])
         if self.hit == None:
             return
+        
+        # collect positions of glycosylationsites
+        glycosites = set()
+        glycotypes = set()
+        for pos, typ in self.hit.peptide.glycosylationSites:
+            glycosites.add(pos-self.hit.peptide.start)
+            glycotypes.add(typ)
+
+        glycan = self.hit.glycan
+        sugars = dict(glycan.sugar)
+        # calculate size
+        
+        xlen = []
+        ylen = []
+        drawCoreStructure = False
+        if glycan.typ == "N" or "N" in glycotypes:
+            if glycan.sugar.get("HEXNAC", 0) >= 2 and glycan.sugar.get("HEX", 0) >= 3:
+                sugars["HEXNAC"] = sugars["HEXNAC"]-2
+                sugars["HEX"] = sugars["HEX"]-3
+                drawCoreStructure = True
+                xlen.append(5)
+                ylen.append(2)
+        
+        # group sugars
+        group = {}
+        for sugar in sugars:
+            if sugars[sugar] == 0:
+                continue
+            if sugar in ["HEXNAC", "GLCNAC", "GALNAC"]:
+                key = "HEXNAC"
+            elif sugar in ["HEX", "GLC", "GAL", "MAN"]:
+                key = "HEX"
+            else:
+                key = "REST"
+            group[key] = group.get(key, [])
+            for i in range(0, sugars[sugar]):
+                group[key].append(sugar)
+        ylen.append(len(group))
+        for key in group:
+            if drawCoreStructure == True:
+                xlen.append(len(group[key])+5)
+            else:
+                xlen.append(len(group[key]))
+        xlen = max(xlen)
+        ylen = max(ylen)
+        
+        # calc size
+        peptideWidth = self.width/3.0*2.0
+        glycanWidth = self.width/3.0
+        
+
+        size1 = int(glycanWidth/xlen)
+        size2 = int(self.height/ylen)
+        size_comp = min((size1,size2))
+        
+        size = int(size_comp*2/3.0)
+        size = size - size%2
+        gap = size_comp - size
+        gap = gap -gap%2
+        x = peptideWidth+size
+        y = self.height/2.0
+        if drawCoreStructure == True:
+            # draw core
+            self.canvas.create_line(x, y,x+1.5*size+gap,y, fill="black")
+            drawSugarUnit("GLCNAC", x, y, size)
+            x += size+gap
+            drawSugarUnit("GLCNAC", x, y, size)
+            x += size+gap
+            self.canvas.create_line(x-size/2.0, y,x+size, y-size, fill="black")
+            self.canvas.create_line(x-size/2.0, y,x+size, y+size, fill="black")
+            drawSugarUnit("MAN", x, y, size)
+            x += size+gap
+            drawSugarUnit("MAN", x, y-size, size)
+            drawSugarUnit("MAN", x, y+size, size)
+            # draw bracket
+            x += gap
+            self.canvas.create_line(x, size,
+                                    x+gap, size,
+                                    x+gap, self.height/2.0,
+                                    x+size+gap, self.height/2.0,
+                                    x+gap, self.height/2.0,
+                                    x+gap, self.height-size,
+                                    x, self.height-size,
+                                    smooth=True,
+                                    fill="black")
+            x += size + gap
+
+                
+        diff = self.height/float(len(group)+1)
+        y = diff
+        x += size
+        for key in group:
+            for i, sugar in enumerate(group[key]):
+                drawSugarUnit(sugar, x+i*(size+10), y, size)
+            y += diff
+        
         peptideSequence = self.hit.peptide.sequence
         peptideLength = len(peptideSequence)
 
@@ -179,15 +304,11 @@ class PeptideCoverageFrame(ttk.Frame):
             ySeries.remove(peptideLength)
         if peptideLength in bSeries:
             bSeries.remove(peptideLength)
-
-        # collect positions of glycosylationsites
-        glycosites = set()
-        for pos, typ in self.hit.peptide.glycosylationSites:
-            glycosites.add(pos-self.hit.peptide.start)
             
 
         # write peptide sequence
-        xc = self.width/2.0
+        
+        xc = peptideWidth/2.0
         yc = self.height/2.0
         text = self.hit.peptide.sequence
 
@@ -195,7 +316,7 @@ class PeptideCoverageFrame(ttk.Frame):
         s = 0
         for s in range(0, self.height-20):
             font = tkFont.Font(family="Courier", size=s)
-            if (font.measure(" ")+4)*len(text) > self.width:
+            if (font.measure(" ")+4)*len(text) > peptideWidth:
                 break
             
 
