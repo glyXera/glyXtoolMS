@@ -30,10 +30,10 @@ def parseYFragment(name, length):
     return y, length
 
 
-class PeptideCoverageFrame(ttk.Frame):
+class PeptideCoverageFrame(Tkinter.Frame):
 
     def __init__(self, master, model):
-        ttk.Frame.__init__(self, master=master)
+        Tkinter.Frame.__init__(self, master=master)
 
         self.master = master
         self.model = model

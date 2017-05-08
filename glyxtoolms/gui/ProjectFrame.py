@@ -450,6 +450,7 @@ class AddProject(Tkinter.Toplevel):
 
         projectEntry = Tkinter.Entry(self, textvariable=self.projectName)
         projectEntry.grid(row=0, column=1, sticky=('N', 'W', 'E', 'S'))
+        projectEntry.config(bg="white")
 
         self.path = Tkinter.StringVar()
         pathLabel = Tkinter.Label(self, text="mzML-File: ")
@@ -457,6 +458,7 @@ class AddProject(Tkinter.Toplevel):
 
         pathEntry = Tkinter.Entry(self, textvariable=self.path)
         pathEntry.grid(row=1, column=1, columnspan=2, sticky=('N', 'W', 'E', 'S'))
+        pathEntry.config(bg="white")
 
         pathButton = Tkinter.Button(self, text="Open MZML-File", command=self.openDialog)
         pathButton.grid(row=1, column=3)

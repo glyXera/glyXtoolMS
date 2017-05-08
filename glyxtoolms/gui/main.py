@@ -50,24 +50,34 @@ class App(ttk.Frame):
         ttk.Frame.__init__(self)
 
         self.master = master
-        self.menubar = Tkinter.Menu(self.master, bg="#d9d9d9")
+        #self.menubar = Tkinter.Menu(self.master, bg="#d9d9d9")
+        self.menubar = Tkinter.Menu(self.master)
+        self.menubar.config(activebackground="#d6d2d0")
         self.master.config(menu=self.menubar)
-        self.master.config(bg="#d9d9d9")
+        #self.master.config(bg="#d9d9d9")
         self.model = DataModel.DataModel(master)
         
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
         
+        # style
+        _bgcolor = "#eff0f1"
+        self.style = ttk.Style()
+        self.style.configure('.',background=_bgcolor)
+        self.style.configure('TNotebook.Tab',background="#d6d2d0")
+        self.style.map("TNotebook.Tab", background=[("selected", _bgcolor)])
+        #self.style.configure('TNotebook.Tab',inactivebackground=_bgcolor)        
+        
         # collect PanedWindows
         self.paned = {}
         
-        filemenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
+        filemenu = Tkinter.Menu(self.menubar, tearoff=0)
         #filemenu.add_command(label="Set workspace", command=self.setWorkspace)
         filemenu.add_command(label="Options", command=self.setOptions)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.master.destroy)
         self.menubar.add_cascade(label="Program", menu=filemenu)
 
-        projectMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
+        projectMenu = Tkinter.Menu(self.menubar, tearoff=0)
         projectMenu.add_command(label="New Project")
         projectMenu.add_command(label="Open Analysis")
         projectMenu.add_command(label="Save Analysis")
@@ -76,12 +86,12 @@ class App(ttk.Frame):
         projectMenu.add_command(label="Close Analysis")
         self.menubar.add_cascade(label="Project", menu=projectMenu)
 
-        statisticsMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
+        statisticsMenu = Tkinter.Menu(self.menubar, tearoff=0)
         statisticsMenu.add_command(label="Scorehistogram", command=self.showHistogram)
         statisticsMenu.add_command(label="Oxoniumion Plot", command=self.showOxoniumPlot)
         self.menubar.add_cascade(label="Statistics", menu=statisticsMenu)
 
-        filterMenu = Tkinter.Menu(self.menubar, tearoff=0, bg="#d9d9d9")
+        filterMenu = Tkinter.Menu(self.menubar, tearoff=0)
         filterMenu.add_command(label="Set Filter Options", command=self.showFilterOptions)
         self.menubar.add_cascade(label="Filter", menu=filterMenu) # Index 4 in menubar
 
@@ -102,6 +112,7 @@ class App(ttk.Frame):
 
         right = Tkinter.PanedWindow(panes, orient="vertical")
         right.pack(fill="both", expand="yes")
+        
         #right.config(sashwidth=10)
         #right.config(opaqueresize=False)
         #right.config(sashrelief="raised")
@@ -173,6 +184,7 @@ class App(ttk.Frame):
         self.paned["n1"] = n1
         
         n1_top = NotebookIdentification.NotebookIdentification(n1, self.model)
+        
         n1_top.pack()
         n1_middle = PeptideCoverageFrame.PeptideCoverageFrame(n1, self.model)
         n1_middle.pack()
@@ -228,7 +240,7 @@ class App(ttk.Frame):
             self.menubar.entryconfig(4, background="#e60000")
             self.menubar.entryconfig(4, activebackground="#b30000")
         else:
-            self.menubar.entryconfig(4, background="#d9d9d9")
+            self.menubar.entryconfig(4, background="#eff0f1")
             self.menubar.entryconfig(4, activebackground="#d6d2d0")
 
 
@@ -261,20 +273,6 @@ class App(ttk.Frame):
         
     def setOptions(self):
         OptionsFrame.OptionsFrame(self.master, self.model)
-        
-
-    #def setWorkspace(self):
-    #    options = {}
-    #    options['initialdir'] = self.model.workingdir
-    #    options['title'] = 'Set Workspace'
-    #    options['mustexist'] = True
-    #    path = tkFileDialog.askdirectory(**options)
-    #    if path == "" or path == ():
-    #        return
-    #    self.model.workingdir = path
-    #    self.model.saveSettings()
-    #    return
-        
 
     def on_closing(self):
         # save settings
@@ -295,7 +293,6 @@ class HistogramFrame(Tkinter.Toplevel):
         Tkinter.Toplevel.__init__(self, master=master)
         self.master = master
         self.title("Score Histogram")
-        self.config(bg="#d9d9d9")
         self.model = model
         self.view = HistogramView.HistogramView(self, model, height=450, width=500)
         self.view.grid(row=0, column=0, columnspan=2, sticky="NW")
@@ -374,7 +371,6 @@ class OxoniumFrame(Tkinter.Toplevel):
         Tkinter.Toplevel.__init__(self, master=master)
         self.master = master
         self.title("Oxoniumion Plot")
-        self.config(bg="#d9d9d9")
         self.model = model
         self.view = OxoniumIonPlot.OxoniumIonPlot(self, model)
         self.view.grid(row=0, column=0, sticky="NWSE")

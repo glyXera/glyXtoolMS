@@ -293,7 +293,7 @@ class DataModel(object):
         self.resources["filter"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/ox.gif')
         self.resources["oxonium"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
-        stream = resource_stream('glyxtoolms', 'gui/resources/options.gif')
+        stream = resource_stream('glyxtoolms', 'gui/resources/options_small.gif')
         self.resources["options"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         
     def saveToClipboard(self, text):
