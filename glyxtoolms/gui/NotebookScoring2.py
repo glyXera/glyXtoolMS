@@ -25,11 +25,11 @@ class NotebookScoring(ttk.Frame):
         scrollbar = ttk.Scrollbar(self)
         self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
 
-        self.columns = ("RT", "Mass", "Charge", "Score", "Is Glyco", "Status")
-        self.columnsWidth =  {"RT":80, "Mass":80, "Charge":80, "Score":80, "Is Glyco":80, "Status":80}
+        self.columns = ("Spectrum", "RT", "Mass", "Charge", "Score", "Is Glyco", "Status")
+        self.columnsWidth =  {"Spectrum":80, "RT":80, "Mass":80, "Charge":80, "Score":80, "Is Glyco":80, "Status":80}
         self.tree["columns"] = self.columns
         self.tree.column("#0", width=100)
-        self.tree.heading("#0", text="Spectrum Nr.", command=lambda col='#0': self.sortColumn(col))
+        self.tree.heading("#0", text="Feature", command=lambda col='#0': self.sortColumn(col))
         self.showColumns = {}
         for name in self.columns:
             self.showColumns[name] = Tkinter.BooleanVar()
@@ -49,6 +49,7 @@ class NotebookScoring(ttk.Frame):
         scrollbar.config(command=self.tree.yview)
 
         self.treeIds = {}
+        self.specToId = {}
 
         # treeview style
         self.tree.tag_configure('oddUnknown', background='Moccasin')
@@ -80,6 +81,15 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
 
         self.model.registerClass("NotebookScoring", self)
+        
+    def seeItem(self, feature):
+        spectra = feature.spectra
+        self.tree.selection_set(())
+        itemIds = []
+        for spectrum in spectra:
+            spectrumId = self.specToId[str(spectrum.index) + "-" + str(feature.index)]
+            self.tree.see(spectrumId)
+            self.tree.selection_add(spectrumId)
 
     def setStatus(self,status):
         # get currently active hit
@@ -158,7 +168,8 @@ class NotebookScoring(ttk.Frame):
             self.aMenu.unpost()
             
     def setHighlightingTag(self, taglist, status):
-        assert status in glyxtoolms.io.ConfirmationStatus._types
+        if not status in glyxtoolms.io.ConfirmationStatus._types:
+            raise Exception("Status "+status+" not defined!")
         for statustype in glyxtoolms.io.ConfirmationStatus._types:
             if "even"+statustype in taglist:
                 taglist.remove("even"+statustype)
@@ -198,7 +209,7 @@ class NotebookScoring(ttk.Frame):
         # rearrange items in sorted positions
         for index, (val, k) in enumerate(l):
             self.tree.move(k, '', index)
-            status = self.tree.item(k)["values"][5]
+            status = self.tree.item(k)["values"][6]
             
             # adjust tags
             taglist = list(self.tree.item(k, "tags"))
@@ -219,6 +230,7 @@ class NotebookScoring(ttk.Frame):
         # clear tree
         self.tree.delete(*self.tree.get_children())
         self.treeIds = {}
+        self.specToId = {}
 
         project = self.model.currentProject
 
@@ -240,34 +252,33 @@ class NotebookScoring(ttk.Frame):
             # check if 
             contains = False
             for feature in spectrum.features:
-                if feature in features:
-                    contains = True
-                    break
-            if contains == False:
-                continue
-            if index%2 == 0:
-                taglist = ("even" + spectrum.status, "even")
-            else:
-                taglist = ("odd" + spectrum.status, "odd")
-            index += 1
-            isGlycopeptide = "no"
-            if spectrum.isGlycopeptide:
-                isGlycopeptide = "yes"
-            name = spectrum.nativeId
-            if self.model.timescale == "minutes":
-                rt = round(spectrum.rt/60.0, 2)
-            else:
-                rt = round(spectrum.rt, 1)
-            #itemSpectra = self.tree.insert("" , "end", text=name,
-            itemSpectra = self.tree.insert("", "end", text=spectrum.index,
-                                           values=(rt,
-                                                   round(spectrum.precursorMass, 4),
-                                                   spectrum.precursorCharge,
-                                                   round(spectrum.logScore, 2),
-                                                   isGlycopeptide,
-                                                   spectrum.status),
-                                           tags=taglist)
-            self.treeIds[itemSpectra] = (spec, spectrum)
+                if not feature in features:
+                    continue
+                if index%2 == 0:
+                    taglist = ("even" + spectrum.status, "even")
+                else:
+                    taglist = ("odd" + spectrum.status, "odd")
+                index += 1
+                isGlycopeptide = "no"
+                if spectrum.isGlycopeptide:
+                    isGlycopeptide = "yes"
+                name = spectrum.nativeId
+                if self.model.timescale == "minutes":
+                    rt = round(spectrum.rt/60.0, 2)
+                else:
+                    rt = round(spectrum.rt, 1)
+                #itemSpectra = self.tree.insert("" , "end", text=name,
+                itemSpectra = self.tree.insert("", "end", text=feature.index,
+                                               values=(spectrum.index,
+                                                       rt,
+                                                       round(spectrum.precursorMass, 4),
+                                                       spectrum.precursorCharge,
+                                                       round(spectrum.logScore, 2),
+                                                       isGlycopeptide,
+                                                       spectrum.status),
+                                               tags=taglist)
+                self.treeIds[itemSpectra] = (spec, spectrum)
+                self.specToId[str(spectrum.index) + "-" + str(feature.index)] = itemSpectra
         # apply possible sorting
         if not "NotebookScoring" in analysis.sorting:
             analysis.sorting["NotebookScoring"] = ("#0", False)

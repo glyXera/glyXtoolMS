@@ -80,10 +80,10 @@ class NotebookScoring(ttk.Frame):
         scrollbar = ttk.Scrollbar(frameTree)
         self.tree = ttk.Treeview(frameTree, yscrollcommand=scrollbar.set)
 
-        columns = ("RT", "Mass", "Charge", "Score", "Is Glyco", "Status")
+        columns = ("Spec Nr", "RT", "Mass", "Charge", "Score", "Is Glyco", "Status")
         self.tree["columns"] = columns
         self.tree.column("#0", width=100)
-        self.tree.heading("#0", text="Spectrum Nr.", command=lambda col='#0': self.sortColumn(col))
+        self.tree.heading("#0", text="Feature", command=lambda col='#0': self.sortColumn(col))
         for col in columns:
             self.tree.column(col, width=80)
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
@@ -261,29 +261,31 @@ class NotebookScoring(ttk.Frame):
 
         index = 0
         for spec, spectrum in analysis.data:
-            if index%2 == 0:
-                taglist = ("even" + spectrum.status, "even")
-            else:
-                taglist = ("odd" + spectrum.status, "odd")
-            index += 1
-            isGlycopeptide = "no"
-            if spectrum.isGlycopeptide:
-                isGlycopeptide = "yes"
-            name = spectrum.nativeId
-            if self.model.timescale == "minutes":
-                rt = round(spectrum.rt/60.0, 2)
-            else:
-                rt = round(spectrum.rt, 1)
-            #itemSpectra = self.tree.insert("" , "end", text=name,
-            itemSpectra = self.tree.insert("", "end", text=spectrum.index,
-                                           values=(rt,
-                                                   round(spectrum.precursorMass, 4),
-                                                   spectrum.precursorCharge,
-                                                   round(spectrum.logScore, 2),
-                                                   isGlycopeptide,
-                                                   spectrum.status),
-                                           tags=taglist)
-            self.treeIds[itemSpectra] = (spec, spectrum)
+            for feature in spectrum.features:
+                if index%2 == 0:
+                    taglist = ("even" + spectrum.status, "even")
+                else:
+                    taglist = ("odd" + spectrum.status, "odd")
+                index += 1
+                isGlycopeptide = "no"
+                if spectrum.isGlycopeptide:
+                    isGlycopeptide = "yes"
+                name = spectrum.nativeId
+                if self.model.timescale == "minutes":
+                    rt = round(spectrum.rt/60.0, 2)
+                else:
+                    rt = round(spectrum.rt, 1)
+                #itemSpectra = self.tree.insert("" , "end", text=name,
+                itemSpectra = self.tree.insert("", "end", text=feature.index,
+                                               values=(spectrum.index,
+                                                       rt,
+                                                       round(spectrum.precursorMass, 4),
+                                                       spectrum.precursorCharge,
+                                                       round(spectrum.logScore, 2),
+                                                       isGlycopeptide,
+                                                       spectrum.status),
+                                               tags=taglist)
+                self.treeIds[itemSpectra] = (spec, spectrum)
         # apply possible sorting
         if not "NotebookScoring" in analysis.sorting:
             analysis.sorting["NotebookScoring"] = ("#0", False)

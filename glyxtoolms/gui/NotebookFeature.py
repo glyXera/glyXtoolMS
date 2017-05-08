@@ -123,6 +123,9 @@ class NotebookFeature(ttk.Frame):
 
         scrollbar.config(command=self.spectrumTree.yview)
         self.spectrumTree.bind("<<TreeviewSelect>>", self.clickedSpectrumTree)
+        
+    #def seeItem(self, feature):
+        
     
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)

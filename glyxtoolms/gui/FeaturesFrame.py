@@ -86,6 +86,11 @@ class NotebookFeature(ttk.Frame):
         self.featureTree.bind("<Right>", self.goRight)
         
         self.model.registerClass("NotebookFeature",self)
+
+    
+    def seeItem(self, feature):
+        itemId = self.featureItems[feature.getId()]
+        self.featureTree.see(itemId)
         
     def setHeadingNames(self):
         
@@ -152,6 +157,8 @@ class NotebookFeature(ttk.Frame):
                 self.aMenu.unpost()
         except:
             pass
+
+        
             
     def copyToClipboard(self, *arg, **args):
         # get active columns
