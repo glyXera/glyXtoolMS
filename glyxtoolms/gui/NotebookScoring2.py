@@ -50,6 +50,7 @@ class NotebookScoring(ttk.Frame):
 
         self.treeIds = {}
         self.specToId = {}
+        self.notify = True
 
         # treeview style
         self.tree.tag_configure('oddUnknown', background='Moccasin')
@@ -79,17 +80,24 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("h", lambda e: self.setStatus("PoorGlycopeptide"))
         self.tree.bind("m", lambda e: self.setStatus("PoorNonGlycopeptide"))
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
-
+        
         self.model.registerClass("NotebookScoring", self)
         
     def seeItem(self, feature):
         spectra = feature.spectra
-        self.tree.selection_set(())
+        self.notify = False
         itemIds = []
         for spectrum in spectra:
             spectrumId = self.specToId[str(spectrum.index) + "-" + str(feature.index)]
             self.tree.see(spectrumId)
-            self.tree.selection_add(spectrumId)
+            itemIds.append(spectrumId)
+        #self.update()
+        self.tree.selection_set(tuple(itemIds))
+        self.update()
+        self.notify = True
+        
+    
+        
 
     def setStatus(self,status):
         # get currently active hit
@@ -288,10 +296,20 @@ class NotebookScoring(ttk.Frame):
         self.sortColumn(sortingColumn)
 
     def clickedTree(self, event):
+        if self.notify == False:
+            return
         selection = self.tree.selection()
         if len(selection) == 0:
             return
         item = selection[0]
+        
+        # init Oxonium Plot
+        spectra = []
+        for item in selection:
+            spec, spectrum = self.treeIds[item]
+            spectra.append(spectrum)
+            self.model.classes["OxoniumIonPlot"].init(spectra=spectra)
+        
         spec, spectrum = self.treeIds[item]
 
         # make calculations
@@ -299,12 +317,8 @@ class NotebookScoring(ttk.Frame):
 
         # init spectrum view
         self.model.classes["SpectrumView"].initSpectrum(ms2)
-        spectra = []
-        for item in selection:
-            spec, spectrum = self.treeIds[item]
-            spectra.append(spectrum)
-        if "OxoniumIonPlot" in self.model.classes:
-            self.model.classes["OxoniumIonPlot"].init(spectra=spectra)
+        
+
 
     def setSelectedSpectrum(self, index):
         for itemSpectra in self.treeIds:

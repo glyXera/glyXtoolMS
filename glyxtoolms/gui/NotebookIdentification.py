@@ -382,11 +382,12 @@ class NotebookIdentification(TreeTable.TreeTable):
         if len(selection) == 1:
             item = selection[0]
             hit = self.treeIds[item]
+            self.model.classes["NotebookScoring"].seeItem(hit.feature)
             self.model.classes["NotebookFeature"].plotSelectedFeatures([hit.feature], hit)
             self.model.classes["NotebookFeature"].seeItem(hit.feature)
             self.model.classes["PeptideCoverageFrame"].init(hit)
-            self.model.classes["NotebookScoring"].seeItem(hit.feature)
             
+            self.update()
             if "OxoniumIonPlot" in self.model.classes:
                 self.model.classes["OxoniumIonPlot"].init(identifications=[hit])
         else:
