@@ -5,6 +5,7 @@ Panel to set Filteroptions for all Data
 import Tkinter
 import ttk
 import glyxtoolms
+import re
 
 class FilterPanel(Tkinter.Toplevel):
 
@@ -207,6 +208,9 @@ class FilterEntry(ttk.Frame):
         
         self.assisted1 = InteractiveEntry(self, self.field1Var)
         self.assisted1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
+        
+        self.range1 = RangeEntry(self, self.field1Var)
+        self.range1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
     
         self.operatorVar = Tkinter.StringVar(self)
         self.operatorVar.trace("w", self.valuesChanged)
@@ -225,6 +229,9 @@ class FilterEntry(ttk.Frame):
         
         self.assisted2 = InteractiveEntry(self, self.field2Var)
         self.assisted2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
+        
+        #self.range2 = RangeEntry(self, self.field1Var)
+        #self.range2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
         
         if definedFilter != None:
             self.currentFilter = definedFilter
@@ -294,26 +301,37 @@ class FilterEntry(ttk.Frame):
             self.options1.grid_remove()
             self.assisted1.grid_remove()
             self.assisted1.setVisible(False)
+            self.range1.grid_remove()
         elif self.currentFilter.type1 == FieldTypes.ENTRY:
             self.entry1.grid()
             self.options1.grid_remove()
             self.assisted1.grid_remove()
             self.assisted1.setVisible(False)
+            self.range1.grid_remove()
             self.field1Var.set(self.currentFilter.field1)
         elif self.currentFilter.type1 == FieldTypes.MENU:
             self.entry1.grid_remove()
             self.options1.grid()
             self.assisted1.grid_remove()
             self.assisted1.setVisible(False)
+            self.range1.grid_remove()
             self.setMenuChoices(self.options1,self.currentFilter.choices1, self.field1Var)
             self.field1Var.set(self.currentFilter.field1)           
         elif self.currentFilter.type1 == FieldTypes.ASSISTED:
             self.entry1.grid_remove()
             self.options1.grid_remove()
+            self.range1.grid_remove()
             self.assisted1.grid()
             self.assisted1.all_choices = self.currentFilter.choices1
             self.field1Var.set(self.currentFilter.field1)
             self.assisted1.setVisible(True)
+        elif self.currentFilter.type1 == FieldTypes.RANGE:
+            self.entry1.grid_remove()
+            self.options1.grid_remove()
+            self.assisted1.grid_remove()
+            self.assisted1.setVisible(False)
+            self.range1.setFieldValue(self.currentFilter.field1)
+            self.range1.grid()
         else:
             raise Exception("Unknown FieldType!")
 
@@ -366,6 +384,90 @@ class FilterEntry(ttk.Frame):
             self.source.remove(self.currentFilter)
         return
         
+class RangeEntry(Tkinter.Frame):
+    
+    def setChoice(self, value):
+        if self.keepTrace == False:
+            return
+        self.menubutton["text"] = value
+        self.valuesChanged()
+    
+    def __init__(self, master, var):
+        Tkinter.Frame.__init__(self, master=master)
+        self.fieldVar = var
+        self.v1 = Tkinter.StringVar()
+        self.e1 = Tkinter.Entry(self, textvariable=self.v1, width=8)
+        self.e1.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        self.menubutton = Tkinter.Menubutton(self, text=" - ", relief="raised")
+        self.menubutton.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        self.rowconfigure(0,weight=1)
+        self.menubutton.menu = Tkinter.Menu(self.menubutton, tearoff=0)
+        self.menubutton["menu"] = self.menubutton.menu
+        self.menubutton.menu.add_command(label=" - ", command=lambda x=" - ": self.setChoice(x))
+        self.menubutton.menu.add_command(label="+/-", command=lambda x="+/-": self.setChoice(x))
+
+        self.v2 = Tkinter.StringVar()
+        self.e2 = Tkinter.Entry(self, textvariable=self.v2, width=8)
+        self.e2.grid(row=0, column=3, sticky=("N", "W", "E", "S"))
+        self.keepTrace = True
+        self.v1.trace("w", self.valuesChanged)
+        self.v2.trace("w", self.valuesChanged)
+        
+    def valuesChanged(self, *args):
+
+        if self.menubutton["text"] == " - ":
+            text = ""
+            try:
+                value = self.v1.get()
+                text += str(float(value))
+                self.e1.config(bg="grey")
+            except:
+                self.e1.config(bg="red")
+            text += "-"
+            try:
+                value = self.v2.get()
+                text += str(float(value))
+                self.e2.config(bg="grey")
+            except:
+                self.e2.config(bg="red")
+        else:
+            text = ""
+            try:
+                value = self.v1.get()
+                float(value)
+                text += value
+                self.e1.config(bg="grey")
+            except:
+                self.e1.config(bg="red")
+            text += "+/-"
+            try:
+                content = self.v2.get()
+                m1 = re.match("^\d+\.?\d*(\W*| ppm| Da)$",content)
+                assert m1 is not None
+                m2 = re.match("^\d+\.?\d*\W*",content)
+                value = float(m2.group())
+                typ = content[m2.end():]
+                assert typ in ["", "Da", "ppm"]
+                if typ == "":
+                    typ = "Da"
+                text += str(value) + " "+typ
+                self.e2.config(bg="grey")
+            except:
+                self.e2.config(bg="red")
+        self.fieldVar.set(text)
+        
+    def setFieldValue(self, fieldValue):
+        self.keepTrace = False
+        if "+/-" in fieldValue:
+            a,b = fieldValue.split("+/-")
+            self.menubutton["text"] = "+/-"
+        else:
+            a,b = fieldValue.split("-")
+            self.menubutton["text"] = " - "
+        self.v1.set(a.strip())
+        self.v2.set(b.strip())
+        self.keepTrace = True
+
 class InteractiveEntry(Tkinter.Entry):
     def __init__(self, master, var):
         Tkinter.Entry.__init__(self, master=master, textvariable=var)
@@ -467,6 +569,7 @@ class FieldTypes:
     ENTRY=2
     MENU=3
     ASSISTED=4
+    RANGE=5 # dropdown menu with "-" and "+/-"
 
 class Filter(object):
     
@@ -502,19 +605,25 @@ class Filter(object):
         raise Exception("overwrite this function!")
     
     def parseFloatRange(self, string):
-        if not "-" in string:
-            raise Exception("please provide a range")
-        
-        sp = string.replace(" ", "").split("-")
-        if len(sp) != 2:
-            raise Exception("use only one '-'")
-        a,b = sp
-        try:
-            a = float(a)
-            b = float(b)
+        m1 = re.match("^\d+\.?\d*\W*-\W*\d+\.?\d*$",string)
+        m2 = re.match("^\d+\.?\d*\W*\+/-\W*\d+\.?\d*\W*(Da|ppm)$",string)
+        if m1 is not None:
+            a,b = string.replace(" ", "").split("-")
+            return float(a), float(b)
+        elif m2 is not None:
+            x,y = string.replace(" ", "").split("+/-")
+            x = float(x)
+            if "Da" in y:
+                y = float(y[:-2])
+                a = x - y
+                b = x + y
+            else:
+                y = float(y[:-3])
+                a = x - x*1E-6
+                b = x + x*1E-6
             return a,b
-        except:
-            raise Exception("cannot convert to number")
+        else:
+            raise Exception("Foo")
             
     def parseFloat(self,string):
         try:
@@ -638,12 +747,12 @@ class GlycopeptideMass_Filter(Filter):
 class Fragmentmass_Filter_Identification(Filter):
     def __init__(self):
         super(Fragmentmass_Filter_Identification, self).__init__("Fragmentmass")
-        self.field1 = "0 - 1"
-        self.type1 = FieldTypes.ENTRY
-        self.field2 = "0 - 1"
+        self.field1 = "0+/-1 ppm"
+        self.type1 = FieldTypes.RANGE
+        self.field2 = "0"
         self.type2 = FieldTypes.ENTRY
         self.operatorChoices = ["=", "<", ">"]
-        self.operator = "="
+        self.operator = ">"
         self.lowIntensity = 0
         self.highIntensity = 0
         self.intensity = 0
@@ -657,7 +766,8 @@ class Fragmentmass_Filter_Identification(Filter):
             self.lowMass, self.highMass = a, b
         else:
              self.lowMass, self.highMass = b, a
-        self.field1 = str(self.lowMass) + " - " + str(self.highMass)
+        self.field1 = field1
+        #self.field1 = str(self.lowMass) + " - " + str(self.highMass)
         
     def parseField2(self,field2):
         if self.operator == "=":
@@ -698,12 +808,12 @@ class Fragmentmass_Filter_Identification(Filter):
 class Fragmentmass_Filter_Feature(Filter):
     def __init__(self):
         super(Fragmentmass_Filter_Feature, self).__init__("Fragmentmass")
-        self.field1 = "0 - 1"
-        self.type1 = FieldTypes.ENTRY
-        self.field2 = "0 - 1"
+        self.field1 = "0+/-1 ppm"
+        self.type1 = FieldTypes.RANGE
+        self.field2 = "0"
         self.type2 = FieldTypes.ENTRY
         self.operatorChoices = ["=", "<", ">"]
-        self.operator = "="
+        self.operator = ">"
         self.lowIntensity = 0
         self.highIntensity = 0
         self.intensity = 0
@@ -717,7 +827,7 @@ class Fragmentmass_Filter_Feature(Filter):
             self.lowMass, self.highMass = a, b
         else:
              self.lowMass, self.highMass = b, a
-        self.field1 = str(self.lowMass) + " - " + str(self.highMass)
+        self.field1 = field1
         
     def parseField2(self,field2):
         if self.operator == "=":
