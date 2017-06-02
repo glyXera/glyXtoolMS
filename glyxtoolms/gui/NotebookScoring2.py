@@ -308,8 +308,8 @@ class NotebookScoring(ttk.Frame):
         for item in selection:
             spec, spectrum = self.treeIds[item]
             spectra.append(spectrum)
+        if "OxoniumIonPlot" in self.model.classes:
             self.model.classes["OxoniumIonPlot"].init(spectra=spectra)
-        
         spec, spectrum = self.treeIds[item]
 
         # make calculations
