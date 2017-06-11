@@ -6,6 +6,8 @@ import os
 import pyperclip
 import glyxtoolms
 from glyxtoolms.gui import TreeTable
+from glyxtoolms.gui import TagEditorWindow
+
 
 
 class NotebookIdentification(TreeTable.TreeTable):
@@ -167,8 +169,16 @@ class NotebookIdentification(TreeTable.TreeTable):
     #        tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
     #        raise
         
-        
-        
+    def editTags(self, *arg, **args):
+        # get currently active hit
+        selection = self.tree.selection()
+        if len(selection) == 0:
+            return
+        hits = []
+        for item in selection:
+            hit  = self.treeIds[item]
+            hits.append(hit)
+        TagEditorWindow.TagEditorWindow(self, self.model, hits)
 
     def setStatus(self,status):
         # get currently active hit
@@ -209,6 +219,13 @@ class NotebookIdentification(TreeTable.TreeTable):
             self.aMenu.add_command(label="Set to Unknown",
                                    command=lambda x="Unknown": self.setStatus(x))
             self.aMenu.add_separator()
+            self.aMenu.add_command(label="Edit Tags",
+                       command=self.editTags)
+            #editmenu = Tkinter.Menu(self.aMenu, tearoff=0)
+            #self.aMenu.menus=[self.aMenu, editmenu]
+            #editmenu.add_command(label="Open")
+            #self.aMenu.add_cascade(label="Edit Tag", menu=editmenu)
+            self.aMenu.add_separator()
             self.aMenu.add_command(label="Copy to Clipboard",
                                    command=self.copyToClipboard)
         self.aMenu.post(event.x_root, event.y_root)
@@ -218,6 +235,7 @@ class NotebookIdentification(TreeTable.TreeTable):
     def removePopup(self,event):
         try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
             if self.focus_get() != self.aMenu:
+            #if self.focus_get() not in self.aMenu.menus:
                 self.aMenu.unpost()
         except:
             pass # Brrrr

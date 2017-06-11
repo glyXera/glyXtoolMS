@@ -1,3 +1,5 @@
+import Tkinter
+
 class PlotOptionsFrame(Tkinter.Toplevel):
 
     def __init__(self, master, model):

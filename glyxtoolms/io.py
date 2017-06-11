@@ -386,6 +386,7 @@ class GlyxXMLFile(object):
         self.spectra = []
         self.features = []
         self.glycoModHits = []
+        self.all_tags = set()
         self._version_ = "0.1.2" # current version
         self.version = self._version_ # will be overwritten by file
         self.toolValueDefaults = {}
@@ -706,6 +707,7 @@ class GlyxXMLFile(object):
             if self.version > "0.1.1":
                 self._parseTags(xmlHit, hit)
                 self._parseToolValues(xmlHit, hit, toolValueDefaults)
+                self.all_tags = self.all_tags.union(hit.tags)
             hits.append(hit)
         return hits
 
