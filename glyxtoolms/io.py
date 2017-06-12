@@ -979,7 +979,7 @@ class PeptideModification(object):
     def _parse(self, xmlModification, peptide=None):
         if peptide != None:
             self.peptide = peptide
-        self.name = xmlModification.find("./name").text
+        self.name = xmlModification.find("./name").text.upper() # Fix Cys_CAM bug
         self.position = int(xmlModification.find("./position").text)
         if self.position != -1:
             return
