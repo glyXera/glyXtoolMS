@@ -111,6 +111,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
     def initCanvas(self, keepZoom=False):
         super(AnnotatedPlot, self).initCanvas(keepZoom)
         if self.rulerbutton.active.get() == True:
+            #self.sidepanel.panels["ruler"].currentAnnotation = None
             self.sidepanel.panels["ruler"].update()
         
     def rulerToggled(self, *arg, **args):
@@ -1204,6 +1205,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.framePlot.removeAnnotation(self.currentAnnotation)
 
     def update(self):
+        self.currentAnnotation = None
         self.frameSeries.clear()
         for seriesName in self.framePlot.annotations:
             series = self.framePlot.annotations[seriesName]
@@ -1277,6 +1279,9 @@ class AnnotationSidePanel(Tkinter.Frame, object):
     def buildMenu(self):
         if self.currentAnnotation == None:
             return
+        #if self.currentAnnotation.series not in self.framePlot.annotations:
+        #    self.currentAnnotation = None
+        #    return
         series = self.framePlot.annotations[self.currentAnnotation.series]
         self.mb.menu.delete(0,"end")
         
