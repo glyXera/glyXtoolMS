@@ -6,6 +6,30 @@ import os
 import tkFileDialog
 import glyxtoolms
 
+def parseFragmentname(name, length):
+    match = re.match(r"^y\d+$", name)
+    if match is not None:
+        pos = length-int(match.group()[1:])
+        return {"type":"y", "start":pos, "end":length}
+    match = re.match(r"^y\d+", name)
+    if match is not None:
+        pos = length-int(match.group()[1:])
+        return {"type":"yinternal", "start":pos, "end":length}
+    match = re.match(r"^b\d+$", name)
+    if match is not None:
+        pos = int(match.group()[1:])
+        return {"type":"b", "start":0, "end":pos}
+    match = re.match(r"^b\d+", name)
+    if match is not None:
+        pos = int(match.group()[1:])
+        return {"type":"binternal", "start":0, "end":pos}
+    match = re.match(r"^y\d+b\d+", name)
+    if match is not None:
+        start, end = match.group()[1:].split("b")
+        return {"type":"yb", "start":start, "end":end}
+    return None
+    
+
 def parseInternalFragment(name, length):
     match = re.match(r"^y\d+b\d+", name)
     if match == None:
@@ -269,26 +293,44 @@ class PeptideCoverageFrame(Tkinter.Frame):
                 key = "".join(sorted(name))
                 parts[key] = parts.get(key, []) + [name]
 
-        ySeries = set()
-        bSeries = set()
+        ySeries = {}
+        bSeries = {}
         self.fragmentCoverage = {}
         
         restNames = []
         for name in self.hit.fragments:
-            y, b = parseInternalFragment(name, peptideLength)
-            if y == None:
-                y, b = parseBFragment(name)
-            else: # ignore internal fragments
+            if self.hit.fragments[name].get("type", "") != "peptide":
                 continue
-            if y == None:
-                y, b = parseYFragment(name, peptideLength)
-            if y == None:
+            result = parseFragmentname(name, peptideLength)
+            if result == None:
                 restNames.append(name)
                 continue
-            ySeries.add(y)
-            bSeries.add(b)
-            key_y = "y" + str(y)
-            key_b = "b" + str(b)
+            
+            start = result["start"]
+            end = result["end"]
+            typ = result["type"]
+            #y, b = parseInternalFragment(name, peptideLength)
+            #if y == None:
+            #    y, b = parseBFragment(name)
+            #else: # ignore internal fragments
+            #    continue
+            #if y == None:
+            #    y, b = parseYFragment(name, peptideLength)
+            #if y == None:
+            #    restNames.append(name)
+            #    continue
+            if typ == "y":
+                ySeries[start] = True
+            elif typ == "yinternal" and start not in ySeries:
+                ySeries[start] = False
+                
+            if typ == "b":
+                bSeries[end] = True
+            elif typ == "binternal" and end not in bSeries:
+                bSeries[end] = False
+                
+            key_y = "y" + str(start)
+            key_b = "b" + str(end)
             self.fragmentCoverage[key_y] = self.fragmentCoverage.get(key_y, []) + [name]
             self.fragmentCoverage[key_b] = self.fragmentCoverage.get(key_b, []) + [name]
         
@@ -296,14 +338,14 @@ class PeptideCoverageFrame(Tkinter.Frame):
         
         # remove 0 and len
         if 0 in ySeries:
-            ySeries.remove(0)
+            ySeries.pop(0)
         if 0 in bSeries:
-            bSeries.remove(0)
+            bSeries.pop(0)
 
         if peptideLength in ySeries:
-            ySeries.remove(peptideLength)
+            ySeries.pop(peptideLength)
         if peptideLength in bSeries:
-            bSeries.remove(peptideLength)
+            bSeries.pop(peptideLength)
             
 
         # write peptide sequence
@@ -343,14 +385,20 @@ class PeptideCoverageFrame(Tkinter.Frame):
         for index in ySeries:
             x = start + (index-0.5)*letterSize
             color = "black"
+            if ySeries[index] == True:
+                dash = ()
+            else:
+                dash=(3,5)
             
             item1 = self.canvas.create_line(x, yc,
                                             x, 20,
                                             tags=("site", ),
+                                            dash=dash,
                                             fill=color)
             item2 = self.canvas.create_line(x, 20,
                                             x+10, 20,
                                             tags=("site", ),
+                                            dash=dash,
                                             fill=color)
             item3 = self.canvas.create_text((x+5, 10),
                                             text="y"+str(len(text)-index), 

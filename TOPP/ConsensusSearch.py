@@ -39,6 +39,7 @@ def main(options):
         feature = hit.feature
         hit.fragments = {}
         result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(hit.peptide,
+                                                                       hit.glycan,
                                                                        feature.consensus, 
                                                                        tolerance, 
                                                                        feature.getCharge())

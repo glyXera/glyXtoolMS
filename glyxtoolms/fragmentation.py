@@ -233,8 +233,61 @@ def generatePeptideFragments(peptide):
 
     return data
 
+def generateGlycanFragments(glycan):
+    return
 
-def annotateSpectrumWithFragments(peptide, spectrum, tolerance, maxCharge):
+def annotateIdentification(hit, tolerance):
+    
+    # helper function to calculate charged ion masses
+    def calcChargedMass(singlyChargedMass,charge):
+        mass = singlyChargedMass+(charge-1)*glyxtoolms.masses.MASS["H"]
+        return mass/float(charge)
+    
+    feature = hit.feature
+    maxCharge = feature.getCharge()
+    result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(hit.peptide,
+                                                                   hit.glycan,
+                                                                   feature.consensus, 
+                                                                   tolerance, 
+                                                                   maxCharge)
+    fragments = result["fragments"]
+    
+    
+    # calc immonium ions
+    immIons = {}
+    for aminoacid in hit.peptide.sequence: # TODO: account for modifications
+        comp = glyxtoolms.fragmentation.Composition() + glyxtoolms.masses.COMPOSITION[aminoacid]
+        comp = comp + {"C":-1, "O":-2, "H":-1}
+        immIons[aminoacid+"+"] = comp.mass()
+        
+    
+    
+    # create composition subsets according to glycan type
+    comb = []
+    keys = [key for key in hit.glycan.sugar.keys() if hit.glycan.sugar[key] > 0]
+    for key in keys:
+        comb.append(range(0,hit.glycan.sugar[key]+1))
+
+    glycans = []
+
+    for ii in itertools.product(*comb):
+        g = glyxtoolms.lib.Glycan()
+        composition = dict(zip(keys, ii))
+        g.setComposition(**composition)
+        glycans.append(g)
+        #if isNGlycan == False or g.checkComposition() == True:
+        #    glycans.append(g)
+
+    glycanIons = {}
+    pepIon = hit.peptide.mass+glyxtoolms.masses.MASS["H+"]
+    for charge in range(1, maxCharge):
+        for g in glycans:
+            mass = calcChargedMass(pepIon+g.mass,charge)
+            glycanIons[g.toString()+"("+str(charge)+"H+)"] = (mass,charge)
+            
+    
+
+def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharge):
 
     # helper function to search masses in a spectrum
     def searchMassInSpectrum(mass,tolerance,spectrum):

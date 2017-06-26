@@ -220,6 +220,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         if self.peptide == None:
             return
         result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(self.peptide,
+                                                                       self.glycan,
                                                                        self.feature.consensus, 
                                                                        tolerance, 
                                                                        self.feature.getCharge())

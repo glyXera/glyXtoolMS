@@ -664,14 +664,18 @@ class GlyxXMLFile(object):
                 xmlFragmentName = ET.SubElement(xmlFragment, "name")
                 xmlFragmentName.text = fragmentname
 
-                xmlFragmentSequence = ET.SubElement(xmlFragment, "sequence")
-                xmlFragmentSequence.text = fragments[fragmentname]["sequence"]
+                if "sequence" in fragments[fragmentname]:
+                    xmlFragmentSequence = ET.SubElement(xmlFragment, "sequence")
+                    xmlFragmentSequence.text = fragments[fragmentname]["sequence"]
 
                 xmlFragmentMass = ET.SubElement(xmlFragment, "mass")
                 xmlFragmentMass.text = str(fragments[fragmentname]["mass"])
 
                 xmlFragmentCounts = ET.SubElement(xmlFragment, "counts")
                 xmlFragmentCounts.text = str(fragments[fragmentname]["counts"])
+                
+                xmlFragmentType = ET.SubElement(xmlFragment, "type")
+                xmlFragmentType.text = str(fragments[fragmentname]["type"])
 
 
     def _parseGlycoModHits(self, xmlGlycoModHits, toolValueDefaults={}):
@@ -698,9 +702,19 @@ class GlyxXMLFile(object):
                 for xmlfragment in xmlHit.findall("./fragments/fragment"):
                     fragment = {}
                     fragmentname = xmlfragment.find("./name").text
-                    fragment["sequence"] = xmlfragment.find("./sequence").text
+                    seq = xmlfragment.find("./sequence")
+                    if seq != None:
+                        fragment["sequence"] = seq.text
+                    else:
+                        fragment["sequence"] = ""
                     fragment["mass"] = float(xmlfragment.find("./mass").text)
                     fragment["counts"] = float(xmlfragment.find("./counts").text)
+                    typ = xmlfragment.find("./type")
+                    if typ == None:
+                        fragment["type"] = "peptide"
+                    else:
+                        fragment["type"] = xmlfragment.find("./type").text
+                        
                     hit.fragments[fragmentname] = fragment
             if self.version > "0.0.5":
                 hit.status = xmlHit.find("./status").text
@@ -1002,7 +1016,10 @@ class PeptideModification(object):
         for mod in self.peptide.modifications:
             if mod.position > -1:
                 occupied.add(mod.position)
-        targets = glyxtoolms.masses.PROTEINMODIFICATION[self.name]["targets"]
+        if "targets" in glyxtoolms.masses.PROTEINMODIFICATION[self.name]:
+            targets = glyxtoolms.masses.PROTEINMODIFICATION[self.name]["targets"]
+        else:
+            targets = glyxtoolms.masses.AMINOACID.keys()
         positions = set()
         for pos, amino in enumerate(self.peptide.sequence):
             if pos in occupied:

@@ -584,9 +584,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
         if hexnac >= 2 and hexose >= 3:
             return True
         return False
-
-
-
+    
 
 # --------------------------- Helper functions ------------------------------------
 
