@@ -88,9 +88,14 @@ class DataModel(object):
             family,size  = string.split(",")
             return tkFont.Font(family=family,size=int(size))
             
+        def stringToBool(string):
+            if string == "False":
+                return False
+            return True
+            
         # register converters for options
         registerFunction(self, "font", fontToString, stringToFont)
-        registerFunction(self, "show", str, bool)
+        registerFunction(self, "show", str, stringToBool)
         registerFunction(self, "left", str, int)
         registerFunction(self, "right", str, int)
         registerFunction(self, "bottom", str, int)
@@ -98,11 +103,11 @@ class DataModel(object):
         registerFunction(self, "labelcolor", str, str)
         registerFunction(self, "oxcolor", str, str)
         registerFunction(self, "pepcolor", str, str)
-        registerFunction(self, "shownames", str, bool)
-        registerFunction(self, "showmasses", str, bool)
-        registerFunction(self, "showox", str, bool)
-        registerFunction(self, "showpep", str, bool)
-        registerFunction(self, "showpicto", str, bool)
+        registerFunction(self, "shownames", str, stringToBool)
+        registerFunction(self, "showmasses", str, stringToBool)
+        registerFunction(self, "showox", str, stringToBool)
+        registerFunction(self, "showpep", str, stringToBool)
+        registerFunction(self, "showpicto", str, stringToBool)
         
         
     def runFilters(self): # check filters

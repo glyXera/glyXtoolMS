@@ -45,7 +45,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
     
     def createOptions(self, optionsFrame):
         def toggleVisbility(a,b,c,varname, var):
-            self.options["Annotations"][varname] = var.get()
+            self.options["annotations"][varname] = var.get()
             self._paintCanvas(False)
             
         super(ConsensusSpectrumFrame, self).createOptions(optionsFrame)
@@ -58,7 +58,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         c = Appearance.Checkbutton(frame, text="Show Names", variable=nameVar)
         c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
         frame.row += 1
-        nameVar.trace("w", lambda a,b,c,d="showNames",e=nameVar: toggleVisbility(a,b,c,d,e))
+        nameVar.trace("w", lambda a,b,c,d="shownames",e=nameVar: toggleVisbility(a,b,c,d,e))
         
         massVar = Tkinter.BooleanVar()
         massVar.set(self.options["annotations"]["showmasses"])
@@ -66,7 +66,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         c = Appearance.Checkbutton(frame, text="Show Mass Labels", variable=massVar)
         c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
         frame.row += 1
-        massVar.trace("w", lambda a,b,c,d="showMasses",e=massVar: toggleVisbility(a,b,c,d,e))
+        massVar.trace("w", lambda a,b,c,d="showmasses",e=massVar: toggleVisbility(a,b,c,d,e))
         
         oxVar = Tkinter.BooleanVar()
         oxVar.set(self.options["annotations"]["showox"])
@@ -74,7 +74,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         c = Appearance.Checkbutton(frame, text="Highlight Oxonium Ions and Losses", variable=oxVar)
         c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
         frame.row += 1
-        oxVar.trace("w", lambda a,b,c,d="showOx",e=oxVar: toggleVisbility(a,b,c,d,e))
+        oxVar.trace("w", lambda a,b,c,d="showox",e=oxVar: toggleVisbility(a,b,c,d,e))
         
         pepVar = Tkinter.BooleanVar()
         pepVar.set(self.options["annotations"]["showpep"])
