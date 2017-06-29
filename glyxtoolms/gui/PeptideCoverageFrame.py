@@ -299,7 +299,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
         
         restNames = []
         for name in self.hit.fragments:
-            if self.hit.fragments[name].get("type", "") != "peptide":
+            if self.hit.fragments[name].get("type", "") not in ["peptide", "pep", "yb", "y", "b"]:
                 continue
             result = parseFragmentname(name, peptideLength)
             if result == None:
