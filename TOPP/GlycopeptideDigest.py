@@ -84,8 +84,11 @@ def main(options):
     allGlycopeptides = []
     for fastaEntry in fastaData:
         protein = glyxtoolms.lib.Protein()
-        
-        protein.loadFromFasta(fastaEntry.identifier,fastaEntry.description,fastaEntry.sequence)
+        try:
+            protein.loadFromFasta(fastaEntry.identifier,fastaEntry.description,fastaEntry.sequence)
+        except:
+            print "could not read " + fastaEntry.identifier
+            continue
         parameters.proteins.append(protein)
         proteinDigest.newDigest(protein)
         # call digest functions to set cleavage sites
