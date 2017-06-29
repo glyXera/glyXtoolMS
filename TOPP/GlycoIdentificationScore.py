@@ -37,9 +37,9 @@ def calcScore(hit, options):
     else:
         scoreNeuAc = (1+("(NeuAc)1(H+)1" not in ions))/2.0
     if hit.glycan.sugar.get("DHEX",0) > 0:
-        scoreFuc = (1+("(dHex)1(H+)1" in ions) + ("(HexNAc)1(Hex)1(dHex)1(H+)1" in ions))/3.0
+        scoreFuc = (1 + ("(HexNAc)1(Hex)1(dHex)1(H+)1" in ions))/2.0
     else:
-        scoreFuc = (1+("(dHex)1(H+)1" not in ions) + ("(HexNAc)1(Hex)1(dHex)1(H+)1" not in ions))/3.0
+        scoreFuc = (1+ ("(HexNAc)1(Hex)1(dHex)1(H+)1" not in ions))/2.0
     
     # sanitize peptide length
     length = float(len(hit.peptide.sequence))-1
@@ -48,17 +48,29 @@ def calcScore(hit, options):
     
     # calc score
     score = 1.0
+    all_scores = {}
     if options.scorePepFrag == "true":
-        score = score*(len(y)/length+len(b)/length)/2.0 
+        score1 = (len(y)/length+len(b)/length)/2.0
+        score = score*score1
+        all_scores["scorePepFrag"] = score1
     if options.scorePep == "true":
-        score = score*(1+pep)/2.0
+        score2 = (1+pep)/2.0
+        score = score*score2
+        all_scores["scorePep"] = score2
     if options.scorePepNH3 == "true":
-        score = score*(1+pepNH3)/2.0
+        score3 = (1+pepNH3)/2.0
+        score = score*score3
+        all_scores["scorePepNH3"] = score3
     if options.scorePepHEXNAC == "true":
-        score = score*(1+pepHexNAc)/2.0
+        score4 = (1+pepHexNAc)/2.0
+        score = score*score4
+        all_scores["scorePepHEXNAC"] = score4
     if options.scoreOxonium == "true":
-        score = score*scoreNeuAc*scoreFuc
-    return score
+        score5 = scoreNeuAc*scoreFuc
+        score = score*score5
+        all_scores["scoreOxonium"] = score5
+        
+    return score, all_scores
 
 def handle_args(argv=None):
     import argparse
@@ -87,15 +99,37 @@ def main(options):
     glyML = glyxtoolms.io.GlyxXMLFile()
     glyML.readFromFile(options.infile)
     
-    glyML.addToolValueDefault("identScore", 0.0)
+    # add scores
+    glyML.addToolValueDefault("scoreTotal", 0.0)
+    if options.scorePepFrag == "true":
+        glyML.addToolValueDefault("scorePepFrag", 0.0)
+    if options.scorePep == "true":
+        glyML.addToolValueDefault("scorePep", 0.0)
+    if options.scorePepNH3 == "true":
+        glyML.addToolValueDefault("scorePepNH3", 0.0)
+    if options.scorePepHEXNAC == "true":
+        glyML.addToolValueDefault("scorePepHEXNAC", 0.0)
+    if options.scoreOxonium == "true":
+        glyML.addToolValueDefault("scoreOxonium", 0.0)
     newhits = []
     N_removed = 0
     for h in glyML.glycoModHits:
-        score = calcScore(h, options)
+        score, all_scores = calcScore(h, options)
         if score <= cutoff:
             N_removed += 1
             continue
-        h.toolValues["identScore"] = score
+        h.toolValues["scoreTotal"] = score
+        if options.scorePepFrag == "true":
+            h.toolValues["scorePepFrag"] = all_scores["scorePepFrag"]
+        if options.scorePep == "true":
+            h.toolValues["scorePep"] = all_scores["scorePep"]
+        if options.scorePepNH3 == "true":
+            h.toolValues["scorePepNH3"] = all_scores["scorePepNH3"]
+        if options.scorePepHEXNAC == "true":
+            h.toolValues["scorePepHEXNAC"] = all_scores["scorePepHEXNAC"]
+        if options.scoreOxonium == "true":
+            h.toolValues["scoreOxonium"] = all_scores["scoreOxonium"]
+        
         newhits.append(h)
     print "removed " + str(N_removed) + " identifications with a score lower than " + str(cutoff) + " from " + str(len(glyML.glycoModHits)) + " total identifications."
     glyML.glycoModHits = newhits
