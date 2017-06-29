@@ -621,7 +621,6 @@ class Filter(object):
                 y = float(y[:-3])
                 a = x - x*y*1E-6
                 b = x + x*y*1E-6
-                print x, y, a, b
             return a,b
         else:
             raise Exception("Foo")
