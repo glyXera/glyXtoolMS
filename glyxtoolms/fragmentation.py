@@ -355,7 +355,7 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
             fragment["mass"] = fragmentmass
             fragment["sequence"] = fragmentsequence
             fragment["counts"] = peak.y
-            fragment["typ"] = typ
+            fragment["type"] = typ
             found_fragments[fragmentkey] = fragment
         
         # check if peptide variant has highest fragment count
