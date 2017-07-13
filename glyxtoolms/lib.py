@@ -101,8 +101,8 @@ class Protein(object):
         self.sequence = re.sub(r"\(.+?\)", "", sequence)
         # check aminoacids and modifications
         try:
-            for s in self.sequence:
-                assert s in glyxtoolms.masses.AMINOACID
+            #for s in self.sequence:
+            #    assert s in glyxtoolms.masses.AMINOACID
             for name, amino, pos in self.modifications:
                 assert name in glyxtoolms.masses.PROTEINMODIFICATION
         except KeyError:
@@ -409,6 +409,7 @@ class ProteinDigest(object):
                           OGlycosylation=False):
 
         # generate list of glycosylationsites
+        sitesType = {}
         sites = []
         if NGlycosylation == True:
             for match in re.finditer(r"(?=(N[^P](S|T)))", self.protein.sequence):
@@ -417,9 +418,13 @@ class ProteinDigest(object):
             for match in re.finditer(r"(?=(S|T))", self.protein.sequence):
                 sites.append((match.start(), "O"))
         sites.sort()
+        for pos, typ in sites:
+            sitesType[typ] = sitesType.get(typ, 0) +1
+        print sitesType
 
         glycopeptides = []
         # b) search peptides with possible glycosylation site
+        aminoacids = set(glyxtoolms.masses.AMINOACID.keys())
         for peptide in peptides:
             glycopeptide = False
             for site, typ in sites:
@@ -427,7 +432,12 @@ class ProteinDigest(object):
                     peptide.glycosylationSites.append((site, typ))
                     glycopeptide = True
             if glycopeptide == True:
+                # check if unknown aminoacids are within peptide sequence
+                pepAminoAcids = set(peptide.sequence)
+                if len(pepAminoAcids.difference(aminoacids)) > 0:
+                    continue
                 glycopeptides += self.calcPeptideMasses(peptide)
+
         return glycopeptides
 
 # --------------------------------------- Glycan -----------------------

@@ -1399,9 +1399,9 @@ class XMLPeptideFile(object):
     def _writeParameters(self, xml):
         parameters = self.parameters
         xmlProteins = ET.SubElement(xml, "proteins")
-        for protein in parameters.proteins:
+        for proteinID in parameters.proteins:
             xmlProtein = ET.SubElement(xmlProteins, "proteinIdentifier")
-            xmlProtein.text = str(protein.identifier)
+            xmlProtein.text = proteinID
         xmlEnzymes = ET.SubElement(xml, "enzymes")
         xmlEnzymes.text = ", ".join(parameters.digestionEnzymes)
         glycosylations = []
@@ -1418,6 +1418,19 @@ class XMLPeptideFile(object):
         xmlmissedCleaveage.text = str(parameters.missedCleavages)
 
         return
+        
+    def _parseParameters(self, xmlParameters):
+        parameters = XMLPeptideParameters()
+        for xmlProtein in xmlParameters.findall("./proteins/proteinIdentifier"):
+            parameters.proteins.append(xmlProtein.text)
+        parameters.digestionEnzymes = xmlParameters.find("./enzymes").text.split(", ")
+        glycosylation = xmlParameters.find("./glycosylations").text.split(", ")
+        parameters.NGlycosylation = "N" in glycosylation
+        parameters.OGlycosylation = "O" in glycosylation
+        parameters.modifications = xmlParameters.find("./modifications").text.split(", ")
+        parameters.missedCleavages = int(xmlParameters.find("./missedCleaveage").text)
+        
+        return parameters
 
     def _writePeptides(self, xmlPeptides):
         for peptide in self.peptides:
@@ -1435,9 +1448,7 @@ class XMLPeptideFile(object):
 
         return peptides
 
-    def _parseParameters(self, xmlParameters):
-        parameters = XMLPeptideParameters()
-        return parameters
+
 
     def writeToFile(self, path):
         xmlRoot = ET.Element("xmlPeptides")

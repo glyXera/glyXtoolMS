@@ -89,7 +89,7 @@ def main(options):
         except:
             print "could not read " + fastaEntry.identifier
             continue
-        parameters.proteins.append(protein)
+        parameters.proteins.append(fastaEntry.identifier)
         proteinDigest.newDigest(protein)
         # call digest functions to set cleavage sites
         for digestFunc in digests:

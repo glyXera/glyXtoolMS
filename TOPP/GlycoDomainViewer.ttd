@@ -1,0 +1,39 @@
+<ttd>
+	<tool status="external">
+		<category>GlyxBox</category>
+		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
+		<type>GlycoDomainViewer</type>
+		// description of the wrapper
+		<external>
+      <text>
+        <onstartup>Startig GlyxBox - GlycoDomainViewer</onstartup>
+        <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
+        <onfinish>GlycoDomainViewer successful</onfinish>
+      </text>    
+		  // currently disregarded by TOPPAS, but might become useful
+		  <e_category>GlycoDomainViewer</e_category>
+		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
+		  <cloptions> "%1"/GlycoDomainViewer.py --in "%2" --out "%3"</cloptions>
+		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
+		  <path>{pythonpath}</path>
+      // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
+      // and thus starting the tool from somewhere else might actually lead to trouble
+      // use only real paths here (no placeholders like %TMP)
+      <workingdirectory>.</workingdirectory>
+		  // these mappings connect input parameters (from the 'ini_param' section below) and the command line options of your tool
+		  // any INI parameter can be referenced using %%'param_name', e.g. %%in
+		  // additionally you can use %TMP and %BASENAME[X] to get the current temp directory to store data, or the basename of X
+		  <mappings>
+			<mapping id="1" cl="%%scriptpath" />
+			<mapping id="2" cl="%%in" />
+			<mapping id="3" cl="%%out" />   
+		  </mappings>
+		  <ini_param>
+			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
+            <ITEM name="in" value="" type="string" tags="input file" restrictions="*.xml" description="File input - peptide file .xml"/>
+            <ITEM name="out" value="" type="string" tags="output file" restrictions="*.xml" description="File output - peptide file .xml"/>
+		  </ini_param>
+		</external>
+	</tool>
+</ttd>
+ 
