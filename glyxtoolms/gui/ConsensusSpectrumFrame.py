@@ -181,24 +181,23 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                         foundGlycan = ionname
                         break
 
-            foundPep = None
+            foundPep = []
             if self.options["annotations"]["showpep"] == True:
                 if self.hit != None:
                     for key in self.hit.fragments:
-                        if foundGlycan != None:
-                            break
                         if abs(self.hit.fragments[key]["mass"]-peak.x) < 0.1:
-                            foundPep = key
-                            break
-            if foundGlycan != None and foundPep != None:
+                            foundPep.append(key)
+
+            # sort peptide ions
+            if foundGlycan != None and len(foundPep) > 0:
                 color = self.options["annotations"]["oxcolor"]
-                annotationText.append((pMZ, pInt, foundGlycan+"\n"+foundPep, masstext))
+                annotationText.append((pMZ, pInt, "\n".join([foundGlycan]+foundPep), masstext))
             elif foundGlycan != None:
                 color = self.options["annotations"]["oxcolor"]
                 annotationText.append((pMZ, pInt, foundGlycan, masstext))
-            elif foundPep != None:
+            elif len(foundPep) > 0:
                 color = self.options["annotations"]["pepcolor"]
-                annotationText.append((pMZ, pInt, foundPep, masstext))
+                annotationText.append((pMZ, pInt, "\n".join(foundPep), masstext))
             else:
                 annotationMass.append((pMZ, pInt, "", masstext))
                 color = "black"
