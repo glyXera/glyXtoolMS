@@ -201,7 +201,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         colors = {"pep":"green", "b":"khaki", "b+m":"dark khaki", "y":"gray", "y+m":"slate gray"}
         for ionname in self.fragments:
             ion = self.fragments[ionname]
-            key = ion["typ"]
+            key = ion.get("typ", '')
             if key != "pep" and "(" in ion["sequence"]:
                 key +="+m"
             if key not in colors:
