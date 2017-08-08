@@ -57,7 +57,8 @@ def main(options):
     parameters.missedCleavages = missedCleavages
     findOGlycosylation = "O-Glycosylation" in options.glycosylation
     findNGlycosylation = "N-Glycosylation" in options.glycosylation
-    parameters.NGlycosylation = findNGlycosylation
+    findNXCGlycosylation = "NXC-Glycosylation" in options.glycosylation
+    parameters.NGlycosylation = (findNXCGlycosylation or findNXGlycosylation)
     parameters.OGlycosylation = findOGlycosylation
 
     digests = []
@@ -100,7 +101,8 @@ def main(options):
         # find glycopeptides
         glycopeptides = proteinDigest.findGlycopeptides(peptides,
                                     findNGlycosylation,
-                                    findOGlycosylation)
+                                    findOGlycosylation,
+                                    findNXCGlycosylation)
         allGlycopeptides += glycopeptides
     
     

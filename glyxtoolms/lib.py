@@ -406,7 +406,7 @@ class ProteinDigest(object):
         return peptides
 
     def findGlycopeptides(self, peptides, NGlycosylation=False,
-                          OGlycosylation=False):
+                          OGlycosylation=False, NCGlycosylation=False):
 
         # generate list of glycosylationsites
         sitesType = {}
@@ -417,6 +417,9 @@ class ProteinDigest(object):
         if OGlycosylation == True:
             for match in re.finditer(r"(?=(S|T))", self.protein.sequence):
                 sites.append((match.start(), "O"))
+        if NCGlycosylation == True:
+            for match in re.finditer(r"(?=(N[^P]C))", self.protein.sequence):
+                sites.append((match.start(), "N"))
         sites.sort()
         for pos, typ in sites:
             sitesType[typ] = sitesType.get(typ, 0) +1

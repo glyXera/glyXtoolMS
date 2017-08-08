@@ -31,7 +31,7 @@
             <mapping id="5" cl="%%maxNrModifications" />
             <mapping id="6" cl="%%modifications" />
             <mapping id="7" cl="%%glycosylation" />
-            <mapping id="8" cl="%%missedCleavageSites" />                                               			
+            <mapping id="8" cl="%%missedCleavageSites" />
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
@@ -40,7 +40,7 @@
             <ITEMLIST name="enzymes" value="[]" type="string" restrictions="Trypsin,Trypsin/P,AspN,AspN2,Unspecific,NoDigest" description="Digestion enzymes"/>
             <ITEM name="maxNrModifications" value="2" type="int" description="Nr of maximum allowed modifications. CYS_CAM, CYS_CM are excluded. Unlimited with -1."/>
             <ITEMLIST name="modifications" value="[]" type="string" restrictions="None,AMID,CAM,CYS_CAM,NTERM_CAM,CM,CYS_CM,DEAM,ASN_DEAM,GLN_DEAM,DEHYDR,SER_DEHYDR,THR_DEHYDR,DIOX,TRP_DIOX,TYR_DIOX,MSO,OX,TRP_OX,TYR_OX,CYS_PAM,PHOS,SER_PHOS,THR_PHOS,TYR_PHOS" description="variable modifications"/>
-            <ITEMLIST name="glycosylation" value="[]" type="string" restrictions="N-Glycosylation,O-Glycosylation" description="glycosylation"/>
+            <ITEMLIST name="glycosylation" value="[]" type="string" restrictions="N-Glycosylation,O-Glycosylation,NXC-Glycosylation" description="glycosylation"/>
             <ITEM name="missedCleavageSites" value="0" type="int" description="maximum missed cleavage sites"/>
 		  </ini_param>
 		</external>
