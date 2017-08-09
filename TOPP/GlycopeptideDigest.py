@@ -58,7 +58,7 @@ def main(options):
     findOGlycosylation = "O-Glycosylation" in options.glycosylation
     findNGlycosylation = "N-Glycosylation" in options.glycosylation
     findNXCGlycosylation = "NXC-Glycosylation" in options.glycosylation
-    parameters.NGlycosylation = (findNXCGlycosylation or findNXGlycosylation)
+    parameters.NGlycosylation = (findNGlycosylation or findNXCGlycosylation)
     parameters.OGlycosylation = findOGlycosylation
 
     digests = []
