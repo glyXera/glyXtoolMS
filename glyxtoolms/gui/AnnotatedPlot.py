@@ -91,6 +91,8 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.canvas.bind("<B1-Motion>", self.button1Motion, "+")
         self.canvas.bind("<Motion>", self.mouseMoveEvent, "+")
         self.canvas.bind("<Button-3>", self.button3Pressed, "+")
+        self.canvas.bind("<Control-p>", self.getPattern, "+")
+        
         #self.canvas.bind("<Button-3>", self.showContextMenu)
         #self.canvas.bind("<Double-Button-1>", self.showAnnotationEdit)
         #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
@@ -107,6 +109,62 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.rulerbutton = self.toolbar.addButton("ruler","toggle", "default")
         # add trace to ruler button toggles
         self.rulerbutton.active.trace("w", self.rulerToggled)
+        
+    def getPattern(self, event):
+        if self.model.currentAnalysis == None:
+            return
+        if self.action is not None:
+            return
+        
+        # search after pattern
+        pattern = {}
+        pattern["pep"] = 0.0
+        pattern["-NH3"] = -glyxtoolms.masses.MASS["N"] - 3*glyxtoolms.masses.MASS["H"]
+        pattern["+N83"] = glyxtoolms.masses.calcMassFromElements({"C":4, "H":5, "N":1, "O":1})
+        pattern["+HEXNAC"] = glyxtoolms.masses.GLYCAN["HEXNAC"]
+        
+        tolerance = 0.1
+        all_patterns = []
+        for i1 in self.peaksByItem:
+            this_pattern = {}
+            start = self.peaksByItem[i1]
+            for i2 in self.peaksByItem:
+                peak = self.peaksByItem[i2]
+                diff = peak.x - start.x
+                for key in pattern:
+                    error = pattern[key] - diff
+                    if abs(error) <= tolerance:
+                        if not key in this_pattern or peak.y > this_pattern[key]:
+                            this_pattern[key] = peak
+            if len(this_pattern) > 1:
+                intensity = sum([this_pattern[key].y for key in this_pattern])
+                all_patterns.append((len(this_pattern),intensity,this_pattern))
+        all_patterns = sorted(all_patterns, key=lambda x: (x[0],x[1]), reverse=True)
+        # sort pattern after intensity
+        if len(all_patterns) > 5:
+            all_patterns = all_patterns[:5]
+        print all_patterns
+        
+        i = 0
+        for length, intensity, pattern in all_patterns:
+            i += 1
+            seriesname = "pattern"+str(i)
+            for key in pattern:
+                if key == "pep":
+                    continue
+                x1 = pattern["pep"].x
+                x2 = pattern[key].x
+                if x2 < x1:
+                    x1,x2 = x2,x1
+                    
+                # create new annotation
+                a = glyxtoolms.io.Annotation()
+                a.x1 = x1
+                a.x2 = x2
+                a.text = key
+                a.y = 0
+                self.addAnnotation(a, seriesname)
+        self._paintCanvas(False)
 
     def initCanvas(self, keepZoom=False):
         super(AnnotatedPlot, self).initCanvas(keepZoom)
@@ -1095,12 +1153,18 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.frame.columnconfigure(1,weight=1)
         self.frame.rowconfigure(0,weight=0)
         self.frame.rowconfigure(1,weight=1)
+        self.frame.rowconfigure(2,weight=1)
         
         self.canvas.bind("<Configure>", self.on_resize, "+")
         self.frame.bind("<Configure>", self.on_resize, "+")
         
+        self.frameTools = Tkinter.LabelFrame(self.frame,text="Annotation Tools")
+        self.frameTools.grid(row=0,column=0, sticky="NEW", padx=2)
+        self.buttonTools = Tkinter.Button(self.frameTools, text="Tools", command=self.openTools)
+        self.buttonTools.grid(row=0,column=0, padx=4, sticky="NESW")
+        
         self.frameAnnotation = Tkinter.LabelFrame(self.frame,text="Current Annotation")
-        self.frameAnnotation.grid(row=0,column=0, sticky="NEW", padx=2)
+        self.frameAnnotation.grid(row=1,column=0, sticky="NEW", padx=2)
         
         self.annotationContent = Tkinter.Frame(self.frameAnnotation)
         self.annotationContent.grid(row=0,column=0, sticky="NSEW")
@@ -1173,8 +1237,11 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.varSeries.trace("w", self.eventSeriesChanged)
 
         self.frameSeries = CheckboxList(self.frame, self, self.framePlot)
-        self.frameSeries.grid(row=1,column=0, sticky="SEW", padx=2)
+        self.frameSeries.grid(row=2,column=0, sticky="SEW", padx=2)
         self.setAnnotation(None)
+        
+    def openTools(self):
+        frame = AnnotationToolsFrame(self.master)
         
     def radioGroupChanged(self, *arg, **args):
         if self.currentAnnotation == None:
@@ -1331,3 +1398,10 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.framePlot._paintCanvas()
         
 
+class AnnotationToolsFrame(Tkinter.Toplevel):
+
+    def __init__(self, master):
+        Tkinter.Toplevel.__init__(self, master=master)
+        self.master = master
+        self.title("Annotation tools")
+        self.config(bg="#d9d9d9")

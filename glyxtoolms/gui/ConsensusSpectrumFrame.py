@@ -185,8 +185,11 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             if self.options["annotations"]["showpep"] == True:
                 if self.hit != None:
                     for key in self.hit.fragments:
-                        if abs(self.hit.fragments[key]["mass"]-peak.x) < 0.1:
+                        p = self.hit.fragments[key]["peak"]
+                        if p == peak:
                             foundPep.append(key)
+                        #if abs(self.hit.fragments[key]["mass"]-peak.x) < 0.1:
+                        #    foundPep.append(key)
 
             # sort peptide ions
             if foundGlycan != None and len(foundPep) > 0:

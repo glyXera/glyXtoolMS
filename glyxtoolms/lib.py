@@ -423,7 +423,6 @@ class ProteinDigest(object):
         sites.sort()
         for pos, typ in sites:
             sitesType[typ] = sitesType.get(typ, 0) +1
-        print sitesType
 
         glycopeptides = []
         # b) search peptides with possible glycosylation site

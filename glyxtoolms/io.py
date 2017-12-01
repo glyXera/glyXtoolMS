@@ -321,7 +321,8 @@ class GlyxXMLFeature(object):
         return new
         
     def addConsensusPeak(self, x, y):
-        self.consensus.append(GlyxXMLConsensusPeak(x,y))
+        
+        self.consensus.append(GlyxXMLConsensusPeak(x,y, len(self.consensus)))
 
 class XMLGlycan(object):
 
@@ -345,9 +346,10 @@ class GlyxXMLGlycoModHit(object):
 
 class GlyxXMLConsensusPeak(object):
 
-    def __init__(self, x, y):
+    def __init__(self, x, y, pos):
         self.x = x
         self.y = y
+        self.pos = pos
         
 class ToolValue(object):
     
@@ -676,13 +678,22 @@ class GlyxXMLFile(object):
                 
                 xmlFragmentType = ET.SubElement(xmlFragment, "type")
                 xmlFragmentType.text = str(fragments[fragmentname]["type"])
+                
+                xmlFragmentType = ET.SubElement(xmlFragment, "pos")
+                peak = fragments[fragmentname]["peak"]
+                
+                xmlFragmentType.text = str(peak.pos)
 
 
-    def _parseGlycoModHits(self, xmlGlycoModHits, toolValueDefaults={}):
+    def _parseGlycoModHits(self, xmlGlycoModHits, featureIDs, toolValueDefaults={}):
         hits = []
         for xmlHit in xmlGlycoModHits:
             hit = GlyxXMLGlycoModHit()
             hit.featureID = str(xmlHit.find("./featureId").text)
+            # link feature
+            hit.feature = featureIDs[hit.featureID]
+            hit.feature.hits.add(hit)
+            
             hit.error = float(xmlHit.find("./error").text)
 
             composition = str(xmlHit.find("./glycan/composition").text)
@@ -714,6 +725,21 @@ class GlyxXMLFile(object):
                         fragment["type"] = "peptide"
                     else:
                         fragment["type"] = xmlfragment.find("./type").text
+                    # parse pos, if available
+                    xmlPos = xmlfragment.find("./pos")
+                    nearest = None
+                    if xmlPos == None:
+                        # find nearest peak
+                        peaks = []
+                        mass = fragment["mass"]
+                        for p in hit.feature.consensus:
+                            if abs(p.x-mass) <= self.parameters.getMassTolerance():
+                                peaks.append((abs(p.x-mass), p))
+                        if len(peaks) > 0:
+                            nearest = min(peaks)[1]
+                    else:
+                        nearest = hit.feature.consensus[int(xmlPos.text)]
+                    fragment["peak"] = nearest
                         
                     hit.fragments[fragmentname] = fragment
             if self.version > "0.0.5":
@@ -749,10 +775,12 @@ class GlyxXMLFile(object):
                     xString = xmlFeature.find("./consensusSpectrum/x").text
                     yString = xmlFeature.find("./consensusSpectrum/y").text
                     feature.consensus = []
+                    i = 0
                     for x, y in zip(xString.split(";"), yString.split(";")):
                         x = float(x)
                         y = float(y)
-                        feature.consensus.append(GlyxXMLConsensusPeak(x, y))
+                        feature.consensus.append(GlyxXMLConsensusPeak(x, y, i))
+                        i += 1
                 except:
                     print "Parsing error at "+feature.id
                     raise
@@ -927,23 +955,29 @@ class GlyxXMLFile(object):
             self.version = "0.0.1"
         else:
             self.version = version.text
+        
         # read parameters
         parameters = self._parseParameters(root.find(".//parameters"))
+        self.parameters = parameters
+        
         # read tool value defaults
         toolValueDefaults = self._parseToolValueDefaults(root.findall("./toolValues/tool"))
+        self.toolValueDefaults = toolValueDefaults
+        
         # parse spectra
         spectra = self._parseSpectra(root.findall("./spectra/spectrum"))
-        # parse features
-        features = self._parseFeatures(root.findall("./features/feature"))
-        # parse glycomod
-        glycoMod = self._parseGlycoModHits(root.findall("./glycomod/hit"), toolValueDefaults=toolValueDefaults)
-        
-        #Link all data
         specIDs = {}
-        featureIDs = {}
         for spec in spectra:
             specIDs[spec.getNativeId()] = spec
-            
+        self.spectra = spectra
+        
+        
+        # parse features
+        features = self._parseFeatures(root.findall("./features/feature"))
+        self.features = features
+        
+        # collect feature information
+        featureIDs = {}
         for feature in features:
             featureIDs[feature.id] = feature
             feature.spectra = []
@@ -951,16 +985,11 @@ class GlyxXMLFile(object):
                 spectrum = specIDs[specID]
                 feature.spectra.append(spectrum)
                 spectrum.features.add(feature)
-        for hit in glycoMod:
-            hit.feature = featureIDs[hit.featureID]
-            hit.feature.hits.add(hit)
-        
-        # assign data to object
-        self.parameters = parameters
-        self.spectra = spectra
-        self.features = features
+
+        # parse glycomod
+        glycoMod = self._parseGlycoModHits(root.findall("./glycomod/hit"), featureIDs, toolValueDefaults=toolValueDefaults)
         self.glycoModHits = glycoMod
-        self.toolValueDefaults = toolValueDefaults
+        
 
     def setParameters(self, parameters):
         self.parameters = parameters

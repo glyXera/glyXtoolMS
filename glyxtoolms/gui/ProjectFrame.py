@@ -483,6 +483,12 @@ class AddProject(Tkinter.Toplevel):
         # set the dimensions of the screen 
         # and where it is placed
         self.geometry('%dx%d+%d+%d' % (w, h, x, y))
+        
+        # raise to top
+        self.focus_set()
+        self.transient(master)
+        self.lift()
+        self.wm_deiconify()
 
     def finish(self):
         name = self.projectName.get()
