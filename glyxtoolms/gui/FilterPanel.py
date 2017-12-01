@@ -123,6 +123,7 @@ class FilterPanel(Tkinter.Toplevel):
     def addIdentificationFilter(self, definedFilter=None):
         filters = []
         filters.append(EmptyFilter())
+        filters.append(GlycopeptideMassError_Filter())
         filters.append(GlycopeptideMass_Filter())
         filters.append(Fragmentmass_Filter_Identification())
         filters.append(Fragmentname_Filter(self.model))
@@ -199,6 +200,7 @@ class FilterEntry(ttk.Frame):
 
         self.field1Var = Tkinter.StringVar(self)
         self.field1Var.trace("w", self.valuesChanged)
+        
         self.entry1 = Tkinter.Entry(self, textvariable=self.field1Var)
         self.entry1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
         
@@ -211,6 +213,9 @@ class FilterEntry(ttk.Frame):
         
         self.range1 = RangeEntry(self, self.field1Var)
         self.range1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
+        
+        self.unit1 = UnitEntry(self, self.field1Var, ["1", "2"])
+        self.unit1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
     
         self.operatorVar = Tkinter.StringVar(self)
         self.operatorVar.trace("w", self.valuesChanged)
@@ -230,9 +235,12 @@ class FilterEntry(ttk.Frame):
         self.assisted2 = InteractiveEntry(self, self.field2Var)
         self.assisted2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
         
-        #self.range2 = RangeEntry(self, self.field1Var)
-        #self.range2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
+        self.range2 = RangeEntry(self, self.field2Var)
+        self.range2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
         
+        self.unit2 = UnitEntry(self, self.field2Var, ["3", "4"])
+        self.unit2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
+
         if definedFilter != None:
             self.currentFilter = definedFilter
         self.traceChanges = False
@@ -248,11 +256,13 @@ class FilterEntry(ttk.Frame):
             self.entry1.config(bg="grey")
             self.assisted1.config(bg="grey")
             self.options1.config(bg="grey")
+            self.unit1.config(bg="grey")
         except:
             self.currentFilter.valid = False
             self.entry1.config(bg="red")
             self.assisted1.config(bg="red")
             self.options1.config(bg="red")
+            self.unit1.config(bg="red")
             
         try:
             self.currentFilter.parseOperator(self.operatorVar.get())
@@ -266,11 +276,13 @@ class FilterEntry(ttk.Frame):
             self.entry2.config(bg="grey")
             self.assisted2.config(bg="grey")
             self.options2.config(bg="grey")
+            self.unit2.config(bg="grey")
         except:
             self.currentFilter.valid = False
             self.entry2.config(bg="red")
             self.assisted2.config(bg="red")
             self.options2.config(bg="red")
+            self.unit2.config(bg="red")
  
     def filterChanged(self, *args):
         if self.traceChanges == False:
@@ -294,77 +306,70 @@ class FilterEntry(ttk.Frame):
         self.source.append(self.currentFilter)
 
     def paintCurrentFilter(self):
+
         self.traceChanges = False
         self.var.set(self.currentFilter.name)
+        
+        self.entry1.grid_remove()
+        self.options1.grid_remove()
+        self.assisted1.grid_remove()
+        self.assisted1.setVisible(False)
+        self.range1.grid_remove()
+        self.unit1.grid_remove()
+        
         if self.currentFilter.type1 == FieldTypes.INACTIVE:
-            self.entry1.grid_remove()
-            self.options1.grid_remove()
-            self.assisted1.grid_remove()
-            self.assisted1.setVisible(False)
-            self.range1.grid_remove()
+            pass
         elif self.currentFilter.type1 == FieldTypes.ENTRY:
             self.entry1.grid()
-            self.options1.grid_remove()
-            self.assisted1.grid_remove()
-            self.assisted1.setVisible(False)
-            self.range1.grid_remove()
-            self.field1Var.set(self.currentFilter.field1)
         elif self.currentFilter.type1 == FieldTypes.MENU:
-            self.entry1.grid_remove()
             self.options1.grid()
-            self.assisted1.grid_remove()
-            self.assisted1.setVisible(False)
-            self.range1.grid_remove()
-            self.setMenuChoices(self.options1,self.currentFilter.choices1, self.field1Var)
-            self.field1Var.set(self.currentFilter.field1)           
+            self.unit1.grid_remove()         
         elif self.currentFilter.type1 == FieldTypes.ASSISTED:
-            self.entry1.grid_remove()
-            self.options1.grid_remove()
-            self.range1.grid_remove()
             self.assisted1.grid()
             self.assisted1.all_choices = self.currentFilter.choices1
             self.field1Var.set(self.currentFilter.field1)
             self.assisted1.setVisible(True)
         elif self.currentFilter.type1 == FieldTypes.RANGE:
-            self.entry1.grid_remove()
-            self.options1.grid_remove()
-            self.assisted1.grid_remove()
-            self.assisted1.setVisible(False)
             self.range1.setFieldValue(self.currentFilter.field1)
             self.range1.grid()
+        elif self.currentFilter.type1 == FieldTypes.UNIT:
+            self.unit1.grid()
         else:
             raise Exception("Unknown FieldType!")
+        self.field1Var.set(self.currentFilter.field1)
 
         self.setMenuChoices(self.optionOperator, self.currentFilter.operatorChoices, self.operatorVar)
         self.operatorVar.set(self.currentFilter.operator)
+
+        self.entry2.grid_remove()
+        self.options2.grid_remove()
+        self.assisted2.grid_remove()
+        self.assisted2.setVisible(False)
+        self.range2.grid_remove()
+        self.unit2.grid_remove()
+        
         if self.currentFilter.type2 == FieldTypes.INACTIVE:
-            self.entry2.grid_remove()
-            self.options2.grid_remove()
-            self.assisted2.grid_remove()
-            self.assisted2.setVisible(False)
+            pass
         elif self.currentFilter.type2 == FieldTypes.ENTRY:
             self.entry2.grid()
-            self.options2.grid_remove()
-            self.assisted2.grid_remove()
-            self.assisted2.setVisible(False)
-            self.field2Var.set(self.currentFilter.field2)
         elif self.currentFilter.type2 == FieldTypes.MENU:
-            self.entry2.grid_remove()
             self.options2.grid()
-            self.assisted2.grid_remove()
-            self.assisted2.setVisible(False)
             self.setMenuChoices(self.options2, self.currentFilter.choices2, self.field2Var)
-            self.field2Var.set(self.currentFilter.field2)
         elif self.currentFilter.type2 == FieldTypes.ASSISTED:
-            self.entry2.grid_remove()
-            self.options2.grid_remove()
             self.assisted2.grid()
             self.assisted2.all_choices = self.currentFilter.choices2
-            self.field2Var.set(self.currentFilter.field2)
             self.assisted2.setVisible(True)
-            
+        elif self.currentFilter.type2 == FieldTypes.RANGE:
+            self.range2.setFieldValue(self.currentFilter.field2)
+            self.range2.grid()
+        elif self.currentFilter.type2 == FieldTypes.UNIT:
+            self.unit2.grid()
+            self.unit2.setUnits(self.currentFilter.unitChoices)
+            self.unit2.setFieldValue(self.currentFilter.field2)
         else:
             raise Exception("Unknown FieldType!")
+        self.field2Var.set(self.currentFilter.field2)
+
         self.traceChanges = True
         self.valuesChanged()
         
@@ -383,7 +388,62 @@ class FilterEntry(ttk.Frame):
         if self.currentFilter in self.source:
             self.source.remove(self.currentFilter)
         return
+
+class UnitEntry(Tkinter.Frame):
+    
+    def setChoice(self, value):
+        if self.keepTrace == False:
+            return
+        self.menubutton["text"] = value
+        self.valuesChanged()
+    
+    def __init__(self, master, var, units):
+        Tkinter.Frame.__init__(self, master=master)
+        self.fieldVar = var
+        self.units = units
+        self.v = Tkinter.StringVar()
+        self.e = Tkinter.Entry(self, textvariable=self.v, width=8)
+        self.e.config(bg="grey")
+        self.e.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        self.menubutton = Tkinter.Menubutton(self, text=self.units[0], relief="raised")
+        self.menubutton.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        self.rowconfigure(0,weight=1)
+        self.menubutton.menu = Tkinter.Menu(self.menubutton, tearoff=0)
+        self.menubutton["menu"] = self.menubutton.menu
+        for unit in units:
+            self.menubutton.menu.add_command(label=unit, command=lambda x=unit: self.setChoice(x))
+        self.keepTrace = True
+        self.v.trace("w", self.valuesChanged)
         
+    def setUnits(self, choices):
+        self.keepTrace = False
+        self.menubutton.menu.delete(0, self.menubutton.menu.index("end"))
+        for unit in choices:
+            self.menubutton.menu.add_command(label=unit, command=lambda x=unit: self.setChoice(x))
+        if len(choices) > 0:
+            self.menubutton.config(text=choices[0])
+        self.keepTrace = True
+        
+        
+    def valuesChanged(self, *args):
+        text = self.v.get().strip()
+        # parse value
+        try:
+            value = float(text)
+            self.e.config(bg="grey")
+        except:
+            self.e.config(bg="red")
+        # parse unit
+        text += " " + self.menubutton["text"]
+        self.fieldVar.set(text)
+        
+    def setFieldValue(self, fieldValue):
+        self.keepTrace = False
+        value,unit = fieldValue.split(" ")
+        self.v.set(value)
+        self.menubutton["text"] = unit
+        self.keepTrace = True
+
 class RangeEntry(Tkinter.Frame):
     
     def setChoice(self, value):
@@ -570,6 +630,7 @@ class FieldTypes:
     MENU=3
     ASSISTED=4
     RANGE=5 # dropdown menu with "-" and "+/-"
+    UNIT=6
 
 class Filter(object):
     
@@ -742,6 +803,40 @@ class GlycopeptideMass_Filter(Filter):
                 return True
             else:
                 return False
+
+class GlycopeptideMassError_Filter(Filter):
+    def __init__(self):
+        super(GlycopeptideMassError_Filter, self).__init__("GlycopeptideMass Error")
+        self.type1 = FieldTypes.INACTIVE
+        self.field2 = "0 ppm"
+        self.type2 = FieldTypes.UNIT
+        self.unitChoices = ["ppm", "Da"]
+        self.unit = "ppm"
+        self.operatorChoices = ["<=",]
+        self.operator = "<="
+        self.lowValue = 0
+        self.highValue = 0
+        self.value = 0
+        
+    def parseField1(self,field1):
+        return
+        
+    def parseField2(self,field2):
+        field2 = field2.strip()
+        value, unit = field2.split(" ")
+        self.value = float(value)
+        assert unit in self.unitChoices
+        self.unit = unit
+        self.field2 = str(self.value) + " " + unit
+
+    def evaluate(self, hit, **args):        
+        if self.unit == "Da":
+            error = hit.error
+        else:
+            error = hit.error/float(hit.feature.getMZ())*1E6
+        if abs(error) <= self.value:
+            return True
+        return False
 
 
 class Fragmentmass_Filter_Identification(Filter):
