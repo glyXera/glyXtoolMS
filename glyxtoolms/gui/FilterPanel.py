@@ -28,8 +28,11 @@ class FilterPanel(Tkinter.Toplevel):
 
         # set the dimensions of the screen 
         # and where it is placed
-        self.geometry('%dx%d+%d+%d' % (w, h, x, y))
-        
+        #self.geometry('%dx%d+%d+%d' % (w, h, x, y))
+        self.focus_set()
+        self.transient(master)
+        self.lift()
+        self.wm_deiconify()
         
         self.protocol("WM_DELETE_WINDOW", self._delete_window)
         #self.bind("<Destroy>", self._destroy)
@@ -42,6 +45,8 @@ class FilterPanel(Tkinter.Toplevel):
         
         frameIdentification = ttk.Labelframe(self, text="1. Identifications")
         frameIdentification.grid(row=0, column=0, sticky="NWES")
+        frameIdentification.columnconfigure(0, weight=0)
+        frameIdentification.columnconfigure(1, weight=1)
         
         buttonIdentification = Tkinter.Button(frameIdentification,
                                               text="add Filter",
@@ -52,17 +57,18 @@ class FilterPanel(Tkinter.Toplevel):
         self.filterIdentification = ttk.Frame(frameIdentification)
         self.filterIdentification.grid(row=1, column=0, columnspan=2, sticky="NWES")
         self.filterIdentification.columnconfigure(1, weight=1)
-        self.filterIdentification.evalLogic = self.evalLogic
+        self.filterIdentification.evalLogic = lambda x=self.filterIdentification:self.evalLogic(x)
         self.filterIdentification.entries = []
         
-        frameIdentification.columnconfigure(0, weight=0)
-        frameIdentification.columnconfigure(1, weight=1)
+
         
         #   ------- Features ------ #
         self.N_Features = 0
 
         frameFeature = ttk.Labelframe(self, text="2. Features")
         frameFeature.grid(row=1, column=0, sticky="NWES")
+        frameFeature.columnconfigure(0, weight=0)
+        frameFeature.columnconfigure(1, weight=1)
         
         buttonFeature = Tkinter.Button(frameFeature,
                                        text="add Filter",
@@ -71,13 +77,18 @@ class FilterPanel(Tkinter.Toplevel):
         
         
         self.filterFeature = ttk.Frame(frameFeature)
-        self.filterFeature.grid(row=1, column=0, columnspan=2, sticky="NWES")  
+        self.filterFeature.grid(row=1, column=0, columnspan=2, sticky="NWES")
+        self.filterFeature.columnconfigure(1, weight=1)
+        self.filterFeature.evalLogic = lambda x=self.filterFeature:self.evalLogic(x)
+        self.filterFeature.entries = []
 
         #   ------- Scoring ------ #        
         self.N_Scoring = 0
         
         frameScoring = ttk.Labelframe(self, text="3. Scoring")
         frameScoring.grid(row=2, column=0, sticky="NWES")
+        frameScoring.columnconfigure(0, weight=0)
+        frameScoring.columnconfigure(1, weight=1)
         
         buttonScoring = Tkinter.Button(frameScoring,
                                        text="add Filter",
@@ -87,6 +98,9 @@ class FilterPanel(Tkinter.Toplevel):
         
         self.filterScoring = ttk.Frame(frameScoring)
         self.filterScoring.grid(row=1, column=0, columnspan=2, sticky="NWES")
+        self.filterScoring.columnconfigure(1, weight=1)
+        self.filterScoring.evalLogic = lambda x=self.filterScoring:self.evalLogic(x)
+        self.filterScoring.entries = []
         
 
         self.columnconfigure(0, weight=1)
@@ -107,19 +121,18 @@ class FilterPanel(Tkinter.Toplevel):
             f.reinitialize()
             self.addScoringFilter(f)
 
-    def evalLogic(self):
+    def evalLogic(self, container):
         text = ""
-        for f in self.model.filters["Identification"]:
-            text += f.logicLeft
+        for entry in container.entries:
+            text += entry.currentFilter.logicLeft
             text += str(True)
-            text += f.logicRight
+            text += entry.currentFilter.logicRight
         valid = True
         try:
-            print "eval", text
             eval(text)
         except:
             valid = False
-        for entry in self.filterIdentification.entries:
+        for entry in container.entries:
             entry.setLogicState(valid)
         
 
@@ -154,7 +167,6 @@ class FilterPanel(Tkinter.Toplevel):
                         definedFilter=definedFilter)
         f.grid(row=self.N_Identification, column=1, sticky=("N", "W", "E", "S"))
         self.N_Identification += 1
-        self.filterIdentification.entries.append(f)
         
         
     def addFeatureFilter(self, definedFilter=None):
@@ -167,8 +179,9 @@ class FilterPanel(Tkinter.Toplevel):
         f = FilterEntry(self.filterFeature,
                         filters,
                         self.model.filters["Features"],
+                        self.N_Features,
                         definedFilter=definedFilter)
-        f.grid(row=self.N_Features, column=0, sticky=("N", "W", "E", "S"))
+        f.grid(row=self.N_Features, column=1, sticky=("N", "W", "E", "S"))
         self.N_Features += 1
         
     def addScoringFilter(self, definedFilter=None):
@@ -179,8 +192,9 @@ class FilterPanel(Tkinter.Toplevel):
         f = FilterEntry(self.filterScoring,
                         filters,
                         self.model.filters["Scoring"],
+                        self.N_Scoring,
                         definedFilter=definedFilter)
-        f.grid(row=self.N_Scoring, column=0, sticky=("N", "W", "E", "S"))
+        f.grid(row=self.N_Scoring, column=1, sticky=("N", "W", "E", "S"))
         self.N_Scoring += 1
         
 class FilterEntry(ttk.Frame):
@@ -189,10 +203,11 @@ class FilterEntry(ttk.Frame):
         
         self.master = master
         self.source = source
+        self.master.entries.append(self)
         
         # Connection | type | <Field1> | Operator | <Field2> |
         
-        self.traceChanges = True
+        self.traceChanges = False
 
         self.filters = filters
         if definedFilter == None:
@@ -206,7 +221,7 @@ class FilterEntry(ttk.Frame):
         self.logicLeftOption = Tkinter.OptionMenu(self.master, self.logicLeftVar, *choices)
         self.logicLeftOption.grid(row=row, column=0, sticky=("N", "W", "E", "S"))
         if definedFilter == None:
-            if row == 0:
+            if len(self.master.entries) == 1:
                 self.logicLeftVar.set(" ")
             else:
                 self.logicLeftVar.set(" and ")
@@ -219,12 +234,17 @@ class FilterEntry(ttk.Frame):
         self.logicRightOption = Tkinter.OptionMenu(self.master, self.logicRightVar, *choices)
         self.logicRightOption.grid(row=row, column=2, sticky=("N", "W", "E", "S"))
         self.logicRightVar.set(self.currentFilter.logicRight)
+        
+        self.delButton = Tkinter.Button(self.master, text="x", command=self.delete)
+        self.delButton.grid(row=row, column=3)
 
         self.var = Tkinter.StringVar(self)
         self.currentOperator = self.currentFilter.operator
 
         choices = []
         for f in self.filters:
+            if f.name == "":
+                continue
             choices.append(f.name)
             
         option = Tkinter.OptionMenu(self, self.var, *choices)
@@ -279,9 +299,13 @@ class FilterEntry(ttk.Frame):
         self.unit2 = UnitEntry(self, self.field2Var, ["3", "4"])
         self.unit2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
 
-        self.traceChanges = False
+        
         self.paintCurrentFilter()
         self.traceChanges = True
+        self.logicLeftChanged()
+        self.logicRightChanged()
+
+        
         
     def valuesChanged(self, *args):
         if self.traceChanges == False:
@@ -452,12 +476,16 @@ class FilterEntry(ttk.Frame):
             
             
     def logicLeftChanged(self, *args):
+        if self.traceChanges == False:
+            return
         option = self.logicLeftVar.get()
         self.currentFilter.logicLeft = option
         self.master.evalLogic()
             
 
     def logicRightChanged(self, *args):
+        if self.traceChanges == False:
+            return
         option = self.logicRightVar.get()
         self.currentFilter.logicRight = option
         self.master.evalLogic()
@@ -476,13 +504,15 @@ class FilterEntry(ttk.Frame):
             self.logicRightOption.config(highlightcolor="red")
     
     def delete(self):
-        self.grid_forget()
-        self.logicLeftOption.grid_forget()
-        self.logicRightOption.grid_forget()
+        self.logicLeftOption.destroy()
+        self.logicRightOption.destroy()
+        self.delButton.destroy()
+        self.destroy()
         if self.currentFilter in self.source:
             self.source.remove(self.currentFilter)
         if self in self.master.entries:
             self.master.entries.remove(self)
+        self.master.evalLogic()
         return
 
 class UnitEntry(Tkinter.Frame):
