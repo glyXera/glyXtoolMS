@@ -46,13 +46,14 @@ class FilterPanel(Tkinter.Toplevel):
         buttonIdentification = Tkinter.Button(frameIdentification,
                                               text="add Filter",
                                               command=self.addIdentificationFilter)
-        buttonIdentification.grid(row=0, column=0, sticky="NWES")
+        buttonIdentification.grid(row=0, column=0,columnspan=3, sticky="NW")
         
         
         self.filterIdentification = ttk.Frame(frameIdentification)
         self.filterIdentification.grid(row=1, column=0, columnspan=2, sticky="NWES")
-        
-        self.filterIdentification.columnconfigure(0, weight=1)
+        self.filterIdentification.columnconfigure(1, weight=1)
+        self.filterIdentification.evalLogic = self.evalLogic
+        self.filterIdentification.entries = []
         
         frameIdentification.columnconfigure(0, weight=0)
         frameIdentification.columnconfigure(1, weight=1)
@@ -86,6 +87,7 @@ class FilterPanel(Tkinter.Toplevel):
         
         self.filterScoring = ttk.Frame(frameScoring)
         self.filterScoring.grid(row=1, column=0, columnspan=2, sticky="NWES")
+        
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -105,6 +107,22 @@ class FilterPanel(Tkinter.Toplevel):
             f.reinitialize()
             self.addScoringFilter(f)
 
+    def evalLogic(self):
+        text = ""
+        for f in self.model.filters["Identification"]:
+            text += f.logicLeft
+            text += str(True)
+            text += f.logicRight
+        valid = True
+        try:
+            print "eval", text
+            eval(text)
+        except:
+            valid = False
+        for entry in self.filterIdentification.entries:
+            entry.setLogicState(valid)
+        
+
     def _delete_window(self):
         try:
             self.destroy()
@@ -118,8 +136,6 @@ class FilterPanel(Tkinter.Toplevel):
         except:
             pass
 
-
-        
     def addIdentificationFilter(self, definedFilter=None):
         filters = []
         filters.append(EmptyFilter())
@@ -134,9 +150,11 @@ class FilterPanel(Tkinter.Toplevel):
         f = FilterEntry(self.filterIdentification,
                         filters,
                         self.model.filters["Identification"],
+                        self.N_Identification,
                         definedFilter=definedFilter)
-        f.grid(row=self.N_Identification, column=0, sticky=("N", "W", "E", "S"))
+        f.grid(row=self.N_Identification, column=1, sticky=("N", "W", "E", "S"))
         self.N_Identification += 1
+        self.filterIdentification.entries.append(f)
         
         
     def addFeatureFilter(self, definedFilter=None):
@@ -166,29 +184,43 @@ class FilterPanel(Tkinter.Toplevel):
         self.N_Scoring += 1
         
 class FilterEntry(ttk.Frame):
-    def __init__(self, master, filters, source, definedFilter=None):
+    def __init__(self, master, filters, source, row, definedFilter=None):
         ttk.Frame.__init__(self, master=master)
         
         self.master = master
         self.source = source
         
-        # | type | <Field1> | Operator | <Field2> |
+        # Connection | type | <Field1> | Operator | <Field2> |
         
         self.traceChanges = True
-        
-        button = Tkinter.Button(self, text=" - ", command=self.delete)
-        button.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
-        
-        # register new filters here
+
         self.filters = filters
+        if definedFilter == None:
+            self.currentFilter = self.filters[0]
+        else:
+            self.currentFilter = definedFilter
+
+        choices = [" "," and ", " or ", " ( ", " ) ", " ) and ( ", ") or ( ", " and (", " or ( ", " ) and ", ") or "]
+        self.logicLeftVar = Tkinter.StringVar(self)
+        self.logicLeftVar.trace("w", self.logicLeftChanged)
+        self.logicLeftOption = Tkinter.OptionMenu(self.master, self.logicLeftVar, *choices)
+        self.logicLeftOption.grid(row=row, column=0, sticky=("N", "W", "E", "S"))
+        if definedFilter == None:
+            if row == 0:
+                self.logicLeftVar.set(" ")
+            else:
+                self.logicLeftVar.set(" and ")
+        else:
+            self.logicLeftVar.set(self.currentFilter.logicLeft)
+        
+        
+        self.logicRightVar = Tkinter.StringVar(self)
+        self.logicRightVar.trace("w", self.logicRightChanged)
+        self.logicRightOption = Tkinter.OptionMenu(self.master, self.logicRightVar, *choices)
+        self.logicRightOption.grid(row=row, column=2, sticky=("N", "W", "E", "S"))
+        self.logicRightVar.set(self.currentFilter.logicRight)
 
         self.var = Tkinter.StringVar(self)
-        
-        self.currentFilter = self.filters[0]
-        
-        self.var.set(self.currentFilter.name)
-        self.var.trace("w", self.filterChanged)
-        
         self.currentOperator = self.currentFilter.operator
 
         choices = []
@@ -197,12 +229,15 @@ class FilterEntry(ttk.Frame):
             
         option = Tkinter.OptionMenu(self, self.var, *choices)
         option.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
+        self.var.set(self.currentFilter.name)
+        self.var.trace("w", self.filterChanged)
 
         self.field1Var = Tkinter.StringVar(self)
         self.field1Var.trace("w", self.valuesChanged)
         
         self.entry1 = Tkinter.Entry(self, textvariable=self.field1Var)
         self.entry1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
+        self.entry1.config(bg="white")
         
         choices = ['', ]
         self.options1 = Tkinter.OptionMenu(self, self.field1Var, *choices)
@@ -210,6 +245,7 @@ class FilterEntry(ttk.Frame):
         
         self.assisted1 = InteractiveEntry(self, self.field1Var)
         self.assisted1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
+        self.assisted1.config(bg="white")
         
         self.range1 = RangeEntry(self, self.field1Var)
         self.range1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
@@ -226,6 +262,7 @@ class FilterEntry(ttk.Frame):
         self.field2Var = Tkinter.StringVar(self)
         self.field2Var.trace("w", self.valuesChanged)
         self.entry2 = Tkinter.Entry(self, textvariable=self.field2Var)
+        self.entry2.config(bg="white")
         self.entry2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
         
         choices = ['', ]
@@ -234,6 +271,7 @@ class FilterEntry(ttk.Frame):
         
         self.assisted2 = InteractiveEntry(self, self.field2Var)
         self.assisted2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
+        self.assisted2.config(bg="white")
         
         self.range2 = RangeEntry(self, self.field2Var)
         self.range2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
@@ -241,8 +279,6 @@ class FilterEntry(ttk.Frame):
         self.unit2 = UnitEntry(self, self.field2Var, ["3", "4"])
         self.unit2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
 
-        if definedFilter != None:
-            self.currentFilter = definedFilter
         self.traceChanges = False
         self.paintCurrentFilter()
         self.traceChanges = True
@@ -253,43 +289,67 @@ class FilterEntry(ttk.Frame):
         self.currentFilter.valid = True
         try:
             self.currentFilter.parseField1(self.field1Var.get())
-            self.entry1.config(bg="grey")
-            self.assisted1.config(bg="grey")
-            self.options1.config(bg="grey")
-            self.unit1.config(bg="grey")
+            self.entry1.config(highlightbackground="#eff0f1")
+            self.entry1.config(highlightcolor="black")
+            self.assisted1.config(highlightbackground="#eff0f1")
+            self.assisted1.config(highlightcolor="black")
+            self.options1.config(highlightbackground="#eff0f1")
+            self.options1.config(highlightcolor="black")
+            self.unit1.config(highlightbackground="#eff0f1")
+            self.unit1.config(highlightcolor="black")
         except:
             self.currentFilter.valid = False
-            self.entry1.config(bg="red")
-            self.assisted1.config(bg="red")
-            self.options1.config(bg="red")
-            self.unit1.config(bg="red")
+            self.entry1.config(highlightbackground="red")
+            self.entry1.config(highlightcolor="red")
+            self.assisted1.config(highlightbackground="red")
+            self.assisted1.config(highlightcolor="red")
+            self.options1.config(highlightbackground="red")
+            self.options1.config(highlightcolor="red")
+            self.unit1.config(highlightbackground="red")
+            self.unit1.config(highlightcolor="red")
             
         try:
             self.currentFilter.parseOperator(self.operatorVar.get())
-            self.optionOperator.config(bg="grey")
+            self.optionOperator.config(highlightbackground="#eff0f1")
+            self.optionOperator.config(highlightcolor="black")
         except:
             self.currentFilter.valid = False
-            self.optionOperator.config(bg="red")
+            self.optionOperator.config(highlightbackground="red")
+            self.optionOperator.config(highlightcolor="red")
                      
         try:
             self.currentFilter.parseField2(self.field2Var.get())
-            self.entry2.config(bg="grey")
-            self.assisted2.config(bg="grey")
-            self.options2.config(bg="grey")
-            self.unit2.config(bg="grey")
+            self.entry2.config(highlightbackground="#eff0f1")
+            self.entry2.config(highlightcolor="black")
+            self.assisted2.config(highlightbackground="#eff0f1")
+            self.assisted2.config(highlightcolor="black")
+            self.options2.config(highlightbackground="#eff0f1")
+            self.options2.config(highlightcolor="black")
+            self.unit2.config(highlightbackground="#eff0f1")
+            self.unit2.config(highlightcolor="black")
         except:
             self.currentFilter.valid = False
-            self.entry2.config(bg="red")
-            self.assisted2.config(bg="red")
-            self.options2.config(bg="red")
-            self.unit2.config(bg="red")
+            self.entry2.config(highlightbackground="red")
+            self.entry2.config(highlightcolor="red")
+            self.assisted2.config(highlightbackground="red")
+            self.assisted2.config(highlightcolor="red")
+            self.options2.config(highlightbackground="red")
+            self.options2.config(highlightcolor="red")
+            self.unit2.config(highlightbackground="red")
+            self.unit2.config(highlightcolor="red")
  
     def filterChanged(self, *args):
         if self.traceChanges == False:
             return
         name = self.var.get()
+        if name == "":
+            self.delete()
+            return
         if self.currentFilter.name == name:
             return
+        logicLeft = self.currentFilter.logicLeft
+        logicRight = self.currentFilter.logicRight
+        
         # remove currentFilter from model
         if self.currentFilter in self.source:
             self.source.remove(self.currentFilter)
@@ -300,13 +360,16 @@ class FilterEntry(ttk.Frame):
                 self.currentFilter = f
         if self.currentFilter == None:
             raise Exception("Unknown Filter")
-                
-        self.paintCurrentFilter()
 
+
+        self.currentFilter.logicLeft = logicLeft
+        self.currentFilter.logicRight = logicRight
+
+        self.paintCurrentFilter()
         self.source.append(self.currentFilter)
+        self.master.evalLogic()
 
     def paintCurrentFilter(self):
-
         self.traceChanges = False
         self.var.set(self.currentFilter.name)
         
@@ -337,9 +400,13 @@ class FilterEntry(ttk.Frame):
         else:
             raise Exception("Unknown FieldType!")
         self.field1Var.set(self.currentFilter.field1)
-
-        self.setMenuChoices(self.optionOperator, self.currentFilter.operatorChoices, self.operatorVar)
-        self.operatorVar.set(self.currentFilter.operator)
+        
+        if len(self.currentFilter.operatorChoices) > 0:
+            self.optionOperator.grid()
+            self.setMenuChoices(self.optionOperator, self.currentFilter.operatorChoices, self.operatorVar)
+            self.operatorVar.set(self.currentFilter.operator)
+        else:
+            self.optionOperator.grid_remove()
 
         self.entry2.grid_remove()
         self.options2.grid_remove()
@@ -382,11 +449,40 @@ class FilterEntry(ttk.Frame):
         var.set(choices[0])
         for choice in choices:
             menu['menu'].add_command(label=choice, command=Tkinter._setit(var, choice))
+            
+            
+    def logicLeftChanged(self, *args):
+        option = self.logicLeftVar.get()
+        self.currentFilter.logicLeft = option
+        self.master.evalLogic()
+            
 
+    def logicRightChanged(self, *args):
+        option = self.logicRightVar.get()
+        self.currentFilter.logicRight = option
+        self.master.evalLogic()
+    
+    def setLogicState(self, valid):
+        if valid == True:
+            self.logicLeftOption.config(highlightbackground="#eff0f1")
+            self.logicLeftOption.config(highlightcolor="#eff0f1")
+            self.logicRightOption.config(highlightbackground="#eff0f1")
+            self.logicRightOption.config(highlightcolor="#eff0f1")
+            
+        else:
+            self.logicLeftOption.config(highlightbackground="red")
+            self.logicLeftOption.config(highlightcolor="red")
+            self.logicRightOption.config(highlightbackground="red")
+            self.logicRightOption.config(highlightcolor="red")
+    
     def delete(self):
         self.grid_forget()
+        self.logicLeftOption.grid_forget()
+        self.logicRightOption.grid_forget()
         if self.currentFilter in self.source:
             self.source.remove(self.currentFilter)
+        if self in self.master.entries:
+            self.master.entries.remove(self)
         return
 
 class UnitEntry(Tkinter.Frame):
@@ -403,7 +499,7 @@ class UnitEntry(Tkinter.Frame):
         self.units = units
         self.v = Tkinter.StringVar()
         self.e = Tkinter.Entry(self, textvariable=self.v, width=8)
-        self.e.config(bg="grey")
+        self.e.config(bg="white")
         self.e.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
         self.menubutton = Tkinter.Menubutton(self, text=self.units[0], relief="raised")
         self.menubutton.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
@@ -430,9 +526,12 @@ class UnitEntry(Tkinter.Frame):
         # parse value
         try:
             value = float(text)
-            self.e.config(bg="grey")
+            self.e.config(highlightbackground="#eff0f1")
+            self.e.config(highlightcolor="black")
+            
         except:
-            self.e.config(bg="red")
+            self.e.config(highlightbackground="red")
+            self.e.config(highlightcolor="red")
         # parse unit
         text += " " + self.menubutton["text"]
         self.fieldVar.set(text)
@@ -458,6 +557,7 @@ class RangeEntry(Tkinter.Frame):
         self.v1 = Tkinter.StringVar()
         self.e1 = Tkinter.Entry(self, textvariable=self.v1, width=8)
         self.e1.grid(row=0, column=0, sticky=("N", "W", "E", "S"))
+        self.e1.config(bg="white")
         self.menubutton = Tkinter.Menubutton(self, text=" - ", relief="raised")
         self.menubutton.grid(row=0, column=1, sticky=("N", "W", "E", "S"))
         self.rowconfigure(0,weight=1)
@@ -469,6 +569,7 @@ class RangeEntry(Tkinter.Frame):
         self.v2 = Tkinter.StringVar()
         self.e2 = Tkinter.Entry(self, textvariable=self.v2, width=8)
         self.e2.grid(row=0, column=3, sticky=("N", "W", "E", "S"))
+        self.e2.config(bg="white")
         self.keepTrace = True
         self.v1.trace("w", self.valuesChanged)
         self.v2.trace("w", self.valuesChanged)
@@ -480,25 +581,31 @@ class RangeEntry(Tkinter.Frame):
             try:
                 value = self.v1.get()
                 text += str(float(value))
-                self.e1.config(bg="grey")
+                self.e1.config(highlightbackground="#eff0f1")
+                self.e1.config(highlightcolor="black")
             except:
-                self.e1.config(bg="red")
+                self.e1.config(highlightbackground="red")
+                self.e1.config(highlightcolor="red")
             text += "-"
             try:
                 value = self.v2.get()
                 text += str(float(value))
-                self.e2.config(bg="grey")
+                self.e2.config(highlightbackground="#eff0f1")
+                self.e2.config(highlightcolor="black")
             except:
-                self.e2.config(bg="red")
+                self.e2.config(highlightbackground="red")
+                self.e2.config(highlightcolor="red")
         else:
             text = ""
             try:
                 value = self.v1.get()
                 float(value)
                 text += value
-                self.e1.config(bg="grey")
+                self.e1.config(highlightbackground="#eff0f1")
+                self.e1.config(highlightcolor="black")
             except:
-                self.e1.config(bg="red")
+                self.e1.config(highlightbackground="red")
+                self.e1.config(highlightcolor="red")
             text += "+/-"
             try:
                 content = self.v2.get()
@@ -511,9 +618,11 @@ class RangeEntry(Tkinter.Frame):
                 if typ == "":
                     typ = "Da"
                 text += str(value) + " "+typ
-                self.e2.config(bg="grey")
+                self.e2.config(highlightbackground="#eff0f1")
+                self.e2.config(highlightcolor="black")
             except:
-                self.e2.config(bg="red")
+                self.e2.config(highlightbackground="red")
+                self.e2.config(highlightcolor="red")
         self.fieldVar.set(text)
         
     def setFieldValue(self, fieldValue):
@@ -636,6 +745,8 @@ class Filter(object):
     
     def __init__(self, name):
         self.name = name
+        self.logicLeft = " "
+        self.logicRight = " "
         self.field1 = ""
         self.choices1 = []
         self.type1 = FieldTypes.INACTIVE
@@ -697,7 +808,7 @@ class EmptyFilter(Filter):
         super(EmptyFilter, self).__init__("")
         self.type1 = FieldTypes.INACTIVE
         self.type2 = FieldTypes.INACTIVE
-        self.operatorChoices = [""]
+        self.operatorChoices = []
         
     def parseField1(self, field1):
         return
