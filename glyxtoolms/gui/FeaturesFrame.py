@@ -296,7 +296,7 @@ class NotebookFeature(ttk.Frame):
         if col == "isGlycopeptide" or col == "Status":
             l = [(self.featureTree.set(k, col), k) for k in children]
         elif col == "Nr. Idents":
-            l = [(int(self.featureTree.set(k, col)), k) for k in children]
+            l = [(int(self.featureTree.set(k, col).split("/")[0]), k) for k in children]
         elif col == "#0":
             l = [(int(self.featureTree.item(k, "text")), k) for k in children]
         else:
@@ -384,6 +384,11 @@ class NotebookFeature(ttk.Frame):
             else:
                 rt = round(feature.getRT(), 1)
 
+            nrIdentifications = 0
+            for hit in feature.hits:
+                if hit.passesFilter == True:
+                    nrIdentifications += 1
+
             item = self.featureTree.insert("", "end", text=name,
                                            values=(rt,
                                                    round(feature.getMZ(), 4),
@@ -391,7 +396,7 @@ class NotebookFeature(ttk.Frame):
                                                    round(bestScore, 2),
                                                    len(feature.getSpectraIds()),
                                                    feature.status,
-                                                   len(feature.hits)),
+                                                   str(nrIdentifications) + "/"+str(len(feature.hits))),
                                            tags=taglist)
             self.featureTreeIds[item] = feature
             self.featureItems[feature.getId()] = item

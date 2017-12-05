@@ -34,7 +34,7 @@ class FilterPanel(Tkinter.Toplevel):
         self.lift()
         self.wm_deiconify()
         
-        self.protocol("WM_DELETE_WINDOW", self._delete_window)
+        #self.protocol("WM_DELETE_WINDOW", self._delete_window)
         #self.bind("<Destroy>", self._destroy)
 
         
@@ -44,7 +44,7 @@ class FilterPanel(Tkinter.Toplevel):
         self.N_Identification = 0
         
         frameIdentification = ttk.Labelframe(self, text="1. Identifications")
-        frameIdentification.grid(row=0, column=0, sticky="NWES")
+        frameIdentification.grid(row=0, column=0, columnspan=2, sticky="NWES")
         frameIdentification.columnconfigure(0, weight=0)
         frameIdentification.columnconfigure(1, weight=1)
         
@@ -58,6 +58,7 @@ class FilterPanel(Tkinter.Toplevel):
         self.filterIdentification.grid(row=1, column=0, columnspan=2, sticky="NWES")
         self.filterIdentification.columnconfigure(1, weight=1)
         self.filterIdentification.evalLogic = lambda x=self.filterIdentification:self.evalLogic(x)
+        self.filterIdentification.checkValidity = self.checkValidity
         self.filterIdentification.entries = []
         
 
@@ -66,7 +67,7 @@ class FilterPanel(Tkinter.Toplevel):
         self.N_Features = 0
 
         frameFeature = ttk.Labelframe(self, text="2. Features")
-        frameFeature.grid(row=1, column=0, sticky="NWES")
+        frameFeature.grid(row=1, column=0, columnspan=2, sticky="NWES")
         frameFeature.columnconfigure(0, weight=0)
         frameFeature.columnconfigure(1, weight=1)
         
@@ -80,13 +81,14 @@ class FilterPanel(Tkinter.Toplevel):
         self.filterFeature.grid(row=1, column=0, columnspan=2, sticky="NWES")
         self.filterFeature.columnconfigure(1, weight=1)
         self.filterFeature.evalLogic = lambda x=self.filterFeature:self.evalLogic(x)
+        self.filterFeature.checkValidity = self.checkValidity
         self.filterFeature.entries = []
 
         #   ------- Scoring ------ #        
         self.N_Scoring = 0
         
         frameScoring = ttk.Labelframe(self, text="3. Scoring")
-        frameScoring.grid(row=2, column=0, sticky="NWES")
+        frameScoring.grid(row=2, column=0, columnspan=2, sticky="NWES")
         frameScoring.columnconfigure(0, weight=0)
         frameScoring.columnconfigure(1, weight=1)
         
@@ -100,8 +102,14 @@ class FilterPanel(Tkinter.Toplevel):
         self.filterScoring.grid(row=1, column=0, columnspan=2, sticky="NWES")
         self.filterScoring.columnconfigure(1, weight=1)
         self.filterScoring.evalLogic = lambda x=self.filterScoring:self.evalLogic(x)
+        self.filterScoring.checkValidity = self.checkValidity
         self.filterScoring.entries = []
         
+        self.buttonCancel = Tkinter.Button(self, text="Cancel", command=self.cancel)
+        self.buttonCancel.grid(row=3, column=0, sticky="NE")
+        
+        self.buttonOk = Tkinter.Button(self, text="OK", command=self.ok)
+        self.buttonOk.grid(row=3, column=1, sticky="NW")
 
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
@@ -120,6 +128,61 @@ class FilterPanel(Tkinter.Toplevel):
         for f in self.model.filters["Scoring"]:
             f.reinitialize()
             self.addScoringFilter(f)
+            
+    def cancel(self):
+        self.destroy()
+        
+    def checkValidity(self):
+        valid = True
+        if self.evalLogic(self.filterIdentification) == False:
+            valid = False
+        if self.evalLogic(self.filterFeature) == False:
+            valid = False
+        if self.evalLogic(self.filterScoring) == False:
+            valid = False
+        
+        for entry in self.filterIdentification.entries:
+            if entry.currentFilter.valid == False:
+                valid = False
+                break
+        for entry in self.filterFeature.entries:
+            if entry.currentFilter.valid == False:
+                valid = False
+                break
+                
+        for entry in self.filterScoring.entries:
+            if entry.currentFilter.valid == False:
+                valid = False
+                break
+        if valid == True:
+            self.buttonOk['state'] = 'normal'
+        else:
+            self.buttonOk['state'] = 'disabled'
+        return valid
+        
+    def ok(self):
+        # gather active filters
+        if self.checkValidity() == False:
+            return
+        self.model.filters["Identification"] = []
+        for entry in self.filterIdentification.entries:
+            self.model.filters["Identification"].append(entry.currentFilter)
+            
+        self.model.filters["Features"] = []
+        for entry in self.filterFeature.entries:
+            self.model.filters["Features"].append(entry.currentFilter)
+            
+        self.model.filters["Scoring"] = []
+        for entry in self.filterScoring.entries:
+            self.model.filters["Scoring"].append(entry.currentFilter)
+            
+        self.model.runFilters()
+        self.model.classes["NotebookFeature"].updateFeatureTree()
+        features = self.model.classes["NotebookFeature"].getSelectedFeatures()
+        self.model.classes["NotebookScoring"].updateTree(features)
+        self.model.classes["NotebookIdentification"].updateTree(features)
+        self.model.classes["TwoDView"].init()
+        self.destroy()
 
     def evalLogic(self, container):
         text = ""
@@ -129,29 +192,18 @@ class FilterPanel(Tkinter.Toplevel):
             text += entry.currentFilter.logicRight
         valid = True
         try:
-            eval(text)
+            if text != "":
+                eval(text)
         except:
             valid = False
         for entry in container.entries:
             entry.setLogicState(valid)
-        
-
-    def _delete_window(self):
-        try:
-            self.destroy()
-            self.model.runFilters()
-            self.model.classes["NotebookFeature"].updateFeatureTree()
-            features = self.model.classes["NotebookFeature"].getSelectedFeatures()
-            self.model.classes["NotebookScoring"].updateTree(features)
-            self.model.classes["NotebookIdentification"].updateTree(features)
-            self.model.classes["TwoDView"].init()
-            
-        except:
-            pass
+        return valid
 
     def addIdentificationFilter(self, definedFilter=None):
         filters = []
         filters.append(EmptyFilter())
+        filters.append(GlycanRegexFilter())
         filters.append(GlycopeptideMassError_Filter())
         filters.append(GlycopeptideMass_Filter())
         filters.append(Fragmentmass_Filter_Identification())
@@ -162,7 +214,6 @@ class FilterPanel(Tkinter.Toplevel):
         
         f = FilterEntry(self.filterIdentification,
                         filters,
-                        self.model.filters["Identification"],
                         self.N_Identification,
                         definedFilter=definedFilter)
         f.grid(row=self.N_Identification, column=1, sticky=("N", "W", "E", "S"))
@@ -178,7 +229,6 @@ class FilterPanel(Tkinter.Toplevel):
         
         f = FilterEntry(self.filterFeature,
                         filters,
-                        self.model.filters["Features"],
                         self.N_Features,
                         definedFilter=definedFilter)
         f.grid(row=self.N_Features, column=1, sticky=("N", "W", "E", "S"))
@@ -191,18 +241,16 @@ class FilterPanel(Tkinter.Toplevel):
         
         f = FilterEntry(self.filterScoring,
                         filters,
-                        self.model.filters["Scoring"],
                         self.N_Scoring,
                         definedFilter=definedFilter)
         f.grid(row=self.N_Scoring, column=1, sticky=("N", "W", "E", "S"))
         self.N_Scoring += 1
         
 class FilterEntry(ttk.Frame):
-    def __init__(self, master, filters, source, row, definedFilter=None):
+    def __init__(self, master, filters, row, definedFilter=None):
         ttk.Frame.__init__(self, master=master)
         
         self.master = master
-        self.source = source
         self.master.entries.append(self)
         
         # Connection | type | <Field1> | Operator | <Field2> |
@@ -272,12 +320,19 @@ class FilterEntry(ttk.Frame):
         
         self.unit1 = UnitEntry(self, self.field1Var, ["1", "2"])
         self.unit1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
+        
+        self.label1 = Tkinter.Label(self, text="Foobar")
+        self.label1.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
+        
+        # ----------------
     
         self.operatorVar = Tkinter.StringVar(self)
         self.operatorVar.trace("w", self.valuesChanged)
         choicesOperator = ['', ]
         self.optionOperator = Tkinter.OptionMenu(self, self.operatorVar, *choicesOperator)
         self.optionOperator.grid(row=0, column=3, sticky=("N", "W", "E", "S"))
+        
+        # -----------------
         
         self.field2Var = Tkinter.StringVar(self)
         self.field2Var.trace("w", self.valuesChanged)
@@ -298,12 +353,16 @@ class FilterEntry(ttk.Frame):
         
         self.unit2 = UnitEntry(self, self.field2Var, ["3", "4"])
         self.unit2.grid(row=0, column=4, sticky=("N", "W", "E", "S"))
+        
+        self.label2 = Tkinter.Label(self, text="Foobar")
+        self.label2.grid(row=0, column=2, sticky=("N", "W", "E", "S"))
 
         
         self.paintCurrentFilter()
         self.traceChanges = True
         self.logicLeftChanged()
         self.logicRightChanged()
+        self.master.checkValidity()
 
         
         
@@ -361,6 +420,7 @@ class FilterEntry(ttk.Frame):
             self.options2.config(highlightcolor="red")
             self.unit2.config(highlightbackground="red")
             self.unit2.config(highlightcolor="red")
+        self.master.checkValidity()
  
     def filterChanged(self, *args):
         if self.traceChanges == False:
@@ -374,10 +434,6 @@ class FilterEntry(ttk.Frame):
         logicLeft = self.currentFilter.logicLeft
         logicRight = self.currentFilter.logicRight
         
-        # remove currentFilter from model
-        if self.currentFilter in self.source:
-            self.source.remove(self.currentFilter)
-        
         self.currentFilter = None
         for f in self.filters:
             if f.name == name:
@@ -390,8 +446,8 @@ class FilterEntry(ttk.Frame):
         self.currentFilter.logicRight = logicRight
 
         self.paintCurrentFilter()
-        self.source.append(self.currentFilter)
         self.master.evalLogic()
+        self.master.checkValidity()
 
     def paintCurrentFilter(self):
         self.traceChanges = False
@@ -403,6 +459,7 @@ class FilterEntry(ttk.Frame):
         self.assisted1.setVisible(False)
         self.range1.grid_remove()
         self.unit1.grid_remove()
+        self.label1.grid_remove()
         
         if self.currentFilter.type1 == FieldTypes.INACTIVE:
             pass
@@ -410,7 +467,7 @@ class FilterEntry(ttk.Frame):
             self.entry1.grid()
         elif self.currentFilter.type1 == FieldTypes.MENU:
             self.options1.grid()
-            self.unit1.grid_remove()         
+            self.setMenuChoices(self.options1, self.currentFilter.choices1, self.field1Var)     
         elif self.currentFilter.type1 == FieldTypes.ASSISTED:
             self.assisted1.grid()
             self.assisted1.all_choices = self.currentFilter.choices1
@@ -421,6 +478,9 @@ class FilterEntry(ttk.Frame):
             self.range1.grid()
         elif self.currentFilter.type1 == FieldTypes.UNIT:
             self.unit1.grid()
+        elif self.currentFilter.type1 == FieldTypes.LABEL:
+            self.label1.config(text=self.currentFilter.field1)
+            self.label1.grid()
         else:
             raise Exception("Unknown FieldType!")
         self.field1Var.set(self.currentFilter.field1)
@@ -438,6 +498,7 @@ class FilterEntry(ttk.Frame):
         self.assisted2.setVisible(False)
         self.range2.grid_remove()
         self.unit2.grid_remove()
+        self.label2.grid_remove()
         
         if self.currentFilter.type2 == FieldTypes.INACTIVE:
             pass
@@ -457,6 +518,9 @@ class FilterEntry(ttk.Frame):
             self.unit2.grid()
             self.unit2.setUnits(self.currentFilter.unitChoices)
             self.unit2.setFieldValue(self.currentFilter.field2)
+        elif self.currentFilter.type2 == FieldTypes.LABEL:
+            self.label2.config(text=self.currentFilter.field2)
+            self.label2.grid()
         else:
             raise Exception("Unknown FieldType!")
         self.field2Var.set(self.currentFilter.field2)
@@ -470,9 +534,9 @@ class FilterEntry(ttk.Frame):
         if len(choices) == 0:
             var.set("")
             return
-        var.set(choices[0])
         for choice in choices:
             menu['menu'].add_command(label=choice, command=Tkinter._setit(var, choice))
+        var.set(choices[0])
             
             
     def logicLeftChanged(self, *args):
@@ -502,18 +566,17 @@ class FilterEntry(ttk.Frame):
             self.logicLeftOption.config(highlightcolor="red")
             self.logicRightOption.config(highlightbackground="red")
             self.logicRightOption.config(highlightcolor="red")
+        
     
     def delete(self):
         self.logicLeftOption.destroy()
         self.logicRightOption.destroy()
         self.delButton.destroy()
         self.destroy()
-        if self.currentFilter in self.source:
-            self.source.remove(self.currentFilter)
         if self in self.master.entries:
             self.master.entries.remove(self)
         self.master.evalLogic()
-        return
+        self.master.checkValidity()
 
 class UnitEntry(Tkinter.Frame):
     
@@ -770,6 +833,7 @@ class FieldTypes:
     ASSISTED=4
     RANGE=5 # dropdown menu with "-" and "+/-"
     UNIT=6
+    LABEL=7
 
 class Filter(object):
     
@@ -848,6 +912,38 @@ class EmptyFilter(Filter):
 
     def evaluate(self, obj, **args):
         return True
+        
+class GlycanRegexFilter(Filter):
+    def __init__(self):
+        super(GlycanRegexFilter, self).__init__("Regex")
+        self.type1 = FieldTypes.MENU
+        self.choices1 = ["Glycan name", "Peptide sequence"]
+        self.field1 = "Glycan name"
+        self.type2 = FieldTypes.ENTRY
+        self.operatorChoices = ["matches", "matches not"]
+        self.operator = "matches"
+        self.field2 = ""
+        self.pattern = re.compile(self.field2)
+        
+    def parseField1(self, field1):
+        self.field1 = field1
+        
+    def parseField2(self, field2):
+        self.field2 = field2
+        self.pattern = re.compile(field2)
+
+    def evaluate(self, hit, **args):
+        match = True
+        if self.field1 == "Glycan name":
+            if self.pattern.search(hit.glycan.toString()) == None:
+                match = False
+        else:
+            if self.pattern.search(hit.peptide.toString()) == None:
+                match = False
+        if self.operator == "matches":
+            return match
+        else:
+            return not match
 
 class StatusFilter(Filter):
     def __init__(self):
