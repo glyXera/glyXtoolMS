@@ -624,7 +624,9 @@ class AnnotatedPlot(FramePlot.FramePlot):
             for error, charge, peak, name in hits.get("+",[]):
                 self.aMenu.add_command(label="+"+name + " :" + str(round(error,4))+" Da ("+str(charge) + "+)",
                                        command=lambda x1=mass,x2=peak.x: defineNewAnnotation(x1,x2,annotation))
-            self.aMenu.post(event.x_root, event.y_root)
+                                       
+            # post menu above cursor
+            self.aMenu.post(event.x_root, event.y_root - self.aMenu.yposition("end"))
             self.aMenu.focus_set()
             self.aMenu.bind("<FocusOut>", self.removePopup)
         
