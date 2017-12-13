@@ -280,7 +280,7 @@ def annotateIdentification(hit, tolerance):
 
     glycanIons = {}
     pepIon = hit.peptide.mass+glyxtoolms.masses.MASS["H+"]
-    for charge in range(1, maxCharge):
+    for charge in range(1, maxCharge+1):
         for g in glycans:
             mass = calcChargedMass(pepIon+g.mass,charge)
             glycanIons[g.toString()+"("+str(charge)+"H+)"] = (mass,charge)
