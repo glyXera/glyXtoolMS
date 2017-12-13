@@ -157,9 +157,9 @@ PROTEINMODIFICATION["TYR_DIOX"] = {"mass": 31.9899,
                                "composition":{'O': 2} 
                               } # Dioxidation Tyrosin       
 
-PROTEINMODIFICATION["TRP_KYN"] = {"mass":-3.9949 ,
+PROTEINMODIFICATION["TRP_KYN"] = {"mass":3.9949 ,
                               "targets": {"W"},
-                               "composition":{'O': -1, 'C':1} 
+                               "composition":{'O': 1, 'C':-1} 
                               }
 
 def getModificationNames():
