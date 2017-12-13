@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>GlycanCompositionBuilder</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/GlycoIdentificationScore.py --in "%2" --out "%3" --cutoff "%4" --scoreFrag "%5" --scorePep "%6" --scorePepNH3 "%7" --scorePepHEXNAC "%8" --scoreOxonium "%9"</cloptions>
+		  <cloptions> "%1"/GlycoIdentificationScore.py --in "%2" --out "%3" --cutoff "%4" --scoreFrag "%5" --scorePep "%6" --scorePepNH3 "%7" --scorePepHEXNAC "%8" --scoreOxonium "%9" --scoreExplained "%10"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -33,6 +33,7 @@
             <mapping id="7" cl="%%scorePepNH3" />
             <mapping id="8" cl="%%scorePepHEXNAC" />                                            			
             <mapping id="9" cl="%%scoreOxonium" />     
+            <mapping id="10" cl="%%scoreExplained" /> 
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
@@ -44,6 +45,7 @@
             <ITEM name="scorePepNH3" value="true" type="string" restrictions="true,false" description="Score existence of the peptide-NH3 ion"/>
             <ITEM name="scorePepHEXNAC" value="true" type="string" restrictions="true,false" description="Score existence of the peptide+HEXNAC ion"/>
             <ITEM name="scoreOxonium" value="true" type="string" restrictions="true,false" description="Score consistency between glycan composition and oxonium ions"/>
+            <ITEM name="scoreExplained" value="true" type="string" restrictions="true,false" description="Score explained intensity of the match"/>
 		  </ini_param>
 		</external>
 	</tool>

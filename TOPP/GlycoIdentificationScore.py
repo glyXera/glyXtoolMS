@@ -19,11 +19,11 @@ def calcScore(hit, options):
             y.add(re.search("\d+", name).group())
         if re.match("^b\d+(-NH3|-H2O|\+HexNAc)?$", name):
             b.add(re.search("\d+", name).group())
-        if name.startswith("peptide+("):
+        if name.startswith("peptide("):
             pep = True
-        if name.startswith("peptide-NH3+("):
+        if name.startswith("peptide-NH3("):
             pepNH3 = True
-        if name.startswith("peptide+HexNAc+("):
+        if name.startswith("peptide+N1("):
             pepHexNAc = True
 
     # check oxonium ions for glycan moeity
@@ -45,6 +45,18 @@ def calcScore(hit, options):
     length = float(len(hit.peptide.sequence))-1
     if length == 0:
         length = 1.0
+        
+    # collect peaks with fragment info
+    peakset = set()
+    for key in keys:
+        p = hit.fragments[key]["peak"]
+        peakset.add(p)
+    explainedIntensity = 0.0
+    for p in peakset:
+        explainedIntensity += p.y
+    totalIntensity = 0.0
+    for p in hit.feature.consensus:
+        totalIntensity += p.y
     
     # calc score
     score = 1.0
@@ -69,6 +81,10 @@ def calcScore(hit, options):
         score5 = scoreNeuAc*scoreFuc
         score = score*score5
         all_scores["scoreOxonium"] = score5
+    if options.scoreExplained == "true":
+        score6 = explainedIntensity/totalIntensity
+        score = score*score6
+        all_scores["scoreExplained"] = score6
         
     return score, all_scores
 
@@ -84,6 +100,8 @@ def handle_args(argv=None):
     parser.add_argument("--scorePepNH3", dest="scorePepNH3",help="Score existence of the peptide-NH3 ion")
     parser.add_argument("--scorePepHEXNAC", dest="scorePepHEXNAC",help="Score existence of the peptide+HEXNAC ion")
     parser.add_argument("--scoreOxonium", dest="scoreOxonium",help="Score consistency between glycan composition and oxonium ions")
+    parser.add_argument("--scoreExplained", dest="scoreExplained",help="Score explained intensity of the match")
+    
 
     if not argv:
         args = parser.parse_args(sys.argv[1:])
@@ -111,6 +129,8 @@ def main(options):
         glyML.addToolValueDefault("scorePepHEXNAC", 0.0)
     if options.scoreOxonium == "true":
         glyML.addToolValueDefault("scoreOxonium", 0.0)
+    if options.scoreExplained == "true":
+        glyML.addToolValueDefault("scoreExplained", 0.0)
     newhits = []
     N_removed = 0
     for h in glyML.glycoModHits:
@@ -129,6 +149,8 @@ def main(options):
             h.toolValues["scorePepHEXNAC"] = all_scores["scorePepHEXNAC"]
         if options.scoreOxonium == "true":
             h.toolValues["scoreOxonium"] = all_scores["scoreOxonium"]
+        if options.scoreOxonium == "true":
+            h.toolValues["scoreExplained"] = all_scores["scoreExplained"]
         
         newhits.append(h)
     print "removed " + str(N_removed) + " identifications with a score lower than " + str(cutoff) + " from " + str(len(glyML.glycoModHits)) + " total identifications."
