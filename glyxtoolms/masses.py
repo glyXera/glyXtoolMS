@@ -135,7 +135,7 @@ PROTEINMODIFICATION["OX"] = {"mass": 15.9949,
 PROTEINMODIFICATION["TRP_OX"] = {"mass": 15.9949,
                               "targets": {"W"},
                                "composition":{'O': 1} 
-                              } # Oxidation Tyrosin
+                              } # Oxidation Tryptophan
                               
 PROTEINMODIFICATION["TYR_OX"] = {"mass": 15.9949,
                               "targets": {"Y"},
@@ -145,17 +145,22 @@ PROTEINMODIFICATION["TYR_OX"] = {"mass": 15.9949,
 PROTEINMODIFICATION["DIOX"] = {"mass": 31.9899,
                               "targets": {"W", "Y"},
                                "composition":{'O': 2} 
-                              } # Dioxidation Tyrosin
+                              } # Dioxidation Tryptophan and Tyrosin
                               
 PROTEINMODIFICATION["TRP_DIOX"] = {"mass": 31.9899,
                               "targets": {"W"},
                                "composition":{'O': 2} 
-                              } # Dioxidation Tyrosin
+                              } # Dioxidation Tryptophan
                               
 PROTEINMODIFICATION["TYR_DIOX"] = {"mass": 31.9899,
                               "targets": {"Y"},
                                "composition":{'O': 2} 
-                              } # Dioxidation Tyrosin                              
+                              } # Dioxidation Tyrosin       
+
+PROTEINMODIFICATION["TRP_KYN"] = {"mass":-3.9949 ,
+                              "targets": {"W"},
+                               "composition":{'O': -1, 'C':1} 
+                              }
 
 def getModificationNames():
     """ Return a sorted list of Modification names. 
