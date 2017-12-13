@@ -346,7 +346,7 @@ class GlyxXMLGlycoModHit(object):
 
 class GlyxXMLConsensusPeak(object):
 
-    def __init__(self, x, y, pos):
+    def __init__(self, x, y, pos=None):
         self.x = x
         self.y = y
         self.pos = pos
