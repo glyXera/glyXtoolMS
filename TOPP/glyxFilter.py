@@ -342,7 +342,7 @@ def main(options):
             charge = feature.getCharge()
             feature.spectraIds.add(spec.getNativeID())
             
-            if charge != 1:
+            if charge > 1: # TODO: Handle negative charge
                 score = Score(spec.getNativeID(), rt, mz, precursor.getMZ(), charge, intensity, feature)
                 scores.append(score)
                 singleCharged = False
