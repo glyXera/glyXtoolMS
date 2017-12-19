@@ -1456,7 +1456,9 @@ class XMLPeptideFile(object):
         glycosylation = xmlParameters.find("./glycosylations").text.split(", ")
         parameters.NGlycosylation = "N" in glycosylation
         parameters.OGlycosylation = "O" in glycosylation
-        parameters.modifications = xmlParameters.find("./modifications").text.split(", ")
+        modifications = xmlParameters.find("./modifications")
+        if modifications.text != None:
+            parameters.modifications = xmlParameters.find("./modifications").text.split(", ")
         parameters.missedCleavages = int(xmlParameters.find("./missedCleaveage").text)
         
         return parameters
