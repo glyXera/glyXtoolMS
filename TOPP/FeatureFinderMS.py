@@ -98,23 +98,24 @@ def findMonoIsotopicPeak(mz_org, charge, spec1, tolerance, precursorshift, mswin
 
     # find which isotope mz is
     results = []
-    for mz in mz_candidates: 
-        for i in range(-6,6):
-            # calculate possible monoisotopes
-            monomass = mz + i*glyxtoolms.masses.MASS["H+"]/charge
-            result = findPattern(monomass, charge, peaks, tolerance)
-            if result == None:
-                continue
-            # check that pattern encloses mz_org
-            isInPattern = False
-            for x in result["x"]:
-                if abs(x-mz_org) < tolerance:
-                    isInPattern = True
-                    break
-            minMZ = min(result["x"])-tolerance
-            maxMZ = max(result["x"])+tolerance
-            if minMZ < mz_org < maxMZ and isInPattern == True and sum(result["y"]) > 0:
-                results.append(result)
+    for mz in mz_candidates:
+        for charge in range(1,5): # TODO: open as parameter
+            for i in range(-6,6):
+                # calculate possible monoisotopes
+                monomass = mz + i*glyxtoolms.masses.MASS["H+"]/charge
+                result = findPattern(monomass, charge, peaks, tolerance)
+                if result == None:
+                    continue
+                # check that pattern encloses mz_org
+                isInPattern = False
+                for x in result["x"]:
+                    if abs(x-mz_org) < tolerance:
+                        isInPattern = True
+                        break
+                minMZ = min(result["x"])-tolerance
+                maxMZ = max(result["x"])+tolerance
+                if minMZ < mz_org < maxMZ and isInPattern == True and sum(result["y"]) > 0:
+                    results.append(result)
     return peaks, results
 
 

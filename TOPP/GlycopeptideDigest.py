@@ -20,7 +20,6 @@ def handle_args(argv=None):
     parser.add_argument("--modifications", dest="modifications",help="variable modifications: List of [None,AMID,CAM,CYS_CAM,NTERM_CAM,CM,CYS_CM,DEAM,ASN_DEAM,GLN_DEAM,DEHYDR,SER_DEHYDR,THR_DEHYDR,DIOX,TRP_DIOX,TYR_DIOX,MSO,OX,TRP_OX,TYR_OX,CYS_PAM,PHOS,SER_PHOS,THR_PHOS,TYR_PHOS")
     parser.add_argument("--glycosylation", dest="glycosylation",help="Glycosylation: List of [N-Glycosylation,O-Glycosylation]")
     parser.add_argument("--missedCleavageSites", dest="missedCleavageSites",help="maximum missed cleavage sites")
-                
     if not argv:
         args = parser.parse_args(sys.argv[1:])
     else:
