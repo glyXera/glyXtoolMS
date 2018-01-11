@@ -92,6 +92,27 @@ def getModificationVariants(peptide):
         if isValidPermutation(i) == True:
             final.add(tuple(sorted(i)))
     return final
+    
+class FragmentType(object):
+    UNKNOWN=0
+    IMMONIUMION=1
+    OXONIUMION=2
+    YION=3
+    BION=4
+    BYION=5
+    GLYCANION=6
+    ISOTOPE=7
+    
+
+class Fragment(object):
+    
+    def __init__(self, name, mass,typ=0, peak=None):
+        self.name = name
+        self.typ = typ
+        self.mass = mass
+        self.peak = peak
+        
+    
 
 
 def generatePeptideFragments(peptide):
@@ -284,7 +305,6 @@ def annotateIdentification(hit, tolerance):
         for g in glycans:
             mass = calcChargedMass(pepIon+g.mass,charge)
             glycanIons[g.toString()+"("+str(charge)+"H+)"] = (mass,charge)
-            
     
 
 def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharge):
