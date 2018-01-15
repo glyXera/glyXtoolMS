@@ -590,13 +590,25 @@ class Glycan(glyxtoolms.io.XMLGlycan):
 
 
     def hasNCore(self):
-        """ Checks if the compositin contains 2 HexNac and 3 Hexose to build N-Glycan core """ 
+        """ Checks if the composition contains 2 HexNac and 3 Hexose to build N-Glycan core """ 
         hexnac = self.sugar["HEXNAC"]
         hexose = self.sugar["HEX"]
         if hexnac >= 2 and hexose >= 3:
             return True
         return False
     
+    def hasNCorePart(self):
+        """ Checks if the composition has at least the N-Core Part """
+        N = self.sugar["HEXNAC"]
+        H = self.sugar["HEX"]
+        
+        if N < 1:
+            return False
+        if H > 0 and N < 2:
+            return False
+        if N > 2 and H < 2:
+            return False
+        return True
 
 # --------------------------- Helper functions ------------------------------------
 
