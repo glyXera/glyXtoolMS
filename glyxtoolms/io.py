@@ -722,7 +722,6 @@ class GlyxXMLFile(object):
                     hit.fragments[fragment.name] = fragment
             elif self.version > "0.0.3":
                 for xmlfragment in xmlHit.findall("./fragments/fragment"):
-                    fragment = {}
                     fragmentName = xmlfragment.find("./name").text
                     fragmentMass = float(xmlfragment.find("./mass").text)
                     # parse fragmentCharge from name
@@ -734,7 +733,17 @@ class GlyxXMLFile(object):
                     #fragmentCharge = int(xmlfragment.find("./charge").text)
                     typ = xmlfragment.find("./type")
                     if typ == None:
-                        fragmentTyp = glyxtoolms.fragmentation.FragmentType.GLYCOPEPTIDEION
+                        # guess type from peptide name
+                        if fragmentName.startswith("peptide"):
+                            fragmentTyp = glyxtoolms.fragmentation.FragmentType.PEPTIDEION
+                        elif re.search("^y\d+b\d+",fragmentName) is not None:
+                            fragmentTyp = glyxtoolms.fragmentation.FragmentType.BYION
+                        elif fragmentName.startswith("y"):
+                            fragmentTyp = glyxtoolms.fragmentation.FragmentType.YION
+                        elif fragmentName.startswith("b"):
+                            fragmentTyp = glyxtoolms.fragmentation.FragmentType.YION
+                        else:
+                            raise Exception("Unknown ion fragment!")
                     else:
                         fragmentTyp = typ.text
                     
@@ -753,6 +762,22 @@ class GlyxXMLFile(object):
                         fragmentPeak = hit.feature.consensus[int(xmlPos.text)]
                     fragment = glyxtoolms.fragmentation.Fragment(fragmentName, fragmentMass, fragmentCharge, typ=fragmentTyp, peak=fragmentPeak)
                     hit.fragments[fragment.name] = fragment
+                # Add Oxonium Ions, since they are no longer shown otherwise
+                tolerance = self.parameters.getMassTolerance()
+                for spectrum in hit.feature.spectra:
+                    for glycanname in spectrum.ions:
+                        for ionname in spectrum.ions[glycanname]:
+                            ion = spectrum.ions[glycanname][ionname]
+                            mz = ion["mass"]
+                            found = None
+                            for peak in hit.feature.consensus:
+                                diff = abs(mz-peak.x)
+                                if diff <= tolerance:
+                                    if found == None or diff < abs(found.x - mz):
+                                        found = peak
+                            if found is not None:
+                                fragment = glyxtoolms.fragmentation.Fragment(ionname, mz, 1, typ=glyxtoolms.fragmentation.FragmentType.OXONIUMION, peak=found)
+                                hit.fragments[fragment.name] = fragment
             if self.version > "0.0.5":
                 hit.status = xmlHit.find("./status").text
             if self.version > "0.1.1":

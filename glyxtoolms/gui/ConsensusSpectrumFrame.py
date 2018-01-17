@@ -211,12 +211,13 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         pInt0 = self.convBtoY(self.viewYMin)
         # compile list of found oxonium-ions within the MS2 Spectra
         analysis = self.model.currentAnalysis
-        glycanFragments = {}
-        for spectrum in self.feature.spectra:
-            for glycanname in spectrum.ions:
-                for ionname in spectrum.ions[glycanname]:
-                    ion = spectrum.ions[glycanname][ionname]
-                    glycanFragments[ionname] = ion["mass"]
+        if self.hit == None and self.options["annotations"]["showox"] == True:
+            glycanFragments = {}
+            for spectrum in self.feature.spectra:
+                for glycanname in spectrum.ions:
+                    for ionname in spectrum.ions[glycanname]:
+                        ion = spectrum.ions[glycanname][ionname]
+                        glycanFragments[ionname] = ion["mass"]
         annotationText = []
         annotationMass = []
         self.peaksByItem = {}
