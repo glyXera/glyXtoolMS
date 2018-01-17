@@ -428,6 +428,15 @@ class GlyxXMLFile(object):
 
         return parameters
 
+    def collect_tags(self):
+        """ Collect all tags of all objects that store them (currently features and identifications)"""
+        all_tags = set()
+        for feature in self.features:
+            all_tags = all_tags.union(feature.tags)
+        for hit in self.glycoModHits:
+            all_tags = all_tags.union(hit.tags)
+        self.all_tags = all_tags
+
     def _parseSpectra(self, xmlSpectra):
         spectra = []
         for s in xmlSpectra:
@@ -749,7 +758,6 @@ class GlyxXMLFile(object):
             if self.version > "0.1.1":
                 self._parseTags(xmlHit, hit)
                 self._parseToolValues(xmlHit, hit, toolValueDefaults)
-                self.all_tags = self.all_tags.union(hit.tags)
             hits.append(hit)
         return hits
 
@@ -940,6 +948,8 @@ class GlyxXMLFile(object):
         self._writeFeatures(xmlFeatures)
         # write glycoModHits
         self._writeGlycoModHits(xmlGlycomodHits)
+        # collect tags
+        self.collect_tags()
         # writing to file
         xmlTree = ET.ElementTree(xmlRoot)
         f = file(path, "w")
@@ -991,6 +1001,9 @@ class GlyxXMLFile(object):
         # parse glycomod
         glycoMod = self._parseGlycoModHits(root.findall("./glycomod/hit"), featureIDs, toolValueDefaults=toolValueDefaults)
         self.glycoModHits = glycoMod
+        
+        # collect tags
+        self.collect_tags()
         
 
     def setParameters(self, parameters):

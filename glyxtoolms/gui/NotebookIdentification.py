@@ -13,50 +13,9 @@ from glyxtoolms.gui import TagEditorWindow
 class NotebookIdentification(TreeTable.TreeTable):
 
     def __init__(self, master, model):
-        #ttk.Frame.__init__(self, master=master)
         TreeTable.TreeTable.__init__(self, master, model)
-        #self.master = master
-        #self.model = model
-        
+
         self.features = []
-        
-        #self.columnconfigure(0, weight=1)
-        #self.columnconfigure(1, weight=0)
-        #self.rowconfigure(0,weight=0)
-        #self.rowconfigure(1,weight=1)
-        
-        # create popup menu
-        #self.aMenu = Tkinter.Menu(self, tearoff=0)
-
-        # show treeview of mzML file MS/MS and MS
-        #button = Tkinter.Button(self,image=self.model.resources["options"])
-        #scrollbar = Tkinter.Scrollbar(self)
-        #self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set, selectmode='extended')
-    
-        #self.initializeColumnHeader()
-
-        #self.tree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
-
-        #scrollbar.grid(row=1, column=1, sticky="NWES")
-        #scrollbar.config(command=self.tree.yview)
-        #button.grid(row=0, column=1)
-
-        #self.treeIds = {}
-
-        # treeview style
-        #self.tree.tag_configure('oddUnknown', background='Moccasin')
-        #self.tree.tag_configure('evenUnknown', background='PeachPuff')
-        #
-        #self.tree.tag_configure('oddDeleted', background='LightSalmon')
-        #self.tree.tag_configure('evenDeleted', background='Salmon')
-        #
-        #self.tree.tag_configure('oddAccepted', background='PaleGreen')
-        #self.tree.tag_configure('evenAccepted', background='YellowGreen')
-        #
-        #self.tree.tag_configure('oddRejected', background='LightBlue')
-        #self.tree.tag_configure('evenRejected', background='SkyBlue')
-
-        #self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
         self.tree.bind("<Button-3>", self.popup)
         
         self.tree.bind("a", lambda e: self.setStatus("Accepted"))
@@ -64,6 +23,9 @@ class NotebookIdentification(TreeTable.TreeTable):
         self.tree.bind("r", lambda e: self.setStatus("Rejected"))
 
         #self.model.registerClass("NotebookIdentification", self)
+        
+        #self.model.currentAnalysis = glyxtoolms.io.GlyxXMLFile()
+        #self.model.currentAnalysis.readFromFile("/afs/mpi-magdeburg.mpg.de/data/bpt/personnel_folders/MarkusPioch/temp/example/20160417_MH_IgG_FASP_Tryp_HILIC_Enri_HCDstep.xml")
         
     def identifier(self):
         return "NotebookIdentification"
@@ -120,55 +82,12 @@ class NotebookIdentification(TreeTable.TreeTable):
             self.columnNames["error"] = "Error [ppm]"
         for col in self.columnNames:
             self.tree.heading(col, text=self.columnNames.get(col, col),command=lambda col=col: self.sortColumn(col))
-        
-    #def columnVisibilityChanged(self, *arg, **args):
-    #    header = []
-    #    for columnname in self.columns:
-    #        self.columnsWidth[columnname] = self.tree.column(columnname, "width")
-    #        if self.showColumns[columnname].get() == True:
-    #            header.append(columnname)
-    #    self.tree["displaycolumns"] = tuple(header)
-    #    space = self.grid_bbox(column=0, row=0, col2=0, row2=0)[2]
-    #    width = space/(len(header)+1)
-    #    rest = space%(len(header)+1)
-    #    for column in ["#0"] + header:
-    #        self.tree.column(column, width=width+rest)
-    #        rest = 0
+            
+    def openOptions(self):
+        pass
+        #hits = [self.model.currentAnalysis.glycoModHits[0]]
+        #TagEditorWindow.TagEditorWindow(self, self.model, hits)
 
-    #def selectAllIdentifications(self, event):
-    #    items = self.tree.get_children()
-    #    if len(items) == 0:
-    #        return
-    #    self.tree.selection_set(items)
-    #    self.clickedTree(None)
-        
-    #def copyToClipboard(self, *arg, **args):
-    #    # get active columns
-    #    header = ["Feature Nr"]
-    #    active = []
-    #    for columnname in self.columns:
-    #        isActive = self.showColumns[columnname].get()
-    #        active.append(isActive)
-    #        if isActive == True:
-    #            header.append(self.columnNames.get(columnname,columnname))
-    #
-    #    # add header
-    #    text = "\t".join(header) + "\n"
-    #    for item in self.tree.selection():
-    #        content = self.tree.item(item)
-    #        line = []
-    #        line.append(content["text"])
-    #        for isActive,value in zip(active,content["values"]):
-    #            if isActive:
-    #                line.append(str(value))
-    #        text += "\t".join(line) + "\n"
-    #    try:
-    #        self.model.saveToClipboard(text)
-    #        tkMessageBox.showinfo("Saved Table to Clipboard", "Table Data are saved to the Clipboard")
-    #    except:
-    #        tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
-    #        raise
-        
     def editTags(self, *arg, **args):
         # get currently active hit
         selection = self.tree.selection()
@@ -178,7 +97,19 @@ class NotebookIdentification(TreeTable.TreeTable):
         for item in selection:
             hit  = self.treeIds[item]
             hits.append(hit)
-        TagEditorWindow.TagEditorWindow(self, self.model, hits)
+        TagEditorWindow.TagEditorWindow(self, self.model, hits, self.updateTagsView)
+        
+    def updateTagsView(self):
+        # get currently active hit
+        selection = self.tree.selection()
+        if len(selection) == 0:
+            return
+        hits = []
+        for item in selection:
+            hit  = self.treeIds[item]
+            values = self.tree.item(item)["values"]
+            values[5] = tags = ", ".join(hit.tags)
+            self.tree.item(item, values=values)
 
     def setStatus(self,status):
         # get currently active hit

@@ -24,7 +24,7 @@ class TreeTable(ttk.Frame):
         self.aMenu = Tkinter.Menu(self, tearoff=0)
 
         # show treeview of mzML file MS/MS and MS
-        button = Tkinter.Button(self,image=self.model.resources["options"])
+        self.options = Tkinter.Button(self,image=self.model.resources["options"],command=self.openOptions)
         scrollbar = Tkinter.Scrollbar(self)
         self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set, selectmode='extended')
     
@@ -34,7 +34,7 @@ class TreeTable(ttk.Frame):
 
         scrollbar.grid(row=1, column=1, sticky="NWES")
         scrollbar.config(command=self.tree.yview)
-        button.grid(row=0, column=1)
+        self.options.grid(row=0, column=1)
 
         self.treeIds = {}
 
@@ -112,4 +112,5 @@ class TreeTable(ttk.Frame):
             tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
             raise
 
-
+    def openOptions(self):
+        pass
