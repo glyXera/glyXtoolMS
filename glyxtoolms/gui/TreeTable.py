@@ -53,6 +53,9 @@ class TreeTable(ttk.Frame):
 
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
 
+        self.tree.bind("<Control-Key-a>", self.selectAllRows)
+        self.tree.bind("<Control-Key-c>", self.copyToClipboard)
+
         self.model.registerClass(self.identifier(), self)
         
     def initializeColumnHeader(self):

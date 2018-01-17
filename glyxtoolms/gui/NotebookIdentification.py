@@ -104,11 +104,10 @@ class NotebookIdentification(TreeTable.TreeTable):
         selection = self.tree.selection()
         if len(selection) == 0:
             return
-        hits = []
         for item in selection:
             hit  = self.treeIds[item]
             values = self.tree.item(item)["values"]
-            values[5] = tags = ", ".join(hit.tags)
+            values[5] = ", ".join(hit.tags)
             self.tree.item(item, values=values)
 
     def setStatus(self,status):
@@ -373,4 +372,4 @@ class NotebookIdentification(TreeTable.TreeTable):
             analysis.removeIdentification(hit)
         
         # update NotebookFeature
-        self.model.classes["NotebookFeature"].updateFeatureTree()
+        self.model.classes["NotebookFeature"].updateTree()

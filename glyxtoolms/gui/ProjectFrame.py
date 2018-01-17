@@ -308,7 +308,7 @@ class ProjectFrame(ttk.Frame):
             self.model.runFilters()
             self.model.classes["NotebookScoring"].updateTree([])
             self.model.classes["NotebookIdentification"].updateTree([])
-            self.model.classes["NotebookFeature"].updateFeatureTree()
+            self.model.classes["NotebookFeature"].updateTree()
             self.model.classes["TwoDView"].init()
             self.model.classes["NotebookIdentification"].updateHeader()
 
@@ -318,7 +318,7 @@ class ProjectFrame(ttk.Frame):
             self.b5.config(state=Tkinter.DISABLED)
             self.model.classes["NotebookScoring"].updateTree([])
             self.model.classes["NotebookIdentification"].updateTree([])
-            self.model.classes["NotebookFeature"].updateFeatureTree()
+            self.model.classes["NotebookFeature"].updateTree()
 
     def loadedMzMLFile(self, error, project):
         if error == True:
@@ -412,7 +412,7 @@ class ProjectFrame(ttk.Frame):
         # update Notebooks
         self.model.classes["NotebookScoring"].updateTree([])
         self.model.classes["NotebookIdentification"].updateTree([])
-        self.model.classes["NotebookFeature"].updateFeatureTree()
+        self.model.classes["NotebookFeature"].updateTree()
 
     def getSelectedItem(self):
         # returns ItemId, Object, ObjectType

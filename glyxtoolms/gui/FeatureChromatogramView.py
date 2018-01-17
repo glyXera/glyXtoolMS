@@ -49,7 +49,7 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         
     def setStatus(self, status):
         self.model.classes["NotebookFeature"].setStatus(status)
-        self.model.classes["NotebookFeature"].featureTree.focus_set()
+        self.model.classes["NotebookFeature"].tree.focus_set()
 
     def setBorder(self,status):
         self.aMenu.unpost()

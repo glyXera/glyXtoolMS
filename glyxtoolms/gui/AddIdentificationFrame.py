@@ -474,7 +474,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         
         self.destroy()
         self.model.runFilters()
-        self.model.classes["NotebookFeature"].updateFeatureTree()
+        self.model.classes["NotebookFeature"].updateTree()
         self.model.classes["NotebookIdentification"].updateTree()
         tkMessageBox.showinfo("Added new Identification", "Sucessfully added new Identification!")
 

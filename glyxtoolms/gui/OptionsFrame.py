@@ -184,7 +184,7 @@ class OptionsFrame(Tkinter.Toplevel):
         self.model.saveSettings()
         # update plots
         self.model.classes["NotebookIdentification"].updateTree()
-        self.model.classes["NotebookFeature"].updateFeatureTree()
+        self.model.classes["NotebookFeature"].updateTree()
         self.model.classes["ConsensusSpectrumFrame"]._paintCanvas()
         
         self.destroy()

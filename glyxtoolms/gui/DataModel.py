@@ -459,5 +459,5 @@ class ContainerAnalysisFile(object):
         # update views
         #self.model.classes["TwoDView"].paintObject()
         self.model.classes["NotebookFeature"].updateFeature(feature)
-        self.model.classes["NotebookFeature"].clickedFeatureTree(None)
+        self.model.classes["NotebookFeature"].clickedTree(None)
 

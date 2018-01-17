@@ -177,7 +177,7 @@ class FilterPanel(Tkinter.Toplevel):
             self.model.filters["Scoring"].append(entry.currentFilter)
             
         self.model.runFilters()
-        self.model.classes["NotebookFeature"].updateFeatureTree()
+        self.model.classes["NotebookFeature"].updateTree()
         features = self.model.classes["NotebookFeature"].getSelectedFeatures()
         self.model.classes["NotebookScoring"].updateTree(features)
         self.model.classes["NotebookIdentification"].updateTree(features)
@@ -211,8 +211,9 @@ class FilterPanel(Tkinter.Toplevel):
         filters.append(StatusFilter())
         filters.append(FeatureStatusFilter())
         filters.append(GlycosylationSite_Filter(self.model))
-        
-        f = FilterEntry(self.filterIdentification,
+        filters.append(Tag_Filter_Identification(self.model))
+
+        f = FilterEntry(self.model,self.filterIdentification,
                         filters,
                         self.N_Identification,
                         definedFilter=definedFilter)
@@ -226,8 +227,9 @@ class FilterPanel(Tkinter.Toplevel):
         filters.append(Feature_RT_Filter())
         filters.append(Fragmentmass_Filter_Feature())
         filters.append(StatusFilter())
-        
-        f = FilterEntry(self.filterFeature,
+        filters.append(Tag_Filter_Feature(self.model))
+
+        f = FilterEntry(self.model,self.filterFeature,
                         filters,
                         self.N_Features,
                         definedFilter=definedFilter)
@@ -239,7 +241,7 @@ class FilterPanel(Tkinter.Toplevel):
         filters.append(EmptyFilter())
         filters.append(StatusFilter())
         
-        f = FilterEntry(self.filterScoring,
+        f = FilterEntry(self.model,self.filterScoring,
                         filters,
                         self.N_Scoring,
                         definedFilter=definedFilter)
@@ -247,11 +249,12 @@ class FilterPanel(Tkinter.Toplevel):
         self.N_Scoring += 1
         
 class FilterEntry(ttk.Frame):
-    def __init__(self, master, filters, row, definedFilter=None):
+    def __init__(self,model, master, filters, row, definedFilter=None):
         ttk.Frame.__init__(self, master=master)
         
         self.master = master
         self.master.entries.append(self)
+        self.model = model
         
         # Connection | type | <Field1> | Operator | <Field2> |
         
@@ -473,6 +476,7 @@ class FilterEntry(ttk.Frame):
             self.assisted1.all_choices = self.currentFilter.choices1
             self.field1Var.set(self.currentFilter.field1)
             self.assisted1.setVisible(True)
+            self.assisted1.showOptions(0)
         elif self.currentFilter.type1 == FieldTypes.RANGE:
             self.range1.setFieldValue(self.currentFilter.field1)
             self.range1.grid()
@@ -511,6 +515,7 @@ class FilterEntry(ttk.Frame):
             self.assisted2.grid()
             self.assisted2.all_choices = self.currentFilter.choices2
             self.assisted2.setVisible(True)
+            self.assisted2.showOptions(0)
         elif self.currentFilter.type2 == FieldTypes.RANGE:
             self.range2.setFieldValue(self.currentFilter.field2)
             self.range2.grid()
@@ -734,7 +739,7 @@ class InteractiveEntry(Tkinter.Entry):
     def __init__(self, master, var):
         Tkinter.Entry.__init__(self, master=master, textvariable=var)
         self.var = var
-        self.var.trace("w", self.valuesChanged)
+        
         
         self.all_choices = []
         self.currentText = None
@@ -744,9 +749,9 @@ class InteractiveEntry(Tkinter.Entry):
         
         self.aMenu = Tkinter.Menu(self.master, tearoff=0)
         self.aMenu.bind("<FocusOut>", self.removeOptions, "+")
-        self.bind("<FocusIn>", lambda x: self.valuesChanged(2), "+")
+        #self.bind("<FocusIn>", lambda x: self.valuesChanged(2), "+")
         self.bind("<FocusOut>", self.removeOptions, "+")
-        
+        self.var.trace("w", self.valuesChanged)
         
     def setVisible(self, boolean):
         self.isVisible = boolean
@@ -756,11 +761,14 @@ class InteractiveEntry(Tkinter.Entry):
             return
         if len(self.all_choices) == 0:
             return
+        self.master.model.root.update_idletasks()
+        self.focus()
         x = self.winfo_rootx()
         y = self.winfo_rooty()+self.winfo_height()
         self.aMenu.post(x, y)
         self.aMenu.bind("<FocusOut>", lambda x: self.removeOptions())
         self.aMenu.unbind_class("Menu", "<Button>") # needed to properly use the FocusOut binding
+        
         
     def removeOptions(self, event = None):
         if self.focus_get() != self.aMenu or self.focus_get() != self:
@@ -1254,6 +1262,94 @@ class Fragmentname_Filter(Filter):
             return self.existsLabel(self.field1, hit)
         else:
             return not self.existsLabel(self.field1, hit)
+            
+class Tag_Filter_Identification(Filter):
+    def __init__(self, model):
+        super(Tag_Filter_Identification, self).__init__("Tagfilter")
+        self.model = model
+        self.field1 = ""
+        self.type1 = FieldTypes.ASSISTED
+        self.field2 = "0 - 1"
+        self.choices1 = []
+        self.type2 = FieldTypes.INACTIVE
+        self.operatorChoices = ["exists", "exists not"]
+        self.operator = "exists"
+        self.collectNames()
+        
+    def reinitialize(self):
+        self.collectNames()
+        
+    def collectNames(self):
+        self.choices1 = set()
+        for projectName in self.model.projects:
+            project = self.model.projects[projectName]
+            for analysisName in project.analysisFiles:
+                analysis = project.analysisFiles[analysisName]
+                self.choices1 = self.choices1.union(analysis.analysis.all_tags)
+        self.choices1 = list(self.choices1)
+        
+    def parseField1(self, field1):
+        assert field1 in self.choices1
+        self.field1 = field1
+        
+    def parseField2(self, field2):
+        return
+        
+        
+    def existsTag(self, label, hit):
+        if self.field1 in hit.tags:
+            return True
+        return False
+
+    def evaluate(self, hit, **args):
+        if self.operator == "exists":
+            return self.existsTag(self.field1, hit)
+        else:
+            return not self.existsTag(self.field1, hit)
+            
+class Tag_Filter_Feature(Filter):
+    def __init__(self, model):
+        super(Tag_Filter_Feature, self).__init__("Tagfilter")
+        self.model = model
+        self.field1 = ""
+        self.type1 = FieldTypes.ASSISTED
+        self.field2 = "0 - 1"
+        self.choices1 = []
+        self.type2 = FieldTypes.INACTIVE
+        self.operatorChoices = ["exists", "exists not"]
+        self.operator = "exists"
+        self.collectNames()
+        
+    def reinitialize(self):
+        self.collectNames()
+        
+    def collectNames(self):
+        self.choices1 = set()
+        for projectName in self.model.projects:
+            project = self.model.projects[projectName]
+            for analysisName in project.analysisFiles:
+                analysis = project.analysisFiles[analysisName]
+                self.choices1 = self.choices1.union(analysis.analysis.all_tags)
+        self.choices1 = list(self.choices1)
+        
+    def parseField1(self, field1):
+        assert field1 in self.choices1
+        self.field1 = field1
+        
+    def parseField2(self, field2):
+        return
+        
+        
+    def existsTag(self, label, feature):
+        if self.field1 in feature.tags:
+            return True
+        return False
+
+    def evaluate(self, feature, **args):
+        if self.operator == "exists":
+            return self.existsTag(self.field1, feature)
+        else:
+            return not self.existsTag(self.field1, feature)
 
 class GlycosylationSite_Filter(Filter):
     def __init__(self, model):

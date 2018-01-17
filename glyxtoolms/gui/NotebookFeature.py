@@ -7,90 +7,59 @@ import numpy as np
 
 import glyxtoolms
 from glyxtoolms.gui import AddIdentificationFrame
+from glyxtoolms.gui import TreeTable
+from glyxtoolms.gui import TagEditorWindow
 
 
-class NotebookFeature(ttk.Frame):
+class NotebookFeature(TreeTable.TreeTable):
 
     def __init__(self, master, model):
-        ttk.Frame.__init__(self, master=master)
-        self.master = master
-        self.model = model
+        TreeTable.TreeTable.__init__(self, master, model)
+        self.featureItems = {}
+        #self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
+        self.tree.bind("a", lambda e: self.setStatus("Accepted"))
+        self.tree.bind("u", lambda e: self.setStatus("Unknown"))
+        self.tree.bind("r", lambda e: self.setStatus("Rejected"))
+        self.tree.bind("z", self.zoomToFeature)
+        #self.tree.bind("<Control-Key-a>", self.selectAllFeatures)
+        self.tree.bind("<Button-3>", self.popup)
+        # Bindings influencing FeatureChromatogramView
+        self.tree.bind("<Left>", self.goLeft)
+        self.tree.bind("<Right>", self.goRight)
         
-        self.columnconfigure(0, weight=1)
-        self.columnconfigure(1, weight=0)
-        self.rowconfigure(0,weight=0)
-        self.rowconfigure(1,weight=1)
-
-        self.aMenu = Tkinter.Menu(self, tearoff=0)
-
-
-        # show treeview of mzML file MS/MS and MS
-        # ------------------- Feature Tree ----------------------------#
-
-        scrollbar = Tkinter.Scrollbar(self)
-        self.featureTree = ttk.Treeview(self, yscrollcommand=scrollbar.set)
+        #self.model.registerClass("NotebookFeature",self)
         
-        self.columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents")
-        self.columnsWidth = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80}
-        self.columnNames = {"RT":"RT", "MZ":"MZ [Da]", "Charge":"Charge", "Best Score":"Best Score", "Nr Spectra":"Nr Spectra", "Status": "Status", "Nr. Idents":"Nr. Idents"}
+    def identifier(self):
+        return "NotebookFeature"
+
+    def initializeColumnHeader(self):
+        
+        self.columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents", "Tags")
+        self.columnNames = {"RT":"RT", "MZ":"MZ [Da]", "Charge":"Charge", "Best Score":"Best Score", "Nr Spectra":"Nr Spectra", "Status": "Status", "Nr. Idents":"Nr. Idents","Tags":"Tags"}
+        self.columnsWidth = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80,"Tags":80}
+        self.toolNameOrder = []
+
         self.showColumns = {}
         for name in self.columns:
             self.showColumns[name] = Tkinter.BooleanVar()
             self.showColumns[name].set(True)
             self.showColumns[name].trace("w", self.columnVisibilityChanged)
+
+        self.tree.column("#0", width=80)
+        self.tree.heading("#0", text="Feature Nr", command=lambda col='#0': self.sortColumn(col))
         
-        self.featureTree["columns"] = self.columns
-        self.featureTree.column("#0", width=60)
-        self.featureTree.heading("#0", text="Feature Nr",
-                                 command=lambda col='#0': self.sortFeatureColumn(col))
+        
+        self.tree["columns"] = self.columns
         for col in self.columns:
-            self.featureTree.column(col, width=self.columnsWidth[col])
-            self.featureTree.heading(col,
-                                     text=col,
-                                     command=lambda col=col: self.sortFeatureColumn(col))
-
+            self.tree.column(col, width=self.columnsWidth[col])
+            self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
+            
         self.setHeadingNames()
-
-        button = Tkinter.Button(self,image=self.model.resources["filter"])
-        button.grid(row=0, column=1)
-        self.featureTree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
-        scrollbar.grid(row=1, column=1, sticky=("N", "W", "E", "S"))
-        
-        scrollbar.config(command=self.featureTree.yview)
-
-        self.featureTreeIds = {}
-        self.featureItems = {}
-
-        # treeview style
-        self.featureTree.tag_configure('oddUnknown', background='Moccasin')
-        self.featureTree.tag_configure('evenUnknown', background='PeachPuff')
-        
-        self.featureTree.tag_configure('oddDeleted', background='LightSalmon')
-        self.featureTree.tag_configure('evenDeleted', background='Salmon')
-        
-        self.featureTree.tag_configure('oddAccepted', background='PaleGreen')
-        self.featureTree.tag_configure('evenAccepted', background='YellowGreen')
-        
-        self.featureTree.tag_configure('oddRejected', background='LightBlue')
-        self.featureTree.tag_configure('evenRejected', background='SkyBlue')
-        
-        self.featureTree.bind("<<TreeviewSelect>>", self.clickedFeatureTree)
-        self.featureTree.bind("a", lambda e: self.setStatus("Accepted"))
-        self.featureTree.bind("u", lambda e: self.setStatus("Unknown"))
-        self.featureTree.bind("r", lambda e: self.setStatus("Rejected"))
-        self.featureTree.bind("z", self.zoomToFeature)
-        self.featureTree.bind("<Control-Key-a>", self.selectAllFeatures)
-        self.featureTree.bind("<Button-3>", self.popup)
-        # Bindings influencing FeatureChromatogramView
-        self.featureTree.bind("<Left>", self.goLeft)
-        self.featureTree.bind("<Right>", self.goRight)
-        
-        self.model.registerClass("NotebookFeature",self)
 
     
     def seeItem(self, feature):
         itemId = self.featureItems[feature.getId()]
-        self.featureTree.see(itemId)
+        self.tree.see(itemId)
         
     def setHeadingNames(self):
         
@@ -100,30 +69,10 @@ class NotebookFeature(ttk.Frame):
             self.columnNames["RT"] = "RT [s]"
 
         for col in self.columnNames:
-            self.featureTree.heading(col, text=self.columnNames.get(col, col))
-
-    def columnVisibilityChanged(self, *arg, **args):
-        header = []
-        for columnname in self.columns:
-            if self.showColumns[columnname].get() == True:
-                header.append(columnname)
-        self.featureTree["displaycolumns"] = tuple(header)
-        space = self.grid_bbox(column=0, row=0, col2=0, row2=0)[2]
-        width = space/(len(header)+1)
-        rest = space%(len(header)+1)
-        for column in ["#0"] + header:
-            self.featureTree.column(column, width=width+rest)
-            rest = 0
-
-    def selectAllFeatures(self, event):
-        items = self.featureTree.get_children()
-        if len(items) == 0:
-            return
-        self.featureTree.selection_set(items)
-        self.clickedFeatureTree(None)
+            self.tree.heading(col, text=self.columnNames.get(col, col))
     
     def popup(self, event):
-        area = self.featureTree.identify_region(event.x, event.y)
+        area = self.tree.identify_region(event.x, event.y)
         self.aMenu.delete(0,"end")
         if area == "nothing":
             return
@@ -137,6 +86,9 @@ class NotebookFeature(ttk.Frame):
                                    command=lambda x="Rejected": self.setStatus(x))
             self.aMenu.add_command(label="Set to Unknown",
                                    command=lambda x="Unknown": self.setStatus(x))
+            self.aMenu.add_separator()
+            self.aMenu.add_command(label="Edit Tags",
+                       command=self.editTags)
             self.aMenu.add_separator()
             self.aMenu.add_command(label="Change Feature",
                                    command=self.changeFeature)
@@ -158,34 +110,54 @@ class NotebookFeature(ttk.Frame):
         except:
             pass
 
+    def editTags(self, *arg, **args):
+        # get currently active hit
+        selection = self.tree.selection()
+        if len(selection) == 0:
+            return
+        features = []
+        for item in selection:
+            feature  = self.treeIds[item]
+            features.append(feature)
+        TagEditorWindow.TagEditorWindow(self, self.model, features, self.updateTagsView)
         
-            
-    def copyToClipboard(self, *arg, **args):
-        # get active columns
-        header = ["Feature Nr"]
-        active = []
-        for columnname in self.columns:
-            isActive = self.showColumns[columnname].get()
-            active.append(isActive)
-            if isActive == True:
-                header.append(self.columnNames.get(columnname,columnname))
+    def updateTagsView(self):
+        # get currently active hit
+        selection = self.tree.selection()
+        if len(selection) == 0:
+            return
+        for item in selection:
+            feature  = self.treeIds[item]
+            values = self.tree.item(item)["values"]
+            values[7] = ", ".join(feature.tags)
+            self.tree.item(item, values=values)
         
-        # add header
-        text = "\t".join(header) + "\n"
-        for item in self.featureTree.selection():
-            content = self.featureTree.item(item)
-            line = []
-            line.append(content["text"])
-            for isActive,value in zip(active,content["values"]):
-                if isActive:
-                    line.append(str(value))
-            text += "\t".join(line) + "\n"
-        try:
-            self.model.saveToClipboard(text)
-            tkMessageBox.showinfo("Saved Table to Clipboard", "Table Data are saved to the Clipboard")
-        except:
-            tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
-            raise
+    #def copyToClipboard(self, *arg, **args):
+    #    # get active columns
+    #    header = ["Feature Nr"]
+    #    active = []
+    #    for columnname in self.columns:
+    #        isActive = self.showColumns[columnname].get()
+    #        active.append(isActive)
+    #        if isActive == True:
+    #            header.append(self.columnNames.get(columnname,columnname))
+    #    
+    #    # add header
+    #    text = "\t".join(header) + "\n"
+    #    for item in self.tree.selection():
+    #        content = self.tree.item(item)
+    #        line = []
+    #        line.append(content["text"])
+    #        for isActive,value in zip(active,content["values"]):
+    #            if isActive:
+    #                line.append(str(value))
+    #        text += "\t".join(line) + "\n"
+    #    try:
+    #        self.model.saveToClipboard(text)
+    #        tkMessageBox.showinfo("Saved Table to Clipboard", "Table Data are saved to the Clipboard")
+    #    except:
+    #        tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
+    #        raise
             
     def goLeft(self, event):
         self.model.classes["FeatureChromatogramView"].goLeft(event)
@@ -196,10 +168,10 @@ class NotebookFeature(ttk.Frame):
         return "break" # Stop default event propagation
         
     def zoomToFeature(self, event):
-        selection = self.featureTree.selection()
+        selection = self.tree.selection()
         if len(selection) != 1:
             return
-        feature = self.featureTreeIds[selection[0]]
+        feature = self.treeIds[selection[0]]
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
         rtdiff = (maxRT-minRT)
         minRT = minRT-rtdiff
@@ -211,11 +183,11 @@ class NotebookFeature(ttk.Frame):
             
     def setStatus(self, status):
         # get currently active hit
-        selection = self.featureTree.selection()
+        selection = self.tree.selection()
         if len(selection) == 0:
             return
         for item in selection:
-            feature = self.featureTreeIds[item]
+            feature = self.treeIds[item]
             
             if status == "Accepted":
                 feature.status = glyxtoolms.io.ConfirmationStatus.Accepted
@@ -224,29 +196,29 @@ class NotebookFeature(ttk.Frame):
             elif status == "Unknown":
                 feature.status = glyxtoolms.io.ConfirmationStatus.Unknown
             # Update on Treeview
-            values = self.featureTree.item(item)["values"]
+            values = self.tree.item(item)["values"]
             values[5] = feature.status
-            self.featureTree.item(item, values=values)
+            self.tree.item(item, values=values)
             
-            taglist = list(self.featureTree.item(item, "tags"))
+            taglist = list(self.tree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, feature.status)
-            self.featureTree.item(item, tags=taglist)
+            self.tree.item(item, tags=taglist)
     
     def changeFeature(self):
-        selection = self.featureTree.selection()
+        selection = self.tree.selection()
         if len(selection) != 1:
             return
-        feature = self.featureTreeIds[selection[0]]
+        feature = self.treeIds[selection[0]]
         ChangeFeatureFrame(self.master, self.model, feature)
         
     def copyFeature(self):
         analysis = self.model.currentAnalysis
         if analysis == None:
             return
-        selection = self.featureTree.selection()
+        selection = self.tree.selection()
         if len(selection) != 1:
             return
-        feature = self.featureTreeIds[selection[0]]
+        feature = self.treeIds[selection[0]]
         new = feature.copy()
         # generate new feature id, check that id is unique
         while True:
@@ -268,19 +240,19 @@ class NotebookFeature(ttk.Frame):
         analysis.createFeatureIds()
         # collect specta within features
         analysis.collectFeatureSpectra()
-        self.updateFeatureTree()
+        self.updateTree()
         self.model.classes["NotebookScoring"].updateTree([feature])
         tkMessageBox.showinfo("Feature Copied", "The feature has been copied!")
         
         
     def addIdentification(self):
-        selection = self.featureTree.selection()
+        selection = self.tree.selection()
         if len(selection) != 1:
             return
-        feature = self.featureTreeIds[selection[0]]
+        feature = self.treeIds[selection[0]]
         AddIdentificationFrame.AddIdentificationFrame(self.master, self.model, feature)
 
-    def sortFeatureColumn(self, col):
+    def sortColumn(self, col):
 
         if self.model == None or self.model.currentAnalysis == None:
             return
@@ -292,25 +264,25 @@ class NotebookFeature(ttk.Frame):
             reverse = False
         self.model.currentAnalysis.sorting["NotebookFeature"] = (sortingColumn, reverse)
 
-        children = self.featureTree.get_children('')
+        children = self.tree.get_children('')
         if col == "isGlycopeptide" or col == "Status":
-            l = [(self.featureTree.set(k, col), k) for k in children]
+            l = [(self.tree.set(k, col), k) for k in children]
         elif col == "Nr. Idents":
-            l = [(int(self.featureTree.set(k, col).split("/")[0]), k) for k in children]
+            l = [(int(self.tree.set(k, col).split("/")[0]), k) for k in children]
         elif col == "#0":
-            l = [(int(self.featureTree.item(k, "text")), k) for k in children]
+            l = [(int(self.tree.item(k, "text")), k) for k in children]
         else:
-            l = [(float(self.featureTree.set(k, col)), k) for k in children]
+            l = [(float(self.tree.set(k, col)), k) for k in children]
 
         l.sort(reverse=reverse)
 
 
         # rearrange items in sorted positions
         for index, (val, k) in enumerate(l):
-            self.featureTree.move(k, '', index)
-            status = self.featureTree.item(k)["values"][5]
+            self.tree.move(k, '', index)
+            status = self.tree.item(k)["values"][5]
             # adjust tags
-            taglist = list(self.featureTree.item(k, "tags"))
+            taglist = list(self.tree.item(k, "tags"))
             if "odd" in taglist:
                 taglist.remove("odd")
             if "even" in taglist:
@@ -321,7 +293,7 @@ class NotebookFeature(ttk.Frame):
             else:
                 taglist.append("odd")
                 taglist = self.setHighlightingTag(taglist, status)
-            self.featureTree.item(k, tags=taglist)
+            self.tree.item(k, tags=taglist)
 
     def setHighlightingTag(self, taglist, status):
         assert status in glyxtoolms.io.ConfirmationStatus._types
@@ -338,11 +310,11 @@ class NotebookFeature(ttk.Frame):
             raise Exception("Cannot find 'even' or 'odd' tag in taglist!")
         return taglist
 
-    def updateFeatureTree(self):
+    def updateTree(self):
 
         # clear tree
-        self.featureTree.delete(*self.featureTree.get_children())
-        self.featureTreeIds = {}
+        self.tree.delete(*self.tree.get_children())
+        self.treeIds = {}
         self.setHeadingNames()
         project = self.model.currentProject
 
@@ -388,17 +360,22 @@ class NotebookFeature(ttk.Frame):
             for hit in feature.hits:
                 if hit.passesFilter == True:
                     nrIdentifications += 1
-
-            item = self.featureTree.insert("", "end", text=name,
-                                           values=(rt,
-                                                   round(feature.getMZ(), 4),
-                                                   feature.getCharge(),
-                                                   round(bestScore, 2),
-                                                   len(feature.getSpectraIds()),
-                                                   feature.status,
-                                                   str(nrIdentifications) + "/"+str(len(feature.hits))),
+            
+            tags = ", ".join(feature.tags)
+            values = [rt,
+                      round(feature.getMZ(), 4),
+                      feature.getCharge(),
+                      round(bestScore, 2),
+                      len(feature.getSpectraIds()),
+                      feature.status,
+                      str(nrIdentifications) + "/"+str(len(feature.hits)),
+                      tags]
+            
+            
+            item = self.tree.insert("", "end", text=name,
+                                           values=values,
                                            tags=taglist)
-            self.featureTreeIds[item] = feature
+            self.treeIds[item] = feature
             self.featureItems[feature.getId()] = item
 
         # apply possible sorting
@@ -407,15 +384,15 @@ class NotebookFeature(ttk.Frame):
         
         sortingColumn, reverse = analysis.sorting["NotebookFeature"]
         analysis.sorting["NotebookFeature"] = (sortingColumn, not reverse)
-        self.sortFeatureColumn(sortingColumn)
+        self.sortColumn(sortingColumn)
 
     def selectFeature(self, feature):
         item = self.featureItems.get(feature.getId(), False)
         if item == False:
             return
-        self.featureTree.selection_set(item)
-        self.featureTree.see(item)
-        self.clickedFeatureTree(None)
+        self.tree.selection_set(item)
+        self.tree.see(item)
+        self.clickedTree(None)
         
     def updateFeature(self, feature):
         item = self.featureItems.get(feature.getId(), False)
@@ -435,7 +412,7 @@ class NotebookFeature(ttk.Frame):
             spectrum = analysis.spectraIds[specId]
             if spectrum.logScore < bestScore:
                 bestScore = spectrum.logScore
-        self.featureTree.item(item,values=(rt,
+        self.tree.item(item,values=(rt,
                                            round(feature.getMZ(), 4),
                                            feature.getCharge(),
                                            round(bestScore, 2),
@@ -444,14 +421,14 @@ class NotebookFeature(ttk.Frame):
                                            len(feature.hits)))
     
     def getSelectedFeatures(self):
-        selection = self.featureTree.selection()
+        selection = self.tree.selection()
         features = []
         for item in selection:
-            feature = self.featureTreeIds[item]
+            feature = self.treeIds[item]
             features.append(feature)
         return features
 
-    def clickedFeatureTree(self, event):
+    def clickedTree(self, event):
         # collect features and update IdentificationFrame
         features = self.getSelectedFeatures()
         self.model.classes["PeptideCoverageFrame"].init(None)
@@ -573,33 +550,33 @@ class NotebookFeature(ttk.Frame):
 
 
     def setSelectedFeature(self, index):
-        for item in self.featureTreeIds:
-            if index == self.featureTreeIds[item].index:
-                self.featureTree.selection_set(item)
-                self.featureTree.see(item)
+        for item in self.treeIds:
+            if index == self.treeIds[item].index:
+                self.tree.selection_set(item)
+                self.tree.see(item)
                 break
 
     def deleteFeature(self, event):
 
-        #updateFeatureTree
-        selection = self.featureTree.selection()
+        #updateTree
+        selection = self.tree.selection()
         if len(selection) == 0:
             return
         for item in selection:
 
-            feature = self.featureTreeIds[item]
-            nextItem = self.featureTree.next(item)
-            self.featureTree.delete(item)
-            self.featureTreeIds.pop(item)
+            feature = self.treeIds[item]
+            nextItem = self.tree.next(item)
+            self.tree.delete(item)
+            self.treeIds.pop(item)
             self.featureItems.pop(feature.getId())
             
             if nextItem != {}:
-                self.featureTree.selection_set(nextItem)
-                self.featureTree.see(nextItem)
-            elif len(self.featureTree.get_children('')) > 0:
-                nextItem = self.featureTree.get_children('')[-1]
-                self.featureTree.selection_set(nextItem)
-                self.featureTree.see(nextItem)
+                self.tree.selection_set(nextItem)
+                self.tree.see(nextItem)
+            elif len(self.tree.get_children('')) > 0:
+                nextItem = self.tree.get_children('')[-1]
+                self.tree.selection_set(nextItem)
+                self.tree.see(nextItem)
 
             # remove feature from analysis file
             analysis = self.model.currentAnalysis
@@ -608,9 +585,9 @@ class NotebookFeature(ttk.Frame):
         self.model.classes["NotebookIdentification"].updateTree()
 
         # adjust tags
-        for index, k in enumerate(self.featureTree.get_children('')):            
-            taglist = list(self.featureTree.item(k, "tags"))
-            status = self.featureTree.item(k)["values"][5]
+        for index, k in enumerate(self.tree.get_children('')):            
+            taglist = list(self.tree.item(k, "tags"))
+            status = self.tree.item(k)["values"][5]
             if "odd" in taglist:
                 taglist.remove("odd")
             if "even" in taglist:
@@ -621,7 +598,7 @@ class NotebookFeature(ttk.Frame):
             else:
                 taglist.append("odd")
                 taglist = self.setHighlightingTag(taglist, status)
-            self.featureTree.item(k, tags=taglist)
+            self.tree.item(k, tags=taglist)
 
 
 class ChangeFeatureFrame(Tkinter.Toplevel):
@@ -702,7 +679,7 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
         self.feature.setMZ(self.mass)
         self.destroy()
         self.model.currentAnalysis.featureEdited(self.feature)
-        #self.model.classes["NotebookFeature"].updateFeatureTree()
+        #self.model.classes["NotebookFeature"].updateTree()
 
     def cancel(self):
         self.destroy()
