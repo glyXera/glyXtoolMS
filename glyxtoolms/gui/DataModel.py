@@ -102,13 +102,23 @@ class DataModel(object):
         registerFunction(self, "top", str, int)
         registerFunction(self, "labelcolor", str, str)
         registerFunction(self, "oxcolor", str, str)
+        registerFunction(self, "immcolor", str, str)
+        registerFunction(self, "bcolor", str, str)
+        registerFunction(self, "ycolor", str, str)
+        registerFunction(self, "bycolor", str, str)
         registerFunction(self, "pepcolor", str, str)
+        registerFunction(self, "glycopepcolor", str, str)
+        
         registerFunction(self, "shownames", str, stringToBool)
         registerFunction(self, "showmasses", str, stringToBool)
         registerFunction(self, "showox", str, stringToBool)
+        registerFunction(self, "showimmonium", str, stringToBool)
+        registerFunction(self, "showy", str, stringToBool)
+        registerFunction(self, "showb", str, stringToBool)
+        registerFunction(self, "showby", str, stringToBool)
         registerFunction(self, "showpep", str, stringToBool)
+        registerFunction(self, "showglycopep", str, stringToBool)
         registerFunction(self, "showpicto", str, stringToBool)
-        
         
     def runFilters(self): # check filters
         
@@ -136,14 +146,6 @@ class DataModel(object):
 
         for spectrum in self.currentAnalysis.analysis.spectra:
             spectrum.passesFilter = evaluateObject(spectrum, self.filters["Scoring"])
-            #spectrum.passesFilter = True
-            #for f in self.filters["Scoring"]:
-            #    try:
-            #        if not f.evaluate(spectrum):
-            #            spectrum.passesFilter = False
-            #            break
-            #    except:
-            #        raise Exception("Cannot evaluate Filter", f)
 
         for feature in self.currentAnalysis.analysis.features:
             # remove features which have no MS2 spectra that pass the filter
@@ -157,27 +159,12 @@ class DataModel(object):
                 continue
             
             feature.passesFilter = evaluateObject(feature, self.filters["Features"], timescale=self.timescale)
-            
-            #for f in self.filters["Features"]:
-            #    try:
-            #        if not f.evaluate(feature, timescale=self.timescale):
-            #            feature.passesFilter = False
-            #            break
-            #    except:
-            #        raise Exception("Cannot evaluate Filter", f)
         for hit in self.currentAnalysis.analysis.glycoModHits:
             hit.passesFilter = True
             if hit.feature.passesFilter == False:
                 hit.passesFilter = False
                 continue
             hit.passesFilter = evaluateObject(hit, self.filters["Identification"])
-            #for f in self.filters["Identification"]:
-            #    try:
-            #        if not f.evaluate(hit):
-            #            hit.passesFilter = False
-            #            break
-            #    except:
-            #        raise Exception("Cannot evaluate Filter", f)
 
     def readSettings(self):
         home = os.path.expanduser("~")

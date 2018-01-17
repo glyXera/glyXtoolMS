@@ -48,12 +48,12 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         options["annotations"]["shownames"] = True
         options["annotations"]["showmasses"] = True
         options["annotations"]["showox"] = True
-        options["annotations"]["showImmonium"] = True
-        options["annotations"]["showY"] = True
-        options["annotations"]["showB"] = True
-        options["annotations"]["showBY"] = True
+        options["annotations"]["showimmonium"] = True
+        options["annotations"]["showy"] = True
+        options["annotations"]["showb"] = True
+        options["annotations"]["showby"] = True
         options["annotations"]["showpep"] = True
-        options["annotations"]["showGlyopep"] = True
+        options["annotations"]["showglycopep"] = True
 
 
         return options
@@ -89,13 +89,13 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         addFragmentHighlight(showName="shownames", text="Show Names", colorName = "labelcolor")
         
         addFragmentHighlight(showName="showox", text="Highlight oxonium ions", colorName = "oxcolor")
-        addFragmentHighlight(showName="showImmonium", text="Highlight immmonium ions", colorName = "immcolor")
-        addFragmentHighlight(showName="showY", text="Highlight y-ions", colorName = "ycolor")
-        addFragmentHighlight(showName="showB", text="Highlight b-ions", colorName = "bcolor")
-        addFragmentHighlight(showName="showBY", text="Highlight by-ions", colorName = "bycolor")
+        addFragmentHighlight(showName="showimmonium", text="Highlight immmonium ions", colorName = "immcolor")
+        addFragmentHighlight(showName="showy", text="Highlight y-ions", colorName = "ycolor")
+        addFragmentHighlight(showName="showb", text="Highlight b-ions", colorName = "bcolor")
+        addFragmentHighlight(showName="showby", text="Highlight by-ions", colorName = "bycolor")
         
         addFragmentHighlight(showName="showpep", text="Highlight peptide ions", colorName = "pepcolor")
-        addFragmentHighlight(showName="showGlyopep", text="Highlight B/Y ions", colorName = "glycopepcolor")
+        addFragmentHighlight(showName="showglycopep", text="Highlight B/Y ions", colorName = "glycopepcolor")
         
 
     def setColor(self, name, button):
@@ -149,12 +149,12 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         TYPE = glyxtoolms.fragmentation.FragmentType
         paintHierachary = []
         paintHierachary.append((TYPE.OXONIUMION, "showox", "oxcolor",1))
-        paintHierachary.append((TYPE.IMMONIUMION, "showImmonium", "immcolor",2))
+        paintHierachary.append((TYPE.IMMONIUMION, "showimmonium", "immcolor",2))
         paintHierachary.append((TYPE.PEPTIDEION, "showpep", "pepcolor",3))
-        paintHierachary.append((TYPE.GLYCOPEPTIDEION, "showGlyopep", "glycopepcolor",4))
-        paintHierachary.append((TYPE.YION, "showY", "ycolor",5))
-        paintHierachary.append((TYPE.BION, "showB", "bcolor",6))
-        paintHierachary.append((TYPE.BYION, "showBY", "bycolor",7))
+        paintHierachary.append((TYPE.GLYCOPEPTIDEION, "showglycopep", "glycopepcolor",4))
+        paintHierachary.append((TYPE.YION, "showy", "ycolor",5))
+        paintHierachary.append((TYPE.BION, "showb", "bcolor",6))
+        paintHierachary.append((TYPE.BYION, "showby", "bycolor",7))
         paintHierachary.append((TYPE.UNKNOWN, "", "",8))
         
         
@@ -202,23 +202,6 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                 text.append((rank,fragment.name))
             
             text = [name for rank,name in sorted(text)]
-                    
-            #if annotations.get("showox", False) and TYPE.OXONIUMION in types:
-            #    color = annotations.get("oxcolor","black")
-            #elif annotations.get("showImmonium", False) and TYPE.IMMONIUMION in types:
-            #    color = annotations.get("immcolor","black")
-            #elif annotations.get("showpep", False) and TYPE.PEPTIDEION in types:
-            #    color = annotations.get("pepcolor","black")
-            #elif annotations.get("showGlyopep", False) and TYPE.GLYCOPEPTIDEION in types:
-            #    color = annotations.get("glycopepcolor","black")
-            #elif annotations.get("showY", False) and TYPE.YION in types:
-            #    color = annotations.get("ycolor","black")
-            #elif annotations.get("showB", False) and TYPE.BION in types:
-            #    color = annotations.get("bcolor","black")
-            #elif annotations.get("showBY", False) and TYPE.BYION in types:
-            #    color = annotations.get("bycolor","black")
-            #else:
-            #    color = "black"
             return color, text
         
         if self.consensus == None:
