@@ -27,7 +27,7 @@ from glyxtoolms.gui import Appearance
 from glyxtoolms.gui import DataModel
 from glyxtoolms.gui import ProjectFrame
 from glyxtoolms.gui import NotebookScoring2
-from glyxtoolms.gui import FeaturesFrame
+from glyxtoolms.gui import NotebookFeature
 from glyxtoolms.gui import NotebookIdentification
 from glyxtoolms.gui import ExtensionScoring
 from glyxtoolms.gui import ExtensionFeature
@@ -142,7 +142,7 @@ class App(ttk.Frame):
         notebookLeft_n1.config(sashrelief="raised")
         self.paned["notebookLeft_n1"] = notebookLeft_n1
         
-        frameFeature = FeaturesFrame.NotebookFeature(notebookLeft_n1, self.model)
+        frameFeature = NotebookFeature.NotebookFeature(notebookLeft_n1, self.model)
         frameFeature.pack(fill="both", expand="yes")
         
         frameChrom = ttk.Frame(notebookLeft_n1)
