@@ -49,7 +49,7 @@ def calcScore(hit, options):
     # collect peaks with fragment info
     peakset = set()
     for key in keys:
-        p = hit.fragments[key]["peak"]
+        p = hit.fragments[key].peak
         peakset.add(p)
     explainedIntensity = 0.0
     for p in peakset:

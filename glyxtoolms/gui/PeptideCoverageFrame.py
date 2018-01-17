@@ -297,28 +297,22 @@ class PeptideCoverageFrame(Tkinter.Frame):
         bSeries = {}
         self.fragmentCoverage = {}
         
-        restNames = []
+        peptideFragments = []
+        TYPE = glyxtoolms.fragmentation.FragmentType
         for name in self.hit.fragments:
-            if self.hit.fragments[name].get("type", "") not in ["peptide", "pep", "yb", "y", "b"]:
+            fragment = self.hit.fragments[name]
+            if fragment.typ in [TYPE.PEPTIDEION, TYPE.GLYCOPEPTIDEION]:
+                peptideFragments.append(fragment)
+                continue
+            elif fragment.typ not in [TYPE.YION, TYPE.BION, TYPE.BYION]:
                 continue
             result = parseFragmentname(name, peptideLength)
             if result == None:
-                restNames.append(name)
                 continue
             
             start = result["start"]
             end = result["end"]
             typ = result["type"]
-            #y, b = parseInternalFragment(name, peptideLength)
-            #if y == None:
-            #    y, b = parseBFragment(name)
-            #else: # ignore internal fragments
-            #    continue
-            #if y == None:
-            #    y, b = parseYFragment(name, peptideLength)
-            #if y == None:
-            #    restNames.append(name)
-            #    continue
             if typ == "y":
                 ySeries[start] = True
             elif typ == "yinternal" and start not in ySeries:
@@ -334,6 +328,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
             self.fragmentCoverage[key_y] = self.fragmentCoverage.get(key_y, []) + [name]
             self.fragmentCoverage[key_b] = self.fragmentCoverage.get(key_b, []) + [name]
         
+        restNames = [fragment.name for fragment in sorted(peptideFragments, key=lambda x:(x.mass*x.charge))]
         self.setMenuChoices(restNames)
         
         # remove 0 and len

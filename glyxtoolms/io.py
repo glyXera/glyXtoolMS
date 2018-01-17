@@ -389,7 +389,7 @@ class GlyxXMLFile(object):
         self.features = []
         self.glycoModHits = []
         self.all_tags = set()
-        self._version_ = "0.1.2" # current version
+        self._version_ = "0.1.3" # current version
         self.version = self._version_ # will be overwritten by file
         self.toolValueDefaults = {}
         
@@ -659,31 +659,19 @@ class GlyxXMLFile(object):
             # write identified fragments
             fragments = glycoModHit.fragments
             # sort fragments after mass
-            sortedFragmentNames = sorted(fragments.keys(), key=lambda name: fragments[name]["mass"])
+            sortedFragmentNames = sorted(fragments.keys(), key=lambda name: fragments[name].mass)
             xmlFragments = ET.SubElement(xmlHit, "fragments")
             for fragmentname in sortedFragmentNames:
-                xmlFragment = ET.SubElement(xmlFragments, "fragment")
-                xmlFragmentName = ET.SubElement(xmlFragment, "name")
-                xmlFragmentName.text = fragmentname
-
-                if "sequence" in fragments[fragmentname]:
-                    xmlFragmentSequence = ET.SubElement(xmlFragment, "sequence")
-                    xmlFragmentSequence.text = fragments[fragmentname]["sequence"]
-
-                xmlFragmentMass = ET.SubElement(xmlFragment, "mass")
-                xmlFragmentMass.text = str(fragments[fragmentname]["mass"])
-
-                xmlFragmentCounts = ET.SubElement(xmlFragment, "counts")
-                xmlFragmentCounts.text = str(fragments[fragmentname]["counts"])
-                
-                xmlFragmentType = ET.SubElement(xmlFragment, "type")
-                xmlFragmentType.text = str(fragments[fragmentname]["type"])
-                
-                xmlFragmentType = ET.SubElement(xmlFragment, "pos")
-                peak = fragments[fragmentname]["peak"]
-                
-                xmlFragmentType.text = str(peak.pos)
-
+                fragment = fragments[fragmentname]
+                parents = ",".join(fragment.parents)
+                xmlFragment = ET.SubElement(xmlFragments, "fragment",
+                                            name=fragment.name,
+                                            typ=fragment.typ,
+                                            mass=str(fragment.mass),
+                                            charge=str(fragment.charge),
+                                            peak=str(fragment.peak.pos),
+                                            parents=parents
+                                           )
 
     def _parseGlycoModHits(self, xmlGlycoModHits, featureIDs, toolValueDefaults={}):
         hits = []
@@ -709,39 +697,53 @@ class GlyxXMLFile(object):
             hit.peptide = peptide
 
             hit.fragments = {}
-            if self.version > "0.0.3":
+            if self.version > "0.1.2":
+                for xmlfragment in xmlHit.findall("./fragments/fragment"):
+                    fragmentName = xmlfragment.get("name")
+                    fragmentTyp = xmlfragment.get("typ")
+                    fragmentMass = float(xmlfragment.get("mass"))
+                    fragmentCharge = int(xmlfragment.get("charge"))
+                    peakPos = int(xmlfragment.get("peak"))
+                    peak = hit.feature.consensus[peakPos]
+                    parentText = xmlfragment.get("parents")
+                    parents = set([])
+                    if len(parentText) > 0:
+                        parents = set(parentText.split(","))
+                    fragment = glyxtoolms.fragmentation.Fragment(fragmentName, fragmentMass, fragmentCharge, typ=fragmentTyp, peak=peak,parents=parents)
+                    hit.fragments[fragment.name] = fragment
+            elif self.version > "0.0.3":
                 for xmlfragment in xmlHit.findall("./fragments/fragment"):
                     fragment = {}
-                    fragmentname = xmlfragment.find("./name").text
-                    seq = xmlfragment.find("./sequence")
-                    if seq != None:
-                        fragment["sequence"] = seq.text
+                    fragmentName = xmlfragment.find("./name").text
+                    fragmentMass = float(xmlfragment.find("./mass").text)
+                    # parse fragmentCharge from name
+                    chargeMatch = re.search("\(\d+H\+\)",fragmentName)
+                    if chargeMatch:
+                        fragmentCharge = int(chargeMatch.group()[1:-3])
                     else:
-                        fragment["sequence"] = ""
-                    fragment["mass"] = float(xmlfragment.find("./mass").text)
-                    fragment["counts"] = float(xmlfragment.find("./counts").text)
+                        fragmentCharge = 1
+                    #fragmentCharge = int(xmlfragment.find("./charge").text)
                     typ = xmlfragment.find("./type")
                     if typ == None:
-                        fragment["type"] = "peptide"
+                        fragmentTyp = glyxtoolms.fragmentation.FragmentType.GLYCOPEPTIDEION
                     else:
-                        fragment["type"] = xmlfragment.find("./type").text
+                        fragmentTyp = typ.text
+                    
                     # parse pos, if available
                     xmlPos = xmlfragment.find("./pos")
-                    nearest = None
+                    fragmentPeak = None
                     if xmlPos == None:
                         # find nearest peak
-                        peaks = []
-                        mass = fragment["mass"]
+                        fragmentPeak = None
                         for p in hit.feature.consensus:
-                            if abs(p.x-mass) <= self.parameters.getMassTolerance():
-                                peaks.append((abs(p.x-mass), p))
-                        if len(peaks) > 0:
-                            nearest = min(peaks)[1]
+                            diff = abs(p.x-fragmentMass)
+                            if diff <= self.parameters.getMassTolerance():
+                                if fragmentPeak == None or diff < abs(fragmentPeak.x-fragmentMass):
+                                    fragmentPeak = p
                     else:
-                        nearest = hit.feature.consensus[int(xmlPos.text)]
-                    fragment["peak"] = nearest
-                        
-                    hit.fragments[fragmentname] = fragment
+                        fragmentPeak = hit.feature.consensus[int(xmlPos.text)]
+                    fragment = glyxtoolms.fragmentation.Fragment(fragmentName, fragmentMass, fragmentCharge, typ=fragmentTyp, peak=fragmentPeak)
+                    hit.fragments[fragment.name] = fragment
             if self.version > "0.0.5":
                 hit.status = xmlHit.find("./status").text
             if self.version > "0.1.1":

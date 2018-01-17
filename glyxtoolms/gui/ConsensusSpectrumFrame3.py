@@ -108,9 +108,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             for key in self.fragments:
                 if foundGlycan != None:
                     break
-                if abs(self.fragments[key]["mass"]-peak.x) < 0.1:
+                if abs(self.fragments[key].mass-peak.x) < 0.1:
                     foundPep = key
-                    foundPep = self.fragments[key]["sequence"]
                     break
             if foundGlycan != None and foundPep != None:
                 color = "green"
@@ -198,17 +197,13 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
-        colors = {"pep":"green", "b":"khaki", "b+m":"dark khaki", "y":"gray", "y+m":"slate gray"}
+        #colors = {"pep":"green", "b":"khaki", "b+m":"dark khaki", "y":"gray", "y+m":"slate gray"}
+        
         for ionname in self.fragments:
             ion = self.fragments[ionname]
-            key = ion.get("typ", '')
-            if key != "pep" and "(" in ion["sequence"]:
-                key +="+m"
-            if key not in colors:
-                continue
-            color = colors.get(key)
+            color = glyxtoolms.fragmentation.FragmentType.getColor(ion.typ)
 
-            mz = self.fragments[ionname]["mass"]
+            mz = self.fragments[ionname].mass
             pMZ = self.convAtoX(mz)
             self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax,
                                     tags=("fragmentSelection", ),

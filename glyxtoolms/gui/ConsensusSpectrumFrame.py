@@ -2,6 +2,7 @@ import ttk
 import Tkinter
 from glyxtoolms.gui import AnnotatedPlot
 from glyxtoolms.gui import Appearance
+import glyxtoolms
 import tkFont
 from tkColorChooser import askcolor
 
@@ -36,11 +37,25 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         options["annotations"]["font"] = tkFont.Font(family="Arial",size=10)
         options["annotations"]["labelcolor"] = "blue violet"
         options["annotations"]["oxcolor"] = "red"
+        options["annotations"]["immcolor"] = "yellow"
+        options["annotations"]["ycolor"] = "blue"
+        options["annotations"]["bcolor"] = "blue"
+        options["annotations"]["bycolor"] = "blue"
         options["annotations"]["pepcolor"] = "blue"
+        options["annotations"]["glycopepcolor"] = "green"
+
+        
         options["annotations"]["shownames"] = True
         options["annotations"]["showmasses"] = True
         options["annotations"]["showox"] = True
+        options["annotations"]["showImmonium"] = True
+        options["annotations"]["showY"] = True
+        options["annotations"]["showB"] = True
+        options["annotations"]["showBY"] = True
         options["annotations"]["showpep"] = True
+        options["annotations"]["showGlyopep"] = True
+
+
         return options
     
     def createOptions(self, optionsFrame):
@@ -48,63 +63,41 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             self.options["annotations"][varname] = var.get()
             self._paintCanvas(False)
             
+        def addFragmentHighlight(showName=None, text=None, colorName=None):
+            if showName != None and text != None:
+                var = Tkinter.BooleanVar()
+                var.set(self.options["annotations"][showName])
+                optionsFrame.addVariable("annotations", showName, var)
+                c = Appearance.Checkbutton(frame, text=text, variable=var)
+                c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
+                var.trace("w", lambda a,b,c,d=showName,e=var: toggleVisbility(a,b,c,d,e))
+            if colorName != None:
+                botton = Tkinter.Button(frame, text="Set Color")
+                botton.grid(row=frame.row, column=2, sticky="NW")
+                botton.config(fg=self.options["annotations"][colorName])
+                botton.config(activeforeground=self.options["annotations"][colorName])
+                botton.config(command=lambda a=colorName, b=botton: self.setColor(a,b))
+            frame.row += 1
+            
+            
+            
         super(ConsensusSpectrumFrame, self).createOptions(optionsFrame)
         frame = optionsFrame.addLabelFrame("Annotations")
         optionsFrame.addFont(frame, "annotations", "Size: ")
+
+        addFragmentHighlight(showName="showmasses", text="Show Mass Labels")        
+        addFragmentHighlight(showName="shownames", text="Show Names", colorName = "labelcolor")
         
-        nameVar = Tkinter.BooleanVar()
-        nameVar.set(self.options["annotations"]["shownames"])
-        optionsFrame.addVariable("annotations", "shownames", nameVar)
-        c = Appearance.Checkbutton(frame, text="Show Names", variable=nameVar)
-        c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
-        frame.row += 1
-        nameVar.trace("w", lambda a,b,c,d="shownames",e=nameVar: toggleVisbility(a,b,c,d,e))
+        addFragmentHighlight(showName="showox", text="Highlight oxonium ions", colorName = "oxcolor")
+        addFragmentHighlight(showName="showImmonium", text="Highlight immmonium ions", colorName = "immcolor")
+        addFragmentHighlight(showName="showY", text="Highlight y-ions", colorName = "ycolor")
+        addFragmentHighlight(showName="showB", text="Highlight b-ions", colorName = "bcolor")
+        addFragmentHighlight(showName="showBY", text="Highlight by-ions", colorName = "bycolor")
         
-        massVar = Tkinter.BooleanVar()
-        massVar.set(self.options["annotations"]["showmasses"])
-        optionsFrame.addVariable("annotations", "showmasses", massVar)
-        c = Appearance.Checkbutton(frame, text="Show Mass Labels", variable=massVar)
-        c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
-        frame.row += 1
-        massVar.trace("w", lambda a,b,c,d="showmasses",e=massVar: toggleVisbility(a,b,c,d,e))
+        addFragmentHighlight(showName="showpep", text="Highlight peptide ions", colorName = "pepcolor")
+        addFragmentHighlight(showName="showGlyopep", text="Highlight B/Y ions", colorName = "glycopepcolor")
         
-        oxVar = Tkinter.BooleanVar()
-        oxVar.set(self.options["annotations"]["showox"])
-        optionsFrame.addVariable("annotations", "showox", oxVar)
-        c = Appearance.Checkbutton(frame, text="Highlight Oxonium Ions and Losses", variable=oxVar)
-        c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
-        frame.row += 1
-        oxVar.trace("w", lambda a,b,c,d="showox",e=oxVar: toggleVisbility(a,b,c,d,e))
-        
-        pepVar = Tkinter.BooleanVar()
-        pepVar.set(self.options["annotations"]["showpep"])
-        optionsFrame.addVariable("annotations", "showpep", pepVar)
-        c = Appearance.Checkbutton(frame, text="Highlight Peptide Fragments", variable=pepVar)
-        c.grid(row=frame.row, column=0, columnspan=2, sticky="NWS")
-        frame.row += 1
-        pepVar.trace("w", lambda a,b,c,d="showpep",e=pepVar: toggleVisbility(a,b,c,d,e))
-        
-        buttonColorLabel = Tkinter.Button(frame, text="Set Color")
-        buttonColorLabel.grid(row=1, column=2,rowspan=2, sticky="NW")
-        buttonColorLabel.config(fg=self.options["annotations"]["labelcolor"])
-        buttonColorLabel.config(activeforeground=self.options["annotations"]["labelcolor"])
-        buttonColorLabel.config(command=lambda a="labelcolor", b=buttonColorLabel: self.setColor(a,b))
-        #frame.row += 1
-        
-        buttonColorOx = Tkinter.Button(frame, text="Set Color")
-        buttonColorOx.grid(row=3, column=2, sticky="NW")
-        buttonColorOx.config(fg=self.options["annotations"]["oxcolor"])
-        buttonColorOx.config(activeforeground=self.options["annotations"]["oxcolor"])
-        buttonColorOx.config(command=lambda a="oxcolor", b=buttonColorOx: self.setColor(a,b))
-        #frame.row += 1
-        
-        buttonColorPep = Tkinter.Button(frame, text="Set Color")
-        buttonColorPep.grid(row=4, column=2, sticky="NW")
-        buttonColorPep.config(fg=self.options["annotations"]["pepcolor"])
-        buttonColorPep.config(activeforeground=self.options["annotations"]["pepcolor"])
-        buttonColorPep.config(command=lambda a="pepcolor", b=buttonColorPep: self.setColor(a,b))
-        #frame.row += 1
-        
+
     def setColor(self, name, button):
         color = askcolor(self.options["annotations"][name])[1]
         
@@ -152,6 +145,82 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.bMax *= 1.2
 
     def paintObject(self):
+        
+        TYPE = glyxtoolms.fragmentation.FragmentType
+        paintHierachary = []
+        paintHierachary.append((TYPE.OXONIUMION, "showox", "oxcolor",1))
+        paintHierachary.append((TYPE.IMMONIUMION, "showImmonium", "immcolor",2))
+        paintHierachary.append((TYPE.PEPTIDEION, "showpep", "pepcolor",3))
+        paintHierachary.append((TYPE.GLYCOPEPTIDEION, "showGlyopep", "glycopepcolor",4))
+        paintHierachary.append((TYPE.YION, "showY", "ycolor",5))
+        paintHierachary.append((TYPE.BION, "showB", "bcolor",6))
+        paintHierachary.append((TYPE.BYION, "showBY", "bycolor",7))
+        paintHierachary.append((TYPE.UNKNOWN, "", "",8))
+        
+        
+        def findTypes(all_fragments, fragList):
+            types = set()
+            types.add(TYPE.UNKNOWN)
+            for fragment in fragList:
+                if fragment.typ == TYPE.ISOTOPE:
+                    for name in fragment.parents:
+                        if name in all_fragments:
+                            types = types.union(findTypes(all_fragments, [all_fragments[name]]))
+                else:
+                    types.add(fragment.typ)
+            return types
+        
+        def findColorAndText(all_fragments, fragList):
+            # collect types
+            types = findTypes(all_fragments, fragList)
+            TYPE = glyxtoolms.fragmentation.FragmentType
+            
+            annotations = self.options["annotations"]
+            color = "black"
+            
+            for typ, showVar, colorvar,rank in paintHierachary:
+                if typ not in types:
+                    continue
+                if annotations.get(showVar, False) == True:
+                    color = annotations.get(colorvar,"black")
+                    break
+            
+            # sort fragments after hierachy
+            text = []
+            for fragment in fragList:
+                types = findTypes(all_fragments, [fragment])
+                
+                for typ, showVar, colorvar,rank in paintHierachary:
+                    if annotations.get(showVar, False) == False:
+                        continue
+                    if typ in types:
+                        break
+                if annotations.get(showVar, False) == False:
+                    continue
+                if typ == TYPE.UNKNOWN:
+                    continue
+                text.append((rank,fragment.name))
+            
+            text = [name for rank,name in sorted(text)]
+                    
+            #if annotations.get("showox", False) and TYPE.OXONIUMION in types:
+            #    color = annotations.get("oxcolor","black")
+            #elif annotations.get("showImmonium", False) and TYPE.IMMONIUMION in types:
+            #    color = annotations.get("immcolor","black")
+            #elif annotations.get("showpep", False) and TYPE.PEPTIDEION in types:
+            #    color = annotations.get("pepcolor","black")
+            #elif annotations.get("showGlyopep", False) and TYPE.GLYCOPEPTIDEION in types:
+            #    color = annotations.get("glycopepcolor","black")
+            #elif annotations.get("showY", False) and TYPE.YION in types:
+            #    color = annotations.get("ycolor","black")
+            #elif annotations.get("showB", False) and TYPE.BION in types:
+            #    color = annotations.get("bcolor","black")
+            #elif annotations.get("showBY", False) and TYPE.BYION in types:
+            #    color = annotations.get("bycolor","black")
+            #else:
+            #    color = "black"
+            return color, text
+        
         if self.consensus == None:
             return
         if self.feature == None:
@@ -168,39 +237,37 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         annotationText = []
         annotationMass = []
         self.peaksByItem = {}
+        
+        
         for peak in self.consensus:
             pMZ = self.convAtoX(peak.x)
             pInt = self.convBtoY(peak.y)
 
             masstext = str(round(peak.x - self.referenceMass, 4))
-            # check if a fragment exists for the peak
-            foundGlycan = None
-            if self.options["annotations"]["showox"] == True:
-                for ionname in glycanFragments:
-                    if abs(glycanFragments[ionname]-peak.x) < 0.1:
-                        foundGlycan = ionname
-                        break
-
-            foundPep = []
-            if self.options["annotations"]["showpep"] == True:
-                if self.hit != None:
-                    for key in self.hit.fragments:
-                        p = self.hit.fragments[key]["peak"]
-                        if p == peak:
-                            foundPep.append(key)
-                        #if abs(self.hit.fragments[key]["mass"]-peak.x) < 0.1:
-                        #    foundPep.append(key)
-
-            # sort peptide ions
-            if foundGlycan != None and len(foundPep) > 0:
+            foundGlycans = set()
+            foundFrag = set()
+            if self.hit == None: # annotate glycans from scoring tool
+                if self.options["annotations"]["showox"] == True:
+                    for ionname in glycanFragments:
+                        if abs(glycanFragments[ionname]-peak.x) < 0.1:
+                            foundGlycans.add(ionname)
+            else:
+                fragments = self.annotated.get(peak, [])
+                for fragment in fragments:
+                    foundFrag.add(fragment)
+            # sort fragment ions
+            if len(foundGlycans) > 0 and len(foundFrag) > 0:
+                
+                color,text = findColorAndText(self.hit.fragments, foundFrag)
                 color = self.options["annotations"]["oxcolor"]
-                annotationText.append((pMZ, pInt, "\n".join([foundGlycan]+foundPep), masstext))
-            elif foundGlycan != None:
+                annotationText.append((pMZ, pInt, "\n".join(list(foundGlycans)+text), masstext))
+            elif len(foundGlycans) > 0:
                 color = self.options["annotations"]["oxcolor"]
-                annotationText.append((pMZ, pInt, foundGlycan, masstext))
-            elif len(foundPep) > 0:
-                color = self.options["annotations"]["pepcolor"]
-                annotationText.append((pMZ, pInt, "\n".join(foundPep), masstext))
+                annotationText.append((pMZ, pInt, "\n".join(foundGlycans), masstext))
+            elif len(foundFrag) > 0:
+                # find color
+                color,text = findColorAndText(self.hit.fragments, foundFrag)
+                annotationText.append((pMZ, pInt, "\n".join(text), masstext))
             else:
                 annotationMass.append((pMZ, pInt, "", masstext))
                 color = "black"
@@ -232,11 +299,24 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.currentAnnotation = None
         self.peaksByItem = {}
         
+        self.annotated = {}
+        self.linkFragmentsToPeak()
+        
         self.initCanvas(keepZoom=True)
 
     def identifier(self):
         return "ConsensusSpectrumFrame"
-
+        
+    def linkFragmentsToPeak(self):
+        self.annotated = {}
+        if self.feature == None:
+            return
+        if self.hit == None:
+            return
+        for fragment in self.hit.fragments.values():
+            if fragment.peak == None:
+                continue
+            self.annotated[fragment.peak] = self.annotated.get(fragment.peak,[]) + [fragment]
 
     def plotText(self, collectedText, items=set(), N=0):
         # remove text which is outside of view
@@ -298,7 +378,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         pIntMax = self.convBtoY(self.viewYMax)
         plotting = []
         for ionname in self.selectedFragments:
-            mz = self.hit.fragments[ionname]["mass"]
+            mz = self.hit.fragments[ionname].mass
             pMZ = self.convAtoX(mz)
             plotting.append(mz)
             self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax,
