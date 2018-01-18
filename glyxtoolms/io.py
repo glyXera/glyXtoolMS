@@ -730,22 +730,17 @@ class GlyxXMLFile(object):
                         fragmentCharge = int(chargeMatch.group()[1:-3])
                     else:
                         fragmentCharge = 1
-                    #fragmentCharge = int(xmlfragment.find("./charge").text)
-                    typ = xmlfragment.find("./type")
-                    if typ == None:
-                        # guess type from peptide name
-                        if fragmentName.startswith("peptide"):
-                            fragmentTyp = glyxtoolms.fragmentation.FragmentType.PEPTIDEION
-                        elif re.search("^y\d+b\d+",fragmentName) is not None:
-                            fragmentTyp = glyxtoolms.fragmentation.FragmentType.BYION
-                        elif fragmentName.startswith("y"):
-                            fragmentTyp = glyxtoolms.fragmentation.FragmentType.YION
-                        elif fragmentName.startswith("b"):
-                            fragmentTyp = glyxtoolms.fragmentation.FragmentType.YION
-                        else:
-                            raise Exception("Unknown ion fragment!")
+                    # guess type from peptide name
+                    if fragmentName.startswith("peptide"):
+                        fragmentTyp = glyxtoolms.fragmentation.FragmentType.PEPTIDEION
+                    elif re.search("^y\d+b\d+",fragmentName) is not None:
+                        fragmentTyp = glyxtoolms.fragmentation.FragmentType.BYION
+                    elif fragmentName.startswith("y"):
+                        fragmentTyp = glyxtoolms.fragmentation.FragmentType.YION
+                    elif fragmentName.startswith("b"):
+                        fragmentTyp = glyxtoolms.fragmentation.FragmentType.YION
                     else:
-                        fragmentTyp = typ.text
+                        raise Exception("Unknown ion fragment!")
                     
                     # parse pos, if available
                     xmlPos = xmlfragment.find("./pos")
