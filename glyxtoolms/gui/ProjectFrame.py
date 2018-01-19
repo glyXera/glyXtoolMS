@@ -85,10 +85,15 @@ class ProjectFrame(ttk.Frame):
         self.b2 = ttk.Button(tools, text="Close Project", command=self.closeProject)
         self.b2.grid(row=0, column=1)
         self.b2.config(state=Tkinter.DISABLED)
+        
+        self.b6 = ttk.Button(tools, text="Find Analysis", command=self.clickedFindAnalysis)
+        self.b6.grid(row=0, column=2)
 
         self.b3 = ttk.Button(tools, text="Add Analysis", command=self.clickedAddAnalysis)
         self.b3.grid(row=1, column=0)
         self.b3.config(state=Tkinter.DISABLED)
+        
+
 
         #NORMAL, ACTIVE or DISABLED
 
@@ -146,6 +151,8 @@ class ProjectFrame(ttk.Frame):
     def clickedAddProject(self):
         AddProject(self, self.model)
 
+    def clickedFindAnalysis(self):
+        FindAnalysis(self, self.model)
 
     def clickedAddAnalysis(self):
         item, obj, typ = self.getSelectedItem()
@@ -518,5 +525,167 @@ class AddProject(Tkinter.Toplevel):
         options['title'] = 'Open mzML file'
         path = tkFileDialog.askopenfilename(**options)
         self.path.set(path)
+        
+
+        
 
 
+class FindAnalysis(Tkinter.Toplevel):
+
+    def __init__(self, master, model):
+        Tkinter.Toplevel.__init__(self, master=master)
+        self.master = master
+        self.model = model
+        self.title("Find Analysis")
+        self.minsize(600, 300)
+        
+        self.analysisFiles = set()
+        self.keywords = set()
+
+        self.columnconfigure(0, weight=1)
+        self.rowconfigure(0, weight=0)
+        self.rowconfigure(1, weight=0)
+        self.rowconfigure(2, weight=1)
+        self.rowconfigure(3, weight=0)
+        
+        self.frameRoot = ttk.Labelframe(self, text="Set Search Startingpoint")
+        self.frameSearch = ttk.Labelframe(self, text="Search for")
+        self.frameResults = ttk.Labelframe(self, text="Analysis Files")
+        self.frameFinal = Tkinter.Frame(self)
+        
+        self.frameRoot.grid(row=0, column=0, sticky="NSEW")
+        self.frameSearch.grid(row=1, column=0, sticky="NSEW")
+        self.frameResults.grid(row=2, column=0, sticky="NSEW")
+        self.frameFinal.grid(row=3, column=0, sticky="NSEW")
+        
+        self.frameRoot.columnconfigure(0, weight=1)
+        self.frameRoot.columnconfigure(1, weight=0)
+        
+        self.frameSearch.columnconfigure(0, weight=1)
+        
+        self.frameResults.columnconfigure(0, weight=1)
+        self.frameResults.rowconfigure(0, weight=1)
+        
+        self.varRoot = Tkinter.StringVar()
+        entryRoot = Tkinter.Entry(self.frameRoot, textvariable=self.varRoot)
+        entryRoot.config(bg="white")
+        entryRoot.grid(row=0, column=0, sticky="NSEW")
+        
+        self.varRoot.trace("w", self.rootChanged)
+        
+        buttonChoose = Tkinter.Button(self.frameRoot, text="Choose Root", command=self.chooseRoot)
+        buttonChoose.grid(row=0, column=1)
+        
+        # --------------
+        
+        self.varSearch = Tkinter.StringVar()
+        entrySearch = Tkinter.Entry(self.frameSearch, textvariable=self.varSearch)
+        entrySearch.config(bg="white")
+        entrySearch.grid(row=0, column=0, sticky="NSEW")
+        
+        self.varSearch.trace("w", self.keywordsChanged)
+        
+        # ----------
+        
+        scrollbar = Tkinter.Scrollbar(self.frameResults, orient="vertical")
+        self.listBox = Tkinter.Listbox(self.frameResults,selectmode="single",yscrollcommand=scrollbar.set)
+        scrollbar.config(command=self.listBox.yview)
+        self.listBox.grid(row=0, column=0,sticky="NSEW")
+        scrollbar.grid(row=0, column=1,sticky="NSEW")
+        
+        self.listBox.bind("<<ListboxSelect>>", self.listSelected)
+        
+        # ----------
+        buttonCancel = Tkinter.Button(self.frameFinal,text="Cancel",command=self.cancel)
+        self.buttonOK = Tkinter.Button(self.frameFinal,text="OK",command=self.ok)
+        self.buttonOK.pack(side="right", anchor="se")
+        buttonCancel.pack(side="right", anchor="se")
+        
+        self.varRoot.set(self.model.workingdir)
+        
+    def rootChanged(self,*arg,**args):
+        print "root changed to ", self.varRoot.get()
+        # collect all analysis files
+        self.collectAllFiles()
+        self.updateListbox()
+        
+    def collectAllFiles(self):
+        start = self.varRoot.get()
+        if os.path.isdir(start) == False:
+            return
+        self.analysisFiles = set()
+        for root, directories, filenames in os.walk(start):
+            for filename in filenames:
+                if filename.endswith(".xml"):
+                    self.analysisFiles.add(os.path.join(root,filename))
+        
+    def keywordsChanged(self,*arg,**args):
+        self.keywords = set()
+        for text in self.varSearch.get().split(","):
+            text = text.strip()
+            self.keywords.add(text)
+        self.updateListbox()
+        
+    def updateListbox(self):
+        self.buttonOK.config(state="disabled")
+        self.listBox.delete(0, "end")
+        for analysis in sorted(self.analysisFiles):
+            found = True
+            for keyword in self.keywords:
+                if not keyword in analysis:
+                    found = False
+                    break
+            if found == True:
+                self.listBox.insert("end", analysis)
+        
+    def cancel(self):
+        self.destroy()
+        
+    def ok(self):
+        selection = self.listBox.curselection()
+        if len(selection) == 0:
+            self.buttonOK.config(state="disabled")
+            return
+        else:
+            self.buttonOK.config(state="normal")
+        analysisPath = self.listBox.get(selection[0])
+        mzMLPath = self.chooseMzML(analysisPath)
+        if mzMLPath == None:
+            return
+        else:
+            name = os.path.basename(mzMLPath)
+            self.master.addProject(name, mzMLPath)
+            self.destroy()
+        
+    def chooseMzML(self, analysisPath):
+        
+        basedir = os.path.dirname(analysisPath)
+        print "basedir", basedir
+        options = {}
+        options['defaultextension'] = '.mzML'
+        options['filetypes'] = [('mzML files', '.mzML'), ('all files', '.*')]
+        options['initialdir'] = basedir
+        options['parent'] = self
+        options['title'] = 'Choose mzML file'
+        path = tkFileDialog.askopenfilename(**options)
+        return path
+    
+    def chooseRoot(self):
+        options = {}
+        #options['defaultextension'] = '.mzML'
+        #options['filetypes'] = [('mzML files', '.mzML'), ('all files', '.*')]
+        options['initialdir'] = self.varRoot.get()
+        options['parent'] = self
+        options['title'] = 'Choose search starting point'
+        path = tkFileDialog.askdirectory(**options)
+        self.varRoot.set(path)
+        
+    def listSelected(self,*arg, **args):
+        selection = self.listBox.curselection()
+        if len(selection) == 0:
+            self.buttonOK.config(state="disabled")
+            return
+        else:
+            self.buttonOK.config(state="normal")
+        
+        
