@@ -135,7 +135,7 @@ def main(options):
     N_removed = 0
     for h in glyML.glycoModHits:
         score, all_scores = calcScore(h, options)
-        if score <= cutoff:
+        if score < cutoff:
             N_removed += 1
             continue
         h.toolValues["scoreTotal"] = score

@@ -116,6 +116,7 @@ class TagEditorWindow(Tkinter.Toplevel):
         self.destroy()
         # collect tags
         self.model.currentAnalysis.analysis.collect_tags()
+        self.model.collect_tags()
         # update view
         self.updateTagsView()
 

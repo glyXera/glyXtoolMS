@@ -755,6 +755,8 @@ class GlyxXMLFile(object):
                                     fragmentPeak = p
                     else:
                         fragmentPeak = hit.feature.consensus[int(xmlPos.text)]
+                    if fragmentPeak == None:
+                        continue
                     fragment = glyxtoolms.fragmentation.Fragment(fragmentName, fragmentMass, fragmentCharge, typ=fragmentTyp, peak=fragmentPeak)
                     hit.fragments[fragment.name] = fragment
                 # Add Oxonium Ions, since they are no longer shown otherwise

@@ -277,8 +277,12 @@ class ProjectFrame(ttk.Frame):
         path = tkFileDialog.asksaveasfilename(**options)
         if path == "" or path == ():
             return
-
-        obj.analysis.writeToFile(path)
+        try:
+            obj.analysis.writeToFile(path)
+        except:
+            tkMessageBox.showerror("Save Error", "Error saving Analysis!")
+            raise
+            return
         obj.project.analysisFiles.pop(obj.name)
         # set new analysis name
         obj.path = path
@@ -286,7 +290,7 @@ class ProjectFrame(ttk.Frame):
         obj.name = name
         self.projectTree.item(item, text=name)
         obj.project.analysisFiles[name] = obj
-
+        tkMessageBox.showinfo("Saved Info", "Analysis saved to file!")
 
     def clickedTree(self, event):
         item, obj, typ = self.getSelectedItem()

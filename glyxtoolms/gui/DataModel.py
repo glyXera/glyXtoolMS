@@ -67,6 +67,14 @@ class DataModel(object):
         # read resources
         self.loadResources()
         
+        self.all_tags = set()
+        self.collect_tags()
+        
+    def collect_tags(self):
+        self.all_tags = set()
+            
+        
+        
     def registerClass(self, name, theClass):
         #if name in self.classes:
         #    raise Exception("A class with the name "+name+" is already registered!")
