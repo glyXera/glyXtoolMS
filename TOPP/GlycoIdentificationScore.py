@@ -19,11 +19,11 @@ def calcScore(hit, options):
             y.add(re.search("\d+", name).group())
         if re.match("^b\d+(-NH3|-H2O|\+HexNAc)?$", name):
             b.add(re.search("\d+", name).group())
-        if name.startswith("peptide("):
+        if name.startswith("peptide(") or name.startswith("peptide+("):
             pep = True
-        if name.startswith("peptide-NH3("):
+        if name.startswith("peptide-NH3(") or name.startswith("peptide-NH3+("):
             pepNH3 = True
-        if name.startswith("peptide+N1("):
+        if name.startswith("peptide+N1(") or name.startswith("peptide+HexNAc+("):
             pepHexNAc = True
 
     # check oxonium ions for glycan moeity
