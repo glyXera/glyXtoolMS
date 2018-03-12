@@ -4,7 +4,6 @@ Plot Spectrum within GUI
 
 import ttk
 import Tkinter
-#from glyxtoolms.gui import FramePlot
 from glyxtoolms.gui import Appearance
 from glyxtoolms.gui import AnnotatedPlot
 

@@ -10,8 +10,6 @@ d = Deconvolution(peaklist)
 deconvolutedPeaks = d.deconvolute(max_charge, nrOfPeaks)
 
 """
-from __future__ import (absolute_import, division,
-                        print_function, unicode_literals)
 
 class Peak(object):
     """ Stores peak information needed for deconvolution """

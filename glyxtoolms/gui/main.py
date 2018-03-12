@@ -20,7 +20,6 @@ GUI:
 
 import Tkinter
 import ttk
-#import tkFileDialog
 import pyperclip
 
 from glyxtoolms.gui import Appearance
