@@ -257,10 +257,13 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
 
     # helper function to search masses in a spectrum
     def searchMassInSpectrum(mass,tolerance,spectrum):
+        def error(mass, goal):
+            return abs((goal - mass)/goal*1E6)
+            
         hit = None
         for peak in spectrum:
-            if abs(peak.x - mass) < tolerance:
-                if hit == None or abs(peak.x-mass) < abs(hit.x - mass):
+            if error(peak.x,mass) <= tolerance:
+                if hit == None or error(peak.x,mass) < error(hit.x,mass):
                     hit = peak
         return hit
     
@@ -350,11 +353,11 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
 
             fragments += Fragment(g.toString()+"-2*H2O(+)", oxH2O.mass - mH2O, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
             fragments += Fragment(g.toString()+"-3*H2O(+)", oxH2O.mass - 2*mH2O, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
-            fragments += Fragment(g.toString()+"-H2OCH2CO(+)", oxH2O.mass - mCH2CO, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
+            fragments += Fragment(g.toString()+"-CH3COOH(+)", oxH2O.mass - mCH2CO, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
             fragments += Fragment(g.toString()+"-H2OCH2OH2O(+)", oxH2O.mass - mCH2O - mH2O, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
             fragments += Fragment(g.toString()+"-H2OCH2COH2O(+)", oxH2O.mass - mCH2CO - mH2O, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
 
-
+            
         
         # add peptide and glycopeptide ions
         for charge in range(1, maxCharge+1):
