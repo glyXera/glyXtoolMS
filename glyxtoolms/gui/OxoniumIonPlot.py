@@ -36,7 +36,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         self.selectionButton = self.toolbar.addButton("oxonium","selection", "default")
         # add trace to ruler button toggles
         self.selectionButton.active.trace("w", self.selectionPanelToggled)
-        self.plotOrder = ["HexNAc", "Hex", "dHex", "NeuAc", "NeuGc", "H2O"]
+        self.plotOrder = ["HexNAc","N" "Hex","H","dHex","F", "NeuAc","Sa" "NeuGc","Sg"]
         
     def identifier(self):
         return "OxoniumIonPlot"
@@ -66,60 +66,104 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         pictogramVar.trace("w", lambda a,b,c,d=pictogramVar: togglePictogram(a,b,c,d))
 
     def parseOxoniumion(self, name):
+        # check type
         units = {}
-        for unit in re.findall("\(.+?\)-?\d+",name):
-            glycan, amount = unit.split(")")
-            glycan = glycan[1:]
-            amount = int(amount)
-            if amount == 0:
-                continue
-            units[glycan] = amount
+        if name.endswith("(+)"):
+            name = name.replace("(+)","")
+            sp = name.split("-")
+            glycanpart = sp[0]
+            for part in re.findall(".\d+",glycanpart):
+                amount = int(re.sub("\D+","",part))
+                glycan = re.sub("\d+","",part)
+                units[glycan] = amount
+            if sp == 2:
+                loss = sp[1]
+                units[loss[1:]] = -1
+        else:
+            
+            for unit in re.findall("\(.+?\)-?\d+",name):
+                glycan, amount = unit.split(")")
+                glycan = glycan[1:]
+                amount = int(amount)
+                if amount == 0:
+                    continue
+                units[glycan] = amount
+            if "H+" in units:
+                units.pop("H+")
+        print name, units
         return units
     
     def paintOxoniumion(self, x, y, name):
+        x = x -10
+        text = name
+        self.canvas.create_text((x, y),
+                                    text=text,
+                                    anchor="e",
+                                    font=self.options["axisnumbering"]["font"])
+        x = x - self.options["axisnumbering"]["font"].measure(text)-2
+        return x
+    
+    def paintOxoniumionOld(self, x, y, name):
         units = self.parseOxoniumion(name)
-        units.pop("H+")
         # use size of font to assume shape sizes
         size = self.options["axisnumbering"]["font"].config()["size"]
         h = size/2.0
         x = x -10
+        rest = []
         for unit in units:
-            assert unit in self.plotOrder
+            if unit not in self.plotOrder:
+                rest.append(unit)
         for unit in self.plotOrder[::-1]:
             if unit not in units:
                 continue
             amount = units[unit]
-            if unit == "H2O":
-                
-                text = "H2O"
-                if amount < -1:
-                   text = str(amount)+text
-                elif amount == -1:
-                    text = "-"+text
-                elif amount == 1:
-                    text = "+"+text
-                else:
-                    text = "+" +str(amount)+text
-                self.canvas.create_text((x, y),
-                                        text=text,
-                                        anchor="e",
-                                        font=self.options["axisnumbering"]["font"])
-                # measure new x
-                x = x - self.options["axisnumbering"]["font"].measure(text)-2
+            #if unit == "H2O":
+            #    
+            #    text = "H2O"
+            #    if amount < -1:
+            #       text = str(amount)+text
+            #    elif amount == -1:
+            #        text = "-"+text
+            #    elif amount == 1:
+            #        text = "+"+text
+            #    else:
+            #        text = "+" +str(amount)+text
+            #    self.canvas.create_text((x, y),
+            #                            text=text,
+            #                            anchor="e",
+            #                            font=self.options["axisnumbering"]["font"])
+            #    # measure new x
+            #    x = x - self.options["axisnumbering"]["font"].measure(text)-2
+            #else:
+            for i in range(0, amount):
+                if unit == "HexNAc" or unit == "N":
+                    self.canvas.create_rectangle(x,y-h,x-size, y+h)
+                elif unit == "Hex"or unit == "H":
+                    self.canvas.create_oval(x,y-h,x-size, y+h)
+                elif unit == "dHex"or unit == "F":
+                    self.canvas.create_polygon(x,y+h,x-size,y+h,x-h,y-h, fill="red", outline="black")
+                elif unit == "NeuAc"or unit == "Sa":
+                    self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="violet", outline="black")
+                elif unit == "NeuGc"or unit == "Sg":
+                    self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="azure", outline="black")
+                x = x - size -2
+        for unit in rest:
+            text = unit
+            amount = units[unit]
+            if amount < -1:
+               text = str(amount)+text
+            elif amount == -1:
+                text = "-"+text
+            elif amount == 1:
+                text = "+"+text
             else:
-                for i in range(0, amount):
-                    if unit == "HexNAc":
-                        self.canvas.create_rectangle(x,y-h,x-size, y+h)
-                    elif unit == "Hex":
-                        self.canvas.create_oval(x,y-h,x-size, y+h)
-                    elif unit == "dHex":
-                        self.canvas.create_polygon(x,y+h,x-size,y+h,x-h,y-h, fill="red", outline="black")
-                    elif unit == "NeuAc":
-                        self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="violet", outline="black")
-                    elif unit == "NeuGc":
-                        self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="azure", outline="black")
-
-                    x = x - size -2
+                text = "+" +str(amount)+text
+            self.canvas.create_text((x, y),
+                                    text=text,
+                                    anchor="e",
+                                    font=self.options["axisnumbering"]["font"])
+            # measure new x
+            x = x - self.options["axisnumbering"]["font"].measure(text)-2
         return x
 
         
@@ -299,6 +343,38 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 #else:
                 #    sdev[name] = 0.0
         return avg, sdev, names
+        
+        
+    def _getOxoniumionsIdentification(self, hits):
+        names = {}
+        values = {}
+        
+        for hit in hits:
+            collect = []
+            total = 0
+            for fragment in hit.fragments.values():
+                if fragment.typ == glyxtoolms.fragmentation.FragmentType.OXONIUMION:
+                    mass = fragment.mass
+                    intensity = fragment.peak.y
+                    name = fragment.name
+                    collect.append((mass, name, intensity))
+                    names[name] = mass
+                    total += intensity
+            
+            for mass, name, intensity in collect:
+                values[name] = values.get(name, []) + [intensity/float(total)*100]
+                
+            # calculate average
+            avg = {}
+            sdev = {}
+            for name in values:
+                length = float(len(hits))
+                avg[name] = sum(values[name])/length
+                if length > 1:
+                    sdev[name] = math.sqrt(sum([(v-avg[name])**2 for v in values[name]])/(length-1))
+                #else:
+                #    sdev[name] = 0.0
+        return avg, sdev, names
     
     def _init_features(self, features):
         all_names = {}
@@ -315,7 +391,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
     def _init_identifications(self, identifications):
         all_names = {}
         for hit in identifications:
-            avg, sdev, names  = self._getOxoniumions(hit.feature.spectra)
+            avg, sdev, names  = self._getOxoniumionsIdentification([hit])
             for name in names:
                 all_names[name] = names[name]
             self.data.append(avg)
