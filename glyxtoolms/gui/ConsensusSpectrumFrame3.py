@@ -2,6 +2,7 @@ import ttk
 import Tkinter
 from glyxtoolms.gui import AnnotatedPlot
 from glyxtoolms.gui import Appearance
+import glyxtoolms
 
 
 class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
