@@ -49,7 +49,7 @@ class App(ttk.Frame):
     def __init__(self, master):
 
         ttk.Frame.__init__(self)
-        
+
         self.master = master
         #self.menubar = Tkinter.Menu(self.master, bg="#d9d9d9")
         self.menubar = Tkinter.Menu(self.master)
@@ -57,22 +57,22 @@ class App(ttk.Frame):
         self.master.config(menu=self.menubar)
         #self.master.config(bg="#d9d9d9")
         self.model = DataModel.DataModel(master)
-        
-        
-        
+
+
+
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
-        
+
         # style
         _bgcolor = "#eff0f1"
         self.style = ttk.Style()
         self.style.configure('.',background=_bgcolor)
         self.style.configure('TNotebook.Tab',background="#d6d2d0")
         self.style.map("TNotebook.Tab", background=[("selected", _bgcolor)])
-        #self.style.configure('TNotebook.Tab',inactivebackground=_bgcolor)        
-        
+        #self.style.configure('TNotebook.Tab',inactivebackground=_bgcolor)
+
         # collect PanedWindows
         self.paned = {}
-        
+
         filemenu = Tkinter.Menu(self.menubar, tearoff=0)
         #filemenu.add_command(label="Set workspace", command=self.setWorkspace)
         filemenu.add_command(label="Options", command=self.setOptions)
@@ -97,7 +97,7 @@ class App(ttk.Frame):
         filterMenu = Tkinter.Menu(self.menubar, tearoff=0)
         filterMenu.add_command(label="Set Filter Options", command=self.showFilterOptions)
         self.menubar.add_cascade(label="Filter", menu=filterMenu) # Index 4 in menubar
-        
+
         toppasMenu = Tkinter.Menu(self.menubar, tearoff=0)
         #toppasMenu.add_command(label="Collect Analysis Files", command=self.collectToppasFiles)
         toppasMenu.add_command(label="Configure TOPPAS", command=self.configureToppas)
@@ -110,7 +110,7 @@ class App(ttk.Frame):
         panes.config(sashrelief="raised")
         panes.pack(fill="both", expand="yes")
         self.paned["panes"] = panes
-        
+
         left = Tkinter.PanedWindow(panes, orient="vertical")
         left.pack(fill="both", expand="yes")
         left.config(sashwidth=10)
@@ -120,7 +120,7 @@ class App(ttk.Frame):
 
         right = Tkinter.PanedWindow(panes, orient="vertical")
         right.pack(fill="both", expand="yes")
-        
+
         #right.config(sashwidth=10)
         #right.config(opaqueresize=False)
         #right.config(sashrelief="raised")
@@ -133,40 +133,40 @@ class App(ttk.Frame):
         leftTop.pack()
         leftBottom = Tkinter.Frame(left,width=100, height=100)
         leftBottom.pack()
-        
+
         left.add(leftTop)
         left.add(leftBottom)
-        
+
         # ---- Left side -----
         frameProject = ProjectFrame.ProjectFrame(leftTop, self.model)
         frameProject.pack(fill="both", expand="yes")
 
         notebookLeft = ttk.Notebook(leftBottom)
         notebookLeft.pack(fill="both", expand="yes")
-        
+
         notebookLeft_n1 = Tkinter.PanedWindow(notebookLeft, orient="vertical")
         notebookLeft_n1.config(sashwidth=10)
         notebookLeft_n1.config(opaqueresize=False)
         notebookLeft_n1.config(sashrelief="raised")
         self.paned["notebookLeft_n1"] = notebookLeft_n1
-        
+
         frameFeature = NotebookFeature.NotebookFeature(notebookLeft_n1, self.model)
         frameFeature.pack(fill="both", expand="yes")
-        
+
         frameChrom = ttk.Frame(notebookLeft_n1)
         frameChrom.pack(fill="both", expand="yes")
         frameChrom.columnconfigure(0,weight=1)
         frameChrom.columnconfigure(1,weight=1)
         frameChrom.rowconfigure(0,weight=1)
-        
+
         notebookLeft_n1.add(frameFeature)
         notebookLeft_n1.add(frameChrom)
-        
+
         notebookLeft_n2 = TwoDView.TwoDView(notebookLeft, self.model)
-        
+
         notebookLeft.add(notebookLeft_n1, text='FeatureList')
         notebookLeft.add(notebookLeft_n2, text='2DView')
-        
+
         chromFrame = ttk.Labelframe(frameChrom, text="Precursor Chromatogram")
         chromFrame.grid(row=0, column=0, sticky="NWES")
         chromView = FeatureChromatogramView.FeatureChromatogramView(chromFrame, self.model)
@@ -180,70 +180,70 @@ class App(ttk.Frame):
         msView.grid(row=0, column=0, sticky="NWES")
         msFrame.columnconfigure(0, weight=1)
         msFrame.rowconfigure(0, weight=1)
-        
+
         # ---- Right side -----
         notebook = ttk.Notebook(right)
         notebook.pack(fill="both", expand="yes")
-        
+
         n1 = Tkinter.PanedWindow(notebook, orient="vertical")
         n1.config(sashwidth=10)
         n1.config(opaqueresize=False)
         n1.config(sashrelief="raised")
         self.paned["n1"] = n1
-        
+
         n1_top = NotebookIdentification.NotebookIdentification(n1, self.model)
-        
+
         n1_top.pack()
         n1_middle = PeptideCoverageFrame.PeptideCoverageFrame(n1, self.model)
         n1_middle.pack()
         n1_bottom = ConsensusSpectrumFrame.ConsensusSpectrumFrame(n1, self.model)
         n1_bottom.pack()
-        
+
         n1.add(n1_top)
         n1.add(n1_middle)
         n1.add(n1_bottom)
-        
+
         n2 = Tkinter.PanedWindow(notebook, orient="vertical")
         n2.config(sashwidth=10)
         n2.config(opaqueresize=False)
         n2.config(sashrelief="raised")
         self.paned["n2"] = n2
-        
+
         n2_top = NotebookScoring2.NotebookScoring(n2, self.model)
         n2_top.pack()
-        
+
         n2_bottom = SpectrumView2.SpectrumView(n2, self.model)
         n2_bottom.pack()
-        
+
         n2.add(n2_top)
         n2.add(n2_bottom)
-        
+
         notebook.add(n1, text='Identifications')
         notebook.add(n2, text='Spectra')
 
         self.model.registerClass("main", self)
-        
+
         # set layout if stored in config
         self.master.update_idletasks()
-        
+
         if self.model.isDefaultConfig == False:
             self.model.setLayout()
         else:
-            ask = tkMessageBox.askyesno("Configure OpenMS", 
+            ask = tkMessageBox.askyesno("Configure OpenMS",
                                     "Since OpenMS/TOPPAS is not configured yet, do you want to do it now?",
                                     default=tkMessageBox.YES)
             if ask == True:
                 ToppasConfigurationFrame.ToppasConfigurationFrame(self,self.model)
-        
-                
+
+
     def getSashCoords(self):
         coords = {}
-        for key in self.paned: 
+        for key in self.paned:
             for index in range(0, len(self.paned[key].panes())-1):
                 coord = self.paned[key].sash_coord(index)
                 coords[key+"."+str(index)] = coord
         return coords
-        
+
     def setSashCoords(self, coords):
         for key in coords:
             x,y = coords[key]
@@ -277,23 +277,23 @@ class App(ttk.Frame):
             return
         HistogramFrame(self.master, self.model)
         return
-        
+
     def showOxoniumPlot(self):
         if "OxoniumFrame" in self.model.toplevel:
             self.model.toplevel["OxoniumFrame"].destroy()
         frame = OxoniumFrame(self, self.model)
         self.model.toplevel["OxoniumFrame"] = frame
-        
+
     def showFilterOptions(self):
         FilterPanel.FilterPanel(self.master, self.model)
-        
+
     def setOptions(self):
         OptionsFrame.OptionsFrame(self.master, self.model)
-        
-        
+
+
     def collectToppasFiles(self):
         return
-    
+
     def configureToppas(self):
         ToppasConfigurationFrame.ToppasConfigurationFrame(self,self.model)
 
@@ -337,7 +337,7 @@ class HistogramFrame(Tkinter.Toplevel):
         b3 = Tkinter.Button(self, text="close", command=self.close)
         b3.grid(row=3, column=1, sticky="NW")
         self.makeHistogram()
-        
+
         # get window size
         self.update()
         h = self.winfo_height()
@@ -350,7 +350,7 @@ class HistogramFrame(Tkinter.Toplevel):
         # calculate x and y coordinates for the Tk window
         x = (ws/2) - (w/2)
         y = (hs/2) - (h/2)
-        # set the dimensions of the screen 
+        # set the dimensions of the screen
         # and where it is placed
         self.geometry('%dx%d+%d+%d' % (w, h, x, y))
 
@@ -407,7 +407,7 @@ class OxoniumFrame(Tkinter.Toplevel):
         # get selected features
         features = self.model.classes["NotebookFeature"].getSelectedFeatures()
         self.view.init(features=features)
-            
+
     def on_closing(self):
         if "OxoniumIonPlot" in self.model.classes:
             self.model.classes.pop("OxoniumIonPlot")

@@ -1,5 +1,4 @@
-__all__ = ["reporter", "scoring", "tests"]
-import glyxtoolms.reporter
+__all__ = ["scoring", "tests"]
 import glyxtoolms.scoring
 import glyxtoolms.tests
 import glyxtoolms.lib

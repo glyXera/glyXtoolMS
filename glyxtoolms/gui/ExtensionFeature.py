@@ -13,7 +13,7 @@ class Notebook1(ttk.Frame):
         ttk.Frame.__init__(self, master=master)
         self.master = master
         self.model = model
-        
+
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=1)
         self.rowconfigure(0, weight=1)
@@ -31,7 +31,7 @@ class Notebook1(ttk.Frame):
         msView.grid(row=0, column=0, sticky="NWES")
         msFrame.columnconfigure(0, weight=1)
         msFrame.rowconfigure(0, weight=1)
-        
+
 
 
 
@@ -49,7 +49,7 @@ class Notebook2(ttk.Frame):
         msmsFrame.rowconfigure(0, weight=1)
         msmsView = FeatureSpectrumView.FeatureSpectrumView(msmsFrame, model)
         msmsView.grid(row=0, column=0, sticky="NWES")
-        
+
 class Notebook3(ttk.Frame):
 
     def __init__(self, master, model):
@@ -90,7 +90,7 @@ class ExtensionFeature(ttk.Labelframe):
         self.notebook.add(self.n1, text='Feature')
         self.notebook.add(self.n2, text='Fragment Spectrum')
         self.notebook.add(self.n3, text='Consensus Spectrum')
-        
+
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)

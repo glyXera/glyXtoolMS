@@ -8,7 +8,7 @@ import tkFont
 import random
 
 class Annotatable(object):
-    
+
     def __init__(self,x=0,y=0):
         """  Annotatable object, has to provide a x and y coordinate """
         self.x = x
@@ -16,7 +16,7 @@ class Annotatable(object):
 
 COLORS = ["#c00000", "#ff0000", "#7030a0", "#b83098", "#0070c0", "#00b0f0", "#00aa50", "#92d050", "#ff8b00", "#ffc000"]
 ACOLORS = ["#c05000", "#ff5300", "#8c30a0", "#b85698", "#00a1c0", "#00c9f0", "#00c950", "#92f150", "#ff9900", "#ffe400"]
-        
+
 class ColorChooser(Tkinter.Toplevel):
 
     def __init__(self, master, startColor=None):
@@ -25,7 +25,7 @@ class ColorChooser(Tkinter.Toplevel):
         self.title("Edit Series Color")
         self.config(bg="#d9d9d9")
         self.color = None
-        
+
         self.buttons = []
         for index, color in enumerate(COLORS):
             b = Tkinter.Button(self, width=1, height=1)
@@ -36,7 +36,7 @@ class ColorChooser(Tkinter.Toplevel):
             self.buttons.append(b)
             if startColor == color:
                 b.config(relief="sunken")
-        
+
         col = int(index/2)
         self.current = Tkinter.Label(self, text="Currently chosen")
         self.current.grid(row=0, column=col+1, columnspan=2)
@@ -52,14 +52,14 @@ class ColorChooser(Tkinter.Toplevel):
         self.transient(master)
         self.grab_set()
         self.wait_window(self)
-        
+
     def setColor(self, button):
         # untoggle all buttons
         for b in self.buttons:
             b.config(relief="raised")
         button.config(relief="sunken")
         self.current.config(bg=button.cget("bg"))
-        
+
     def pressedOK(self):
         color = self.current.cget("bg")
         self.color = color
@@ -82,47 +82,47 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.annotationItems = {}
         self.selectedAnnotation = None
         self.mouseOverAnnotation = None
-        
+
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        
+
         self.canvas.bind("<Button-1>", self.button1Pressed, "+")
         self.canvas.bind("<ButtonRelease-1>", self.button1Released, "+")
         self.canvas.bind("<B1-Motion>", self.button1Motion, "+")
         self.canvas.bind("<Motion>", self.mouseMoveEvent, "+")
         self.canvas.bind("<Button-3>", self.button3Pressed, "+")
         self.canvas.bind("<Control-p>", self.getPattern, "+")
-        
+
         #self.canvas.bind("<Button-3>", self.showContextMenu)
         #self.canvas.bind("<Double-Button-1>", self.showAnnotationEdit)
         #self.canvas.bind("<Button-3>", self.button3Pressed, "+")
         #self.canvas.bind("<ButtonRelease-3>", self.button3Released, "+")
         #self.canvas.bind("<B3-Motion>", self.button3Motion, "+")
-        
+
         self.canvas.bind("<Delete>", self.eventDeleteAnnotation, "+")
-        
+
         # add sidepanel for annotations
         sidePanelAnnotations = AnnotationSidePanel(self.sidepanel, self)
         self.sidepanel.addContextPanel("ruler", sidePanelAnnotations)
-        
+
         # add ruler toggle
         self.rulerbutton = self.toolbar.addButton("ruler","toggle", "default")
         # add trace to ruler button toggles
         self.rulerbutton.active.trace("w", self.rulerToggled)
-        
+
     def getPattern(self, event):
         if self.model.currentAnalysis == None:
             return
         if self.action is not None:
             return
-        
+
         # search after pattern
         pattern = {}
         pattern["pep"] = 0.0
         pattern["-NH3"] = -glyxtoolms.masses.MASS["N"] - 3*glyxtoolms.masses.MASS["H"]
         pattern["+N83"] = glyxtoolms.masses.calcMassFromElements({"C":4, "H":5, "N":1, "O":1})
         pattern["+HEXNAC"] = glyxtoolms.masses.GLYCAN["HEXNAC"]
-        
+
         tolerance = 0.1
         all_patterns = []
         for i1 in self.peaksByItem:
@@ -144,7 +144,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         if len(all_patterns) > 5:
             all_patterns = all_patterns[:5]
         print all_patterns
-        
+
         i = 0
         for length, intensity, pattern in all_patterns:
             i += 1
@@ -156,7 +156,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 x2 = pattern[key].x
                 if x2 < x1:
                     x1,x2 = x2,x1
-                    
+
                 # create new annotation
                 a = glyxtoolms.io.Annotation()
                 a.x1 = x1
@@ -171,14 +171,14 @@ class AnnotatedPlot(FramePlot.FramePlot):
         if self.rulerbutton.active.get() == True:
             #self.sidepanel.panels["ruler"].currentAnnotation = None
             self.sidepanel.panels["ruler"].update()
-        
+
     def rulerToggled(self, *arg, **args):
         if self.rulerbutton.active.get() == False:
             self.setSelectedAnnotation(None)
             self._paintCanvas()
         else:
             self.sidepanel.panels["ruler"].update()
-        
+
     def button1Motion(self, event):
         if self.rulerbutton.active.get() == False:
             return
@@ -197,7 +197,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         for item in objects["annotatable"]:
             peak = self.peaksByItem[item]
             xx.append((peak.x, peak))
-        
+
         if self.action.get("name","") == 'move_x1':
             annotation = self.action.get("annotation")
             # select new x position
@@ -297,7 +297,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             self.action = None
         if repaint == True:
             self._paintCanvas(False)
-        
+
 
     def _paintCanvas(self, addToHistory=True):
         """ Method override to inject annotation painting """
@@ -309,7 +309,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
 
     def addAnnotatableItem(self, item, annotatableObject):
         self.peaksByItem[item] = annotatableObject
-        
+
     def addSeries(self, seriesName, color):
         series = glyxtoolms.io.AnnotationSeries()
         series.name = seriesName
@@ -331,7 +331,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 color = remaining.pop()
             self.addSeries(seriesName, color) # TODO: set color
         self.annotations[seriesName].annotations.append(annotation)
-        
+
     def removeAnnotation(self, annotation):
         seriesName = annotation.series
         if not seriesName in self.annotations:
@@ -350,10 +350,10 @@ class AnnotatedPlot(FramePlot.FramePlot):
             self.sidepanel.panels["ruler"].update()
         if repaint == True:
             self._paintCanvas()
-            
+
     def findItemsAt(self, pixelX=None, pixelY=None, delta=10):
         if pixelX == None and pixelY == None:
-            return {"annotatable":[], "annotation":[]} 
+            return {"annotatable":[], "annotation":[]}
         if pixelX == None:
             xmin = 0
             xmax = self.height
@@ -377,13 +377,13 @@ class AnnotatedPlot(FramePlot.FramePlot):
             if pixelY != None:
                 minlist.append(abs(self.canvas.coords(item)[1] - pixelY))
             mini = min(minlist)
-                
+
             if item in self.peaksByItem:
                 peaks.append((mini, item))
             if item in self.annotationItems:
                 annotations.append((mini, item))
-        return {"annotatable":[p[1] for p in peaks], 
-                 "annotation":[a[1] for a in annotations]}        
+        return {"annotatable":[p[1] for p in peaks],
+                 "annotation":[a[1] for a in annotations]}
 
     def findItemAt(self, pixelX=None, pixelY=None):
         if pixelX == None and pixelY == None:
@@ -420,7 +420,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             self.selectedAnnotation.selected = ""
         self.selectedAnnotation = annotation
         self.sidepanel.panels["ruler"].setAnnotation(annotation)
-        
+
     def setMouseOverAnnotation(self, annotations, selected):
         if self.mouseOverAnnotation != None:
             self.mouseOverAnnotation.selected = ""
@@ -431,7 +431,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             annotation.selected = selected
         self.mouseOverAnnotation = annotation
         self._paintCanvas()
-                
+
     def mouseMoveEvent(self, event):
         if self.rulerbutton.active.get() == False:
             return
@@ -478,7 +478,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         objects = self.findItemsAt(pixelX=event.x, pixelY=event.y,delta=10)
         annotationItems = objects["annotation"]
         annotatableItems = objects["annotatable"]
-        
+
         if len(annotationItems) > 0:
             # collect text
             text = {}
@@ -568,7 +568,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             pass # Brrrr
 
     def button3Pressed(self, event):
-        
+
         def defineNewAnnotation(x1, x2, annotation=None):
             # create new annotation
             a = glyxtoolms.io.Annotation()
@@ -591,7 +591,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             self.addAnnotation(a, seriesName)
             self.setSelectedAnnotation(a)
             self._paintCanvas()
-        
+
         def searchMassDifference(mass, tolerance, annotation): # TODO get tolerance from user/analysis
             # get series charge
             if annotation == None:
@@ -624,18 +624,18 @@ class AnnotatedPlot(FramePlot.FramePlot):
             for error, charge, peak, name in hits.get("+",[]):
                 self.aMenu.add_command(label="+"+name + " :" + str(round(error,4))+" Da ("+str(charge) + "+)",
                                        command=lambda x1=mass,x2=peak.x: defineNewAnnotation(x1,x2,annotation))
-                                       
+
             # post menu above cursor
             self.aMenu.post(event.x_root, event.y_root - self.aMenu.yposition("end"))
             self.aMenu.focus_set()
             self.aMenu.bind("<FocusOut>", self.removePopup)
-        
+
         if self.rulerbutton.active.get() == False:
             return
         objects = self.findItemsAt(pixelX=event.x, pixelY=event.y,delta=10)
         annotationItems = objects["annotation"]
         annotatableItems = objects["annotatable"]
-        
+
         if len(annotationItems) > 0:
             # collect text
             text = {}
@@ -653,7 +653,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 mass = annotation.x2
             if annotation != None:
                 searchMassDifference(mass, 0.1, annotation)
-            
+
         if len(annotatableItems) > 0:
             # select nearest annotatable
             nearest = []
@@ -664,7 +664,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             nearest = nearest[0][1]
             searchMassDifference(nearest.x, 0.1, None)
 
-    
+
     def button3Motion(self, event):
         if self.rulerbutton.active.get() == False:
             return
@@ -674,7 +674,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
 
         if peak is  None:
             return
-        
+
         x = peak.x
 
         if self.selectedAnnotation.selected == "x1":
@@ -685,7 +685,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         self.selectedAnnotation.y = event.y
         self.selectedAnnotation.text = str(round(abs(self.selectedAnnotation.x1-self.selectedAnnotation.x2),4))
         self.paintCurrentAnnotation()
-    
+
     def button3Released(self, event):
         if self.rulerbutton.active.get() == False:
             return
@@ -707,7 +707,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         if self.selectedAnnotation is None:
             return
         self.removeAnnotation(self.selectedAnnotation)
-        
+
     def paintCurrentAnnotation(self):
         self.canvas.delete("currentAnnotation")
         # draw annotation lines
@@ -715,7 +715,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             return
         self.paintAnnotation(self.selectedAnnotation)
         self.canvas.tag_lower("currentAnnotation")
-        
+
     def paintAllAnnotations(self):
         self.canvas.delete("annotation")
         self.annotationItems = {}
@@ -728,7 +728,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
             if len(series.annotations) == 0:
                 continue
             dimensions[seriesName] = {}
-            
+
             for annotation in sorted(series.annotations, key=lambda a: (a.x1,-abs(a.x2-a.x1))):
                 x1 = annotation.x1
                 x2 = annotation.x2
@@ -770,14 +770,14 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 offset += 1
             offsets[seriesName] = offset
             noOverlap[seriesName] = (x1,x2,y1+offset,y2+offset)
-        
+
         # recalculate annotation level based on offset
         for seriesName in sorted(offsets, key=lambda s: offsets[s]):
             for annotation in self.annotations[seriesName].annotations:
                 annotation.level += offsets[seriesName]
                 self.paintAnnotation(annotation)
         self.canvas.tag_lower("annotation")
-        
+
     def paintAnnotation(self, annotation):
         # remove annotation items from canvas if exiting
         for item in annotation.items:
@@ -790,11 +790,11 @@ class AnnotatedPlot(FramePlot.FramePlot):
         px2 = self.convAtoX(annotation.x2)
         pXText = self.convAtoX((annotation.x1+annotation.x2)/2.0)
         py = annotation.level*20 + self.convBtoY(self.viewYMax)+20
-        
+
         dash = None
         color = self.annotations[annotation.series].color
         width = 1
-        
+
         # get annotation text
         if annotation.show == "text":
             annotationText = annotation.text
@@ -815,7 +815,7 @@ class AnnotatedPlot(FramePlot.FramePlot):
         if annotation == self.mouseOverAnnotation:
             tags = ("annotation", )
             width = 4
-        
+
         #item1 = self.canvas.create_line(px1, pIntMin, px1, pIntMax, tags=tags, fill=color)
         item1 = self.canvas.create_line(px1, pIntMin, px1, py-10, tags=tags, fill=color)
         item2 = self.canvas.create_line(px2, pIntMin, px2, py-10, tags=tags, fill=color)
@@ -834,39 +834,39 @@ class AnnotatedPlot(FramePlot.FramePlot):
         annotation.items[item2] = "x2"
         annotation.items[item3] = "line"
         annotation.items[item4] = "text"
-    
+
         if annotation == self.selectedAnnotation:
             #item5 = self.canvas.create_rectangle(px1+5, py-16, px2-5, py+6, tags=tags, outline='', fill="grey", stipple="gray25",activestipple="gray75")
             item5 = self.canvas.create_rectangle(px1+5, py-16, px2-5, py+6, tags=tags, outline='', fill="grey", stipple="gray25")
             annotation.items[item5] = "selected_body"
             self.canvas.tag_lower(item5,item1)
             self.annotationItems[item5] = annotation
-            
+
             item6 = self.canvas.create_rectangle(px1-5, pIntMin, px1+5, py+6, tags=tags, outline='', fill="black", stipple="gray25",activestipple="gray75")
             annotation.items[item6] = "selected_x1"
             self.canvas.tag_lower(item6,item1)
             self.annotationItems[item6] = annotation
-            
+
             item7 = self.canvas.create_rectangle(px1-5, py-16, px1+5, py+6, tags=tags, outline='', fill="green", stipple="gray25",activestipple="gray75")
             annotation.items[item7] = "move_x1"
             self.canvas.tag_lower(item7,item1)
             self.annotationItems[item7] = annotation
-            
+
             item8 = self.canvas.create_rectangle(px2-5, pIntMin, px2+5, py+6, tags=tags, outline='', fill="black", stipple="gray25",activestipple="gray75")
             annotation.items[item8] = "selected_x2"
             self.canvas.tag_lower(item8,item1)
             self.annotationItems[item8] = annotation
-            
+
             item9 = self.canvas.create_rectangle(px2-5, py-16, px2+5, py+6, tags=tags, outline='', fill="green", stipple="gray25",activestipple="gray75")
             annotation.items[item9] = "move_x2"
             self.canvas.tag_lower(item9,item1)
             self.annotationItems[item9] = annotation
-        
+
         self.annotationItems[item1] = annotation
         self.annotationItems[item2] = annotation
         self.annotationItems[item3] = annotation
         self.annotationItems[item4] = annotation
-        
+
     def doMassDifferenceLookup(self, annotation):
         tolerance = 0.1 # Todo: Fix tolerance
         massdifference = abs(annotation.x1-annotation.x2)
@@ -888,44 +888,44 @@ class EditAnnotationFrame(Tkinter.Toplevel):
         self.master = master
         self.title("Edit Annotation")
         self.config(bg="#d9d9d9")
-        
+
         l1 = ttk.Label(self, text="Text: ")
         l1.grid(row=1, column=0, sticky="NE")
-        
+
         self.varText = Tkinter.StringVar()
         e2 = ttk.Entry(self, textvariable=self.varText)
         e2.grid(row=1, column=1, columnspan=2)
         self.varText.set(master.selectedAnnotation.text)
-        
+
         l2 = ttk.Label(self, text="Series: ")
         l2.grid(row=2, column=0, sticky="NE")
-        
+
         #f2 = ttk.Labelframe(self,text="Series")
         #f2.grid(row=2, column=0, columnspan=3, sticky="NE")
         self.lb = Tkinter.Listbox(self, selectmode="SINGLE")
         self.lb.config(bg="white")
         self.lb.grid(row=2, column=1, columnspan=2, sticky="NE")
         #self.lb.pack()
-        
+
         bAdd = Tkinter.Button(self, text="Edit available Series")
         bAdd.grid(row=3, column=1, columnspan=2, sticky="NE")
-        
+
         bCancel = Tkinter.Button(self, text="Cancel",command=self.pressedCancel)
         bCancel.grid(row=4, column=1, sticky="NE")
-        
+
         bOk = Tkinter.Button(self, text="OK",command=self.pressedOK)
         bOk.grid(row=4, column=2, sticky="NE")
-        
+
         # lift window on top
         self.lift(master)
         self.transient(master)
         self.grab_set()
-        
+
         self.updateListbox()
-        
+
     def updateListbox(self):
         self.lb.delete(0, "end")
-        
+
         for seriesName in self.master.annotations:
             series = self.master.annotations[seriesName]
             self.lb.insert("end", series.name)
@@ -934,7 +934,7 @@ class EditAnnotationFrame(Tkinter.Toplevel):
             if seriesName == self.master.selectedAnnotation.series:
                 self.lb.selection_set("end")
         return
-        
+
     def pressedOK(self):
         # check name
         newName = self.varText.get()
@@ -942,12 +942,12 @@ class EditAnnotationFrame(Tkinter.Toplevel):
             self.master.selectedAnnotation.text = newName
         self.destroy()
         self.master._paintCanvas()
-        
+
     def pressedCancel(self):
         self.destroy()
-        
+
 class CheckboxList(Tkinter.Frame):
-    
+
     def __init__(self, master, annotationspanel, framePlot):
         Tkinter.Frame.__init__(self, master=master)
         self.columnconfigure(0,weight=1)
@@ -959,17 +959,17 @@ class CheckboxList(Tkinter.Frame):
         self.framePlot = framePlot
         self.annotationspanel = annotationspanel
 
-        
+
         self.frame.columnconfigure(0,weight=1, minsize=100) # 121
         self.frame.columnconfigure(1,weight=0, minsize=22) # 22
         self.frame.columnconfigure(2,weight=0, minsize=22) # 22
         self.frame.columnconfigure(3,weight=0, minsize=27) # 27
         self.frame.columnconfigure(4,weight=0, minsize=20) # 20
         self.frame.rowconfigure(0,weight=1)
-        
+
         self.row = 0
         self.elements = {} # link to all elements of each series over series object
-        
+
         eye_icon = 'R0lGODlhDAAIAIAAAAAAAAAAACH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAAEALAAAAAAMAAgA\nAAIUjIFpC9fx4JkyPhthbnlJ6nWJYhQAOw==\n'
         photo = Tkinter.PhotoImage(data=eye_icon)
         h1 = Tkinter.Label(self.frame, text="Name")
@@ -981,7 +981,7 @@ class CheckboxList(Tkinter.Frame):
         h4 = Tkinter.Label(self.frame, image=photo, width=10, height=10)
         h4.image = photo
         h4.grid(row=self.row, column=3)
-        
+
     def clear(self):
         for series in self.elements:
             self.elements[series]["entryName"].destroy()
@@ -991,7 +991,7 @@ class CheckboxList(Tkinter.Frame):
             self.elements[series]["buttonDelete"].destroy()
         self.elements = {}
         self.row = 0
-        
+
     def addSeries(self, series):
         self.row += 1
         varName = Tkinter.StringVar()
@@ -1000,14 +1000,14 @@ class CheckboxList(Tkinter.Frame):
         entryName.grid(row=self.row, column=0, sticky="WE")
         varName.set(series.name)
         varName.trace("w", lambda name, index, mode,x=series:self.eventNameChanged(x))
-        
+
         varCharge = Tkinter.StringVar()
         entryCharge = Tkinter.Entry(self.frame, textvariable=varCharge, width=2)
         entryCharge.grid(row=self.row, column=1)
         entryCharge.config(bg="white")
         varCharge.set(series.charge)
         varCharge.trace("w", lambda name, index, mode,x=series:self.eventChargeChanged(x))
-        
+
         buttonColor = Tkinter.Button(self.frame, text=" ", padx=6, pady=1)
         buttonColor.config(command=lambda b=buttonColor, s=series: self.eventSetColor(b,series))
         buttonColor.grid(row=self.row, column=2)
@@ -1021,13 +1021,13 @@ class CheckboxList(Tkinter.Frame):
             varShow.set(0)
         else:
             varShow.set(1)
-            
+
         varShow.trace("w", lambda name, index, mode,s=series, var=varShow:self.eventSetVisibility(s,var))
-            
+
         buttonDelete = Tkinter.Button(self.frame, text="X", padx=3, pady=0)
         buttonDelete.config(command=lambda x=series: self.eventDeleteSeries(x))
         buttonDelete.grid(row=self.row, column=4)
-                
+
         # add elements to list
         self.elements[series] = {}
         self.elements[series]["varName"] = varName
@@ -1038,8 +1038,8 @@ class CheckboxList(Tkinter.Frame):
         self.elements[series]["varShow"] = varShow
         self.elements[series]["checkShow"] = checkShow
         self.elements[series]["buttonDelete"] = buttonDelete
-        
-        
+
+
     def eventSetVisibility(self, series, var):
         if series.hidden  == var.get():
             series.hidden = not series.hidden
@@ -1051,7 +1051,7 @@ class CheckboxList(Tkinter.Frame):
     def eventDeleteSeries(self, series):
         if series not in self.elements:
             return
-        ask = tkMessageBox.askyesno("Delete Series", 
+        ask = tkMessageBox.askyesno("Delete Series",
                                     "Do you want to delete the series '"+
                                     self.elements[series]["entryName"].get()+
                                     "'?",
@@ -1069,7 +1069,7 @@ class CheckboxList(Tkinter.Frame):
             self.annotationspanel.setAnnotation(None)
         self.annotationspanel.update()
         self.framePlot._paintCanvas()
-        
+
     def eventSetColor(self, button, series):
         chooser = ColorChooser(self, button.cget("bg"))
         color = chooser.color
@@ -1079,7 +1079,7 @@ class CheckboxList(Tkinter.Frame):
             series.color=color
             self.annotationspanel.update()
             self.framePlot._paintCanvas()
-            
+
     def eventChargeChanged(self,changedSeries):
         varCharge = self.elements[changedSeries]["varCharge"]
         entryCharge = self.elements[changedSeries]["entryCharge"]
@@ -1091,8 +1091,8 @@ class CheckboxList(Tkinter.Frame):
             self.framePlot._paintCanvas()
         except:
             entryCharge.config(bg="red")
-        
-        
+
+
     def eventNameChanged(self,changedSeries):
         # check all entries for names which are not unique or empty
         names = {}
@@ -1100,7 +1100,7 @@ class CheckboxList(Tkinter.Frame):
         for series in self.elements:
             varName = self.elements[series]["varName"]
             entryName = self.elements[series]["entryName"]
-            
+
             name = varName.get()
             names[name] = names.get(name, []) + [entryName]
         for name in names:
@@ -1124,8 +1124,8 @@ class CheckboxList(Tkinter.Frame):
                     annotation.series = newName
                 changedSeries.name = newName
                 self.annotationspanel.setAnnotation(self.annotationspanel.currentAnnotation)
-                
-                
+
+
 
 class AnnotationSidePanel(Tkinter.Frame, object):
     def __init__(self, master, framePlot):
@@ -1135,7 +1135,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
 
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
-        
+
         self.scrollbar = Tkinter.Scrollbar(self)
         self.scrollbar.grid(row=0, column=1, sticky="WNS")
         self.canvas = Tkinter.Canvas(self, yscrollcommand=self.scrollbar.set)
@@ -1147,7 +1147,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.canvas.create_window(0, 0, anchor="nw", window=self.frame)
 
         self.scrollbar.config(command=self.canvas.yview)
-        
+
         self.empty = Tkinter.Canvas(self, width=10, height=0)
         self.empty.grid(row=1, column=1, sticky="WNS")
         self.empty.config(highlightthickness=0)
@@ -1156,18 +1156,18 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.frame.rowconfigure(0,weight=0)
         self.frame.rowconfigure(1,weight=1)
         self.frame.rowconfigure(2,weight=1)
-        
+
         self.canvas.bind("<Configure>", self.on_resize, "+")
         self.frame.bind("<Configure>", self.on_resize, "+")
-        
+
         self.frameTools = Tkinter.LabelFrame(self.frame,text="Annotation Tools")
         self.frameTools.grid(row=0,column=0, sticky="NEW", padx=2)
         self.buttonTools = Tkinter.Button(self.frameTools, text="Tools", command=self.openTools)
         self.buttonTools.grid(row=0,column=0, padx=4, sticky="NESW")
-        
+
         self.frameAnnotation = Tkinter.LabelFrame(self.frame,text="Current Annotation")
         self.frameAnnotation.grid(row=1,column=0, sticky="NEW", padx=2)
-        
+
         self.annotationContent = Tkinter.Frame(self.frameAnnotation)
         self.annotationContent.grid(row=0,column=0, sticky="NSEW")
         self.annotationContent.columnconfigure(0,weight=0)
@@ -1176,15 +1176,15 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.annotationContent.rowconfigure(1,weight=0)
         self.annotationContent.rowconfigure(2,weight=0)
         self.annotationContent.rowconfigure(3,weight=1)
-        
+
         self.buttonDelete = Tkinter.Button(self.annotationContent, text="Delete  Annotation",command=self.deleteAnnotation)
         self.buttonDelete.grid(row=0,column=0,columnspan=2, padx=4, sticky="NESW")
-        
+
         labelMassText1 = Tkinter.Label(self.annotationContent, text="m1")
         labelMassText1.grid(row=1,column=0, sticky="NSEW")
         self.labelMass1 = Tkinter.Label(self.annotationContent, text=" - Da", anchor="e")
         self.labelMass1.grid(row=1,column=1, padx=4, sticky="NSEW")
-        
+
         labelMassText2 = Tkinter.Label(self.annotationContent, text="m2")
         labelMassText2.grid(row=2,column=0, sticky="NSEW")
         self.labelMass2 = Tkinter.Label(self.annotationContent, text=" - Da", anchor="e")
@@ -1192,36 +1192,36 @@ class AnnotationSidePanel(Tkinter.Frame, object):
 
         radioFrame = Tkinter.LabelFrame(self.annotationContent, text="Annotate with")
         radioFrame.grid(row=3,column=0, columnspan=2, padx=2)
-        
+
         self.varRadio = Tkinter.StringVar()
         self.varRadio.trace("w", self.radioGroupChanged)
-        
+
         self.buttonShowDiff = Tkinter.Radiobutton(radioFrame, text="Diff", variable=self.varRadio, value="mass")
         self.buttonShowDiff.grid(row=0,column=0, sticky="NWS")
-        
+
         self.varMass = Tkinter.StringVar()
         self.entryMass= Tkinter.Entry(radioFrame, textvariable=self.varMass, width=14)
         self.entryMass.grid(row=0,column=1, padx=4, sticky="NSEW")
         self.entryMass.config(justify="right")
-        
+
         self.buttonShowLookup = Tkinter.Radiobutton(radioFrame, text="Lookup", variable=self.varRadio, value="lookup")
         self.buttonShowLookup.grid(row=1,column=0, sticky="NWS")
-        
+
         self.varLookup = Tkinter.StringVar()
         self.entryLookup= Tkinter.Entry(radioFrame, textvariable=self.varLookup ,width=14)
         self.entryLookup.grid(row=1,column=1, padx=4, sticky="NWES")
-        
+
         self.buttonShowText = Tkinter.Radiobutton(radioFrame, text="Text", variable=self.varRadio, value="text")
         self.buttonShowText.grid(row=2,column=0, sticky="NWS")
-        
+
         self.buttonShowNone = Tkinter.Radiobutton(radioFrame, text="None", variable=self.varRadio, value="none")
         self.buttonShowNone.grid(row=3,column=0, sticky="NWS")
-        
+
         self.varText = Tkinter.StringVar()
         self.entryText = Tkinter.Entry(radioFrame, textvariable=self.varText ,width=14)
         self.entryText.config(bg="white")
         self.entryText.grid(row=2,column=1, padx=4, sticky="NWES")
-        
+
         self.entryLookup.config(state="readonly")
         self.entryMass.config(state="readonly")
 
@@ -1241,10 +1241,10 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         self.frameSeries = CheckboxList(self.frame, self, self.framePlot)
         self.frameSeries.grid(row=2,column=0, sticky="SEW", padx=2)
         self.setAnnotation(None)
-        
+
     def openTools(self):
         frame = AnnotationToolsFrame(self.master)
-        
+
     def radioGroupChanged(self, *arg, **args):
         if self.currentAnnotation == None:
             self.entryText.config(state="disabled")
@@ -1254,20 +1254,20 @@ class AnnotationSidePanel(Tkinter.Frame, object):
 
         self.entryLookup.config(state="readonly")
         self.entryMass.config(state="readonly")
-        self.currentAnnotation.show = self.varRadio.get()        
+        self.currentAnnotation.show = self.varRadio.get()
         if self.currentAnnotation.show == "text":
             self.entryText.config(state="normal")
         else:
             self.entryText.config(state="disabled")
         self.framePlot._paintCanvas()
-        
+
     def on_resize(self,event):
         self.frame.update_idletasks()
         size = self.canvas.bbox("all")
         self.empty.config(height=event.height -size[3])
         self.canvas.config(height=size[3], width=size[2])
         self.canvas.config(scrollregion=size)
- 
+
     def deleteAnnotation(self):
         if self.currentAnnotation == None:
             return
@@ -1280,7 +1280,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             series = self.framePlot.annotations[seriesName]
             self.frameSeries.addSeries(series)
         self.buildMenu()
-            
+
     def updateAnnotationMasses(self):
         if self.currentAnnotation == None:
             self.labelMass1.config(text=" - Da")
@@ -1301,10 +1301,10 @@ class AnnotationSidePanel(Tkinter.Frame, object):
                 self.entryMass.config(fg="black")
             else:
                 self.entryMass.config(fg="red")
-        
+
     def setAnnotation(self, annotation):
         self.currentAnnotation = annotation
-        
+
         if annotation == None:
             self.mb.config(text="Series"+u" \u25BC")
             self.mb.config(state="disabled")
@@ -1321,22 +1321,22 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             self.varLookup.set("")
             self.entryText.config(state="disabled")
             self.entryLookup.config(state="disabled")
-            
+
         else:
             self.mb.config(state="normal")
             self.buttonDelete.config(state="normal")
-            
+
             self.buttonShowDiff.config(state="normal")
             self.buttonShowLookup.config(state="normal")
             self.buttonShowText.config(state="normal")
             self.buttonShowNone.config(state="normal")
-            
+
             self.varRadio.set(annotation.show)
             self.varSeries.set(annotation.series)
             self.buildMenu()
             self.varText.set(annotation.text)
         self.updateAnnotationMasses()
-        
+
     def getColorImage(self,color):
         size = 12
         image = Tkinter.PhotoImage(width=size,height=size)
@@ -1353,7 +1353,7 @@ class AnnotationSidePanel(Tkinter.Frame, object):
         #    return
         series = self.framePlot.annotations[self.currentAnnotation.series]
         self.mb.menu.delete(0,"end")
-        
+
         #eye_icon = 'R0lGODlhDAAIAIAAAAAAAAAAACH+EUNyZWF0ZWQgd2l0aCBHSU1QACH5BAEKAAEALAAAAAAMAAgA\nAAIUjIFpC9fx4JkyPhthbnlJ6nWJYhQAOw==\n'
         #photo = Tkinter.PhotoImage(data=eye_icon)
         self.mb.menu.images = []
@@ -1361,18 +1361,18 @@ class AnnotationSidePanel(Tkinter.Frame, object):
 
             s = self.framePlot.annotations[name]
             photo = self.getColorImage(s.color)
-            self.mb.menu.add_radiobutton(label=name, 
+            self.mb.menu.add_radiobutton(label=name,
                                          variable=self.varSeries,
                                          value=name, compound="left", image=photo, indicatoron=False)
             self.mb.menu.images.append(photo)
 
-        
+
         self.mb.config(text=series.name+u" \u25BC")
         photo = self.getColorImage(series.color)
         self.mb.config(compound="left", image=photo)
         self.mb.image = photo
         self.varSeries.set(series.name)
-        
+
     def eventSeriesChanged(self,*arg, **args):
         # check if annotation needs to be updated
         if self.currentAnnotation == None:
@@ -1392,13 +1392,13 @@ class AnnotationSidePanel(Tkinter.Frame, object):
             self.framePlot.annotations.pop(oldSeries.name)
             self.update()
         self.framePlot._paintCanvas()
-        
+
     def eventTextChanged(self, *arg, **args):
         if self.currentAnnotation == None:
             return
         self.currentAnnotation.text = self.varText.get()
         self.framePlot._paintCanvas()
-        
+
 
 class AnnotationToolsFrame(Tkinter.Toplevel):
 

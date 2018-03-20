@@ -14,7 +14,7 @@ class TwoDView(FramePlot.FramePlot):
         self.xTypeTime = True
         self.featureItems = {}
         self.currentFeatures = []
-        
+
         s = ttk.Style()
 
         s.map('TCheckbutton',
@@ -26,14 +26,14 @@ class TwoDView(FramePlot.FramePlot):
                           ('active', '#d9d9d9')])
 
         self.visible = {}
-        for name in ["Glycopeptide spectra", 
-                      "Non-Glycopeptide spectra", 
-                      "Glycopeptide features", 
+        for name in ["Glycopeptide spectra",
+                      "Non-Glycopeptide spectra",
+                      "Glycopeptide features",
                       "Non-Glycopeptide features"]:
             self.visible[name] = Tkinter.BooleanVar()
             self.visible[name].set(True)
             self.visible[name].trace("w", self.visbilityChanged)
-        
+
         self.canvas.bind("<Button-1>", self.eventMouseClick, "+")
         # Events
         #self.canvas.bind("<Left>", self.setButtonValue)
@@ -139,11 +139,11 @@ class TwoDView(FramePlot.FramePlot):
         self.ov10.set(1)
         self.ov11.set(0)
         """
-        
+
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
         self.canvas.bind("<Button-3>", self.popup)
-    
+
     def visbilityChanged(self, *arg, **args):
         self.paintObject()
 
@@ -156,7 +156,7 @@ class TwoDView(FramePlot.FramePlot):
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
-        
+
     def removePopup(self,event):
         if self.focus_get() != self.aMenu:
             self.aMenu.unpost()
@@ -226,11 +226,11 @@ class TwoDView(FramePlot.FramePlot):
         self.featureItems = {}
         for feature in self.currentFeatures:
             self.plotFeatureLine(feature)
-            
+
         for feature in self.model.currentAnalysis.analysis.features:
             if feature.passesFilter == False:
                 continue
-            
+
             rt1, rt2, mz1, mz2 = feature.getBoundingBox()
             rt1 = self.convAtoX(rt1)
             rt2 = self.convAtoX(rt2)
@@ -280,12 +280,12 @@ class TwoDView(FramePlot.FramePlot):
                 if feature.passesFilter == False:
                     continue
                 nrFeatureHits.add(len(feature.hits))
-                
+
                 if feature.charge == spectrum.precursorCharge:
                     hasCharge = True
                     break
             nrFeatureHits = max(nrFeatureHits)
-            
+
             if spectrum.isGlycopeptide:
                 if self.visible["Glycopeptide spectra"].get() == False:
                     continue
@@ -371,7 +371,7 @@ class TwoDView(FramePlot.FramePlot):
             return
         self.currentFeatures = features
         self.initCanvas(keepZoom=keepZoom)
-        
+
     def eventMouseClick(self, event):
         if self.toolbar.active.get("toggle", "") != "": # TODO create real action
             return
@@ -383,7 +383,7 @@ class TwoDView(FramePlot.FramePlot):
                                                    event.x+10,
                                                    event.y+10))
         nearest, distn = None, 0
-        
+
         for item in overlap:
             if item in self.featureItems:
                 # find nearest

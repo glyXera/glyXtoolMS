@@ -17,15 +17,15 @@ class PrecursorView(FramePlot.FramePlot):
         self.spectrum = []
         self.feature = None
         self.base = []
-        
+
         # Events
         self.canvas.bind("<ButtonRelease-3>", self.popup)
-        
+
         # Popup
         self.aMenu = Tkinter.Menu(self.canvas, tearoff=0)
-        self.aMenu.add_command(label="Set monoisotopic peak", 
+        self.aMenu.add_command(label="Set monoisotopic peak",
                                command=lambda x="mono": self.setBorder(x))
-        self.aMenu.add_command(label="Set Left Feature Border", 
+        self.aMenu.add_command(label="Set Left Feature Border",
                                command=lambda x="leftborder": self.setBorder(x))
         self.aMenu.add_command(label="Set Right Feature Border",
                                command=lambda x="rightborder": self.setBorder(x))
@@ -81,8 +81,8 @@ class PrecursorView(FramePlot.FramePlot):
         self.aMenu.grab_set()
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
-        
-        
+
+
     def removePopup(self,event):
         try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
             if self.focus_get() != self.aMenu:
@@ -120,42 +120,42 @@ class PrecursorView(FramePlot.FramePlot):
             xy.append(pInt)
         if len(xy) > 0:
             self.canvas.create_line(xy, tags=("peak", ))
-        
+
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
-        
+
         # paint monoisotopic mass
         pMZ = self.convAtoX(self.feature.getMZ())
         self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("monoisotope", ),fill="blue")
-        
+
         minRT, maxRT, minMZ, maxMZ = self.feature.getBoundingBox()
 
         # paint border
         pMZ = self.convAtoX(minMZ)
         self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("leftborder", ),fill="red")
-        
+
         pMZ = self.convAtoX(maxMZ)
         self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax, tags=("rightborder", ),fill="red")
-        
+
         # paint confidence interval
         self.plotConfidenceBoxes()
-        
-        
+
+
         self.allowZoom = True
-        
+
     def plotConfidenceBoxes(self):
-        
+
         def countStuff(x, l5, l95):
             N = 0
             for a,b in zip(l5, l95):
                 if b <= x <= a:
                     N += 1
             return N
-        
+
         xp = []
         for i in range(0,5):
             xp.append(self.feature.getMZ()+i/float(self.feature.getCharge())*glyxtoolms.masses.MASS["H+"])
-        
+
         yp = np.interp(xp, self.base, self.spectrum)
 
 
@@ -170,7 +170,7 @@ class PrecursorView(FramePlot.FramePlot):
         # find best fit
         l5 = [yp[i]/z5[i] for i in range(0,5)]
         l95 = [yp[i]/z95[i] for i in range(0,5)]
-        
+
         ky = sorted(l5+l95)
         kx = [countStuff(value, l5,l95) for value in ky]
 
@@ -184,7 +184,7 @@ class PrecursorView(FramePlot.FramePlot):
                 current = a
                 stretch = []
             stretch.append(b)
-            
+
         # get longest strecht
         strecht = max(stretches[max(stretches.keys())], key=lambda x:len(x))
         if len(strecht) > 0:
@@ -192,10 +192,10 @@ class PrecursorView(FramePlot.FramePlot):
         else:
             fa = yp[0]/z50[0]
         #fa = np.polyfit(zp,yp,1)[0]
-        
+
         # plot boxes
         for i in range(0,5):
-            
+
             pMZlow = self.convAtoX(xp[i]-0.05)
             pMZhigh = self.convAtoX(xp[i]+0.05)
             pIntLow = self.convBtoY(conv[i]["5%"]*fa)
@@ -206,8 +206,8 @@ class PrecursorView(FramePlot.FramePlot):
             b += [pMZlow,  pInthigh]
             b += [pMZlow,  pIntLow]
             self.canvas.create_line(b, tags=("box", ), fill="red")
-            
-        
+
+
     def init(self, spectrumXArray, spectrumYArray, feature, minMZ, maxMZ):
         self.spectrum = spectrumYArray
         self.base = spectrumXArray

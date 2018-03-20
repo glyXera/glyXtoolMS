@@ -26,22 +26,22 @@ class TagEditorWindow(Tkinter.Toplevel):
 
         # collect tags
         self.tagCopy = {}
-        
-        
+
+
         frameAddTag = ttk.Labelframe(self, text="Add Tag")
         self.frameTags = ttk.Labelframe(self, text="Tags")
         frameButtons = Tkinter.Frame(self)
         frameAddTag.grid(row=0, column=0, sticky="NSEW")
         self.frameTags.grid(row=1, column=0, sticky="NSEW")
         frameButtons.grid(row=2, column=0, sticky="NSEW")
-        
+
         self.entryContent = Tkinter.StringVar()
         entry = Tkinter.Entry(frameAddTag,textvariable=self.entryContent)
         entry.config(bg="white")
         buttonEntry = Tkinter.Button(frameAddTag, text="Add", command=self.addTag)
         entry.grid(row=0, column=0, sticky="NSEW")
         buttonEntry.grid(row=0, column=1)
-        
+
         buttonCancel = Tkinter.Button(frameButtons, text="Cancel",command=self.pressedCancel)
         buttonOK = Tkinter.Button(frameButtons, text="OK",command=self.pressedOK)
         buttonCancel.grid(row=0, column=0)
@@ -58,7 +58,7 @@ class TagEditorWindow(Tkinter.Toplevel):
         self.entryContent.set("")
         self.editedTags.add(text)
         self.paintTags()
-        
+
     def paintTags(self):
         for button in self.frameTags.children.values():
             button.destroy()
@@ -91,7 +91,7 @@ class TagEditorWindow(Tkinter.Toplevel):
                 col = 0
                 frame = Tkinter.Frame(self.frameTags)
                 frame.pack(side="top")
-        
+
     def tagToggled(self, tag):
         var,button = self.tagVars[tag]
         button.config(selectcolor="white")
@@ -103,7 +103,7 @@ class TagEditorWindow(Tkinter.Toplevel):
         else:
             for tagContent in self.tagContainer.values():
                 tagContent.add(tag)
-    
+
     def pressedOK(self):
         for tag in self.editedTags:
             var,button = self.tagVars[tag]
@@ -122,4 +122,4 @@ class TagEditorWindow(Tkinter.Toplevel):
 
     def pressedCancel(self):
         self.destroy()
-            
+

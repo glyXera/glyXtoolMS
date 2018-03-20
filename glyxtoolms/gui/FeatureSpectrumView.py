@@ -7,7 +7,7 @@ import glyxtoolms
 
 """
 class Annotation(object):
-    
+
     def __init__(self):
         self.x1 = 0
         self.x2 = 0
@@ -17,7 +17,7 @@ class Annotation(object):
         self.selected = ""
 """
 class Peak:
-    
+
     def __init__(self,x,y):
         self.x = x
         self.y = y
@@ -54,7 +54,7 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
         self.annotationItems = {}
         self.currentAnnotation = None
         self.initCanvas()
-        
+
     def setMaxValues(self):
         self.aMax = -1
         self.bMax = -1
@@ -136,7 +136,7 @@ class FeatureSpectrumView(AnnotatedPlot.AnnotatedPlot):
 
         items = self.plotText(annotationText, set(), 0)
         items = self.plotText(annotationMass, items, 5)
-        
+
         # paint all available annotations
         self.paintAllAnnotations()
 

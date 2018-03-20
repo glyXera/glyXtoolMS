@@ -9,10 +9,10 @@ import Tkinter
 import pyperclip
 
 class FilterMass:
-    
+
     def __init__(self, value):
         self.value = value
-    
+
     def evaluate(self, hit):
         # calculate glycopeptide mass
         mass = hit.glycan.mass + hit.peptide.mass
@@ -47,7 +47,7 @@ class DataModel(object):
         self.resources = {}
         self.toplevel = {} # store references to other toplevel windows
         self.configfile = None
-        
+
         self.massdifferences = [] # holds look list for annotations
         # generate default mass list from masses.py
         for key in glyxtoolms.masses.GLYCAN:
@@ -61,47 +61,47 @@ class DataModel(object):
         self.massdifferences = sorted(self.massdifferences)
         # register converter functions for settings
         self.registerOptionsConverterFunctions()
-        
+
         # read settings
         self.readSettings()
-        
+
         # read resources
         self.loadResources()
-        
+
         self.all_tags = set()
         self.collect_tags()
-        
+
     def collect_tags(self):
         self.all_tags = set()
-            
-        
-        
+
+
+
     def registerClass(self, name, theClass):
         #if name in self.classes:
         #    raise Exception("A class with the name "+name+" is already registered!")
         self.classes[name] = theClass
 
     def registerOptionsConverterFunctions(self):
-        
+
         def registerFunction(model, name, to_String, fromString):
             if name in model.optionsConverter:
                 return
             model.optionsConverter[name] = {}
             model.optionsConverter[name]["toString"] = to_String
             model.optionsConverter[name]["fromString"] = fromString
-            
+
         def fontToString(font):
             return font["family"] + ","+str(font["size"])
-            
+
         def stringToFont(string):
             family,size  = string.split(",")
             return tkFont.Font(family=family,size=int(size))
-            
+
         def stringToBool(string):
             if string == "False":
                 return False
             return True
-            
+
         # register converters for options
         registerFunction(self, "font", fontToString, stringToFont)
         registerFunction(self, "show", str, stringToBool)
@@ -117,7 +117,7 @@ class DataModel(object):
         registerFunction(self, "bycolor", str, str)
         registerFunction(self, "pepcolor", str, str)
         registerFunction(self, "glycopepcolor", str, str)
-        
+
         registerFunction(self, "shownames", str, stringToBool)
         registerFunction(self, "showmasses", str, stringToBool)
         registerFunction(self, "showox", str, stringToBool)
@@ -128,27 +128,27 @@ class DataModel(object):
         registerFunction(self, "showpep", str, stringToBool)
         registerFunction(self, "showglycopep", str, stringToBool)
         registerFunction(self, "showpicto", str, stringToBool)
-        
+
     def runFilters(self): # check filters
-        
+
         def evaluateObject(obj, filters, **args):
             text = ""
             for f in filters:
                 text += f.logicLeft
                 text += str(f.evaluate(obj, **args))
                 text += f.logicRight
-            
+
             if text == "":
                 return True
-            
+
             return eval(text)
-        
+
         hasActiveFilter = False
         for key in self.filters:
             if len(self.filters[key]) > 0:
                 hasActiveFilter = True
                 break
-  
+
         self.classes["main"].setActiveFilterHint(hasActiveFilter)
         if self.currentAnalysis == None:
             return
@@ -163,10 +163,10 @@ class DataModel(object):
                 if spectrum.passesFilter == True:
                     feature.passesFilter = True
                     break
-                    
+
             if feature.passesFilter == False:
                 continue
-            
+
             feature.passesFilter = evaluateObject(feature, self.filters["Features"], timescale=self.timescale)
         for hit in self.currentAnalysis.analysis.glycoModHits:
             hit.passesFilter = True
@@ -188,7 +188,7 @@ class DataModel(object):
             self.isDefaultConfig = True
         self.configfile = configparser.ConfigParser()
         self.configfile.read(os.path.join(settingspath))
-        
+
         if "GENERAL" in self.configfile.sections():
             section = self.configfile["GENERAL"]
             self.workingdir = section["workingdir"]
@@ -200,8 +200,8 @@ class DataModel(object):
                 self.errorType = section["errorType"]
             if "openMSPath" in section:
                 self.openMSDir = section["openMSPath"]
-            
-                
+
+
         if "PLOTOPTIONS" in self.configfile.sections():
             section = self.configfile["PLOTOPTIONS"]
             for key in section:
@@ -214,7 +214,7 @@ class DataModel(object):
                     self.options[plotname][propty][typ] = converter(value)
                 else:
                     print "cannot load option", key
-                    
+
         if "MASSDIFFERENCES" in self.configfile.sections():
             section = self.configfile["MASSDIFFERENCES"]
             self.massdifferences = []
@@ -224,7 +224,7 @@ class DataModel(object):
                 charge = int(charge)
                 self.massdifferences.append((mass, name, charge, typ))
             self.massdifferences = sorted(self.massdifferences)
-   
+
     def setLayout(self):
         if self.configfile == None:
             return False
@@ -241,7 +241,7 @@ class DataModel(object):
                 value = self.configfile["LAYOUT"][key]
                 x,y = value.split(",")
                 coords[name] = (int(x), int(y))
-        
+
         self.classes["main"].setSashCoords(coords)
         return True
 
@@ -260,7 +260,7 @@ class DataModel(object):
             i += 1
             self.configfile["MASSDIFFERENCES"][str(i)] = str(mass)+":"+key+":"+str(charge)+":"+typ
 
-        # write plotting setting 
+        # write plotting setting
         self.configfile["PLOTOPTIONS"] = {}
         for plotname in self.options:
             for propty in self.options[plotname]:
@@ -273,7 +273,7 @@ class DataModel(object):
                         self.configfile["PLOTOPTIONS"][optionname] = converter(value)
                     else:
                         print "cannot save option", optionname
-                        
+
         # write sash coordinates
         self.configfile["LAYOUT"] = {}
         self.configfile["LAYOUT"]["geometry"] = self.root.geometry()
@@ -287,13 +287,13 @@ class DataModel(object):
         settingspath = os.path.join(home, '.glyxtoolms.ini')
         with open(settingspath, 'w') as configfile:
             self.configfile.write(configfile)
-            
-        print "Settings saved to:", settingspath
-            
 
-            
+        print "Settings saved to:", settingspath
+
+
+
     def loadResources(self):
-        
+
         # load table with isotope distibution confidence intervals
         # get pickled res
         pickle_obj = resource_stream('glyxtoolms', 'gui/resources/isotope_confidence.pickle')
@@ -318,7 +318,7 @@ class DataModel(object):
         self.resources["oxonium"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
         stream = resource_stream('glyxtoolms', 'gui/resources/options_small.gif')
         self.resources["options"] = Tkinter.PhotoImage(data = base64.encodestring(stream.read()))
-        
+
     def saveToClipboard(self, text):
         # ('Tkinter','osx','gtk','qt','xclip','xsel','klipper','windows')
         if self.clipboard == "Tkinter":
@@ -329,7 +329,7 @@ class DataModel(object):
             print "saving to clipboard using xsel"
             pyperclip.set_clipboard(self.clipboard)
             pyperclip.copy(text)
-            
+
 
 
 class Chromatogram(object):
@@ -452,16 +452,16 @@ class ContainerAnalysisFile(object):
         if self.analysis == None:
             return
         minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
-        
+
         # check if new spectra fall within feature bounds
         for spectrum in self.analysis.spectra:
-            if (minRT <= spectrum.rt <= maxRT and 
+            if (minRT <= spectrum.rt <= maxRT and
                 minMZ <= spectrum.precursorMass <= maxMZ):
-                feature.addSpectrum(spectrum)    
+                feature.addSpectrum(spectrum)
             else:
                 feature.removeSpectrum(spectrum)
         # delete features that fall within bounds
-        
+
         # update identifications
         for hit in feature.hits:
             mass = hit.peptide.mass+hit.glycan.mass+glyxtoolms.masses.MASS["H+"]

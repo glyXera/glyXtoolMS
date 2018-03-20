@@ -14,7 +14,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
     def __init__(self, master, model, xTitle="", yTitle=""):
         FramePlot.FramePlot.__init__(self, master, model, xTitle="Normalized Intensity",
                                      yTitle="Oxonium Ions")
-        
+
         self.data = []
         self.sdev = []
         self.names = []
@@ -27,36 +27,36 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
         self.canvas.bind("<Button-3>", self.popup)
-        
+
         # add sidepanel for selection
         self.sidePanelSelection = SelectionSidePanel(self.sidepanel, self)
         self.sidepanel.addContextPanel("oxonium", self.sidePanelSelection)
-        
+
         # add selection panel toggle
         self.selectionButton = self.toolbar.addButton("oxonium","selection", "default")
         # add trace to ruler button toggles
         self.selectionButton.active.trace("w", self.selectionPanelToggled)
         self.plotOrder = ["HexNAc","N" "Hex","H","dHex","F", "NeuAc","Sa" "NeuGc","Sg"]
-        
+
     def identifier(self):
         return "OxoniumIonPlot"
 
-        
+
     def getDefaultOptions(self):
         options = super(OxoniumIonPlot, self).getDefaultOptions()
         options["axislabel"]["showpicto"] = True
         return options
-        
-        
+
+
 
     def createOptions(self, optionsFrame):
         def togglePictogram(a,b,c, var):
             self.options["axislabel"]["showpicto"] = var.get()
             self._paintCanvas(False)
-        
+
         super(OxoniumIonPlot, self).createOptions(optionsFrame)
         frameAxis = optionsFrame.getLabelFrame("Axis")
-        
+
         pictogramVar = Tkinter.BooleanVar()
         pictogramVar.set(self.options["axislabel"]["showpicto"])
         optionsFrame.addVariable("axislabel", "showPicto", pictogramVar)
@@ -80,7 +80,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 loss = sp[1]
                 units[loss[1:]] = -1
         else:
-            
+
             for unit in re.findall("\(.+?\)-?\d+",name):
                 glycan, amount = unit.split(")")
                 glycan = glycan[1:]
@@ -92,7 +92,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 units.pop("H+")
         print name, units
         return units
-    
+
     def paintOxoniumion(self, x, y, name):
         x = x -10
         text = name
@@ -102,7 +102,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                                     font=self.options["axisnumbering"]["font"])
         x = x - self.options["axisnumbering"]["font"].measure(text)-2
         return x
-    
+
     def paintOxoniumionOld(self, x, y, name):
         units = self.parseOxoniumion(name)
         # use size of font to assume shape sizes
@@ -118,7 +118,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 continue
             amount = units[unit]
             #if unit == "H2O":
-            #    
+            #
             #    text = "H2O"
             #    if amount < -1:
             #       text = str(amount)+text
@@ -166,13 +166,13 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             x = x - self.options["axisnumbering"]["font"].measure(text)-2
         return x
 
-        
+
     def selectionPanelToggled(self, *arg, **args):
         if self.selectionButton.active.get() == False:
             self._paintCanvas()
         else:
             self.sidePanelSelection.update()
-    
+
     def visbilityChanged(self, *arg, **args):
         self.initCanvas(keepZoom=False)
 
@@ -185,12 +185,12 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
-        
+
     def removePopup(self,event):
         if self.focus_get() != self.aMenu:
             self.aMenu.unpost()
-    
-    
+
+
     def _paintYAxis(self):
         self.canvas.create_line(self.convAtoX(self.viewXMin),
                                 self.convBtoY(self.viewYMin),
@@ -243,11 +243,11 @@ class OxoniumIonPlot(FramePlot.FramePlot):
 
     def getNewColor(self):
         self.colorindex += 1
-        if self.colorindex >= len(self.colors):            
+        if self.colorindex >= len(self.colors):
             self.colorindex = 0
         return self.colors[self.colorindex]
-        
-        
+
+
     def setMaxValues(self):
         if len(self.data) == 0:
             self.aMax = -1
@@ -263,7 +263,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                     continue
                 intensityMax = avg[ionname]+sdev.get(ionname, 0)
                 intensityMin = avg[ionname]-sdev.get(ionname, 0)
-                
+
                 if self.aMax < intensityMax:
                     self.aMax = intensityMax
                 if self.aMin > intensityMin:
@@ -272,14 +272,14 @@ class OxoniumIonPlot(FramePlot.FramePlot):
         self.aMax *= 1.1
         self.aMin *= 1.1
 
-    def paintObject(self):     
+    def paintObject(self):
         if len(self.data) == 0:
             return
         height = 1/float(len(self.data))
         self.colorindex = 0
         i = 0
         x0 = self.convAtoX(0)
-        
+
         for avg, sdev, legend in zip(self.data, self.sdev, self.legend):
             color = self.getNewColor()
             self.legend[legend] = color
@@ -312,7 +312,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                             yhair2)
                 y += 2
             i += 1
-    
+
     def _getOxoniumions(self, spectra):
         names = {}
         values = {}
@@ -328,10 +328,10 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                     collect.append((mass, name, intensity))
                     names[name] = mass
                     total += intensity
-            
+
             for mass, name, intensity in collect:
                 values[name] = values.get(name, []) + [intensity/float(total)*100]
-                
+
             # calculate average
             avg = {}
             sdev = {}
@@ -343,12 +343,12 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 #else:
                 #    sdev[name] = 0.0
         return avg, sdev, names
-        
-        
+
+
     def _getOxoniumionsIdentification(self, hits):
         names = {}
         values = {}
-        
+
         for hit in hits:
             collect = []
             total = 0
@@ -360,10 +360,10 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                     collect.append((mass, name, intensity))
                     names[name] = mass
                     total += intensity
-            
+
             for mass, name, intensity in collect:
                 values[name] = values.get(name, []) + [intensity/float(total)*100]
-                
+
             # calculate average
             avg = {}
             sdev = {}
@@ -375,7 +375,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 #else:
                 #    sdev[name] = 0.0
         return avg, sdev, names
-    
+
     def _init_features(self, features):
         all_names = {}
         for feature in features:
@@ -386,8 +386,8 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             self.sdev.append(sdev)
             self.legend[str(feature.index)] = "black"
         self.names = sorted(all_names)
-        
-        
+
+
     def _init_identifications(self, identifications):
         all_names = {}
         for hit in identifications:
@@ -401,7 +401,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             legend = str(hit.feature.index) + "-"+hit.peptide.toString() + "+" + glycan.toString()
             self.legend[legend] = "black"
         self.names = sorted(all_names)
-        
+
     def _init_spectra(self, spectra):
         all_names = {}
         for spectrum in sorted(spectra, key=lambda s:s.rt):
@@ -413,44 +413,44 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             legend = str(spectrum.rt)
             self.legend[legend] = "black"
         self.names = sorted(all_names)
-        
+
     def init(self, identifications = [], features = [], spectra=[], keepZoom=False):
         self.data = []
         self.sdev = []
         self.names = []
         self.legend = {}
-        
+
         if len(identifications) > 0:
             self._init_identifications(identifications)
         elif len(features) > 0:
             self._init_features(features)
         elif len(spectra) > 0:
             self._init_spectra(spectra)
-        
+
         # add new oxonium ions to visibility
         for name in self.names:
             if name not in self.visible:
                 self.visible[name] = Tkinter.BooleanVar()
                 self.visible[name].set(True)
                 self.visible[name].trace("w", self.visbilityChanged)
-        
+
         if self.selectionButton.active.get() == True:
             self.sidePanelSelection.update()
         self.initCanvas(keepZoom=keepZoom)
-    
-    
+
+
     def _paintCanvas(self, addToHistory=True):
         """ Overwrite method to include margin calculation """
         if addToHistory == True:
             self.zoomHistory.append((self.viewXMin, self.viewXMax, self.viewYMin, self.viewYMax))
 
-        
+
         self.calculateMargins()
         self.calcScales()
         self.canvas.delete(Tkinter.ALL)
         self.paintObject()
         self._paintAxis()
-        
+
     def calculateMargins(self):
         # calculate space for oxonium names
         self.options["margins"]["left"] = 100
@@ -465,7 +465,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
             size = max(sizes)+10
             if size > 80:
                 self.options["margins"]["left"] = size+20
-                
+
         # calculate space for legend
         self.options["margins"]["right"] = 50
         if len(self.legend) > 0:
@@ -474,7 +474,7 @@ class OxoniumIonPlot(FramePlot.FramePlot):
                 sizes.append(self.options["legend"]["font"].measure(text))
             size = max(sizes)
             self.options["margins"]["right"] = size+50
-        
+
 class SelectionSidePanel(Tkinter.Frame, object):
     def __init__(self, master, framePlot):
         Tkinter.Frame.__init__(self, master=master)
@@ -483,7 +483,7 @@ class SelectionSidePanel(Tkinter.Frame, object):
 
         self.rowconfigure(0, weight=1)
         self.columnconfigure(0, weight=1)
-        
+
         self.scrollbar = Tkinter.Scrollbar(self)
         self.scrollbar.grid(row=0, column=1, sticky="WNS")
         self.canvas = Tkinter.Canvas(self, yscrollcommand=self.scrollbar.set)
@@ -494,7 +494,7 @@ class SelectionSidePanel(Tkinter.Frame, object):
         self.canvas.create_window(0, 0, anchor="nw", window=self.frame)
 
         self.scrollbar.config(command=self.canvas.yview)
-        
+
         self.empty = Tkinter.Canvas(self, width=10, height=0)
         self.empty.grid(row=1, column=1, sticky="WNS")
         self.empty.config(highlightthickness=0)
@@ -502,20 +502,20 @@ class SelectionSidePanel(Tkinter.Frame, object):
         self.frame.columnconfigure(1,weight=1)
         self.frame.rowconfigure(0,weight=0)
         self.frame.rowconfigure(1,weight=1)
-        
+
         self.canvas.bind("<Configure>", self.on_resize, "+")
         self.frame.bind("<Configure>", self.on_resize, "+")
-        
+
         self.frameAnnotation = Tkinter.LabelFrame(self.frame,text="Show Oxoniumions")
         self.frameAnnotation.grid(row=0,column=0, sticky="NEW", padx=2)
-        
+
         self.annotationContent = Tkinter.Frame(self.frameAnnotation)
         self.annotationContent.grid(row=0,column=0)
         b = Tkinter.Label(self.annotationContent, text="None availabe")
         b.pack(side="top", anchor="center")
         self.update()
 
-        
+
     def radioGroupChanged(self, *arg, **args):
         if self.currentAnnotation == None:
             self.entryText.config(state="disabled")
@@ -525,23 +525,23 @@ class SelectionSidePanel(Tkinter.Frame, object):
 
         self.entryLookup.config(state="readonly")
         self.entryMass.config(state="readonly")
-        self.currentAnnotation.show = self.varRadio.get()        
+        self.currentAnnotation.show = self.varRadio.get()
         if self.currentAnnotation.show == "text":
             self.entryText.config(state="normal")
         else:
             self.entryText.config(state="disabled")
         self.framePlot._paintCanvas()
-        
+
     def on_resize(self,event):
         self.frame.update_idletasks()
         size = self.canvas.bbox("all")
         self.empty.config(height=event.height -size[3])
         self.canvas.config(height=size[3], width=size[2])
         self.canvas.config(scrollregion=size)
-        
+
     def update(self):
         self.annotationContent.destroy()
-        
+
         self.annotationContent = Tkinter.Frame(self.frameAnnotation)
         self.annotationContent.grid(row=0,column=0)
         if len(self.framePlot.names) == 0:
@@ -551,4 +551,4 @@ class SelectionSidePanel(Tkinter.Frame, object):
         for name in self.framePlot.names:
             c = Tkinter.Checkbutton(self.annotationContent, text=name, variable=self.framePlot.visible[name])
             c.pack(side="top", anchor="nw")
-            
+

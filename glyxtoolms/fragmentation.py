@@ -80,7 +80,7 @@ def getModificationVariants(peptide):
 
     def isValidPermutation(permutation):
         valid_list = set()
-        for mod, pos in i:
+        for mod, pos in permutation:
             if pos in valid_list:
                 return False
             valid_list.add(pos)
@@ -92,17 +92,17 @@ def getModificationVariants(peptide):
         if isValidPermutation(i) == True:
             final.add(tuple(sorted(i)))
     return final
-    
+
 class FragmentType(object):
-    UNKNOWN="UNKNOWN"
-    ISOTOPE="ISOTOPE"
-    IMMONIUMION="IMMONIUMION"
-    OXONIUMION="OXONIUMION"
-    YION="YION"
-    BION="BION"
-    BYION="BYION"
-    PEPTIDEION="PEPTIDEION"
-    GLYCOPEPTIDEION="GLYCOPEPTIDEION"
+    UNKNOWN = "UNKNOWN"
+    ISOTOPE = "ISOTOPE"
+    IMMONIUMION = "IMMONIUMION"
+    OXONIUMION = "OXONIUMION"
+    YION = "YION"
+    BION = "BION"
+    BYION = "BYION"
+    PEPTIDEION = "PEPTIDEION"
+    GLYCOPEPTIDEION = "GLYCOPEPTIDEION"
     _colors = {"UNKNOWN":"black",
                "ISOTOPE":"yellow",
                "IMMONIUMION":"violet",
@@ -112,20 +112,20 @@ class FragmentType(object):
                "BYION":"blue",
                "PEPTIDEION":"orange",
                "GLYCOPEPTIDEION":"green"
-               }
-    
-    def getColor(self,name):
+              }
+
+    def getColor(self, name):
         return self._colors.get(name, "black")
-    
+
 class FragmentList(dict):
     def __add__(self, fragment):
         self[fragment.name] = fragment
         return self
-        
+
 
 
 class Fragment(object):
-    
+
     def __init__(self, name, mass, charge, typ=FragmentType.UNKNOWN, peak=None, parents=set([])):
         self.name = name
         self.typ = typ
@@ -146,7 +146,7 @@ def generatePeptideFragments(peptide):
         assert mod.position not in modifications
         amino = peptide.sequence[mod.position]
         modifications[mod.position] = (mod.name, amino)
-    
+
     data = FragmentList()
     for i in range(0, len(sequence)):
 
@@ -179,13 +179,13 @@ def generatePeptideFragments(peptide):
             key = str(i+1)
             data += Fragment("b"+key, b.mass(), 1, typ=FragmentType.BION)
             if ("R" in sequence or
-                "K" in sequence or
-                "Q" in sequence or
-                "N" in sequence):
+                    "K" in sequence or
+                    "Q" in sequence or
+                    "N" in sequence):
                 data += Fragment("b"+key+"-NH3", bNH3.mass(),1, typ=FragmentType.BION)
             if ("S" in sequence or
-                "T" in sequence or
-                sequence.startswith("E")):
+                    "T" in sequence or
+                    sequence.startswith("E")):
                 data += Fragment("b"+key+"-H2O", bH2O.mass(), 1, typ=FragmentType.BION)
 
         cTerm = Composition() + {"H":2, "O":1}
@@ -211,15 +211,15 @@ def generatePeptideFragments(peptide):
         key = str(len(sequence)-i)
 
         if i > 0:
-            data += Fragment("y"+key, y.mass(),1, typ=FragmentType.YION)
+            data += Fragment("y"+key, y.mass(), 1, typ=FragmentType.YION)
             if ("R" in sequence or
-                "K" in sequence or
-                "Q" in sequence or
-                "N" in sequence):
+                    "K" in sequence or
+                    "Q" in sequence or
+                    "N" in sequence):
                 data += Fragment("y"+key+"-NH3", yNH3.mass(), 1, typ=FragmentType.YION)
             if ("S" in sequence or
-                "T" in sequence or
-                sequence.startswith("E")):
+                    "T" in sequence or
+                    sequence.startswith("E")):
                 data += Fragment("y"+key+"-H2O", yH2O.mass(), 1, typ=FragmentType.YION)
 
     # calc internal fragments
@@ -256,22 +256,22 @@ def generatePeptideFragments(peptide):
 def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharge):
 
     # helper function to search masses in a spectrum
-    def searchMassInSpectrum(mass,tolerance,spectrum):
+    def searchMassInSpectrum(mass, tolerance, spectrum):
         def error(mass, goal):
             return abs((goal - mass)/goal*1E6)
-            
+
         hit = None
         for peak in spectrum:
-            if error(peak.x,mass) <= tolerance:
-                if hit == None or error(peak.x,mass) < error(hit.x,mass):
+            if error(peak.x, mass) <= tolerance:
+                if hit == None or error(peak.x, mass) < error(hit.x, mass):
                     hit = peak
         return hit
-    
+
     # helper function to calculate charged ion masses
-    def calcChargedMass(singlyChargedMass,charge):
+    def calcChargedMass(singlyChargedMass, charge):
         mass = singlyChargedMass+(charge-1)*glyxtoolms.masses.MASS["H"]
         return mass/float(charge)
-        
+
     # helper masses
     mH2O = glyxtoolms.masses.calcMassFromElements({"H":2, "O":1})
     mNH3 = glyxtoolms.masses.calcMassFromElements({"N":1, "H":3})
@@ -280,7 +280,7 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
     mCH2CO = glyxtoolms.masses.calcMassFromElements({"C":2, "H": 2, "O":1})
     mNx = glyxtoolms.masses.calcMassFromElements({"C":4, "H":5, "N":1, "O":1})
     mCHOCH3 = glyxtoolms.masses.calcMassFromElements({"C":2, "H":4, "O":1})
-    
+
     # calculate peptide mass
     pepIon = peptide.mass+glyxtoolms.masses.MASS["H+"]
     pepGlcNAcIon = pepIon+glyxtoolms.masses.GLYCAN["HEXNAC"]
@@ -289,20 +289,20 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
     pepH2O = pepIon + mH2O
     pepHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]
     pepHexHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]*2
-    
-    
+
+
     # calculate immonium ions
     immoniumIons = {}
     for pos, aminoacid in enumerate(peptide.sequence): # TODO: account for modifications
         comp = glyxtoolms.fragmentation.Composition() + glyxtoolms.masses.COMPOSITION[aminoacid]
         comp = comp + {"C":-1, "O":-2, "H":-1}
         immoniumIons[aminoacid+"+"] = Fragment(aminoacid+"+", comp.mass(), 1, FragmentType.IMMONIUMION)
-    
+
     # create composition subsets according to glycan type
     comb = []
     keys = [key for key in glycan.sugar.keys() if glycan.sugar[key] > 0]
     for key in keys:
-        comb.append(range(0,glycan.sugar[key]+1))
+        comb.append(range(0, glycan.sugar[key]+1))
 
     glycans = []
     for ii in itertools.product(*comb):
@@ -312,10 +312,10 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
         if g.mass == 0.0:
             continue
         glycans.append(g)
-        
+
     # collect glycosylationsite positions
     glycosylationsSites = set()
-    for site,typ in peptide.glycosylationSites:
+    for site, typ in peptide.glycosylationSites:
         pos = site-peptide.start
         assert 0 <= pos < len(peptide.sequence)
         amino = peptide.sequence[pos]
@@ -331,24 +331,24 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
 
     # determine all peptide modification variants
     bestVariant = (None, {})
-    
+
     for modificationset in glyxtoolms.fragmentation.getModificationVariants(peptide):
         pepvariant = peptide.copy()
         pepvariant.modifications = []
         for modname, pos in modificationset:
-            pepvariant.addModification(modname,position=pos)
-        
+            pepvariant.addModification(modname, position=pos)
+
         fragments = glyxtoolms.fragmentation.generatePeptideFragments(pepvariant)
-        
+
         # add immonium ions
         for key in immoniumIons:
             fragments += immoniumIons[key]
-            
+
         # add oxoniumIons
         for g in glycans:
             ox = Fragment(g.toString()+"(+)", g.mass+glyxtoolms.masses.MASS["H+"], 1, FragmentType.OXONIUMION)
             fragments += ox
-            oxH2O = Fragment(g.toString()+"-H2O(+)", ox.mass - mH2O, 1, FragmentType.OXONIUMION,parents={ox.name})
+            oxH2O = Fragment(g.toString()+"-H2O(+)", ox.mass - mH2O, 1, FragmentType.OXONIUMION, parents={ox.name})
             fragments += oxH2O
 
             fragments += Fragment(g.toString()+"-2*H2O(+)", oxH2O.mass - mH2O, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
@@ -357,14 +357,14 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
             fragments += Fragment(g.toString()+"-H2OCH2OH2O(+)", oxH2O.mass - mCH2O - mH2O, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
             fragments += Fragment(g.toString()+"-H2OCH2COH2O(+)", oxH2O.mass - mCH2CO - mH2O, 1, FragmentType.OXONIUMION, parents={oxH2O.name})
 
-            
-        
+
+
         # add peptide and glycopeptide ions
         for charge in range(1, maxCharge+1):
-            pepIonMass = calcChargedMass(pepIon,charge)
-            pepNH3Mass = calcChargedMass(pepNH3,charge)
-            pepH2OMass = calcChargedMass(pepH2O,charge)
-            pep83Mass = calcChargedMass(pep83,charge)
+            pepIonMass = calcChargedMass(pepIon, charge)
+            pepNH3Mass = calcChargedMass(pepNH3, charge)
+            pepH2OMass = calcChargedMass(pepH2O, charge)
+            pep83Mass = calcChargedMass(pep83, charge)
 
             chargeName = "("+str(charge)+"H+)"
             fragments += Fragment("peptide"+chargeName, pepIonMass, charge, FragmentType.PEPTIDEION)
@@ -372,20 +372,20 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
             fragments += Fragment("peptide-H2O"+chargeName, pepH2OMass, charge, FragmentType.PEPTIDEION)
             fragments += Fragment("peptide+N(0.2X)"+chargeName, pep83Mass, charge, FragmentType.GLYCOPEPTIDEION)
             fragments += Fragment("peptide+N(0.2X)-H2O"+chargeName, pep83Mass-mH2O, charge, FragmentType.GLYCOPEPTIDEION)
-            
+
             # add glycan fragments
             for g in glycans:
                 if g.hasNCorePart() == False:
                     continue
-                mass = calcChargedMass(pepIon+g.mass,charge)
-                massH2O = calcChargedMass(pepIon+g.mass-mH2O,charge)
-                mass2xH2O = calcChargedMass(pepIon+g.mass-2*mH2O,charge)
+                mass = calcChargedMass(pepIon+g.mass, charge)
+                massH2O = calcChargedMass(pepIon+g.mass-mH2O, charge)
+                mass2xH2O = calcChargedMass(pepIon+g.mass-2*mH2O, charge)
                 massCHOCH3 = calcChargedMass(pepIon+g.mass-mCHOCH3, charge)
-                fragments += Fragment("peptide+"+g.toString()+"("+str(charge)+"H+)", mass,charge, FragmentType.GLYCOPEPTIDEION)
-                fragments += Fragment("peptide+"+g.toString()+"-H2O"+"("+str(charge)+"H+)", massH2O,charge, FragmentType.GLYCOPEPTIDEION)
-                fragments += Fragment("peptide+"+g.toString()+"-2xH2O"+"("+str(charge)+"H+)", mass2xH2O,charge, FragmentType.GLYCOPEPTIDEION)
-                fragments += Fragment("peptide+"+g.toString()+"-CHOCH3"+"("+str(charge)+"H+)", massCHOCH3,charge, FragmentType.GLYCOPEPTIDEION)
-                
+                fragments += Fragment("peptide+"+g.toString()+"("+str(charge)+"H+)", mass, charge, FragmentType.GLYCOPEPTIDEION)
+                fragments += Fragment("peptide+"+g.toString()+"-H2O"+"("+str(charge)+"H+)", massH2O, charge, FragmentType.GLYCOPEPTIDEION)
+                fragments += Fragment("peptide+"+g.toString()+"-2xH2O"+"("+str(charge)+"H+)", mass2xH2O, charge, FragmentType.GLYCOPEPTIDEION)
+                fragments += Fragment("peptide+"+g.toString()+"-CHOCH3"+"("+str(charge)+"H+)", massCHOCH3, charge, FragmentType.GLYCOPEPTIDEION)
+
         # add peptide fragments with attached glycans
         lenSeq = len(peptide.sequence)
         if len(glycosylationsSites) > 0:
@@ -405,7 +405,7 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
                     else:
                         key = "y"+str(y)+"b"+str(b)
                         typ = FragmentType.BYION
-                    
+
                     ion = fragments.get(key, None)
                     if ion == None:
                         continue
@@ -415,7 +415,7 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
                             continue
                         fragments += Fragment(ion.name+"+"+g.toString(), ion.mass + g.mass,1, typ)
                         fragments += Fragment(ion.name+"+"+g.toString()+"-H2O", ion.mass + g.mass - mH2O, 1, typ, parents={ion.name})
-        
+
         # search for the existence of each fragment within the spectrum
         found_fragments = {}
         for fragmentname in fragments:
@@ -426,13 +426,13 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
                 continue
             fragment.peak = peak
             found_fragments[fragmentname] = fragment
-            
-            
-            
+
+
+
         # add isotopes
         for key in found_fragments.keys():
             fragment = found_fragments[key]
-            for i in range(1,4):
+            for i in range(1, 4):
                 mz = fragment.mass + i/float(fragment.charge)
                 peak = searchMassInSpectrum(mz, tolerance, spectrum)
                 if peak == None:
@@ -444,5 +444,5 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
         # TODO: Better variant scoring?
         if len(found_fragments) > len(bestVariant[1]):
             bestVariant = (pepvariant, found_fragments)
-    
+
     return {"peptidevariant":bestVariant[0], "fragments":bestVariant[1], "all": fragments}

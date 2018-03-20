@@ -26,14 +26,14 @@ class NotebookFeature(TreeTable.TreeTable):
         # Bindings influencing FeatureChromatogramView
         self.tree.bind("<Left>", self.goLeft)
         self.tree.bind("<Right>", self.goRight)
-        
+
         #self.model.registerClass("NotebookFeature",self)
-        
+
     def identifier(self):
         return "NotebookFeature"
 
     def initializeColumnHeader(self):
-        
+
         self.columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents", "Tags")
         self.columnNames = {"RT":"RT", "MZ":"MZ [Da]", "Charge":"Charge", "Best Score":"Best Score", "Nr Spectra":"Nr Spectra", "Status": "Status", "Nr. Idents":"Nr. Idents","Tags":"Tags"}
         self.columnsWidth = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80,"Tags":80}
@@ -47,22 +47,22 @@ class NotebookFeature(TreeTable.TreeTable):
 
         self.tree.column("#0", width=80)
         self.tree.heading("#0", text="Feature Nr", command=lambda col='#0': self.sortColumn(col))
-        
-        
+
+
         self.tree["columns"] = self.columns
         for col in self.columns:
             self.tree.column(col, width=self.columnsWidth[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
-            
+
         self.setHeadingNames()
 
-    
+
     def seeItem(self, feature):
         itemId = self.featureItems[feature.getId()]
         self.tree.see(itemId)
-        
+
     def setHeadingNames(self):
-        
+
         if self.model.timescale == "minutes":
             self.columnNames["RT"] = "RT [min]"
         else:
@@ -70,7 +70,7 @@ class NotebookFeature(TreeTable.TreeTable):
 
         for col in self.columnNames:
             self.tree.heading(col, text=self.columnNames.get(col, col))
-    
+
     def popup(self, event):
         area = self.tree.identify_region(event.x, event.y)
         self.aMenu.delete(0,"end")
@@ -80,7 +80,7 @@ class NotebookFeature(TreeTable.TreeTable):
             for name in self.columns:
                 self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
         else:
-            self.aMenu.add_command(label="Set to Accepted", 
+            self.aMenu.add_command(label="Set to Accepted",
                                    command=lambda x="Accepted": self.setStatus(x))
             self.aMenu.add_command(label="Set to  Rejected",
                                    command=lambda x="Rejected": self.setStatus(x))
@@ -102,7 +102,7 @@ class NotebookFeature(TreeTable.TreeTable):
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
-        
+
     def removePopup(self,event):
         try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
             if self.focus_get() != self.aMenu:
@@ -120,7 +120,7 @@ class NotebookFeature(TreeTable.TreeTable):
             feature  = self.treeIds[item]
             features.append(feature)
         TagEditorWindow.TagEditorWindow(self, self.model, features, self.updateTagsView)
-        
+
     def updateTagsView(self):
         # get currently active hit
         selection = self.tree.selection()
@@ -131,7 +131,7 @@ class NotebookFeature(TreeTable.TreeTable):
             values = self.tree.item(item)["values"]
             values[7] = ", ".join(feature.tags)
             self.tree.item(item, values=values)
-        
+
     #def copyToClipboard(self, *arg, **args):
     #    # get active columns
     #    header = ["Feature Nr"]
@@ -141,7 +141,7 @@ class NotebookFeature(TreeTable.TreeTable):
     #        active.append(isActive)
     #        if isActive == True:
     #            header.append(self.columnNames.get(columnname,columnname))
-    #    
+    #
     #    # add header
     #    text = "\t".join(header) + "\n"
     #    for item in self.tree.selection():
@@ -158,15 +158,15 @@ class NotebookFeature(TreeTable.TreeTable):
     #    except:
     #        tkMessageBox.showerror("Clipboard Error", "Cannot save Data to Clipboard.\nPlease select another clipboard method under Options!")
     #        raise
-            
+
     def goLeft(self, event):
         self.model.classes["FeatureChromatogramView"].goLeft(event)
         return "break" # Stop default event propagation
-        
+
     def goRight(self, event):
         self.model.classes["FeatureChromatogramView"].goRight(event)
         return "break" # Stop default event propagation
-        
+
     def zoomToFeature(self, event):
         selection = self.tree.selection()
         if len(selection) != 1:
@@ -180,7 +180,7 @@ class NotebookFeature(TreeTable.TreeTable):
         minMZ = minMZ-mzdiff*3
         maxMZ = maxMZ+mzdiff*3
         self.model.classes["TwoDView"].zoomToCoordinates(minRT, minMZ, maxRT, maxMZ)
-            
+
     def setStatus(self, status):
         # get currently active hit
         selection = self.tree.selection()
@@ -188,7 +188,7 @@ class NotebookFeature(TreeTable.TreeTable):
             return
         for item in selection:
             feature = self.treeIds[item]
-            
+
             if status == "Accepted":
                 feature.status = glyxtoolms.io.ConfirmationStatus.Accepted
             elif status == "Rejected":
@@ -199,18 +199,18 @@ class NotebookFeature(TreeTable.TreeTable):
             values = self.tree.item(item)["values"]
             values[5] = feature.status
             self.tree.item(item, values=values)
-            
+
             taglist = list(self.tree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, feature.status)
             self.tree.item(item, tags=taglist)
-    
+
     def changeFeature(self):
         selection = self.tree.selection()
         if len(selection) != 1:
             return
         feature = self.treeIds[selection[0]]
         ChangeFeatureFrame(self.master, self.model, feature)
-        
+
     def copyFeature(self):
         analysis = self.model.currentAnalysis
         if analysis == None:
@@ -243,8 +243,8 @@ class NotebookFeature(TreeTable.TreeTable):
         self.updateTree()
         self.model.classes["NotebookScoring"].updateTree([feature])
         tkMessageBox.showinfo("Feature Copied", "The feature has been copied!")
-        
-        
+
+
     def addIdentification(self):
         selection = self.tree.selection()
         if len(selection) != 1:
@@ -328,7 +328,7 @@ class NotebookFeature(TreeTable.TreeTable):
 
         if analysis == None:
             return
-            
+
         self.featureItems = {}
 
         # insert all ms2 spectra
@@ -349,7 +349,7 @@ class NotebookFeature(TreeTable.TreeTable):
             for specId in feature.getSpectraIds():
                 spectrum = analysis.spectraIds[specId]
                 if spectrum.logScore < bestScore:
-                    bestScore = spectrum.logScore 
+                    bestScore = spectrum.logScore
 
             if self.model.timescale == "minutes":
                 rt = round(feature.getRT()/60.0, 2)
@@ -360,7 +360,7 @@ class NotebookFeature(TreeTable.TreeTable):
             for hit in feature.hits:
                 if hit.passesFilter == True:
                     nrIdentifications += 1
-            
+
             tags = ", ".join(feature.tags)
             values = [rt,
                       round(feature.getMZ(), 4),
@@ -370,8 +370,8 @@ class NotebookFeature(TreeTable.TreeTable):
                       feature.status,
                       str(nrIdentifications) + "/"+str(len(feature.hits)),
                       tags]
-            
-            
+
+
             item = self.tree.insert("", "end", text=name,
                                            values=values,
                                            tags=taglist)
@@ -381,7 +381,7 @@ class NotebookFeature(TreeTable.TreeTable):
         # apply possible sorting
         if not "NotebookFeature" in analysis.sorting:
             analysis.sorting["NotebookFeature"] = ("#0", False)
-        
+
         sortingColumn, reverse = analysis.sorting["NotebookFeature"]
         analysis.sorting["NotebookFeature"] = (sortingColumn, not reverse)
         self.sortColumn(sortingColumn)
@@ -393,7 +393,7 @@ class NotebookFeature(TreeTable.TreeTable):
         self.tree.selection_set(item)
         self.tree.see(item)
         self.clickedTree(None)
-        
+
     def updateFeature(self, feature):
         item = self.featureItems.get(feature.getId(), False)
         if item == False:
@@ -401,12 +401,12 @@ class NotebookFeature(TreeTable.TreeTable):
         analysis = self.model.currentAnalysis
         if analysis == None:
             return
-            
+
         if self.model.timescale == "minutes":
             rt = round(feature.getRT()/60.0, 2)
         else:
             rt = round(feature.getRT(), 1)
-                
+
         bestScore = 10.0
         for specId in feature.getSpectraIds():
             spectrum = analysis.spectraIds[specId]
@@ -419,7 +419,7 @@ class NotebookFeature(TreeTable.TreeTable):
                                            len(feature.getSpectraIds()),
                                            feature.status,
                                            len(feature.hits)))
-    
+
     def getSelectedFeatures(self):
         selection = self.tree.selection()
         features = []
@@ -437,7 +437,7 @@ class NotebookFeature(TreeTable.TreeTable):
         if "OxoniumIonPlot" in self.model.classes:
             self.model.classes["OxoniumIonPlot"].init(features=features)
         self.plotSelectedFeatures(features)
-        
+
     def plotSelectedFeatures(self, features, hit=None):
         self.model.classes["TwoDView"].init(features, keepZoom=True)
         if len(features) != 1:
@@ -468,14 +468,14 @@ class NotebookFeature(TreeTable.TreeTable):
                 continue
             rt = spec.getRT()
             c.rt.append(rt)
-            
+
             peaks = spec.get_peaks()
             if hasattr(peaks, "shape"):
                 mzArray = peaks[:, 0]
                 intensArray = peaks[:, 1]
             else:
                 mzArray, intensArray = peaks
-                
+
             # get intensity in range
             choice_Chrom = np.logical_and(np.greater(mzArray, minMZ), np.less(mzArray, maxMZ))
             #choice_Chrom = np.logical_and(np.greater(mzArray, minMZ-0.1), np.less(mzArray, minMZ+0.1))
@@ -496,7 +496,7 @@ class NotebookFeature(TreeTable.TreeTable):
                 break
             if minDiff == None or abs(diff) < minDiff:
                 minDiff = abs(diff)
-            
+
 
         c.plot = True
         c.name = "test"
@@ -505,7 +505,7 @@ class NotebookFeature(TreeTable.TreeTable):
         c.msLevel = 1
         c.selected = True
 
-        
+
         self.model.classes["FeatureChromatogramView"].init(c, feature, minMZView, maxMZView, index)
         self.model.classes["ConsensusSpectrumFrame"].init(feature, hit)
 
@@ -519,7 +519,7 @@ class NotebookFeature(TreeTable.TreeTable):
             sortingColumn = col
             reverse = False
         self.model.currentAnalysis.sorting["NotebookFeatureSpectra"] = (sortingColumn, reverse)
-        
+
         children = self.spectrumTree.get_children('')
         if col == "Is Glyco":
             l = [(self.spectrumTree.set(k, col), k) for k in children]
@@ -569,7 +569,7 @@ class NotebookFeature(TreeTable.TreeTable):
             self.tree.delete(item)
             self.treeIds.pop(item)
             self.featureItems.pop(feature.getId())
-            
+
             if nextItem != {}:
                 self.tree.selection_set(nextItem)
                 self.tree.see(nextItem)
@@ -581,11 +581,11 @@ class NotebookFeature(TreeTable.TreeTable):
             # remove feature from analysis file
             analysis = self.model.currentAnalysis
             analysis.removeFeature(feature)
-        
+
         self.model.classes["NotebookIdentification"].updateTree()
 
         # adjust tags
-        for index, k in enumerate(self.tree.get_children('')):            
+        for index, k in enumerate(self.tree.get_children('')):
             taglist = list(self.tree.item(k, "tags"))
             status = self.tree.item(k)["values"][5]
             if "odd" in taglist:
@@ -613,31 +613,31 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
         self.model = model
         self.mass = 0
         self.charge = 0
-        
+
         labelCharge = Tkinter.Label(self, text="Charge")
         self.chargeVar = Tkinter.StringVar()
         self.chargeVar.trace("w", self.valuesChanged)
         self.entryCharge = Tkinter.Entry(self, textvariable=self.chargeVar)
         labelCharge.grid(row=0, column=0, sticky="NWES")
         self.entryCharge.grid(row=0, column=1, columnspan=2, sticky="NWES")
-        
+
         labelMass = Tkinter.Label(self, text="Mass")
         self.massVar = Tkinter.StringVar()
         self.massVar.trace("w", self.valuesChanged)
         self.entryMass = Tkinter.Entry(self, textvariable=self.massVar)
         labelMass.grid(row=1, column=0, sticky="NWES")
         self.entryMass.grid(row=1, column=1, columnspan=2, sticky="NWES")
-        
-        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)        
+
+        cancelButton = Tkinter.Button(self, text="Cancel", command=self.cancel)
         saveButton = Tkinter.Button(self, text="Save", command=self.save)
 
         cancelButton.grid(row=10, column=0, sticky="NWES")
         saveButton.grid(row=10, column=1, sticky="NWES")
-        
+
         # set values
         self.chargeVar.set(feature.getCharge())
         self.massVar.set(feature.getMZ())
-        
+
         # get window size
         self.update()
         h = self.winfo_height()
@@ -650,11 +650,11 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
         # calculate x and y coordinates for the Tk window
         x = (ws/2) - (w/2)
         y = (hs/2) - (h/2)
-        # set the dimensions of the screen 
+        # set the dimensions of the screen
         # and where it is placed
         self.geometry('%dx%d+%d+%d' % (w, h, x, y))
-                                                   
-        
+
+
     def valuesChanged(self, *args):
         # check entries for validity
         self.valid = True
@@ -664,14 +664,14 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
         except:
             self.valid = False
             self.entryCharge.config(bg="red")
-            
+
         try:
             self.mass = float(self.massVar.get())
             self.entryMass.config(bg="grey")
         except:
             self.valid = False
             self.entryMass.config(bg="red")
-    
+
     def save(self):
         if self.valid == False:
             return
@@ -683,4 +683,4 @@ class ChangeFeatureFrame(Tkinter.Toplevel):
 
     def cancel(self):
         self.destroy()
- 
+

@@ -11,16 +11,16 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         Tkinter.Toplevel.__init__(self, master=master)
         #self.minsize(600, 300)
         self.master = master
-        self.feature = feature 
+        self.feature = feature
         self.title("Add Identification")
         self.config(bg="#d9d9d9")
         self.model = model
         self.glycan = None
         self.peptide = None
         self.ownModifications = set()
-        
+
         self.minsize(600, 300)
-        
+
         self.columnconfigure(0, weight=0)
         self.columnconfigure(1, weight=0)
         self.columnconfigure(2, weight=1)
@@ -29,13 +29,13 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.rowconfigure(2, weight=0)
         self.rowconfigure(3, weight=0)
         self.rowconfigure(4, weight=0)
-        
+
         frameFeature = ttk.Labelframe(self, text="Feature")
         frameGlycan = ttk.Labelframe(self, text="Glycan")
         framePeptide = ttk.Labelframe(self, text="Peptide")
         frameAddCancel = ttk.Labelframe(self, text="Add Identification / Cancel")
         self.frameSpec = ConsensusSpectrumFrame3.ConsensusSpectrumFrame(self, model)
-        
+
         frameGlycan.grid(row=0, column=0, sticky=("NWES"))
         frameFeature.grid(row=0, column=1, sticky=("NWES"))
         frameAddCancel.grid(row=0, column=2, sticky=("NWES"))
@@ -46,17 +46,17 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         framePeptide.rowconfigure(0, weight=0)
         framePeptide.rowconfigure(1, weight=0)
         framePeptide.rowconfigure(2, weight=1)
-        
+
         self.frameSpec.grid(row=4, column=0, columnspan=3, sticky=("NWES"))
 
         self.precursorMass = (self.feature.getMZ()*self.feature.getCharge()-
                               glyxtoolms.masses.MASS["H+"]*(self.feature.getCharge()-1))
-        
+
         labelMass = Tkinter.Label(frameFeature, text="Feature Mass")
         labelMassValue = Tkinter.Label(frameFeature, text=str(round(self.precursorMass,4))+ " Da")
         labelMass.grid(row=0, column=0, sticky="NWES")
         labelMassValue.grid(row=0, column=1, columnspan=2, sticky="NWES")
-        
+
         labelError = Tkinter.Label(frameFeature, text="Feature Error")
         self.labelErrorValue = Tkinter.Label(frameFeature, text="- Da")
         labelError.grid(row=1, column=0, sticky="NWES")
@@ -68,20 +68,20 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.entryGlycan = Tkinter.Entry(frameGlycan, textvariable=self.glycanVar)
         labelGlycanMassLabel = Tkinter.Label(frameGlycan, text="Glycan Mass")
         self.labelGlycanMass = Tkinter.Label(frameGlycan, text="")
-        
+
         labelGlycan.grid(row=0, column=0, sticky="NWES")
         self.entryGlycan.grid(row=0, column=1, columnspan=2, sticky="NWES")
         labelGlycanMassLabel.grid(row=1, column=0, sticky="NWES")
         self.labelGlycanMass.grid(row=1, column=1, columnspan=2, sticky="NWES")
-        
-        
+
+
         labelPeptide = Tkinter.Label(framePeptide, text="Peptide")
         self.peptideVar = Tkinter.StringVar()
         self.peptideVar.trace("w", self.valuesChanged)
         self.entryPeptide = Tkinter.Entry(framePeptide, textvariable=self.peptideVar)
         labelPeptideMassLabel = Tkinter.Label(framePeptide, text="Peptide Mass")
         self.labelPeptideMass = Tkinter.Label(framePeptide, text="")
-        
+
         labelPeptide.grid(row=0, column=0, sticky="NWES")
         self.entryPeptide.grid(row=0, column=1, columnspan=2, sticky="NWES")
         labelPeptideMassLabel.grid(row=1, column=0, sticky="NWES")
@@ -89,7 +89,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
 
         frameModifications = ttk.Labelframe(framePeptide, text="Modifications")
         frameModifications.grid(row=2, column=0, columnspan=3, sticky="NWES")
-        
+
         frameModifications.columnconfigure(0, weight=1)
         frameModifications.columnconfigure(1, weight=0)
         frameModifications.columnconfigure(2, weight=0)
@@ -98,7 +98,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         frameModifications.rowconfigure(1, weight=1)
         frameModifications.rowconfigure(2, weight=0)
         frameModifications.rowconfigure(3, weight=0)
-        
+
         frameTreeLeft = ttk.Labelframe(frameModifications, text="Available Modifications")
         frameTreeMiddle = ttk.Labelframe(frameModifications, text="Available Aminoacids")
         frameTreeRight = ttk.Labelframe(frameModifications, text="Set Modifications")
@@ -106,39 +106,39 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.b2 = Tkinter.Button(frameModifications, text="<", command=self.removeModification)
         b3 = Tkinter.Button(frameModifications, text="define new modification", command=self.defineModification)
         self.b4 = Tkinter.Button(frameModifications, text="remove modification definition", command=self.deleteDefinition)
-        
+
         self.useFragmentInfo = Tkinter.IntVar()
         checkBox = Tkinter.Checkbutton(frameModifications, text="Solve modification positions with fragments in spectrum ", variable=self.useFragmentInfo)
 
         frameTreeLeft.grid(row=0, column=0, rowspan=2, sticky="NWES")
         frameTreeMiddle.grid(row=0, column=1, rowspan=2, sticky="NWES")
-        
+
         self.b1.grid(row=0, column=2, sticky="NWES")
         self.b2.grid(row=1, column=2, sticky="NWES")
         b3.grid(row=2, column=0, sticky="NWES")
         self.b4.grid(row=3, column=0, sticky="NWES")
         checkBox.grid(row=2, column=1, sticky="NWES")
-        
+
         frameTreeRight.grid(row=0, column=3, rowspan=2, sticky="NWES")
-        
+
         frameTreeLeft.columnconfigure(0, weight=1)
         frameTreeLeft.columnconfigure(1, weight=0)
         frameTreeLeft.rowconfigure(0, weight=1)
-        
+
         frameTreeMiddle.columnconfigure(0, weight=1)
         frameTreeMiddle.columnconfigure(1, weight=0)
         frameTreeMiddle.rowconfigure(0, weight=1)
-        
+
         frameTreeRight.columnconfigure(0, weight=1)
         frameTreeRight.columnconfigure(1, weight=0)
         frameTreeRight.rowconfigure(0, weight=1)
-        
+
         scrollbarLeft = Tkinter.Scrollbar(frameTreeLeft)
         self.treeModLeft = ttk.Treeview(frameTreeLeft, selectmode='browse', yscrollcommand=scrollbarLeft.set)
         self.treeModLeft.grid(row=0, column=0, sticky="NWES")
         scrollbarLeft.grid(row=0, column=1, sticky="NWES")
         scrollbarLeft.config(command=self.treeModLeft.yview)
-        
+
         scrollbarMiddle = Tkinter.Scrollbar(frameTreeMiddle)
         self.treeModMiddle = ttk.Treeview(frameTreeMiddle, selectmode='browse', yscrollcommand=scrollbarMiddle.set)
         self.treeModMiddle.grid(row=0, column=0, sticky="NWES")
@@ -150,38 +150,38 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.treeModRight.grid(row=0, column=0, sticky="NWES")
         scrollbarRight.grid(row=0, column=1, sticky="NWES")
         scrollbarRight.config(command=self.treeModLeft.yview)
-        
-        cancelButton = Tkinter.Button(frameAddCancel, text="Cancel", command=self.cancel)        
+
+        cancelButton = Tkinter.Button(frameAddCancel, text="Cancel", command=self.cancel)
         saveButton = Tkinter.Button(frameAddCancel, text="Add Identification", command=self.addIdentification)
 
         cancelButton.grid(row=0, column=0, sticky="NWES")
         saveButton.grid(row=0, column=1, sticky="NWES")
-        
+
         # setup treeviews
         columnsLeft = ("Mass", "Positions",)
         self.treeModLeft["columns"] = columnsLeft
         self.treeModLeft.heading("#0", text="Modification")
         self.treeModLeft.heading("Mass", text="Mass")
         self.treeModLeft.heading("Positions", text="Positions")
-        
+
         self.treeModLeft.column("#0", width=100)
         self.treeModLeft.column("Mass", width=100)
         self.treeModLeft.column("Positions", width=100)
-        
+
         columnsMiddle = ("Aminoacid",)
         self.treeModMiddle["columns"] = columnsMiddle
         self.treeModMiddle.heading("#0", text="#")
         self.treeModMiddle.heading("Aminoacid", text="Aminoacid")
         self.treeModMiddle.column("#0", width=30)
         self.treeModMiddle.column("Aminoacid", width=80)
-        
+
         columnsRight = ("Modification",)
         self.treeModRight["columns"] = columnsRight
         self.treeModRight.heading("#0", text="#")
         self.treeModRight.heading("Modification", text="Modification")
         self.treeModRight.column("#0", width=30)
         self.treeModRight.column("Modification", width=100)
-        
+
         # add available modifications
         self.fillAvailableModifications()
 
@@ -197,34 +197,34 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         # calculate x and y coordinates for the Tk window
         x = (ws/2) - (w/2)
         y = (hs/2) - (h/2)
-        # set the dimensions of the screen 
+        # set the dimensions of the screen
         # and where it is placed
         self.geometry('%dx%d+%d+%d' % (w, h, x, y))
-        
+
         # create treeview bindings
         self.treeModLeft.bind("<<TreeviewSelect>>", self.clickedTreeLeft)
         self.treeModMiddle.bind("<<TreeviewSelect>>", self.clickedTreeMiddle)
         self.treeModRight.bind("<<TreeviewSelect>>", self.clickedTreeRight)
-        
+
         self.treeModLeft.tag_configure('predefined', background='Moccasin')
         self.treeModLeft.tag_configure('own', background='LightSalmon')
-        
+
         # init values
         self.peptideVar.set("")
         self.glycanVar.set("")
         self.frameSpec.init(feature, {})
         self.plotFragments()
-        
+
     def plotFragments(self):
         tolerance = 0.05
         if self.peptide == None:
             return
         result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(self.peptide,
                                                                        self.glycan,
-                                                                       self.feature.consensus, 
-                                                                       tolerance, 
+                                                                       self.feature.consensus,
+                                                                       tolerance,
                                                                        self.feature.getCharge())
-        peptidevariant = result["peptidevariant"] 
+        peptidevariant = result["peptidevariant"]
         fragments = result["fragments"]
         # write fragments to hit
         if peptidevariant != None:
@@ -232,10 +232,10 @@ class AddIdentificationFrame(Tkinter.Toplevel):
                 self.peptideVar.set(peptidevariant.toString())
             self.frameSpec.fragments = fragments
             self.frameSpec.initCanvas(keepZoom=True)
-        
+
     def defineModification(self):
         ElementCompositionFrame(self,self.model)
-        
+
     def deleteDefinition(self):
         if self.peptide == None:
             return
@@ -246,14 +246,14 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         mod = self.treeModLeft.item(itemLeft, "text")
         self.ownModifications.remove(mod)
         self.valuesChanged()
-        
-        
+
+
     def fillAvailableModifications(self):
         self.treeModLeft.delete(*self.treeModLeft.get_children())
         self.b1.config(state=Tkinter.DISABLED)
         self.b2.config(state=Tkinter.DISABLED)
         self.b4.config(state=Tkinter.DISABLED)
-        
+
         if self.peptide == None:
             return
         # add available modifications
@@ -322,20 +322,20 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             return
         itemLeft = selectionLeft[0]
         modname = self.treeModLeft.item(itemLeft, "text")
-        
+
         selectionMiddle = self.treeModMiddle.selection()
         if len(selectionMiddle) == 0:
             return
         itemMiddle = selectionMiddle[0]
         pos = self.treeModMiddle.item(itemMiddle, "text")
-        
+
         if pos == "?":
             pos = -1
         else:
             pos = int(pos) - 1
         self.peptide.addModification(modname, position=pos)
         self.peptideVar.set(self.peptide.toString())
-        
+
     def removeModification(self):
         if self.peptide == None:
             return
@@ -355,13 +355,12 @@ class AddIdentificationFrame(Tkinter.Toplevel):
                 break
         self.peptideVar.set(self.peptide.toString())
 
-    def clickedTreeLeft(self, event):
-    
+    def clickedTreeLeft(self, event=None):
         # update middle tree with valid aminoacids
         self.treeModMiddle.delete(*self.treeModMiddle.get_children())
         self.b1.config(state=Tkinter.DISABLED)
         self.b2.config(state=Tkinter.DISABLED)
-        
+
         if self.peptide == None:
             return
         selection = self.treeModLeft.selection()
@@ -369,7 +368,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             return
         item = selection[0]
         modname = self.treeModLeft.item(item, "text")
-        
+
         copypeptide = self.peptide.copy()
         if modname in self.ownModifications:
             taken = set([mod.position for mod in copypeptide.modifications if mod.position != -1])
@@ -379,7 +378,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         else:
             copypeptide.addModification(modname)
             self.b4.config(state=Tkinter.DISABLED)
-        
+
         # get available positions on the peptide
         positions = set()
         for modificationlist in glyxtoolms.fragmentation.getModificationVariants(copypeptide):
@@ -395,23 +394,23 @@ class AddIdentificationFrame(Tkinter.Toplevel):
                 amino = self.peptide.sequence[i]
                 values = (amino,)
                 item = self.treeModMiddle.insert("", "end", text=str(i+1), values=values)
-                
-    def clickedTreeMiddle(self, event):
+
+    def clickedTreeMiddle(self, event=None):
         self.b1.config(state=Tkinter.NORMAL)
-        
-    def clickedTreeRight(self, event):
+
+    def clickedTreeRight(self, event=None):
         self.b2.config(state=Tkinter.NORMAL)
 
     def valuesChanged(self, *args):
         # check entries for validity
-        
+
         self.valid = True
         try:
             self.glycan = glyxtoolms.lib.Glycan(self.glycanVar.get())
             self.labelGlycanMass.config(text=str(self.glycan.mass) +" Da")
             self.glycanVar.set(self.glycan.toString())
             self.entryGlycan.config(bg="grey")
-            
+
         except:
             self.valid = False
             self.glycan = None
@@ -433,13 +432,13 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             self.peptide = None
             self.labelPeptideMass.config(text=" - Da")
             self.entryPeptide.config(bg="red")
-        
-        
+
+
         # TODO: Checks for circular updating
         self.clickedTreeLeft(None)
         self.fillAvailableModifications()
         self.fillSetModifications()
-        
+
         # calculate Identification error
         if self.valid == True:
             mass = self.peptide.mass+self.glycan.mass+glyxtoolms.masses.MASS["H+"]
@@ -449,16 +448,16 @@ class AddIdentificationFrame(Tkinter.Toplevel):
 
         else:
             self.labelErrorValue.config(text="- Da")
-            
+
     def defineNewModification(self, mod):
         self.ownModifications.add(mod)
         self.valuesChanged()
-    
+
     def addIdentification(self):
         if self.valid == False:
             tkMessageBox.showerror("Invalid Identification", "Identification is invalid, please provide correct peptide and glycan input!",parent=self)
             return
-            
+
         mass = self.peptide.mass+self.glycan.mass+glyxtoolms.masses.MASS["H+"]
         diff = mass-self.precursorMass
         hit = glyxtoolms.io.GlyxXMLGlycoModHit()
@@ -469,9 +468,9 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         hit.feature = self.feature
         hit.fragments = self.frameSpec.fragments
         self.feature.hits.add(hit)
-            
+
         self.model.currentAnalysis.analysis.glycoModHits.append(hit)
-        
+
         self.destroy()
         self.model.runFilters()
         self.model.classes["NotebookFeature"].updateTree()
@@ -482,16 +481,16 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.destroy()
 
 class ElementBox(Tkinter.Frame):
-    
+
     def __init__(self, master, name, update):
         Tkinter.Frame.__init__(self, master=master)
         self.update = update
-        
+
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=0)
         self.columnconfigure(2, weight=0)
         self.rowconfigure(0, weight=1)
-        
+
         self.var = Tkinter.IntVar()
         self.var.trace("w", self.valuesChanged)
         label = Tkinter.Label(self, text=name)
@@ -502,13 +501,13 @@ class ElementBox(Tkinter.Frame):
         scrollbar.grid(row=0, column=3, sticky="NWES")
         scrollbar.config(command=self.change)
         self.var.set(0)
-        
+
     def getValue(self):
         try:
             return int(self.var.get())
         except:
             return 0
-        
+
     def valuesChanged(self, *args):
         try:
             int(self.var.get())
@@ -518,7 +517,7 @@ class ElementBox(Tkinter.Frame):
             self.update()
         except:
             pass # function gets called during init, throwing errors everywhere
-    
+
     def change(self, scroll, direction, units):
         self.var.set(self.getValue()-int(direction))
         self.valuesChanged()
@@ -536,7 +535,7 @@ class ElementCompositionFrame(Tkinter.Toplevel):
         self.rowconfigure(0, weight=0)
         self.rowconfigure(1, weight=1)
         self.rowconfigure(2, weight=0)
-        
+
         self.elements = ["C", "H", "O", "N", "S", "P", "Na", "K", "Mg"]
         elementFrame = ttk.Labelframe(self, text="Elements")
         elementFrame.grid(row=0, column=0, columnspan=2, sticky="NWES")
@@ -550,45 +549,45 @@ class ElementCompositionFrame(Tkinter.Toplevel):
             e = ElementBox(elementFrame, self.elements[i], update = self.updateComposition)
             e.grid(row=row, column=col, sticky="NWES")
             self.content[self.elements[i]] = e
-        
+
         nameFrame = ttk.Labelframe(self, text="Composition")
         nameFrame.grid(row=1, column=0, sticky="NWES")
         nameFrame.columnconfigure(0, weight=1)
         nameFrame.rowconfigure(0, weight=1)
-        
+
         self.compositionVar = Tkinter.StringVar()
         labelCompositon = Tkinter.Label(nameFrame, textvariable = self.compositionVar, anchor="w", justify="left")
         labelCompositon.grid(row=0, column=0, sticky="NWES")
-        
+
         massFrame = ttk.Labelframe(self, text="Mass")
         massFrame.grid(row=1, column=1, sticky="NWES")
         massFrame.columnconfigure(0, weight=1)
         massFrame.rowconfigure(0, weight=1)
-        
+
         self.massVar = Tkinter.StringVar()
         labelMass = Tkinter.Label(massFrame, textvariable = self.massVar, width=15)
         labelMass.grid(row=0, column=0, sticky="NWES")
-        
+
         okFrame = ttk.Frame(self)
         okFrame.grid(row=2, column=0, columnspan=2, sticky="NWES")
-        
-             
+
+
         saveButton = Tkinter.Button(okFrame, text="Add Modification", command=self.addModification)
-        cancelButton = Tkinter.Button(okFrame, text="Cancel", command=self.cancel)   
-        
+        cancelButton = Tkinter.Button(okFrame, text="Cancel", command=self.cancel)
+
         saveButton.grid(row=0, column=0, sticky="NWES")
         cancelButton.grid(row=0, column=1, sticky="NWES")
-        
+
     def cancel(self):
         self.destroy()
-        
+
     def addModification(self):
         mod = self.updateComposition()
         if mod == "":
             return
         self.master.defineNewModification(mod)
         self.destroy()
-        
+
     def updateComposition(self):
         minus = ""
         plus = ""
@@ -604,14 +603,14 @@ class ElementCompositionFrame(Tkinter.Toplevel):
                 plus += ele
             elif value > 1:
                 plus += ele+str(value)
-            
+
         composition = ""
         if plus != "":
             composition += "+"+plus
         if minus != "":
             composition += "-"+minus
         self.compositionVar.set(composition)
-        
+
         if composition != "":
             # parse composition again, and calulate mass
             comp = glyxtoolms.masses.getModificationComposition(composition)

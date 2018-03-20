@@ -45,7 +45,7 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
             return
         if self.spec == None:
             return
-        
+
         specId = self.spec.getNativeID()
         pInt0 = self.convBtoY(self.viewYMin)
 

@@ -12,70 +12,70 @@ class OptionsFrame(Tkinter.Toplevel):
         self.title("Options")
         #self.config(bg="#d9d9d9")
         self.model = model
-        
+
         self.columnconfigure(0, weight=1)
         self.rowconfigure(0, weight=0)
         self.rowconfigure(1, weight=0)
         self.rowconfigure(2, weight=0)
         self.rowconfigure(3, weight=0)
         self.rowconfigure(4, weight=1)
-        
+
         self.columnconfigure(0, weight=1)
-        
-        
+
+
         frameOpenMS = ttk.Labelframe(self, text="OpenMS/TOPPAS")
         frameOpenMS.grid(row=0, column=0, sticky="NWES")
         frameOpenMS.columnconfigure(0, weight=0)
         frameOpenMS.columnconfigure(1, weight=1)
         buttonOpenMS = Tkinter.Button(frameWorkspace, text="Configure OpenMS", command=self.configureOpenMS)
-        
+
         self.openMSVar = Tkinter.StringVar()
         self.openMSVar.set(self.model.workingdir)
         entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
-        
+
         frameWorkspace = ttk.Labelframe(self, text="Set Workspace")
         frameWorkspace.grid(row=1, column=0, sticky="NWES")
         frameWorkspace.columnconfigure(0, weight=0)
         frameWorkspace.columnconfigure(1, weight=1)
         buttonWorkspace = Tkinter.Button(frameWorkspace, text="Set workspace", command=self.setWorkspace)
-        
+
         self.workspaceVar = Tkinter.StringVar()
         self.workspaceVar.set(self.model.workingdir)
         entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
-        
+
         buttonWorkspace.grid(row=0, column=0, sticky="NWES")
         entryWorkspace.grid(row=0, column=1, sticky="NWES")
-        
+
         frameTimeAxis = ttk.Labelframe(self, text="Timeaxis")
         frameTimeAxis.grid(row=2, column=0, sticky="NWES")
-        
+
         self.timeAxisVar = Tkinter.StringVar()
         self.timeAxisVar.set(self.model.timescale)
-        
+
         timeAxisChoice1 = Appearance.Radiobutton(frameTimeAxis, text="In seconds", variable=self.timeAxisVar, value="seconds")
         timeAxisChoice2 = Appearance.Radiobutton(frameTimeAxis, text="In minutes", variable=self.timeAxisVar, value="minutes")
-        
+
         timeAxisChoice1.grid(row=0, column=0, sticky="NWS")
         timeAxisChoice2.grid(row=0, column=1, sticky="NWS")
-        
+
         frameError = ttk.Labelframe(self, text="Mass Error")
         frameError.grid(row=3, column=0, sticky="NWES")
-        
+
         self.errorVar = Tkinter.StringVar()
         self.errorVar.set(self.model.errorType)
-        
+
         errorChoice1 = Appearance.Radiobutton(frameError, text="In Dalton", variable=self.errorVar, value="Da")
         errorChoice2 = Appearance.Radiobutton(frameError, text="In ppm", variable=self.errorVar, value="ppm")
-        
+
         errorChoice1.grid(row=0, column=0, sticky="NWS")
         errorChoice2.grid(row=0, column=1, sticky="NWS")
-        
+
         frameClipboard = ttk.Labelframe(self, text="Clipboard")
         frameClipboard.grid(row=4, column=0, sticky="NWES")
-        
+
         self.clipVar = Tkinter.StringVar()
         self.clipVar.set(self.model.clipboard)
-        
+
         boards = ('osx','qt','xclip','xsel','klipper','windows')
         # test which boards are available here
         avlBoards = []
@@ -92,7 +92,7 @@ class OptionsFrame(Tkinter.Toplevel):
 
         frameDifferences= ttk.Labelframe(self, text="Massdifferences")
         frameDifferences.grid(row=5, column=0, sticky="NWES")
-        
+
         scrollbar = Tkinter.Scrollbar(frameDifferences)
         self.tree = ttk.Treeview(frameDifferences, yscrollcommand=scrollbar.set, selectmode='browse')
         self.columns = ("Mass", "Charge", "Type")
@@ -105,7 +105,7 @@ class OptionsFrame(Tkinter.Toplevel):
         scrollbar.grid(row=0, column=1, sticky="NWES")
         scrollbar.config(command=self.tree.yview)
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
-         
+
         frameEntry = ttk.Labelframe(frameDifferences, text="Entry")
         frameEntry.grid(row=0, column=2, sticky="NWE")
         l1 = ttk.Label(frameEntry,text="Name:")
@@ -116,17 +116,17 @@ class OptionsFrame(Tkinter.Toplevel):
         l2.grid(row=1, column=0, sticky="NW")
         l3.grid(row=2, column=0, sticky="NW")
         l4.grid(row=3, column=0, sticky="NW")
-        
+
         self.v1 = Tkinter.StringVar()
         self.v2 = Tkinter.StringVar()
         self.v3 = Tkinter.StringVar()
         self.v4 = Tkinter.StringVar()
-        
+
         self.v1.trace("w", lambda a,b,c:self.valueChanged("v1"))
         self.v2.trace("w", lambda a,b,c:self.valueChanged("v2"))
         self.v3.trace("w", lambda a,b,c:self.valueChanged("v3"))
         self.v4.trace("w", lambda a,b,c:self.valueChanged("v4"))
-        
+
         self.e1 = Tkinter.Entry(frameEntry, textvariable=self.v1)
         self.e2 = Tkinter.Entry(frameEntry, textvariable=self.v2)
         self.e3 = Tkinter.Entry(frameEntry, textvariable=self.v3)
@@ -139,7 +139,7 @@ class OptionsFrame(Tkinter.Toplevel):
         self.e2.config(bg="white")
         self.e3.config(bg="white")
         self.e4.config(bg="white")
-        
+
         frameEntry2 = ttk.Frame(frameEntry)
         frameEntry2.grid(row=4, column=0, columnspan=2, sticky="NWES")
         self.b1 = Tkinter.Button(frameEntry2, text="Delete Entry",command=self.deleteEntry)
@@ -151,21 +151,21 @@ class OptionsFrame(Tkinter.Toplevel):
         for mass, name, charge, typ in self.model.massdifferences:
             self.tree.insert("", "end", text=name,
                                            values = (str(round(mass,4)), str(charge), typ))
-            
+
         self.sorting = ("#0", False)
         frameButtons = ttk.Frame(self)
         frameButtons.grid(row=5, column=0, sticky="NWES")
-        
-        cancelButton = Tkinter.Button(frameButtons, text="Cancel", command=self.cancel)        
+
+        cancelButton = Tkinter.Button(frameButtons, text="Cancel", command=self.cancel)
         saveButton = Tkinter.Button(frameButtons, text="Save options", command=self.save)
 
         cancelButton.grid(row=0, column=0, sticky="NWES")
         saveButton.grid(row=0, column=1, sticky="NWES")
-        
+
     def configureOpenMS(self):
         pass
 
-        
+
     def setWorkspace(self):
         options = {}
         options['initialdir'] = self.workspaceVar.get()
@@ -175,16 +175,16 @@ class OptionsFrame(Tkinter.Toplevel):
         if path == "" or path == ():
             return
         self.workspaceVar.set(path)
-        
+
     def cancel(self):
         self.destroy()
-    
+
     def save(self):
         self.model.workingdir = self.workspaceVar.get()
         self.model.timescale = self.timeAxisVar.get()
         self.model.clipboard = self.clipVar.get()
         self.model.errorType = self.errorVar.get()
-        
+
         # get mass difference values from tree
         massdifferences = []
         for itemid in self.tree.get_children():
@@ -200,9 +200,9 @@ class OptionsFrame(Tkinter.Toplevel):
         self.model.classes["NotebookIdentification"].updateTree()
         self.model.classes["NotebookFeature"].updateTree()
         self.model.classes["ConsensusSpectrumFrame"]._paintCanvas()
-        
+
         self.destroy()
-        
+
     def valueChanged(self, varname):
         selection = self.tree.selection()
         if len(selection) != 1:
@@ -230,8 +230,8 @@ class OptionsFrame(Tkinter.Toplevel):
         else:
             typ = self.v4.get()
             self.tree.set(itemid, column="Type", value=typ)
-        
-        
+
+
     def clickedTree(self, event):
         selection = self.tree.selection()
         if len(selection) != 1:
@@ -241,7 +241,7 @@ class OptionsFrame(Tkinter.Toplevel):
             self.v4.set("")
             return
         itemid = selection[0]
-        
+
         data = self.tree.item(itemid)
         mass, charge, typ = data["values"]
         name = data["text"]
@@ -249,7 +249,7 @@ class OptionsFrame(Tkinter.Toplevel):
         self.v2.set(mass)
         self.v3.set(charge)
         self.v4.set(typ)
-        
+
     def deleteEntry(self,*arg, **args):
         selection = self.tree.selection()
         if len(selection) != 1:
@@ -263,7 +263,7 @@ class OptionsFrame(Tkinter.Toplevel):
                                   values = ("0.0", "1", "?"))
         self.tree.selection_set(itemid)
         self.tree.see(itemid)
-        
+
     def sortColumn(self, col):
 
         sortingColumn, reverse = self.sorting

@@ -18,19 +18,19 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.consensus = None
         self.selectedFragments = []
         self.NrXScales = 5.0
-        
+
         self.referenceMass = 0
-        
+
         self.annotationItems = {}
         self.annotations = {}
         self.currentAnnotation = None
         self.peaksByItem = {}
-        
+
         # register additional button bindings
         self.canvas.bind("<Button-2>", self.button2, "+")
         self.canvas.bind("<Button-3>", self.button3, "+")
-        
-        
+
+
     def getDefaultOptions(self):
         options = super(ConsensusSpectrumFrame, self).getDefaultOptions()
         options["annotations"] = {}
@@ -44,7 +44,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         options["annotations"]["pepcolor"] = "blue"
         options["annotations"]["glycopepcolor"] = "green"
 
-        
+
         options["annotations"]["shownames"] = True
         options["annotations"]["showmasses"] = True
         options["annotations"]["showox"] = True
@@ -57,12 +57,12 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
 
         return options
-    
+
     def createOptions(self, optionsFrame):
         def toggleVisbility(a,b,c,varname, var):
             self.options["annotations"][varname] = var.get()
             self._paintCanvas(False)
-            
+
         def addFragmentHighlight(showName=None, text=None, colorName=None):
             if showName != None and text != None:
                 var = Tkinter.BooleanVar()
@@ -78,36 +78,36 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                 botton.config(activeforeground=self.options["annotations"][colorName])
                 botton.config(command=lambda a=colorName, b=botton: self.setColor(a,b))
             frame.row += 1
-            
-            
-            
+
+
+
         super(ConsensusSpectrumFrame, self).createOptions(optionsFrame)
         frame = optionsFrame.addLabelFrame("Annotations")
         optionsFrame.addFont(frame, "annotations", "Size: ")
 
-        addFragmentHighlight(showName="showmasses", text="Show Mass Labels")        
+        addFragmentHighlight(showName="showmasses", text="Show Mass Labels")
         addFragmentHighlight(showName="shownames", text="Show Names", colorName = "labelcolor")
-        
+
         addFragmentHighlight(showName="showox", text="Highlight oxonium ions", colorName = "oxcolor")
         addFragmentHighlight(showName="showimmonium", text="Highlight immmonium ions", colorName = "immcolor")
         addFragmentHighlight(showName="showy", text="Highlight y-ions", colorName = "ycolor")
         addFragmentHighlight(showName="showb", text="Highlight b-ions", colorName = "bcolor")
         addFragmentHighlight(showName="showby", text="Highlight by-ions", colorName = "bycolor")
-        
+
         addFragmentHighlight(showName="showpep", text="Highlight peptide ions", colorName = "pepcolor")
         addFragmentHighlight(showName="showglycopep", text="Highlight B/Y ions", colorName = "glycopepcolor")
-        
+
 
     def setColor(self, name, button):
         color = askcolor(self.options["annotations"][name])[1]
-        
+
         if color == None:
             return
         self.options["annotations"][name] = color
         button.config(fg=color)
         button.config(activeforeground=color)
         self._paintCanvas(False)
-        
+
     def button2(self, event):
         overlap = set(self.canvas.find_overlapping(event.x-10,
                                                    0,
@@ -145,7 +145,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.bMax *= 1.2
 
     def paintObject(self):
-        
+
         TYPE = glyxtoolms.fragmentation.FragmentType
         paintHierachary = []
         paintHierachary.append((TYPE.OXONIUMION, "showox", "oxcolor",1))
@@ -156,8 +156,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         paintHierachary.append((TYPE.BION, "showb", "bcolor",6))
         paintHierachary.append((TYPE.BYION, "showby", "bycolor",7))
         paintHierachary.append((TYPE.UNKNOWN, "", "",8))
-        
-        
+
+
         def findTypes(all_fragments, fragList):
             types = set()
             types.add(TYPE.UNKNOWN)
@@ -169,27 +169,27 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                 else:
                     types.add(fragment.typ)
             return types
-        
+
         def findColorAndText(all_fragments, fragList):
             # collect types
             types = findTypes(all_fragments, fragList)
             TYPE = glyxtoolms.fragmentation.FragmentType
-            
+
             annotations = self.options["annotations"]
             color = "black"
-            
+
             for typ, showVar, colorvar,rank in paintHierachary:
                 if typ not in types:
                     continue
                 if annotations.get(showVar, False) == True:
                     color = annotations.get(colorvar,"black")
                     break
-            
+
             # sort fragments after hierachy
             text = []
             for fragment in fragList:
                 types = findTypes(all_fragments, [fragment])
-                
+
                 for typ, showVar, colorvar,rank in paintHierachary:
                     if annotations.get(showVar, False) == False:
                         continue
@@ -200,10 +200,10 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                 if typ == TYPE.UNKNOWN:
                     continue
                 text.append((rank,fragment.name))
-            
+
             text = [name for rank,name in sorted(text)]
             return color, text
-        
+
         if self.consensus == None:
             return
         if self.feature == None:
@@ -221,8 +221,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         annotationText = []
         annotationMass = []
         self.peaksByItem = {}
-        
-        
+
+
         for peak in self.consensus:
             pMZ = self.convAtoX(peak.x)
             pInt = self.convBtoY(peak.y)
@@ -241,7 +241,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                     foundFrag.add(fragment)
             # sort fragment ions
             if len(foundGlycans) > 0 and len(foundFrag) > 0:
-                
+
                 color,text = findColorAndText(self.hit.fragments, foundFrag)
                 color = self.options["annotations"]["oxcolor"]
                 annotationText.append((pMZ, pInt, "\n".join(list(foundGlycans)+text), masstext))
@@ -261,10 +261,10 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         items = self.plotText(annotationMass, items, 5)
 
         self.plotSelectedFragments()
-        
+
         # paint all available annotations
         self.paintAllAnnotations()
-        
+
         self.allowZoom = True
 
     def init(self, feature, hit):
@@ -282,15 +282,15 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.annotationItems = {}
         self.currentAnnotation = None
         self.peaksByItem = {}
-        
+
         self.annotated = {}
         self.linkFragmentsToPeak()
-        
+
         self.initCanvas(keepZoom=True)
 
     def identifier(self):
         return "ConsensusSpectrumFrame"
-        
+
     def linkFragmentsToPeak(self):
         self.annotated = {}
         if self.feature == None:
@@ -336,7 +336,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                                                font = self.options["annotations"]["font"],
                                                anchor="s", justify="center")
                 tempItems.add(item)
-                
+
                 # check bounds of other items
                 bbox = self.canvas.bbox(item)
                 y = bbox[1] # set new y value based on now drawn string
@@ -379,7 +379,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         if self.viewXMin <= minPlot and maxPlot <= self.viewXMax:
             return
         # find minimal zoom
-        widthNow = abs(self.viewXMax-self.viewXMin) 
+        widthNow = abs(self.viewXMax-self.viewXMin)
         widthFrag = abs(minPlot-minPlot)
         diff = (widthNow - widthFrag)/2.0
         if diff < widthFrag/20.0:

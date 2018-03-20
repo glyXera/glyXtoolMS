@@ -49,7 +49,7 @@ def test_peptide_digest():
     protein = glyxtoolms.lib.Protein()
     protein.sequence = "AAACACAAAANASAARHGGGGGGKMGAH"
     proteinDigest = glyxtoolms.lib.ProteinDigest()
-    
+
     proteinDigest.addModification("CYS_CAM")
     proteinDigest.addModification("MSO")
 
@@ -105,7 +105,7 @@ def test_io():
     # add consensus peaks
     feature.addConsensusPeak(1.0,4)
     feature.addConsensusPeak(2.0,3)
-    
+
     # create peptide
     peptide = glyxtoolms.io.XMLPeptide()
     peptide.proteinID = "proteinID"

@@ -14,12 +14,12 @@ class TreeTable(ttk.Frame):
         ttk.Frame.__init__(self, master=master)
         self.master = master
         self.model = model
-        
+
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=0)
         self.rowconfigure(0,weight=0)
         self.rowconfigure(1,weight=1)
-        
+
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
 
@@ -27,7 +27,7 @@ class TreeTable(ttk.Frame):
         self.options = Tkinter.Button(self,image=self.model.resources["options"],command=self.openOptions)
         scrollbar = Tkinter.Scrollbar(self)
         self.tree = ttk.Treeview(self, yscrollcommand=scrollbar.set, selectmode='extended')
-    
+
         self.initializeColumnHeader()
 
         self.tree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
@@ -41,13 +41,13 @@ class TreeTable(ttk.Frame):
         # treeview style
         self.tree.tag_configure('oddUnknown', background='Moccasin')
         self.tree.tag_configure('evenUnknown', background='PeachPuff')
-        
+
         self.tree.tag_configure('oddDeleted', background='LightSalmon')
         self.tree.tag_configure('evenDeleted', background='Salmon')
-        
+
         self.tree.tag_configure('oddAccepted', background='PaleGreen')
         self.tree.tag_configure('evenAccepted', background='YellowGreen')
-        
+
         self.tree.tag_configure('oddRejected', background='LightBlue')
         self.tree.tag_configure('evenRejected', background='SkyBlue')
 
@@ -57,16 +57,16 @@ class TreeTable(ttk.Frame):
         self.tree.bind("<Control-Key-c>", self.copyToClipboard)
 
         self.model.registerClass(self.identifier(), self)
-        
+
     def initializeColumnHeader(self):
         raise Exception("Overwrite this function!")
-        
+
     def identifier(self):
         raise Exception("Overwrite this function!")
 
     def clickedTree(self, event):
         raise Exception("Overwrite this function!")
-        
+
     def columnVisibilityChanged(self, *arg, **args):
         header = []
         for columnname in self.columns:
@@ -87,7 +87,7 @@ class TreeTable(ttk.Frame):
             return
         self.tree.selection_set(items)
         self.clickedTree(None)
-        
+
     def copyToClipboard(self, *arg, **args):
         # get active columns
         header = ["Feature Nr"]

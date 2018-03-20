@@ -16,7 +16,7 @@ class ExtensionScoring(ttk.Labelframe):
         chromFrame.grid(row=0, column=0, sticky="NWES")
         chromFrame.rowconfigure(0, weight=1)
         chromFrame.columnconfigure(0, weight=1)
-        
+
         chromView = ChromatogramView.ChromatogramView(chromFrame, model)
         chromView.grid(row=0, column=0, sticky="NWES")
 
@@ -32,7 +32,7 @@ class ExtensionScoring(ttk.Labelframe):
         msmsFrame.grid(row=1, column=0, columnspan=2, sticky="NWES")
         msmsFrame.rowconfigure(0, weight=1)
         msmsFrame.columnconfigure(0, weight=1)
-        
+
         msmsView = SpectrumView2.SpectrumView(msmsFrame, model)
         msmsView.grid(row=0, column=0, sticky="NWES")
 

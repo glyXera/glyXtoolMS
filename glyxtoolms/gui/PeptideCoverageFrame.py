@@ -28,7 +28,7 @@ def parseFragmentname(name, length):
         start, end = match.group()[1:].split("b")
         return {"type":"yb", "start":start, "end":end}
     return None
-    
+
 
 def parseInternalFragment(name, length):
     match = re.match(r"^y\d+b\d+", name)
@@ -69,17 +69,17 @@ class PeptideCoverageFrame(Tkinter.Frame):
 
         self.height = 0
         self.width = 0
-        
+
         self.rowconfigure(0, weight=0, minsize=38)
         self.rowconfigure(1, weight=1)
         self.columnconfigure(0, weight=1)
         self.columnconfigure(1, weight=0)
-        
+
         self.canvas = Tkinter.Canvas(self, height=100)
         self.canvas.config(bg="white")
         #self.canvas.grid(row=1, column=0, sticky="NSEW")
         #self.canvas.pack(expand=True, fill="both")
-        
+
         self.canvas.config(highlightthickness=0)
         self.canvas.grid(row=1, column=0, sticky="NSEW")
 
@@ -100,22 +100,22 @@ class PeptideCoverageFrame(Tkinter.Frame):
 
         # link function
         self.model.registerClass("PeptideCoverageFrame", self)
-        
+
         # debug
         #g = glyxtoolms.lib.Glycopeptide("EEQFNSTFR", "H5N3F1Sa1Sg1")
         #g.glycan.typ = "N"
-        #self.hit = glyxtoolms.io.GlyxXMLGlycoModHit()        
+        #self.hit = glyxtoolms.io.GlyxXMLGlycoModHit()
         #self.hit.glycan = g.glycan
         #self.hit.peptide = g.peptide
         #self.paint_canvas()
-        
+
     def plotSingleFragment(self, *args):
         if self.hit == None:
             return
         name = self.menuVar.get()
         if name in self.hit.fragments:
             self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([name],zoomIn=True)
-        
+
     def setMenuChoices(self, choices):
         self.aMenu['menu'].delete(0, 'end')
         if len(choices) == 0:
@@ -128,10 +128,10 @@ class PeptideCoverageFrame(Tkinter.Frame):
             self.aMenu['menu'].add_command(label=choice, command=Tkinter._setit(self.menuVar, choice))
         # clear
         self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([],zoomIn=False)
-    
+
     #def eventMouseMotion(self, event):
     #    self.canvas.focus_set()
-    
+
     def savePlot(self, event):
         if self.model.currentAnalysis == None:
             return
@@ -159,10 +159,10 @@ class PeptideCoverageFrame(Tkinter.Frame):
         self.hit = hit
         self.indexList = set()
         self.paint_canvas()
-        
+
 
     def paint_canvas(self):
-        
+
         def drawSugarUnit(unit, x, y, size):
             h = size/2.0
             if unit == "HEXNAC":
@@ -182,12 +182,12 @@ class PeptideCoverageFrame(Tkinter.Frame):
             elif unit == "NEUGC":
                 self.canvas.create_polygon(x,y,x-h,y-h,x-size,y,x-h,y+h, fill="azure", outline="black")
 
-        
+
         self.canvas.delete(Tkinter.ALL)
         self.setMenuChoices([])
         if self.hit == None:
             return
-        
+
         # collect positions of glycosylationsites
         glycosites = set()
         glycotypes = set()
@@ -198,7 +198,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
         glycan = self.hit.glycan
         sugars = dict(glycan.sugar)
         # calculate size
-        
+
         xlen = []
         ylen = []
         drawCoreStructure = False
@@ -209,7 +209,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
                 drawCoreStructure = True
                 xlen.append(5)
                 ylen.append(2)
-        
+
         # group sugars
         group = {}
         for sugar in sugars:
@@ -232,16 +232,16 @@ class PeptideCoverageFrame(Tkinter.Frame):
                 xlen.append(len(group[key]))
         xlen = max(xlen)
         ylen = max(ylen)
-        
+
         # calc size
         peptideWidth = self.width/3.0*2.0
         glycanWidth = self.width/3.0
-        
+
 
         size1 = int(glycanWidth/xlen)
         size2 = int(self.height/ylen)
         size_comp = min((size1,size2))
-        
+
         size = int(size_comp*2/3.0)
         size = size - size%2
         gap = size_comp - size
@@ -274,7 +274,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
                                     fill="black")
             x += size + gap
 
-                
+
         diff = self.height/float(len(group)+1)
         y = diff
         x += size
@@ -282,7 +282,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
             for i, sugar in enumerate(group[key]):
                 drawSugarUnit(sugar, x+i*(size+10), y, size)
             y += diff
-        
+
         peptideSequence = self.hit.peptide.sequence
         peptideLength = len(peptideSequence)
 
@@ -296,7 +296,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
         ySeries = {}
         bSeries = {}
         self.fragmentCoverage = {}
-        
+
         peptideFragments = []
         TYPE = glyxtoolms.fragmentation.FragmentType
         for name in self.hit.fragments:
@@ -309,7 +309,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
             result = parseFragmentname(name, peptideLength)
             if result == None:
                 continue
-            
+
             start = result["start"]
             end = result["end"]
             typ = result["type"]
@@ -317,20 +317,20 @@ class PeptideCoverageFrame(Tkinter.Frame):
                 ySeries[start] = True
             elif typ == "yinternal" and start not in ySeries:
                 ySeries[start] = False
-                
+
             if typ == "b":
                 bSeries[end] = True
             elif typ == "binternal" and end not in bSeries:
                 bSeries[end] = False
-                
+
             key_y = "y" + str(start)
             key_b = "b" + str(end)
             self.fragmentCoverage[key_y] = self.fragmentCoverage.get(key_y, []) + [name]
             self.fragmentCoverage[key_b] = self.fragmentCoverage.get(key_b, []) + [name]
-        
+
         restNames = [fragment.name for fragment in sorted(peptideFragments, key=lambda x:(x.mass*x.charge))]
         self.setMenuChoices(restNames)
-        
+
         # remove 0 and len
         if 0 in ySeries:
             ySeries.pop(0)
@@ -341,10 +341,10 @@ class PeptideCoverageFrame(Tkinter.Frame):
             ySeries.pop(peptideLength)
         if peptideLength in bSeries:
             bSeries.pop(peptideLength)
-            
+
 
         # write peptide sequence
-        
+
         xc = peptideWidth/2.0
         yc = self.height/2.0
         text = self.hit.peptide.sequence
@@ -355,7 +355,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
             font = tkFont.Font(family="Courier", size=s)
             if (font.measure(" ")+4)*len(text) > peptideWidth:
                 break
-            
+
 
         s -= 1
         font = tkFont.Font(family="Courier", size=s)
@@ -372,7 +372,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
                                     fill=fillcolor,
                                     anchor="center",
                                     justify="center")
-            
+
 
         # plot lines
 
@@ -384,7 +384,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
                 dash = ()
             else:
                 dash=(3,5)
-            
+
             item1 = self.canvas.create_line(x, yc,
                                             x, 20,
                                             tags=("site", ),
@@ -396,7 +396,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
                                             dash=dash,
                                             fill=color)
             item3 = self.canvas.create_text((x+5, 10),
-                                            text="y"+str(len(text)-index), 
+                                            text="y"+str(len(text)-index),
                                             tags=("site", ),
                                             fill=color,
                                             anchor="center",
@@ -418,7 +418,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
                                             tags=("site", ),
                                             fill=color)
             item3 = self.canvas.create_text((x-5, self.height-10),
-                                            text="b"+str(index), 
+                                            text="b"+str(index),
                                             tags=("site", ),
                                             fill=color,
                                             anchor="center",

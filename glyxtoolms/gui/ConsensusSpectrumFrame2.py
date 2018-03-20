@@ -16,18 +16,18 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.consensus = None
         self.selectedFragments = []
         self.NrXScales = 5.0
-        
+
         self.referenceMass = 0
-        
+
         self.annotationItems = {}
         self.annotations = {}
         self.currentAnnotation = None
         self.peaksByItem = {}
-        
+
         # register additional button bindings
         self.canvas.bind("<Button-2>", self.button2, "+")
         self.canvas.bind("<Button-3>", self.button3, "+")
-        
+
     def button2(self, event):
         overlap = set(self.canvas.find_overlapping(event.x-10,
                                                    0,
@@ -110,7 +110,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
         # paint all available annotations
         self.paintAllAnnotations()
-        
+
         self.allowZoom = True
 
     def init(self, feature):

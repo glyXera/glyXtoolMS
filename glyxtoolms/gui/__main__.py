@@ -7,7 +7,7 @@ def main(args=None):
         args = sys.argv[1:]
 
     #print "This is the main routine."
-    #print "It should do something interesting." 
+    #print "It should do something interesting."
     # run GUI
     app = glyxtoolms.gui.runGUI()
 
@@ -15,4 +15,4 @@ def main(args=None):
     # you want your project to do.
 
 if __name__ == "__main__":
-    main() 
+    main()

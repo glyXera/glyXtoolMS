@@ -19,7 +19,7 @@ import numpy as np
 import glyxtoolms
 
 class Annotation(object):
-    
+
     def __init__(self):
         self.x1 = 0
         self.x2 = 0
@@ -32,9 +32,9 @@ class Annotation(object):
         self.level = 0
         self.items = {}
         self.valid = True
-        
+
 class AnnotationSeries(object):
-    
+
     def __init__(self):
         self.name = "None"
         self.color = "black"
@@ -201,7 +201,7 @@ class GlyxXMLParameters(object):
         self._sourceFileChecksum = checksum
 
 class ConfirmationStatus(object):
-    
+
     Unknown = "Unknown"
     Deleted = "Deleted"
     Accepted = "Accepted"
@@ -211,12 +211,12 @@ class ConfirmationStatus(object):
     PoorGlycopeptide = "PoorGlycopeptide"
     PoorNonGlycopeptide = "PoorNonGlycopeptide"
     _types = ["Unknown",
-              "Deleted", 
-              "Accepted", 
-              "Rejected", 
-              "Glycopeptide", 
-              "NonGlycopeptide", 
-              "PoorGlycopeptide", 
+              "Deleted",
+              "Accepted",
+              "Rejected",
+              "Glycopeptide",
+              "NonGlycopeptide",
+              "PoorGlycopeptide",
               "PoorNonGlycopeptide"]
 
 class GlyxXMLFeature(object):
@@ -280,14 +280,14 @@ class GlyxXMLFeature(object):
 
     def addSpectrumId(self, spectrumId):
         self.spectraIds.add(spectrumId)
-        
+
     def addSpectrum(self, spectrum):
         """ Add spectrum to feature """
         if not spectrum in self.spectra:
             self.addSpectrumId(spectrum.nativeId)
             self.spectra.append(spectrum)
             spectrum.features.add(self)
-            
+
     def removeSpectrum(self, spectrum):
         """ Remove spectrum from feature, if exists """
         if spectrum in self.spectra:
@@ -299,7 +299,7 @@ class GlyxXMLFeature(object):
 
     def getSpectraIds(self):
         return self.spectraIds
-        
+
     def copy(self):
         new = GlyxXMLFeature()
         new.id = self.id
@@ -319,10 +319,10 @@ class GlyxXMLFeature(object):
         new.hits = set(self.hits)
         new.tags = set(self.tags)
         return new
-        
+
     def addConsensusPeak(self, x, y):
-        
-        self.consensus.append(GlyxXMLConsensusPeak(x,y, len(self.consensus)))
+
+        self.consensus.append(GlyxXMLConsensusPeak(x, y, len(self.consensus)))
 
 class XMLGlycan(object):
 
@@ -350,19 +350,19 @@ class GlyxXMLConsensusPeak(object):
         self.x = x
         self.y = y
         self.pos = pos
-        
+
 class ToolValue(object):
-    
+
     def __init__(self):
         self.name = ""
         self.default = None
         self.typ_desc = "str"
         self.toString = str
         self.fromString = str
-        
-    
+
+
     def setDefaultValue(self, value):
-        self.default = value 
+        self.default = value
         # get value type
         typ = type(value)
         self.toString = str
@@ -392,7 +392,7 @@ class GlyxXMLFile(object):
         self._version_ = "0.1.3" # current version
         self.version = self._version_ # will be overwritten by file
         self.toolValueDefaults = {}
-        
+
     def addToolValueDefault(self, toolname, defaultValue):
         value = ToolValue()
         value.name = toolname
@@ -450,20 +450,20 @@ class GlyxXMLFile(object):
             spectrum.setLogScore(logScore)
             rt = float(s.find("./rt").text)
             spectrum.setRT(rt)
-            
-            if self.version > "0.0.8":                
+
+            if self.version > "0.0.8":
                 spectrum.precursorMass = float(s.find("./precursorMass").text)
                 spectrum.precursorCharge = int(s.find("./precursorCharge").text)
                 spectrum.precursorIntensity = float(s.find("./precursorIntensity").text)
                 spectrum.monoisotopicMass = float(s.find("./monoisotopicMass").text)
-                
+
             else:
                 spectrum.precursorMass = float(s.find("./precursor/mass").text)
                 spectrum.precursorCharge = int(s.find("./precursor/charge").text)
                 if self.version > "0.0.6":
                     spectrum.precursorIntensity = float(s.find("./precursor/intensity").text)
-                spectrum.monoisotopicMass  = spectrum.precursorMass
-                
+                spectrum.monoisotopicMass = spectrum.precursorMass
+
             for score in s.findall("./scores/score"):
                 glycan = score.find("./glycan").text
                 for ion in score.findall("./ions/ion"):
@@ -486,7 +486,7 @@ class GlyxXMLFile(object):
                 #    ann.x1 = float(xmlAnn.find("./x1").text)
                 #    ann.x2 = float(xmlAnn.find("./x2").text)
                 #spectrum.annotations["NoName"] = annotations
-                
+
             spectra.append(spectrum)
 
         return spectra
@@ -559,10 +559,10 @@ class GlyxXMLFile(object):
                 xmlIsGlyco = ET.SubElement(xmlSpectrum, "isGlycopeptide")
                 xmlIsGlyco.text = str(int(spectrum.getIsGlycopeptide()))
             xmlScoreList = ET.SubElement(xmlSpectrum, "scores")
-            
+
             xmlStatus = ET.SubElement(xmlSpectrum, "status")
             xmlStatus.text = spectrum.status
-            
+
             ions = spectrum.getIons()
             for glycan in ions:
                 xmlScore = ET.SubElement(xmlScoreList, "score")
@@ -629,13 +629,13 @@ class GlyxXMLFile(object):
             xmlFeatureConsensusX.text = x
             xmlFeatureConsensusY = ET.SubElement(xmlFeatureConsensus, "y")
             xmlFeatureConsensusY.text = y
-            
+
             xmlStatus = ET.SubElement(xmlFeature, "status")
             xmlStatus.text = feature.status
-            
+
             # write annotations
             self._writeAnnotations(xmlFeature, feature)
-            
+
 
 
     def _writeGlycoModHits(self, xmlGlycoModHits):
@@ -658,10 +658,10 @@ class GlyxXMLFile(object):
 
             xmlError = ET.SubElement(xmlHit, "error")
             xmlError.text = str(glycoModHit.error)
-            
+
             xmlStatus = ET.SubElement(xmlHit, "status")
             xmlStatus.text = str(glycoModHit.status)
-            
+
             self._writeTags(xmlHit, glycoModHit)
             self._writeToolValues(xmlHit, glycoModHit)
 
@@ -690,12 +690,12 @@ class GlyxXMLFile(object):
             # link feature
             hit.feature = featureIDs[hit.featureID]
             hit.feature.hits.add(hit)
-            
+
             hit.error = float(xmlHit.find("./error").text)
 
             composition = str(xmlHit.find("./glycan/composition").text)
             glycan = glyxtoolms.lib.Glycan(composition)
-            
+
             #glycan = XMLGlycan()
             #glycan.composition = str(xmlHit.find("./glycan/composition").text)
             #glycan.mass = float(xmlHit.find("./glycan/mass").text)
@@ -718,14 +718,14 @@ class GlyxXMLFile(object):
                     parents = set([])
                     if len(parentText) > 0:
                         parents = set(parentText.split(","))
-                    fragment = glyxtoolms.fragmentation.Fragment(fragmentName, fragmentMass, fragmentCharge, typ=fragmentTyp, peak=peak,parents=parents)
+                    fragment = glyxtoolms.fragmentation.Fragment(fragmentName, fragmentMass, fragmentCharge, typ=fragmentTyp, peak=peak, parents=parents)
                     hit.fragments[fragment.name] = fragment
             elif self.version > "0.0.3":
                 for xmlfragment in xmlHit.findall("./fragments/fragment"):
                     fragmentName = xmlfragment.find("./name").text
                     fragmentMass = float(xmlfragment.find("./mass").text)
                     # parse fragmentCharge from name
-                    chargeMatch = re.search("\(\d+H\+\)",fragmentName)
+                    chargeMatch = re.search("\(\d+H\+\)", fragmentName)
                     if chargeMatch:
                         fragmentCharge = int(chargeMatch.group()[1:-3])
                     else:
@@ -733,7 +733,7 @@ class GlyxXMLFile(object):
                     # guess type from peptide name
                     if fragmentName.startswith("peptide"):
                         fragmentTyp = glyxtoolms.fragmentation.FragmentType.PEPTIDEION
-                    elif re.search("^y\d+b\d+",fragmentName) is not None:
+                    elif re.search("^y\d+b\d+", fragmentName) is not None:
                         fragmentTyp = glyxtoolms.fragmentation.FragmentType.BYION
                     elif fragmentName.startswith("y"):
                         fragmentTyp = glyxtoolms.fragmentation.FragmentType.YION
@@ -741,7 +741,7 @@ class GlyxXMLFile(object):
                         fragmentTyp = glyxtoolms.fragmentation.FragmentType.YION
                     else:
                         raise Exception("Unknown ion fragment!")
-                    
+
                     # parse pos, if available
                     xmlPos = xmlfragment.find("./pos")
                     fragmentPeak = None
@@ -818,7 +818,7 @@ class GlyxXMLFile(object):
                     raise
             if self.version > "0.0.5":
                 feature.status = xmlFeature.find("./status").text
-            
+
             if self.version > "0.0.7":
                 self._parseAnnotations(xmlFeature, feature)
                 #feature.annotations = []
@@ -850,8 +850,8 @@ class GlyxXMLFile(object):
                 xmlAnnX2.text = str(annotation.x2)
                 xmlAnnShow = ET.SubElement(xmlAnn, "show")
                 xmlAnnShow.text = str(annotation.show)
-                
-    def _parseAnnotations(self,xmlAnnotationParent, parent):
+
+    def _parseAnnotations(self, xmlAnnotationParent, parent):
         parent.annotations = {}
         if self.version < "0.1.0":
             series = AnnotationSeries()
@@ -885,29 +885,29 @@ class GlyxXMLFile(object):
                     series.annotations.append(ann)
                 if len(series.annotations) > 0:
                     parent.annotations[series.name] = series
-                    
-                    
+
+
     def _writeTags(self, xmlTagsParent, parent):
         xmlTags = ET.SubElement(xmlTagsParent, "tags")
         for tag in parent.tags:
-             xmlTag = ET.SubElement(xmlTags, "tag", text=str(tag))
-    
-    def _parseTags(self,xmlTagsParent, parent):
+            xmlTag = ET.SubElement(xmlTags, "tag", text=str(tag))
+
+    def _parseTags(self, xmlTagsParent, parent):
         parent.tags = set()
         for xmlTag in xmlTagsParent.findall("./tags/tag"):
             tag = xmlTag.get("text")
             parent.tags.add(tag)
-        
+
     def _writeToolValues(self, xmlToolValuesParent, parent):
         xmlToolValues = ET.SubElement(xmlToolValuesParent, "toolvalues")
         for toolname in parent.toolValues:
             if not toolname in  self.toolValueDefaults:
                 raise Exception("Unregistered tool value!")
-            converter =  self.toolValueDefaults[toolname]
+            converter = self.toolValueDefaults[toolname]
             value = parent.toolValues[toolname]
             xmlValue = ET.SubElement(xmlToolValues, "value", name=toolname, value=converter.toString(value))
 
-    def _parseToolValues(self,xmlToolValues, parent, toolValueDefaults):
+    def _parseToolValues(self, xmlToolValues, parent, toolValueDefaults):
         parent.toolValues = {}
         for xmlValue in xmlToolValues.findall("./toolvalues/value"):
             toolname = xmlValue.get("name")
@@ -920,18 +920,18 @@ class GlyxXMLFile(object):
     def _writeToolValueDefaults(self, xmlToolValues):
         for toolname in self.toolValueDefaults:
             toolValue = self.toolValueDefaults[toolname]
-            xmlValue = ET.SubElement(xmlToolValues, "tool", 
+            xmlValue = ET.SubElement(xmlToolValues, "tool",
                                      name=toolname,
                                      type=toolValue.typ_desc,
                                      default=toolValue.toString(toolValue.default))
-                                     
+
     def _parseToolValueDefaults(self, xmlValueList):
         values = {}
         for xmlValue in xmlValueList:
             toolname = xmlValue.get("name")
             typ_desc = xmlValue.get("type")
             default = xmlValue.get("default")
-            
+
             if typ_desc == "str":
                 default = str(default)
             elif typ_desc == "int":
@@ -989,27 +989,27 @@ class GlyxXMLFile(object):
             self.version = "0.0.1"
         else:
             self.version = version.text
-        
+
         # read parameters
         parameters = self._parseParameters(root.find(".//parameters"))
         self.parameters = parameters
-        
+
         # read tool value defaults
         toolValueDefaults = self._parseToolValueDefaults(root.findall("./toolValues/tool"))
         self.toolValueDefaults = toolValueDefaults
-        
+
         # parse spectra
         spectra = self._parseSpectra(root.findall("./spectra/spectrum"))
         specIDs = {}
         for spec in spectra:
             specIDs[spec.getNativeId()] = spec
         self.spectra = spectra
-        
-        
+
+
         # parse features
         features = self._parseFeatures(root.findall("./features/feature"))
         self.features = features
-        
+
         # collect feature information
         featureIDs = {}
         for feature in features:
@@ -1023,10 +1023,10 @@ class GlyxXMLFile(object):
         # parse glycomod
         glycoMod = self._parseGlycoModHits(root.findall("./glycomod/hit"), featureIDs, toolValueDefaults=toolValueDefaults)
         self.glycoModHits = glycoMod
-        
+
         # collect tags
         self.collect_tags()
-        
+
 
     def setParameters(self, parameters):
         self.parameters = parameters
@@ -1039,15 +1039,15 @@ class GlyxXMLFile(object):
 
     def addFeature(self, glyxXMLFeature):
         self.features.append(glyxXMLFeature)
-        
+
 class PeptideModification(object):
-    
+
     def __init__(self):
         self.name = ""
         self.position = -1 # If position is undefined, set to -1, otherwise set to amino acid position
         self.positions = set() # Available positions if position is undefined
         self.peptide = None # Link to peptide
-        
+
     def copy(self):
         new = PeptideModification()
         new.name = self.name
@@ -1075,7 +1075,7 @@ class PeptideModification(object):
         self.findModificationTargets()
         if len(self.positions) == 1:
             self.position = self.positions.pop()
-            
+
     def findModificationTargets(self):
         # find already occupied positions
         occupied = set()
@@ -1106,18 +1106,18 @@ class PeptideModification(object):
             self.positions = positions
 
     def _write(self, xmlModification):
-        
+
         xmlName = ET.SubElement(xmlModification, "name")
         xmlName.text = self.name
-        
+
         xmlPosition = ET.SubElement(xmlModification, "position")
         xmlPosition.text = str(self.position)
-        
+
         if self.position == -1:
             xmlPositions = ET.SubElement(xmlModification, "positions")
             xmlPositions.text = ",".join([str(x) for x in self.positions])
         return
-        
+
 
 
 class XMLPeptide(object):
@@ -1143,7 +1143,7 @@ class XMLPeptide(object):
             new.modifications.append(mod.copy())
         new.glycosylationSites = self.glycosylationSites
         return new
-        
+
     def addModification(self, name, position=-1, positions=set()):
         mod = PeptideModification()
         mod.name = name
@@ -1158,29 +1158,29 @@ class XMLPeptide(object):
     def toString(self):
         s = self.sequence
         modi = {}
-        for mod in sorted(self.modifications, key=lambda x:x.position, reverse=True):
+        for mod in sorted(self.modifications, key=lambda x: x.position, reverse=True):
             if mod.position == -1:
                 modi[mod.name] = modi.get(mod.name, []) + [mod]
             else:
                 s = s[:mod.position+1] + "("+mod.name+")"+ s[mod.position+1:]
-                
+
         for name in sorted(modi.keys()):
             # collect set of positions
             positions = set()
-            
+
             for mod in modi[name]:
                 positions = positions.union(mod.positions)
-                
+
             positions = ",".join([str(x+1) for x in sorted(positions)])
-            
+
             s += " "+str(len(modi[name])) + "x"+name+"("+ positions +")"
         return s
-        
+
     def fromString(self, string):
         """ Peptide sequence: EE(Cys_CAM)QFNS(+CHO)TF(-OH)R 1xCys_CAM(2,3) 2xMSO(4,5,6)  """
         string = string.strip()
         sp = string.split(" ")
-        
+
         rawsequence = sp[0]
         self.modifications = []
 
@@ -1214,13 +1214,13 @@ class XMLPeptide(object):
             # 2xCAM(1,2)
             # 2xCAM
             # extract amount
-            amount_match = re.match("^\d+x",modstring)
+            amount_match = re.match("^\d+x", modstring)
             if not amount_match:
                 raise Exception("Unsupported Modification input!")
             amount = int(modstring[:amount_match.end()-1])
-            
-            if re.match("^\d+x.+\(.+\)$",modstring):
-                name_match = re.match("^\d+x.+\(",modstring)
+
+            if re.match("^\d+x.+\(.+\)$", modstring):
+                name_match = re.match("^\d+x.+\(", modstring)
                 name = modstring[amount_match.end():name_match.end()-1]
                 sp = modstring[name_match.end():-1].split(",")
                 positions = set([int(i)-1 for i in sp])
@@ -1230,7 +1230,7 @@ class XMLPeptide(object):
             # test modification validity
 
             # construct modifications
-            for i in range(0,amount):
+            for i in range(0, amount):
                 mod = PeptideModification()
                 mod.peptide = self
                 mod.name = name
@@ -1243,9 +1243,9 @@ class XMLPeptide(object):
                     mod.findModificationTargets()
                     positions = mod.positions
                 self.modifications.append(mod)
-        
+
         self.mass = glyxtoolms.masses.calcPeptideMass(self)
-        
+
     def testModificationValidity(self):
         """ Checks validity of the supplied modifications """
         if len(self.modifications) == 0:
@@ -1255,7 +1255,7 @@ class XMLPeptide(object):
             line = [0]*len(self.sequence)
             if mod.position > -1:
                 line[mod.position] = 1
-            else: 
+            else:
                 for pos in mod.positions:
                     line[pos] = 1
             X.append(line)
@@ -1266,27 +1266,27 @@ class XMLPeptide(object):
             #find all rows with 1s, get the one with the lowest sum
             hits = []
             for col in range(0, matrix.shape[1]):
-                if matrix[row,col] == 1:
-                    hits.append((col,sum(matrix[:,col])))
+                if matrix[row, col] == 1:
+                    hits.append((col, sum(matrix[:, col])))
             # get minimum sum
             if len(hits) == 0:
                 return False
-            col = min(hits,key=lambda x:x[1])[0]
+            col = min(hits,key=lambda x: x[1])[0]
             # set column and row to zero
-            matrix[row,:] = 0
-            matrix[:,col] = 0
-            matrix[row,col] = 1
+            matrix[row, :] = 0
+            matrix[:, col] = 0
+            matrix[row, col] = 1
 
         # check validity
         for row in range(0, matrix.shape[0]):
-            if sum(matrix[row,:]) != 1:
+            if sum(matrix[row, :]) != 1:
                 return False
 
         for col in range(0, matrix.shape[1]):
-            if sum(matrix[:,col]) > 1:
+            if sum(matrix[:, col]) > 1:
                 return False
         return True
-        
+
     def solveModifications(self):
         if len(self.modifications) == 0:
             return
@@ -1301,13 +1301,13 @@ class XMLPeptide(object):
         for mod in self.modifications:
             if mod.position == -1:
                 variableMods[mod.name] = variableMods.get(mod.name, []) + [mod]
-                target[mod.name] = target.get(mod.name,0) +1
+                target[mod.name] = target.get(mod.name, 0) +1
                 for position in mod.positions:
                     if position in ismodified:
                         continue
                     data[position] = data.get(position, set())
                     data[position].add(mod.name)
-                    
+
         if len(variableMods) == 0:
             return
 
@@ -1327,53 +1327,53 @@ class XMLPeptide(object):
                 else:
                     line.append(0)
             matrix.append(line)
-            
+
         A = np.matrix(matrix)
 
         # solve matrix with given target as much as possible
         # transfer target
         y = []
         for mod in mods:
-            y.append(target.get(mod,0))
-            
+            y.append(target.get(mod, 0))
+
         # check if row sum is smaller than target, if equal a solution is possible
         #todo = set()
-        h,w = A.shape
-        todo = set(range(0,h))
+        h, w = A.shape
+        todo = set(range(0, h))
         while len(todo) > 0:
             i1 = todo.pop()
-            s = A[i1,:].sum()
+            s = A[i1, :].sum()
             t = y[i1]
             if t > s:
                 raise Exception("Target larger than available space")
             if t == 0:
                 # set amino acids to zero
-                for e2 in range(0,w):
-                    A[i1,e2] = 0
+                for e2 in range(0, w):
+                    A[i1, e2] = 0
             elif t == s:
                 # set other positions to zero
-                for e2 in range(0,w):
-                    if A[i1,e2] == 0:
+                for e2 in range(0, w):
+                    if A[i1, e2] == 0:
                         continue
-                    for i2 in range(0,h):
+                    for i2 in range(0, h):
                         if i2 == i1:
                             continue
-                        if A[i2,e2] > 0:
-                            A[i2,e2] = 0
+                        if A[i2, e2] > 0:
+                            A[i2, e2] = 0
                             todo.add(i2)
         # collect result
         result = {}
-        for i1 in range(0,h):
-            s = A[i1,:].sum()
+        for i1 in range(0, h):
+            s = A[i1, :].sum()
             t = y[i1]
             if t == 0:
                 continue
             # collect positions
             positions = set()
-            for e2 in range(0,w):
-                if A[i1,e2] == 1:
+            for e2 in range(0, w):
+                if A[i1, e2] == 1:
                     positions.add(keys[e2])
-            
+
             if s == t:
                 line = []
                 for pos in positions:
@@ -1403,7 +1403,7 @@ class XMLPeptide(object):
 
         for xmlMod in xmlPeptide.findall("./modifications/modification"):
             mod = PeptideModification()
-            mod._parse(xmlMod,self)
+            mod._parse(xmlMod, self)
             self.modifications.append(mod)
 
         for xmlSite in xmlPeptide.findall("./glycosylationsites/glycosylationsite"):
@@ -1484,7 +1484,7 @@ class XMLPeptideFile(object):
         xmlmissedCleaveage.text = str(parameters.missedCleavages)
 
         return
-        
+
     def _parseParameters(self, xmlParameters):
         parameters = XMLPeptideParameters()
         for xmlProtein in xmlParameters.findall("./proteins/proteinIdentifier"):
@@ -1497,7 +1497,7 @@ class XMLPeptideFile(object):
         if modifications.text != None:
             parameters.modifications = xmlParameters.find("./modifications").text.split(", ")
         parameters.missedCleavages = int(xmlParameters.find("./missedCleaveage").text)
-        
+
         return parameters
 
     def _writePeptides(self, xmlPeptides):
@@ -1547,13 +1547,13 @@ class XMLPeptideFile(object):
         return
 
 class GlycanCompositionFile(object):
-    
+
     def __init__(self):
         self.glycans = []
         self.version = "1.0"
-        
+
     def read(self, path):
-        f = file(path,"r")
+        f = file(path, "r")
         self.glycans = []
         self.version = "1.0"
         for line in f:
@@ -1563,16 +1563,16 @@ class GlycanCompositionFile(object):
                     self.version = line.split(":")[1]
                 continue
             elif "," in line:
-                typ,glycanstring = line.split(",")
+                typ, glycanstring = line.split(",")
                 assert typ in ["?", "N", "O"]
-                glycan = glyxtoolms.lib.Glycan(glycanstring.strip(),typ=typ.strip())
+                glycan = glyxtoolms.lib.Glycan(glycanstring.strip(), typ=typ.strip())
             else:
                 glycan = glyxtoolms.lib.Glycan(line)
             self.glycans.append(glycan)
         f.close()
-    
-    def write(self,path):
-        f = file(path,"w")
+
+    def write(self, path):
+        f = file(path, "w")
         f.write("#version:"+self.version+"\n")
         for glycan in self.glycans:
             f.write(glycan.typ + "," + glycan.toString() + "\n")

@@ -119,9 +119,9 @@ class Protein(object):
             if start <= pos and pos < end:
                 peptide.addModification(modname, position=pos)
         return peptide
-        
+
 class Glycopeptide:
-    
+
     def __init__(self,peptidesequence, glycancomposition, modifications=list()):
         """
         peptidesequence, glycancomposition, peptidemodifications
@@ -132,7 +132,7 @@ class Glycopeptide:
         for s in peptidesequence:
             assert s in glyxtoolms.masses.AMINOACID
         self.peptide.sequence = peptidesequence
-        
+
         # add modifications
         for name, amino, pos in modifications:
             assert name in glyxtoolms.masses.PROTEINMODIFICATION
@@ -141,14 +141,14 @@ class Glycopeptide:
         self.peptide.mass = glyxtoolms.masses.calcPeptideMass(self.peptide)
         # generate glycan
         self.glycan = glyxtoolms.lib.Glycan(glycancomposition)
-        
+
     def calcIonMass(self, charge):
         # TODO: Extend for Sodium and Potassium
         if charge < 1:
             return self.peptide.mass + self.glycan.mass
         else:
             return (self.peptide.mass + self.glycan.mass + charge*glyxtoolms.masses.MASS["H+"]) / float(charge)
-       
+
 
 class ProteinDigest(object):
 
@@ -159,16 +159,16 @@ class ProteinDigest(object):
         #self.oxidation = False
         #self.carbamylation_N_Term = False
         #self.acrylamideAdducts = False
-        
+
         self.modifications = set()
         self.breakpoints = []
         self.protein = None
         self.maxModifications = -1
-        
+
     def setMaxModifications(self, maxMod):
         self.maxModifications = maxMod
 
-    
+
     def addModification(self, modname):
         assert modname in glyxtoolms.masses.PROTEINMODIFICATION
         assert len(glyxtoolms.masses.PROTEINMODIFICATION[modname].get("targets", [])) > 0
@@ -179,7 +179,7 @@ class ProteinDigest(object):
         def checkPeptideValidity(Y, Y_names, target):
             Y = Y.copy()
             Ycopy = Y.copy()
-            
+
             isValid = True
             for i in range(0,len(Y)):
                 name = Y_names[i]
@@ -216,7 +216,7 @@ class ProteinDigest(object):
         except AttributeError:
             raise Exception("missing attribute 'end'! (Integer)")
 
-        # calc modification data        
+        # calc modification data
         data = {}
         for i,amino in enumerate(sequence):
             possible = set()
@@ -227,18 +227,18 @@ class ProteinDigest(object):
                         possible.add(modname)
                     elif i == len(sequence)-1 and target == "CTERM":
                         possible.add(modname)
-                    elif amino == target: 
+                    elif amino == target:
                         possible.add(modname)
             if len(possible) > 0:
                 data[i] = possible
-                
+
         # remove already modified sites
         for mod in peptide.modifications:
             if mod.position == -1:
                 continue
             if mod.position in data:
                 data.pop(mod.position)
-        
+
         # generate matrix
         keys = sorted(data.keys())
         mods = set()
@@ -247,7 +247,7 @@ class ProteinDigest(object):
                 mods.add(mod)
 
         mods = sorted(mods)
-         
+
         matrix = []
         for mod in mods:
             line = []
@@ -257,10 +257,10 @@ class ProteinDigest(object):
                 else:
                     line.append(0)
             matrix.append(line)
-            
-        A = np.matrix(matrix)        
+
+        A = np.matrix(matrix)
         AA_T = np.dot(A,A.T)
-        
+
         # decompose matrix into independent and dependent matrices
 
         independent = []
@@ -280,7 +280,7 @@ class ProteinDigest(object):
         Y = np.delete(Y, independent, axis=1)
         names = np.array(mods)
         Y_names = np.delete(names, independent, axis=0)
-        
+
         # create permutation matrix of each modification
         perm = []
         diag = AA_T.diagonal()
@@ -289,7 +289,7 @@ class ProteinDigest(object):
             if self.maxModifications > -1 and N_mod > self.maxModifications:
                 N_mod = self.maxModifications
             perm.append(range(0,int(N_mod)+1))
-        
+
         masses = []
         for ii in product(*perm):
             isValid = True
@@ -302,7 +302,7 @@ class ProteinDigest(object):
             # check if more modifications are on than allowed
             if self.maxModifications > -1 and N_mods > self.maxModifications:
                 continue
-                
+
             # check dependent targets
             isValid = checkPeptideValidity(Y, Y_names, target)
             if isValid == False:
@@ -316,11 +316,11 @@ class ProteinDigest(object):
                     continue
                 for i in range(0,target[modname]):
                     newPeptide.addModification(modname)
-                    
+
             # solve modifications as much as possible
             try:
                 newPeptide.solveModifications()
-            
+
             except:
                 print newPeptide.toString()
                 raise
@@ -328,7 +328,7 @@ class ProteinDigest(object):
             # calc peptide mass
             newPeptide.mass = glyxtoolms.masses.calcPeptideMass(newPeptide)
             masses.append(newPeptide)
-        
+
         return masses
 
 
@@ -345,7 +345,7 @@ class ProteinDigest(object):
                 if not (i+1 < len(self.protein.sequence) and self.protein.sequence[i+1] == "P"):
                     self.breakpoints.append(i)
             i += 1
-            
+
     def add_tryptic_low_specific_digest(self):
         # cleaves C-terminal side of K or R, even if P is C-term to K or R
         i = 0
@@ -534,7 +534,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
     def _splitComposition(self, composition):
         """
         Split composition using twoLetterCode
-        
+
         "GN":"HEXNAC",  # GlcNAc
         "M": "HEX",     # Mannose
         "G": "HEX",     # Galactose
@@ -546,7 +546,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
         "AG": "HEX",    # alpha-Gal
         "HN": "HEXNAC", # Hexnac
         "H": "HEX",     # Hex
-        
+
         """
         try:
             assert re.match('^([A-z]+\d+)+$', composition) != None
@@ -590,18 +590,18 @@ class Glycan(glyxtoolms.io.XMLGlycan):
 
 
     def hasNCore(self):
-        """ Checks if the composition contains 2 HexNac and 3 Hexose to build N-Glycan core """ 
+        """ Checks if the composition contains 2 HexNac and 3 Hexose to build N-Glycan core """
         hexnac = self.sugar["HEXNAC"]
         hexose = self.sugar["HEX"]
         if hexnac >= 2 and hexose >= 3:
             return True
         return False
-    
+
     def hasNCorePart(self):
         """ Checks if the composition has at least the N-Core Part """
         N = self.sugar["HEXNAC"]
         H = self.sugar["HEX"]
-        
+
         if N < 1:
             return False
         if H > 0 and N < 2:

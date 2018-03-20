@@ -35,17 +35,17 @@ class NotebookScoring(ttk.Frame):
             self.showColumns[name] = Tkinter.BooleanVar()
             self.showColumns[name].set(True)
             self.showColumns[name].trace("w", self.columnVisibilityChanged)
-        
+
         for col in self.columns:
             self.tree.column(col, width=self.columnsWidth[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
 
         button = Tkinter.Button(self,image=self.model.resources["filter"])
-        
+
         button.grid(row=0, column=1)
         self.tree.grid(row=0, column=0, rowspan=2, sticky=("N", "W", "E", "S"))
         scrollbar.grid(row=1, column=1, sticky="NWES")
-        
+
         scrollbar.config(command=self.tree.yview)
 
         self.treeIds = {}
@@ -55,23 +55,23 @@ class NotebookScoring(ttk.Frame):
         # treeview style
         self.tree.tag_configure('oddUnknown', background='Moccasin')
         self.tree.tag_configure('evenUnknown', background='PeachPuff')
-    
-        
+
+
         self.tree.tag_configure('oddGlycopeptide', background='PaleGreen')
         self.tree.tag_configure('evenGlycopeptide', background='YellowGreen')
-        
+
         self.tree.tag_configure('oddNonGlycopeptide', background='LightBlue')
         self.tree.tag_configure('evenNonGlycopeptide', background='SkyBlue')
-        
+
         self.tree.tag_configure('oddPoorGlycopeptide', background='LightSalmon')
         self.tree.tag_configure('evenPoorGlycopeptide', background='Salmon')
-        
+
         self.tree.tag_configure('oddPoorNonGlycopeptide', background='Plum1')
         self.tree.tag_configure('evenPoorNonGlycopeptide', background='Plum2')
-        
+
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
         self.tree.bind("<Button-3>", self.popup)
-        
+
         #self.tree.bind("a", lambda e: self.setStatus("Accepted"))
         #self.tree.bind("u", lambda e: self.setStatus("Unknown"))
         #self.tree.bind("r", lambda e: self.setStatus("Rejected"))
@@ -80,9 +80,9 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("h", lambda e: self.setStatus("PoorGlycopeptide"))
         self.tree.bind("m", lambda e: self.setStatus("PoorNonGlycopeptide"))
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
-        
+
         self.model.registerClass("NotebookScoring", self)
-        
+
     def seeItem(self, feature):
         spectra = feature.spectra
         self.notify = False
@@ -95,9 +95,9 @@ class NotebookScoring(ttk.Frame):
         self.tree.selection_set(tuple(itemIds))
         self.update()
         self.notify = True
-        
-    
-        
+
+
+
 
     def setStatus(self,status):
         # get currently active hit
@@ -106,7 +106,7 @@ class NotebookScoring(ttk.Frame):
             return
         for item in selection:
             spec, spectrum = self.treeIds[item]
-            
+
             #if status == "Accepted":
             #    spectrum.status = glyxtoolms.io.ConfirmationStatus.Accepted
             #elif status == "Rejected":
@@ -123,12 +123,12 @@ class NotebookScoring(ttk.Frame):
                 spectrum.status = glyxtoolms.io.ConfirmationStatus.PoorNonGlycopeptide
             elif status == "Unknown":
                 spectrum.status = glyxtoolms.io.ConfirmationStatus.Unknown
-                
+
             # Update on Treeview
             values = self.tree.item(item)["values"]
             values[5] = spectrum.status
             self.tree.item(item, values=values)
-            
+
             taglist = list(self.tree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, spectrum.status)
             self.tree.item(item, tags=taglist)
@@ -155,7 +155,7 @@ class NotebookScoring(ttk.Frame):
             for name in self.columns:
                 self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
         else:
-            self.aMenu.add_command(label="Set to Glycopeptide", 
+            self.aMenu.add_command(label="Set to Glycopeptide",
                                    command=lambda x="Glycopeptide": self.setStatus(x))
             self.aMenu.add_command(label="Set to NonGlycopeptide",
                                    command=lambda x="NonGlycopeptide": self.setStatus(x))
@@ -170,11 +170,11 @@ class NotebookScoring(ttk.Frame):
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
-        
+
     def removePopup(self,event):
         if self.focus_get() != self.aMenu:
             self.aMenu.unpost()
-            
+
     def setHighlightingTag(self, taglist, status):
         if not status in glyxtoolms.io.ConfirmationStatus._types:
             raise Exception("Status "+status+" not defined!")
@@ -196,7 +196,7 @@ class NotebookScoring(ttk.Frame):
         if self.model == None or self.model.currentAnalysis == None:
             return
         sortingColumn, reverse = self.model.currentAnalysis.sorting["NotebookScoring"]
-        
+
         if col == sortingColumn:
             reverse = not reverse
         else:
@@ -218,7 +218,7 @@ class NotebookScoring(ttk.Frame):
         for index, (val, k) in enumerate(l):
             self.tree.move(k, '', index)
             status = self.tree.item(k)["values"][6]
-            
+
             # adjust tags
             taglist = list(self.tree.item(k, "tags"))
             if "odd" in taglist:
@@ -257,7 +257,7 @@ class NotebookScoring(ttk.Frame):
 
         index = 0
         for spec, spectrum in analysis.data:
-            # check if 
+            # check if
             contains = False
             for feature in spectrum.features:
                 if not feature in features:
@@ -290,7 +290,7 @@ class NotebookScoring(ttk.Frame):
         # apply possible sorting
         if not "NotebookScoring" in analysis.sorting:
             analysis.sorting["NotebookScoring"] = ("#0", False)
-        
+
         sortingColumn, reverse = analysis.sorting["NotebookScoring"]
         analysis.sorting["NotebookScoring"] = (sortingColumn, not reverse)
         self.sortColumn(sortingColumn)
@@ -302,7 +302,7 @@ class NotebookScoring(ttk.Frame):
         if len(selection) == 0:
             return
         item = selection[0]
-        
+
         # init Oxonium Plot
         spectra = []
         for item in selection:
@@ -317,7 +317,7 @@ class NotebookScoring(ttk.Frame):
 
         # init spectrum view
         self.model.classes["SpectrumView"].initSpectrum(ms2)
-        
+
 
 
     def setSelectedSpectrum(self, index):

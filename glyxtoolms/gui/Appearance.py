@@ -9,7 +9,7 @@ class Checkbutton(Tkinter.Checkbutton):
         #self.config(activebackground="#d9d9d9")
         #self.config(highlightcolor="#d9d9d9")
         #self.config(highlightbackground="#d9d9d9")
-        
+
 class Radiobutton(Tkinter.Radiobutton):
 
     def __init__(self, master, text="", variable=None, value=None):
@@ -18,9 +18,9 @@ class Radiobutton(Tkinter.Radiobutton):
         #self.config(activebackground="#d9d9d9")
         #self.config(highlightcolor="#d9d9d9")
         #self.config(highlightbackground="#d9d9d9")
-        
+
 class Label(Tkinter.Label):
     def __init__(self, *arg, **args):
         Tkinter.Label.__init__(self, *arg, **args)
         #self.config(bg="#d9d9d9")
-    
+

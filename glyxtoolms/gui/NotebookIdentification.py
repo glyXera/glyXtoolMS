@@ -17,21 +17,21 @@ class NotebookIdentification(TreeTable.TreeTable):
 
         self.features = []
         self.tree.bind("<Button-3>", self.popup)
-        
+
         self.tree.bind("a", lambda e: self.setStatus("Accepted"))
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
         self.tree.bind("r", lambda e: self.setStatus("Rejected"))
 
         #self.model.registerClass("NotebookIdentification", self)
-        
+
         #self.model.currentAnalysis = glyxtoolms.io.GlyxXMLFile()
         #self.model.currentAnalysis.readFromFile("/afs/mpi-magdeburg.mpg.de/data/bpt/personnel_folders/MarkusPioch/temp/example/20160417_MH_IgG_FASP_Tryp_HILIC_Enri_HCDstep.xml")
-        
+
     def identifier(self):
         return "NotebookIdentification"
-        
+
     def initializeColumnHeader(self):
-        
+
         self.columns = ["Mass", "error", "Peptide", "Glycan", "Status", "Tags"]
         self.columnNames = {"Mass":"Mass [Da]", "error":"Error", "Peptide":"Peptide", "Glycan":"Glycan", "Status":"Status", "Tags":"Tags"}
         self.columnsWidth = {"Mass":70, "error":80, "Peptide":150, "Glycan":160, "Status":80, "Tags":80}
@@ -45,15 +45,15 @@ class NotebookIdentification(TreeTable.TreeTable):
 
         self.tree.column("#0", width=80)
         self.tree.heading("#0", text="Feature Nr", command=lambda col='#0': self.sortColumn(col))
-        
-        
+
+
         self.tree["columns"] = self.columns
         for col in self.columns:
             self.tree.column(col, width=self.columnsWidth[col])
             self.tree.heading(col, text=col, command=lambda col=col: self.sortColumn(col))
-            
+
         self.setHeadingNames()
-        
+
     def updateHeader(self):
         # append possible ToolValue Columns and Tag column
         if self.model.currentAnalysis != None and not "Tag" in self.columns:
@@ -69,20 +69,20 @@ class NotebookIdentification(TreeTable.TreeTable):
                 self.showColumns[toolname] = Tkinter.BooleanVar()
                 self.showColumns[toolname].set(False)
                 self.showColumns[toolname].trace("w", self.columnVisibilityChanged)
-            self.tree["columns"] = self.columns    
+            self.tree["columns"] = self.columns
             self.setHeadingNames()
             for columnname in self.columns:
                 self.tree.column(columnname, width=self.columnsWidth[columnname])
-        
+
     def setHeadingNames(self):
-        
+
         if self.model.errorType == "Da":
             self.columnNames["error"] = "Error [Da]"
         else:
             self.columnNames["error"] = "Error [ppm]"
         for col in self.columnNames:
             self.tree.heading(col, text=self.columnNames.get(col, col),command=lambda col=col: self.sortColumn(col))
-            
+
     def openOptions(self):
         pass
         #hits = [self.model.currentAnalysis.glycoModHits[0]]
@@ -98,7 +98,7 @@ class NotebookIdentification(TreeTable.TreeTable):
             hit  = self.treeIds[item]
             hits.append(hit)
         TagEditorWindow.TagEditorWindow(self, self.model, hits, self.updateTagsView)
-        
+
     def updateTagsView(self):
         # get currently active hit
         selection = self.tree.selection()
@@ -117,7 +117,7 @@ class NotebookIdentification(TreeTable.TreeTable):
             return
         for item in selection:
             hit = self.treeIds[item]
-            
+
             if status == "Accepted":
                 hit.status = glyxtoolms.io.ConfirmationStatus.Accepted
             elif status == "Rejected":
@@ -128,11 +128,11 @@ class NotebookIdentification(TreeTable.TreeTable):
             values = self.tree.item(item)["values"]
             values[4] = hit.status
             self.tree.item(item, values=values)
-            
+
             taglist = list(self.tree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, hit.status)
             self.tree.item(item, tags=taglist)
-        
+
     def popup(self, event):
         area = self.tree.identify_region(event.x, event.y)
         self.aMenu.delete(0,"end")
@@ -142,7 +142,7 @@ class NotebookIdentification(TreeTable.TreeTable):
             for name in self.columns:
                 self.aMenu.insert_checkbutton("end", label=name, onvalue=1, offvalue=0, variable=self.showColumns[name])
         else:
-            self.aMenu.add_command(label="Set to Accepted", 
+            self.aMenu.add_command(label="Set to Accepted",
                                    command=lambda x="Accepted": self.setStatus(x))
             self.aMenu.add_command(label="Set to Rejected",
                                    command=lambda x="Rejected": self.setStatus(x))
@@ -161,7 +161,7 @@ class NotebookIdentification(TreeTable.TreeTable):
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
-        
+
     def removePopup(self,event):
         try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
             if self.focus_get() != self.aMenu:
@@ -202,7 +202,7 @@ class NotebookIdentification(TreeTable.TreeTable):
         for index, (val, k) in enumerate(l):
             self.tree.move(k, '', index)
             status = self.tree.item(k)["values"][4]
-            
+
             # adjust tags
             taglist = list(self.tree.item(k, "tags"))
             if "odd" in taglist:
@@ -216,7 +216,7 @@ class NotebookIdentification(TreeTable.TreeTable):
                 taglist.append("odd")
                 taglist = self.setHighlightingTag(taglist, status)
             self.tree.item(k, tags=taglist)
-            
+
     def setHighlightingTag(self, taglist, status):
         assert status in glyxtoolms.io.ConfirmationStatus._types
         for statustype in glyxtoolms.io.ConfirmationStatus._types:
@@ -234,12 +234,12 @@ class NotebookIdentification(TreeTable.TreeTable):
 
 
     def updateTree(self, features=None):
-        """ Supply list of features that should be shown. 
+        """ Supply list of features that should be shown.
         If 'None' is supplied, the currently shown features are updated """
         # clear tree
         self.tree.delete(*self.tree.get_children())
         self.treeIds = {}
-        
+
         self.setHeadingNames()
 
         project = self.model.currentProject
@@ -254,24 +254,24 @@ class NotebookIdentification(TreeTable.TreeTable):
 
         if analysis == None:
             return
-            
+
         # check supplied features
         if features is not None:
             self.features = features
-            
+
 
         # insert all glycomod hits
         index = 0
         for hit in analysis.analysis.glycoModHits:
-            
+
             # select hits only present in given features
             if hit.feature not in self.features:
                 continue
-            
+
             # check if hit passes filters
             if hit.passesFilter == False:
                 continue
-                        
+
             feature = hit.feature
             name = feature.index
             # mass
@@ -291,14 +291,14 @@ class NotebookIdentification(TreeTable.TreeTable):
             else:
                 error = round(hit.error/float(feature.getMZ())*1E6, 1)
             tags = ", ".join(hit.tags)
-            
+
             values=[round(mass, 4),
                     error,
                     peptide,
                     glycan.toString(),
                     hit.status,
                     tags]
-                    
+
             # add toolvalues
             for toolname in self.toolNameOrder:
                 # get toolvalue default
@@ -310,7 +310,7 @@ class NotebookIdentification(TreeTable.TreeTable):
                 else:
                     # get default value
                     values.append(toolValueDefault.toString(toolValueDefault.default))
-                    
+
             itemSpectra = self.tree.insert("", "end", text=name,
                                            values = values,
                                            tags=taglist)
@@ -319,7 +319,7 @@ class NotebookIdentification(TreeTable.TreeTable):
         # apply possible sorting
         if not "NotebookIdentification" in analysis.sorting:
             analysis.sorting["NotebookIdentification"] = ("#0", False)
-        
+
         sortingColumn, reverse = analysis.sorting["NotebookIdentification"]
         analysis.sorting["NotebookIdentification"] = (sortingColumn, not reverse)
         self.sortColumn(sortingColumn)
@@ -334,7 +334,7 @@ class NotebookIdentification(TreeTable.TreeTable):
             self.model.classes["NotebookFeature"].plotSelectedFeatures([hit.feature], hit)
             self.model.classes["NotebookFeature"].seeItem(hit.feature)
             self.model.classes["PeptideCoverageFrame"].init(hit)
-            
+
             self.update()
             if "OxoniumIonPlot" in self.model.classes:
                 self.model.classes["OxoniumIonPlot"].init(identifications=[hit])
@@ -350,7 +350,7 @@ class NotebookIdentification(TreeTable.TreeTable):
             self.model.classes["PeptideCoverageFrame"].init(None)
             if "OxoniumIonPlot" in self.model.classes:
                 self.model.classes["OxoniumIonPlot"].init(identifications=hits)
-            
+
 
     def deleteIdentification(self, event):
         selection = self.tree.selection()
@@ -370,6 +370,6 @@ class NotebookIdentification(TreeTable.TreeTable):
 
             analysis = self.model.currentAnalysis
             analysis.removeIdentification(hit)
-        
+
         # update NotebookFeature
         self.model.classes["NotebookFeature"].updateTree()

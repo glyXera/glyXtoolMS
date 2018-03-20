@@ -47,12 +47,12 @@ PROTEINMODIFICATION["NTERM_CAM"] = {"mass": 57.021464,
                                     "targets": {"NTERM"},
                                     "composition":{'C':2, 'H':3, 'O':1, 'N':1}
                                     }
-PROTEINMODIFICATION["CAM"] = {"mass": 57.021464, 
+PROTEINMODIFICATION["CAM"] = {"mass": 57.021464,
                               "targets": {"C","NTERM"},
                               "composition":{'C':2, 'H':3, 'O':1, 'N':1}
                              }
 # Cys_CM, Iodoacetic acid treatment (carboxylation)
-PROTEINMODIFICATION["CYS_CM"] = {"mass": 58.005479, 
+PROTEINMODIFICATION["CYS_CM"] = {"mass": 58.005479,
                                  "targets": {"C"},
                                  "composition":{'C': 2, 'H': 2, 'O': 2}
                                 }
@@ -61,13 +61,13 @@ PROTEINMODIFICATION["CM"] = {"mass": 58.005479,
                              "composition":{'C': 2, 'H': 2, 'O': 2}
                             }
 # Cys_PAM Acrylamide Adduct
-PROTEINMODIFICATION["CYS_PAM"] = {"mass": 71.03712, 
+PROTEINMODIFICATION["CYS_PAM"] = {"mass": 71.03712,
                                   "targets": {"C"},
                                   "composition":{'C': 3, 'H': 5, 'O': 1, 'N': 1}
                                  }
 PROTEINMODIFICATION["PAM"] = {"mass": 71.03712}
 
-PROTEINMODIFICATION["MSO"] = {"mass": 15.9949, 
+PROTEINMODIFICATION["MSO"] = {"mass": 15.9949,
                               "targets": {"M"},
                               "composition":{'O': 1}
                              } # MSO
@@ -100,7 +100,7 @@ PROTEINMODIFICATION["TYR_PHOS"] = {"mass": 79.9663,
                               "targets": {"Y"},
                                "composition":{'P': 1, 'O': 3, 'H': 1}
                              } # Phosphorylation Tyrosin
-                              
+
 PROTEINMODIFICATION["DEHYDR"] = {"mass": -18.0106,
                               "targets": {"S", "T"},
                                "composition":{'H': -2, 'O': -1}
@@ -126,44 +126,44 @@ PROTEINMODIFICATION["GLN_DEAM"] = {"mass": 0.9840,
                                "targets": {"Q"},
                                "composition":{'H': -1, 'O': 1, 'N': -1}
                               } # Deamidation Glutamine
-                              
+
 PROTEINMODIFICATION["OX"] = {"mass": 15.9949,
                               "targets": {"W", "Y"},
-                               "composition":{'O': 1} 
+                               "composition":{'O': 1}
                               } # Oxidation Tyrosin
-                              
+
 PROTEINMODIFICATION["TRP_OX"] = {"mass": 15.9949,
                               "targets": {"W"},
-                               "composition":{'O': 1} 
+                               "composition":{'O': 1}
                               } # Oxidation Tryptophan
-                              
+
 PROTEINMODIFICATION["TYR_OX"] = {"mass": 15.9949,
                               "targets": {"Y"},
-                               "composition":{'O': 1} 
+                               "composition":{'O': 1}
                               } # Oxidation Tyrosin
-                              
+
 PROTEINMODIFICATION["DIOX"] = {"mass": 31.9899,
                               "targets": {"W", "Y"},
-                               "composition":{'O': 2} 
+                               "composition":{'O': 2}
                               } # Dioxidation Tryptophan and Tyrosin
-                              
+
 PROTEINMODIFICATION["TRP_DIOX"] = {"mass": 31.9899,
                               "targets": {"W"},
-                               "composition":{'O': 2} 
+                               "composition":{'O': 2}
                               } # Dioxidation Tryptophan
-                              
+
 PROTEINMODIFICATION["TYR_DIOX"] = {"mass": 31.9899,
                               "targets": {"Y"},
-                               "composition":{'O': 2} 
-                              } # Dioxidation Tyrosin       
+                               "composition":{'O': 2}
+                              } # Dioxidation Tyrosin
 
 PROTEINMODIFICATION["TRP_KYN"] = {"mass":3.9949 ,
                               "targets": {"W"},
-                               "composition":{'O': 1, 'C':-1} 
+                               "composition":{'O': 1, 'C':-1}
                               }
 
 def getModificationNames():
-    """ Return a sorted list of Modification names. 
+    """ Return a sorted list of Modification names.
     Only contains modifications with targets declaration"""
     def sort_names(name):
         if "_" in name:
@@ -206,7 +206,7 @@ def getModificationComposition(modification):
                 amount = -amount
             composition[element] = composition.get(element, 0) + amount
     return composition
-    
+
 
 # ------------------------------ Glycans ------------------------------#
 
@@ -280,12 +280,12 @@ COMPOSITION["DHEX"] = {'C': 6, 'H': 12, 'N': 0, 'O': 5}
 COMPOSITION["HEXNAC"] = {'C': 8, 'H': 15, 'N': 1, 'O': 6}
 COMPOSITION["NEUAC"] = {'C': 11, 'H': 19, 'N': 1, 'O': 9}
 COMPOSITION["NEUGC"] = {'C': 11, 'H': 19, 'N': 1, 'O': 10}
-COMPOSITION["H2O"] = {'H': 2, 'O': 1}  
+COMPOSITION["H2O"] = {'H': 2, 'O': 1}
 
 # ------------------------------- Functions ---------------------------#
 def calcMassFromElements(composition):
     """ Calculates the mass from the elemental composition
-        Input: Dictionary of the element composition 
+        Input: Dictionary of the element composition
         e.g for water (H2O): {"H":2, "O":1}
     """
     mass = 0
@@ -359,7 +359,7 @@ def calcIonMass(name):
         return mass/float(charge), charge
 
 
-    
+
 
 def calculateIsotopicPattern(C=0, H=0, N=0, O=0, S=0, maxShift=10):
     """
@@ -503,9 +503,9 @@ def getElementComposition(peptide, glycan): # currently not working, du to chang
         amount = int(re.sub(r"[A-z]+", "", match))
         addElements(elements, glycanname, amount)
         addElements(elements, "H2O", -1*amount)
-    
+
     return elements
-    
+
 def calcGlycopeptidePattern(peptide, glycan):
 
     elements = getElementComposition(peptide, glycan)
@@ -520,19 +520,19 @@ def calcGlycopeptidePattern(peptide, glycan):
 def calcIsotopicPatternFromMass(mass, N_isotopes, maxS=10):
     m_H = 0.068832626663784202
     b_H = -0.2237949069434535
-    
+
     m_C = 0.045560761070855264
     b_C = -3.4169101305187581
-    
+
     m_S = 0.00076944265205870766
     b_S = 0.071713743069281355
-    
+
     m_O = 0.013186649782530958
     b_O = 0.8063769593231811
-    
+
     m_N = 0.010596216778823579
     b_N = 1.8594274272131806
-    
+
     N_H = int(round(m_H*mass+b_H))
     N_C = int(round(m_C*mass+b_C))
     N_S = int(round(m_S*mass+b_S))
@@ -540,7 +540,7 @@ def calcIsotopicPatternFromMass(mass, N_isotopes, maxS=10):
     N_N = int(round(m_N*mass+b_N))
     if N_S > maxS:
         N_S = maxS
-    
+
     pattern = calculateIsotopicPattern(C=N_C, H=N_H, N=N_N, O=N_O, S=N_S, maxShift=N_isotopes-1)[2]
     summP = sum([b for a,b in pattern])
     return zip(range(0,len(pattern)),[b/summP for a,b in pattern])
@@ -556,7 +556,7 @@ def calcIsotopicPatternFromMass_Old(mass, N_isotopes):
     #est_NCarbon_b = -1.4759043747
     est_NHydrogen_m = 0.0694521806
     est_NHydrogen_b = -1.4759043747
-    
+
     est_NCarbon_m = 0.0456772594
     est_NCarbon_b = -3.4971107586
 
@@ -590,7 +590,7 @@ def findBestFittingMass(x, y, max_charge=5, N_isotopes=4, intensityCutoff=0.2):
         return None
 
     assert len(x) == len(y)
-    
+
     highestPeak = max(y)
     assert highestPeak > 0
 
@@ -601,7 +601,7 @@ def findBestFittingMass(x, y, max_charge=5, N_isotopes=4, intensityCutoff=0.2):
 
             # interpolate intensities from measurement
             intensities_raw = list(np.interp(masses_raw, x, y))
-            
+
             masses = []
             intensities = []
             for a, b in zip(masses_raw, intensities_raw):
@@ -612,11 +612,11 @@ def findBestFittingMass(x, y, max_charge=5, N_isotopes=4, intensityCutoff=0.2):
 
             # calculate intensitySum
             intensitySum = float(sum(intensities))
-            
+
             # if intensitySum < 20% of highest peak, continue
             #if intensitySum < highestPeak*intensityCutoff:
             #    continue
-            
+
             if len(masses) < 3:
                 continue
 
@@ -632,7 +632,7 @@ def findBestFittingMass(x, y, max_charge=5, N_isotopes=4, intensityCutoff=0.2):
             except:
                 print masses, intensities
                 raise
-            
+
             if best == None or error < best["error"]:
                 best = {}
                 best["error"] = error

@@ -24,21 +24,21 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         self.maxMZView = 0
         self.index = 0
         self.feature = None
-        
+
         self.xTypeTime = True
 
         # Events
         self.canvas.bind("<Left>", self.goLeft)
         self.canvas.bind("<Right>", self.goRight)
         self.canvas.bind("<ButtonRelease-3>", self.popup)
-        
+
         # Binf NotebookFeature Keys
         self.canvas.bind("a", lambda e: self.setStatus("Accepted"))
         self.canvas.bind("u", lambda e: self.setStatus("Unknown"))
         self.canvas.bind("r", lambda e: self.setStatus("Rejected"))
-        
+
         self.aMenu = Tkinter.Menu(self.canvas, tearoff=0)
-        self.aMenu.add_command(label="Set Left Retention Border", 
+        self.aMenu.add_command(label="Set Left Retention Border",
                                command=lambda x="leftborder": self.setBorder(x))
         self.aMenu.add_command(label="Set Right Retention Border",
                                command=lambda x="rightborder": self.setBorder(x))
@@ -46,7 +46,7 @@ class FeatureChromatogramView(FramePlot.FramePlot):
                                command=lambda x="Cancel": self.setBorder(x))
 
         self.spectrumPointer = None
-        
+
     def setStatus(self, status):
         self.model.classes["NotebookFeature"].setStatus(status)
         self.model.classes["NotebookFeature"].tree.focus_set()
@@ -64,7 +64,7 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         if self.model.timescale == "minutes":
             selectedRT = selectedRT*60
         pX = self.convAtoX(selectedRT)
-        
+
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         if status == "leftborder":
@@ -84,15 +84,15 @@ class FeatureChromatogramView(FramePlot.FramePlot):
                 self.feature.maxRT = selectedRT
                 self.model.currentAnalysis.featureEdited(self.feature)
         self.canvas.delete("tempborder")
-    
+
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)
         self.mouse_position = event.x_root
         self.aMenu.grab_set()
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
-        
-        
+
+
     def removePopup(self,event):
         try: # catch bug in Tkinter with tkMessageBox. TODO: workaround
             if self.focus_get() != self.aMenu:
@@ -158,14 +158,14 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         highMZ = self.convAtoX(self.featureHigh)
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
-        
+
         self.canvas.create_line(lowMZ, pIntMin, lowMZ, pIntMax, tags=("leftborder", ),fill="red")
         self.canvas.create_line(highMZ, pIntMin, highMZ, pIntMax, tags=("rightborder", ),fill="red")
-        
+
         self.allowZoom = True
-        
+
     def init(self,chrom, feature, minMZView, maxMZView, index):
-        
+
         self.chrom = chrom
         self.feature = feature
         if chrom != None:
@@ -178,21 +178,21 @@ class FeatureChromatogramView(FramePlot.FramePlot):
             self.featureHigh = maxRT
             self.minMZView = minMZView
             self.maxMZView = maxMZView
-        
+
         self.initCanvas(keepZoom=True)
         self.plotPrecursorSpectrum(index)
 
     def identifier(self):
         return "FeatureChromatogramView"
-        
+
     def plotPositionMarker(self):
-        
+
         pRT = self.convAtoX(self.rt)
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
         self.canvas.delete("positionmarker")
         item = self.canvas.create_line(pRT, pIntMin, pRT, pIntMax, tags=("positionmarker", ),fill="blue")
-        
+
     def plotPrecursorSpectrum(self, index):
         if self.chrom == None:
             self.model.classes["FeaturePrecursorView"].init([],
@@ -214,7 +214,7 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         choice_MZ = np.logical_and(np.greater(mzArray, self.minMZView),
                                    np.less(mzArray, self.maxMZView))
         mz_array = np.extract(choice_MZ, mzArray)
-        
+
         intens_array = np.extract(choice_MZ, intensArray)
         self.index = index
         self.rt = spec.getRT()
@@ -265,4 +265,4 @@ class FeatureChromatogramView(FramePlot.FramePlot):
         if spec == None:
             return
         self.plotPrecursorSpectrum(index)
-            
+

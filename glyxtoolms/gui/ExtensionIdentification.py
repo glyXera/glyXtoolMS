@@ -11,7 +11,7 @@ class ExtensionIdentification(ttk.Labelframe):
         ttk.Labelframe.__init__(self, master=master, text=text)
         self.master = master
         self.model = model
-        
+
         panedWindow = Tkinter.PanedWindow(self,orient="vertical")
         panedWindow.pack(fill="both", expand=1)
         panedWindow.config(sashwidth=10)
@@ -21,12 +21,12 @@ class ExtensionIdentification(ttk.Labelframe):
         panedWindow.rowconfigure(0,weight=1)
         panedWindow.rowconfigure(1,weight=0)
         panedWindow.rowconfigure(2,weight=1)
-        
+
         errorFrame = ttk.Labelframe(panedWindow, text="Identification errors")
         errorView = IdentificationStatsFrame.IdentificationStatsFrame(errorFrame,
                                                                       model)
         errorView.pack(expand=True, fill="both")
-        
+
         peptideFrame = ttk.Labelframe(panedWindow, text="Peptide")
         peptideView = PeptideCoverageFrame.PeptideCoverageFrame(peptideFrame,
                                                                 model)
@@ -41,7 +41,7 @@ class ExtensionIdentification(ttk.Labelframe):
         panedWindow.add(errorFrame)
         panedWindow.add(peptideFrame)
         panedWindow.add(consensusFrame)
-        
+
         panedWindow.paneconfigure(errorFrame, stretch="last")
         panedWindow.paneconfigure(peptideFrame, stretch="middle")
         panedWindow.paneconfigure(consensusFrame, stretch="first")

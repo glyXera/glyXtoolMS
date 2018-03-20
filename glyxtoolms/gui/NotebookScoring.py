@@ -14,7 +14,7 @@ class NotebookScoring(ttk.Frame):
 
         # create popup menu
         self.aMenu = Tkinter.Menu(self, tearoff=0)
-        #self.aMenu.add_command(label="Accepted", 
+        #self.aMenu.add_command(label="Accepted",
         #                       command=lambda x="Accepted": self.setStatus(x))
         #self.aMenu.add_command(label="Rejected",
         #                       command=lambda x="Rejected": self.setStatus(x))
@@ -98,31 +98,31 @@ class NotebookScoring(ttk.Frame):
         # treeview style
         self.tree.tag_configure('oddUnknown', background='Moccasin')
         self.tree.tag_configure('evenUnknown', background='PeachPuff')
-        
+
         #self.tree.tag_configure('oddDeleted', background='LightSalmon')
         #self.tree.tag_configure('evenDeleted', background='Salmon')
-        
+
         #self.tree.tag_configure('oddAccepted', background='PaleGreen')
         #self.tree.tag_configure('evenAccepted', background='YellowGreen')
-        
+
         #self.tree.tag_configure('oddRejected', background='LightBlue')
         #self.tree.tag_configure('evenRejected', background='SkyBlue')
-        
+
         self.tree.tag_configure('oddGlycopeptide', background='PaleGreen')
         self.tree.tag_configure('evenGlycopeptide', background='YellowGreen')
-        
+
         self.tree.tag_configure('oddNonGlycopeptide', background='LightBlue')
         self.tree.tag_configure('evenNonGlycopeptide', background='SkyBlue')
-        
+
         self.tree.tag_configure('oddPoorGlycopeptide', background='LightSalmon')
         self.tree.tag_configure('evenPoorGlycopeptide', background='Salmon')
-        
+
         self.tree.tag_configure('oddPoorNonGlycopeptide', background='Plum1')
         self.tree.tag_configure('evenPoorNonGlycopeptide', background='Plum2')
-        
+
         self.tree.bind("<<TreeviewSelect>>", self.clickedTree)
         self.tree.bind("<Button-3>", self.popup)
-        
+
         #self.tree.bind("a", lambda e: self.setStatus("Accepted"))
         #self.tree.bind("u", lambda e: self.setStatus("Unknown"))
         #self.tree.bind("r", lambda e: self.setStatus("Rejected"))
@@ -133,7 +133,7 @@ class NotebookScoring(ttk.Frame):
         self.tree.bind("u", lambda e: self.setStatus("Unknown"))
 
         self.model.registerClass("NotebookScoring", self)
-        
+
         # layout frameTree
         frameTree.rowconfigure(0, weight=1)
 
@@ -144,7 +144,7 @@ class NotebookScoring(ttk.Frame):
             return
         for item in selection:
             spec, spectrum = self.treeIds[item]
-            
+
             #if status == "Accepted":
             #    spectrum.status = glyxtoolms.io.ConfirmationStatus.Accepted
             #elif status == "Rejected":
@@ -161,25 +161,25 @@ class NotebookScoring(ttk.Frame):
                 spectrum.status = glyxtoolms.io.ConfirmationStatus.PoorNonGlycopeptide
             elif status == "Unknown":
                 spectrum.status = glyxtoolms.io.ConfirmationStatus.Unknown
-                
+
             # Update on Treeview
             values = self.tree.item(item)["values"]
             values[5] = spectrum.status
             self.tree.item(item, values=values)
-            
+
             taglist = list(self.tree.item(item, "tags"))
             taglist = self.setHighlightingTag(taglist, spectrum.status)
             self.tree.item(item, tags=taglist)
-        
+
     def popup(self, event):
         self.aMenu.post(event.x_root, event.y_root)
         self.aMenu.focus_set()
         self.aMenu.bind("<FocusOut>", self.removePopup)
-        
+
     def removePopup(self,event):
         if self.focus_get() != self.aMenu:
             self.aMenu.unpost()
-            
+
     def setHighlightingTag(self, taglist, status):
         assert status in glyxtoolms.io.ConfirmationStatus._types
         for statustype in glyxtoolms.io.ConfirmationStatus._types:
@@ -200,7 +200,7 @@ class NotebookScoring(ttk.Frame):
         if self.model == None or self.model.currentAnalysis == None:
             return
         sortingColumn, reverse = self.model.currentAnalysis.sorting["NotebookScoring"]
-        
+
         if col == sortingColumn:
             reverse = not reverse
         else:
@@ -222,7 +222,7 @@ class NotebookScoring(ttk.Frame):
         for index, (val, k) in enumerate(l):
             self.tree.move(k, '', index)
             status = self.tree.item(k)["values"][5]
-            
+
             # adjust tags
             taglist = list(self.tree.item(k, "tags"))
             if "odd" in taglist:
@@ -289,7 +289,7 @@ class NotebookScoring(ttk.Frame):
         # apply possible sorting
         if not "NotebookScoring" in analysis.sorting:
             analysis.sorting["NotebookScoring"] = ("#0", False)
-        
+
         sortingColumn, reverse = analysis.sorting["NotebookScoring"]
         analysis.sorting["NotebookScoring"] = (sortingColumn, not reverse)
         self.sortColumn(sortingColumn)

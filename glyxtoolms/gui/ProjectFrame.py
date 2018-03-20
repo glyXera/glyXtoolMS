@@ -85,14 +85,14 @@ class ProjectFrame(ttk.Frame):
         self.b2 = ttk.Button(tools, text="Close Project", command=self.closeProject)
         self.b2.grid(row=0, column=1)
         self.b2.config(state=Tkinter.DISABLED)
-        
+
         self.b6 = ttk.Button(tools, text="Find Analysis", command=self.clickedFindAnalysis)
         self.b6.grid(row=0, column=2)
 
         self.b3 = ttk.Button(tools, text="Add Analysis", command=self.clickedAddAnalysis)
         self.b3.grid(row=1, column=0)
         self.b3.config(state=Tkinter.DISABLED)
-        
+
 
 
         #NORMAL, ACTIVE or DISABLED
@@ -110,7 +110,7 @@ class ProjectFrame(ttk.Frame):
 
 
         tools.grid(row=0, column=0, sticky="NWES")
-        
+
         projects = ttk.Frame(self)
         projects.grid(row=1, column=0, sticky="NWES")
 
@@ -136,7 +136,7 @@ class ProjectFrame(ttk.Frame):
         projects.columnconfigure(0, weight=1)
         projects.columnconfigure(1, weight=0)
         projects.rowconfigure(0, weight=1)
-        
+
         self.columnconfigure(0, weight=1)
         self.rowconfigure(1, weight=1)
 
@@ -376,7 +376,7 @@ class ProjectFrame(ttk.Frame):
 
         # update internal ids
         analysis.createIds()
-        
+
         # collect specta within features
         analysis.collectFeatureSpectra()
 
@@ -478,7 +478,7 @@ class AddProject(Tkinter.Toplevel):
         b1.grid(row=2, column=2)
         b2 = Tkinter.Button(self, text="Cancel", command=self.destroy)
         b2.grid(row=2, column=3)
-        
+
         # get window size
         self.update()
         h = self.winfo_height()
@@ -491,10 +491,10 @@ class AddProject(Tkinter.Toplevel):
         # calculate x and y coordinates for the Tk window
         x = (ws/2) - (w/2)
         y = (hs/2) - (h/2)
-        # set the dimensions of the screen 
+        # set the dimensions of the screen
         # and where it is placed
         self.geometry('%dx%d+%d+%d' % (w, h, x, y))
-        
+
         # raise to top
         self.focus_set()
         self.transient(master)
@@ -529,9 +529,9 @@ class AddProject(Tkinter.Toplevel):
         options['title'] = 'Open mzML file'
         path = tkFileDialog.askopenfilename(**options)
         self.path.set(path)
-        
 
-        
+
+
 
 
 class FindAnalysis(Tkinter.Toplevel):
@@ -542,7 +542,7 @@ class FindAnalysis(Tkinter.Toplevel):
         self.model = model
         self.title("Find Analysis")
         self.minsize(600, 300)
-        
+
         self.analysisFiles = set()
         self.keywords = set()
 
@@ -551,68 +551,68 @@ class FindAnalysis(Tkinter.Toplevel):
         self.rowconfigure(1, weight=0)
         self.rowconfigure(2, weight=1)
         self.rowconfigure(3, weight=0)
-        
+
         self.frameRoot = ttk.Labelframe(self, text="Set Search Startingpoint")
         self.frameSearch = ttk.Labelframe(self, text="Search for")
         self.frameResults = ttk.Labelframe(self, text="Analysis Files")
         self.frameFinal = Tkinter.Frame(self)
-        
+
         self.frameRoot.grid(row=0, column=0, sticky="NSEW")
         self.frameSearch.grid(row=1, column=0, sticky="NSEW")
         self.frameResults.grid(row=2, column=0, sticky="NSEW")
         self.frameFinal.grid(row=3, column=0, sticky="NSEW")
-        
+
         self.frameRoot.columnconfigure(0, weight=1)
         self.frameRoot.columnconfigure(1, weight=0)
-        
+
         self.frameSearch.columnconfigure(0, weight=1)
-        
+
         self.frameResults.columnconfigure(0, weight=1)
         self.frameResults.rowconfigure(0, weight=1)
-        
+
         self.varRoot = Tkinter.StringVar()
         entryRoot = Tkinter.Entry(self.frameRoot, textvariable=self.varRoot)
         entryRoot.config(bg="white")
         entryRoot.grid(row=0, column=0, sticky="NSEW")
-        
+
         self.varRoot.trace("w", self.rootChanged)
-        
+
         buttonChoose = Tkinter.Button(self.frameRoot, text="Choose Root", command=self.chooseRoot)
         buttonChoose.grid(row=0, column=1)
-        
+
         # --------------
-        
+
         self.varSearch = Tkinter.StringVar()
         entrySearch = Tkinter.Entry(self.frameSearch, textvariable=self.varSearch)
         entrySearch.config(bg="white")
         entrySearch.grid(row=0, column=0, sticky="NSEW")
-        
+
         self.varSearch.trace("w", self.keywordsChanged)
-        
+
         # ----------
-        
+
         scrollbar = Tkinter.Scrollbar(self.frameResults, orient="vertical")
         self.listBox = Tkinter.Listbox(self.frameResults,selectmode="single",yscrollcommand=scrollbar.set)
         scrollbar.config(command=self.listBox.yview)
         self.listBox.grid(row=0, column=0,sticky="NSEW")
         scrollbar.grid(row=0, column=1,sticky="NSEW")
-        
+
         self.listBox.bind("<<ListboxSelect>>", self.listSelected)
-        
+
         # ----------
         buttonCancel = Tkinter.Button(self.frameFinal,text="Cancel",command=self.cancel)
         self.buttonOK = Tkinter.Button(self.frameFinal,text="OK",command=self.ok)
         self.buttonOK.pack(side="right", anchor="se")
         buttonCancel.pack(side="right", anchor="se")
-        
+
         self.varRoot.set(self.model.workingdir)
-        
+
     def rootChanged(self,*arg,**args):
         print "root changed to ", self.varRoot.get()
         # collect all analysis files
         self.collectAllFiles()
         self.updateListbox()
-        
+
     def collectAllFiles(self):
         start = self.varRoot.get()
         if os.path.isdir(start) == False:
@@ -622,14 +622,14 @@ class FindAnalysis(Tkinter.Toplevel):
             for filename in filenames:
                 if filename.endswith(".xml"):
                     self.analysisFiles.add(os.path.join(root,filename))
-        
+
     def keywordsChanged(self,*arg,**args):
         self.keywords = set()
         for text in self.varSearch.get().split(","):
             text = text.strip()
             self.keywords.add(text)
         self.updateListbox()
-        
+
     def updateListbox(self):
         self.buttonOK.config(state="disabled")
         self.listBox.delete(0, "end")
@@ -641,10 +641,10 @@ class FindAnalysis(Tkinter.Toplevel):
                     break
             if found == True:
                 self.listBox.insert("end", analysis)
-        
+
     def cancel(self):
         self.destroy()
-        
+
     def ok(self):
         selection = self.listBox.curselection()
         if len(selection) == 0:
@@ -660,9 +660,9 @@ class FindAnalysis(Tkinter.Toplevel):
             name = os.path.basename(mzMLPath)
             self.master.addProject(name, mzMLPath)
             self.destroy()
-        
+
     def chooseMzML(self, analysisPath):
-        
+
         basedir = os.path.dirname(analysisPath)
         print "basedir", basedir
         options = {}
@@ -673,7 +673,7 @@ class FindAnalysis(Tkinter.Toplevel):
         options['title'] = 'Choose mzML file'
         path = tkFileDialog.askopenfilename(**options)
         return path
-    
+
     def chooseRoot(self):
         options = {}
         #options['defaultextension'] = '.mzML'
@@ -683,7 +683,7 @@ class FindAnalysis(Tkinter.Toplevel):
         options['title'] = 'Choose search starting point'
         path = tkFileDialog.askdirectory(**options)
         self.varRoot.set(path)
-        
+
     def listSelected(self,*arg, **args):
         selection = self.listBox.curselection()
         if len(selection) == 0:
@@ -691,5 +691,5 @@ class FindAnalysis(Tkinter.Toplevel):
             return
         else:
             self.buttonOK.config(state="normal")
-        
-        
+
+
