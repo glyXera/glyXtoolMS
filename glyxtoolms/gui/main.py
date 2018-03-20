@@ -21,6 +21,7 @@ GUI:
 import Tkinter
 import ttk
 import pyperclip
+import tkMessageBox
 
 from glyxtoolms.gui import Appearance
 from glyxtoolms.gui import DataModel
@@ -41,13 +42,14 @@ from glyxtoolms.gui import SpectrumView2
 from glyxtoolms.gui import PeptideCoverageFrame
 from glyxtoolms.gui import OxoniumIonPlot
 from glyxtoolms.gui import OptionsFrame
+from glyxtoolms.gui import ToppasConfigurationFrame
 
 class App(ttk.Frame):
 
     def __init__(self, master):
 
         ttk.Frame.__init__(self)
-
+        
         self.master = master
         #self.menubar = Tkinter.Menu(self.master, bg="#d9d9d9")
         self.menubar = Tkinter.Menu(self.master)
@@ -55,6 +57,8 @@ class App(ttk.Frame):
         self.master.config(menu=self.menubar)
         #self.master.config(bg="#d9d9d9")
         self.model = DataModel.DataModel(master)
+        
+        
         
         self.master.protocol("WM_DELETE_WINDOW", self.on_closing)
         
@@ -93,6 +97,11 @@ class App(ttk.Frame):
         filterMenu = Tkinter.Menu(self.menubar, tearoff=0)
         filterMenu.add_command(label="Set Filter Options", command=self.showFilterOptions)
         self.menubar.add_cascade(label="Filter", menu=filterMenu) # Index 4 in menubar
+        
+        toppasMenu = Tkinter.Menu(self.menubar, tearoff=0)
+        #toppasMenu.add_command(label="Collect Analysis Files", command=self.collectToppasFiles)
+        toppasMenu.add_command(label="Configure TOPPAS", command=self.configureToppas)
+        self.menubar.add_cascade(label="TOPPAS", menu=toppasMenu) # Index 5 in menubar
 
         # Divide left and right
         panes = Tkinter.PanedWindow(master, orient="horizontal")
@@ -216,7 +225,15 @@ class App(ttk.Frame):
         
         # set layout if stored in config
         self.master.update_idletasks()
-        self.model.setLayout()
+        
+        if self.model.isDefaultConfig == False:
+            self.model.setLayout()
+        else:
+            ask = tkMessageBox.askyesno("Configure OpenMS", 
+                                    "Since OpenMS/TOPPAS is not configured yet, do you want to do it now?",
+                                    default=tkMessageBox.YES)
+            if ask == True:
+                ToppasConfigurationFrame.ToppasConfigurationFrame(self,self.model)
         
                 
     def getSashCoords(self):
@@ -272,6 +289,13 @@ class App(ttk.Frame):
         
     def setOptions(self):
         OptionsFrame.OptionsFrame(self.master, self.model)
+        
+        
+    def collectToppasFiles(self):
+        return
+    
+    def configureToppas(self):
+        ToppasConfigurationFrame.ToppasConfigurationFrame(self,self.model)
 
     def on_closing(self):
         # save settings
@@ -390,6 +414,3 @@ class OxoniumFrame(Tkinter.Toplevel):
         if "OxoniumFrame" in self.model.toplevel:
             self.model.toplevel.pop("OxoniumFrame")
         self.destroy()
-
-
-        

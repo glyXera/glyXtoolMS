@@ -22,8 +22,19 @@ class OptionsFrame(Tkinter.Toplevel):
         
         self.columnconfigure(0, weight=1)
         
+        
+        frameOpenMS = ttk.Labelframe(self, text="OpenMS/TOPPAS")
+        frameOpenMS.grid(row=0, column=0, sticky="NWES")
+        frameOpenMS.columnconfigure(0, weight=0)
+        frameOpenMS.columnconfigure(1, weight=1)
+        buttonOpenMS = Tkinter.Button(frameWorkspace, text="Configure OpenMS", command=self.configureOpenMS)
+        
+        self.openMSVar = Tkinter.StringVar()
+        self.openMSVar.set(self.model.workingdir)
+        entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
+        
         frameWorkspace = ttk.Labelframe(self, text="Set Workspace")
-        frameWorkspace.grid(row=0, column=0, sticky="NWES")
+        frameWorkspace.grid(row=1, column=0, sticky="NWES")
         frameWorkspace.columnconfigure(0, weight=0)
         frameWorkspace.columnconfigure(1, weight=1)
         buttonWorkspace = Tkinter.Button(frameWorkspace, text="Set workspace", command=self.setWorkspace)
@@ -36,7 +47,7 @@ class OptionsFrame(Tkinter.Toplevel):
         entryWorkspace.grid(row=0, column=1, sticky="NWES")
         
         frameTimeAxis = ttk.Labelframe(self, text="Timeaxis")
-        frameTimeAxis.grid(row=1, column=0, sticky="NWES")
+        frameTimeAxis.grid(row=2, column=0, sticky="NWES")
         
         self.timeAxisVar = Tkinter.StringVar()
         self.timeAxisVar.set(self.model.timescale)
@@ -48,7 +59,7 @@ class OptionsFrame(Tkinter.Toplevel):
         timeAxisChoice2.grid(row=0, column=1, sticky="NWS")
         
         frameError = ttk.Labelframe(self, text="Mass Error")
-        frameError.grid(row=2, column=0, sticky="NWES")
+        frameError.grid(row=3, column=0, sticky="NWES")
         
         self.errorVar = Tkinter.StringVar()
         self.errorVar.set(self.model.errorType)
@@ -60,7 +71,7 @@ class OptionsFrame(Tkinter.Toplevel):
         errorChoice2.grid(row=0, column=1, sticky="NWS")
         
         frameClipboard = ttk.Labelframe(self, text="Clipboard")
-        frameClipboard.grid(row=3, column=0, sticky="NWES")
+        frameClipboard.grid(row=4, column=0, sticky="NWES")
         
         self.clipVar = Tkinter.StringVar()
         self.clipVar.set(self.model.clipboard)
@@ -80,7 +91,7 @@ class OptionsFrame(Tkinter.Toplevel):
             clipboardChoice.grid(row=5+i/3, column=1+i%3, sticky="NWS")
 
         frameDifferences= ttk.Labelframe(self, text="Massdifferences")
-        frameDifferences.grid(row=4, column=0, sticky="NWES")
+        frameDifferences.grid(row=5, column=0, sticky="NWES")
         
         scrollbar = Tkinter.Scrollbar(frameDifferences)
         self.tree = ttk.Treeview(frameDifferences, yscrollcommand=scrollbar.set, selectmode='browse')
@@ -150,6 +161,9 @@ class OptionsFrame(Tkinter.Toplevel):
 
         cancelButton.grid(row=0, column=0, sticky="NWES")
         saveButton.grid(row=0, column=1, sticky="NWES")
+        
+    def configureOpenMS(self):
+        pass
 
         
     def setWorkspace(self):

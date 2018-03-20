@@ -27,8 +27,9 @@ class DataModel(object):
         #for s in range(10,100):
         #    font = tkFont.Font(family="Courier",size=s)
         #    print s, font.measure(" ")
-
-        self.workingdir = ""
+        self.isDefaultConfig = False
+        self.workingdir = os.path.expanduser("~")
+        self.openMSDir = os.path.expanduser("~")
         self.timescale = "seconds"
         # possible clipboards: ('Tkinter','osx','gtk','qt','xclip','xsel','klipper','windows')
         self.clipboard = "Tkinter" # Switch indicating clipboard to use
@@ -181,8 +182,10 @@ class DataModel(object):
         # Set default settings
         self.workingdir = home
         # Create settings if not exists
+        self.isDefaultConfig = False
         if not os.path.exists(settingspath):
             self.saveSettings()
+            self.isDefaultConfig = True
         self.configfile = configparser.ConfigParser()
         self.configfile.read(os.path.join(settingspath))
         
@@ -195,6 +198,8 @@ class DataModel(object):
                 self.clipboard = section["clipboard"]
             if "errorType" in section:
                 self.errorType = section["errorType"]
+            if "openMSPath" in section:
+                self.openMSDir = section["openMSPath"]
             
                 
         if "PLOTOPTIONS" in self.configfile.sections():
@@ -222,11 +227,11 @@ class DataModel(object):
    
     def setLayout(self):
         if self.configfile == None:
-            return
+            return False
         if "LAYOUT" not in self.configfile.sections():
-            return
+            return False
         if not "main" in self.classes:
-            return
+            return False
         geometry = self.configfile["LAYOUT"]["geometry"]
         self.root.geometry(geometry)
         coords = {}
@@ -238,6 +243,7 @@ class DataModel(object):
                 coords[name] = (int(x), int(y))
         
         self.classes["main"].setSashCoords(coords)
+        return True
 
     def saveSettings(self):
         if self.configfile == None:
@@ -247,7 +253,7 @@ class DataModel(object):
         self.configfile["GENERAL"]["timescale"] = self.timescale
         self.configfile["GENERAL"]["clipboard"] = self.clipboard
         self.configfile["GENERAL"]["errorType"] = self.errorType
-        
+        self.configfile["GENERAL"]["openMSPath"] = self.openMSDir
         self.configfile["MASSDIFFERENCES"] = {}
         i = 0
         for mass, key, charge, typ in self.massdifferences:
