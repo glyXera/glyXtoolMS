@@ -13,3 +13,6 @@ bin/guitests/*
 bin/currentwork.py
 pylint.output
 run_pylint.sh
+PyPi.txt
+TARGET/*
+~*.docx

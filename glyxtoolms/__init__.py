@@ -1,4 +1,3 @@
-__all__ = ["scoring", "tests"]
 import glyxtoolms.scoring
 import glyxtoolms.tests
 import glyxtoolms.lib
