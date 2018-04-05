@@ -87,7 +87,6 @@ def main(options):
     fileoptions = mzFile.getOptions()
     fileoptions.setCompression(True)
     mzFile.setOptions(fileoptions)
-
     mzFile.store(options.outfile,expNew)
     print "finished"
 
