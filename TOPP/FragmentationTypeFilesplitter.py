@@ -66,7 +66,7 @@ def main(options):
     
     
     print "create zip file", options.outfile
-    zipFile = zipfile.ZipFile(options.outfile, "w")
+    zipFile = zipfile.ZipFile(options.outfile, "w",allowZip64 = True)
     for name in filenames:
         zipFile.write(name, os.path.basename(name))
     zipFile.close()
