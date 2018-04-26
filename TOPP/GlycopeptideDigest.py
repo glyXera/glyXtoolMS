@@ -33,46 +33,48 @@ def main(options):
     fh = pyopenms.FASTAFile()
     fastaData = []
     fh.load(pyopenms.String(options.infile),fastaData)
-    
-    # initialize outfile parameters
-    
-    parameters = glyxtoolms.io.XMLPeptideParameters()
 
     print "setting digest parameters"
     proteinDigest = glyxtoolms.lib.ProteinDigest()
-    
-    proteinDigest.setMaxModifications(int(options.maxNrModifications))
-    # TODO: Set modModifications in parameters
-    
 
     for modification in options.modifications.split(" "):
         if modification.lower() == "none":
             continue
         proteinDigest.addModification(modification)
-    
-    parameters.modifications = list(proteinDigest.modifications)
-    
+
     missedCleavages = int(options.missedCleavageSites)
-    parameters.missedCleavages = missedCleavages
+    
+    proteinDigest.setMaxModifications(int(options.maxNrModifications))
+    proteinDigest.setMaxMissedCleavage(2)
+    
     findOGlycosylation = "O-Glycosylation" in options.glycosylation
     findNGlycosylation = "N-Glycosylation" in options.glycosylation
     findNXCGlycosylation = "NXC-Glycosylation" in options.glycosylation
+
+    # initialize outfile parameters
+    # TODO: Set maxModifications in parameters
+    parameters = glyxtoolms.io.XMLPeptideParameters()
+    parameters.modifications = list(proteinDigest.modifications)
+    parameters.missedCleavages = missedCleavages
+    parameters.modifications = list(proteinDigest.modifications)
     parameters.NGlycosylation = (findNGlycosylation or findNXCGlycosylation)
     parameters.OGlycosylation = findOGlycosylation
-
-    digests = []
+    
+    # add digests
     for digest in options.enzymes.split(" "):
         parameters.digestionEnzymes.append(digest)
         if digest == "Trypsin":
-            digests.append(proteinDigest.add_tryptic_digest)
+            proteinDigest.addEnzyme_Trypsin()
         elif digest == "Trypsin/P":
-            digests.append(proteinDigest.add_tryptic_low_specific_digest)
+            proteinDigest.addEnzyme_Trypsin_lowSpecific()
         elif digest == "AspN":
-            digests.append(proteinDigest.add_AspN_digest)
+            proteinDigest.addEnzyme_AspN()
         elif digest == "AspN2":
-            digests.append(proteinDigest.add_AspN_digest_2)
+            proteinDigest.addEnzyme_AspN2()
+        elif digest == "ProtK":
+            proteinDigest.addEnzyme_ProtK()
         elif digest == "Unspecific":
-            digests.append(proteinDigest.add_Unspecific_digest)
+            proteinDigest.addEnzyme_Unspecific()
         elif digest == "NoDigest":
             pass
         else:
@@ -85,17 +87,14 @@ def main(options):
     for fastaEntry in fastaData:
         protein = glyxtoolms.lib.Protein()
         try:
-            protein.loadFromFasta(fastaEntry.identifier,fastaEntry.description,fastaEntry.sequence)
+            protein.loadFromFasta(fastaEntry)
         except:
             print "could not read " + fastaEntry.identifier
             continue
         parameters.proteins.append(fastaEntry.identifier)
-        proteinDigest.newDigest(protein)
-        # call digest functions to set cleavage sites
-        for digestFunc in digests:
-            digestFunc()
+        
         # digest protein
-        peptides = proteinDigest.digest(missedCleavages)
+        peptides = proteinDigest.digest(protein)
         
         # find glycopeptides
         glycopeptides = proteinDigest.findGlycopeptides(peptides,

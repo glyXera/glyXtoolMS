@@ -81,24 +81,24 @@ class Histogram(object):
 
 class Protein(object):
 
-    def __init__(self):
-        self.identifier = ""
-        self.description = ""
-        self.sequence = ""
-        self.modifications = []
-
-
-    def loadFromFasta(self, identifier, description, sequence):
+    def __init__(self,identifier="", description="", sequence=""):
         self.identifier = identifier
         self.description = description
+        self.sequence = sequence
+        self.modifications = []
+
+
+    def loadFromFasta(self, fasta):
+        self.identifier = fasta.identifier
+        self.description = fasta.description
         self.modifications = []
         diff = 0
-        for x in re.finditer(r"\(.+?\)", sequence):
+        for x in re.finditer(r"\(.+?\)", fasta.sequence):
             name = x.group()[1:-1]
             pos = x.start()-diff-1
-            self.modifications.append((name, sequence[pos], pos))
+            self.modifications.append((name, fasta.sequence[pos], pos))
             diff += x.end()-x.start()
-        self.sequence = re.sub(r"\(.+?\)", "", sequence)
+        self.sequence = re.sub(r"\(.+?\)", "", fasta.sequence)
         # check aminoacids and modifications
         try:
             #for s in self.sequence:
@@ -152,22 +152,22 @@ class Glycopeptide:
 
 class ProteinDigest(object):
 
-    def __init__(self):
-
-        #self.carbamidation = False
-        #self.carboxylation = False
-        #self.oxidation = False
-        #self.carbamylation_N_Term = False
-        #self.acrylamideAdducts = False
-
+    def __init__(self, maxModifications=-1, maxMissedCleavage=0):
+        
+        self.maxModifications = maxModifications
+        self.maxMissedCleavage = maxMissedCleavage
         self.modifications = set()
+        self.enzymes = set()
+        
         self.breakpoints = []
         self.protein = None
-        self.maxModifications = -1
+
 
     def setMaxModifications(self, maxMod):
         self.maxModifications = maxMod
 
+    def setMaxMissedCleavage(self, maxCleav):
+        self.maxMissedCleavage = maxCleav
 
     def addModification(self, modname):
         assert modname in glyxtoolms.masses.PROTEINMODIFICATION
@@ -330,14 +330,26 @@ class ProteinDigest(object):
             masses.append(newPeptide)
 
         return masses
+        
+    def addEnzyme_Trypsin(self):
+        self.enzymes.add(self._add_tryptic_digest)
+    
+    def addEnzyme_Trypsin_lowSpecific(self):
+        self.enzymes.add(self._add_tryptic_low_specific_digest)
+    
+    def addEnzyme_AspN(self):
+        self.enzymes.add(self._add_AspN_digest)
+        
+    def addEnzyme_AspN2(self):
+        self.enzymes.add(self._add_AspN_digest_2)
+        
+    def addEnzyme_ProtK(self):
+        self.enzymes.add(self._add_ProtinaseK_digest)
+        
+    def addEnzyme_Unspecific(self):
+        self.enzymes.add(self._add_Unspecific_digest)
 
-
-    def newDigest(self, protein):
-        self.protein = protein
-        self.breakpoints = []
-
-
-    def add_tryptic_digest(self):
+    def _add_tryptic_digest(self):
         # cleaves C-terminal side of K or R, except if P is C-term to K or R
         i = 0
         while i < len(self.protein.sequence):
@@ -346,7 +358,7 @@ class ProteinDigest(object):
                     self.breakpoints.append(i)
             i += 1
 
-    def add_tryptic_low_specific_digest(self):
+    def _add_tryptic_low_specific_digest(self):
         # cleaves C-terminal side of K or R, even if P is C-term to K or R
         i = 0
         while i < len(self.protein.sequence):
@@ -355,7 +367,7 @@ class ProteinDigest(object):
             i += 1
 
 
-    def add_AspN_digest(self):
+    def _add_AspN_digest(self):
         # cleaves N-terminal side of D
         i = 1
         while i < len(self.protein.sequence):
@@ -363,7 +375,7 @@ class ProteinDigest(object):
                 self.breakpoints.append(i-1)
             i += 1
 
-    def add_AspN_digest_2(self):
+    def _add_AspN_digest_2(self):
         # cleaves N-terminal side of E, D and C
         i = 1
         while i < len(self.protein.sequence):
@@ -371,7 +383,7 @@ class ProteinDigest(object):
                 self.breakpoints.append(i-1)
             i += 1
 
-    def add_ProtinaseK_digest(self):
+    def _add_ProtinaseK_digest(self):
         # cleaves D-terminal side of multiple aminoacids
         i = 1
         while i < len(self.protein.sequence):
@@ -380,12 +392,19 @@ class ProteinDigest(object):
                 self.breakpoints.append(i)
             i += 1
 
-    def add_Unspecific_digest(self):
+    def _add_Unspecific_digest(self):
         # cleaves all possible aminoacids
         for i in range(0, len(self.protein.sequence)):
             self.breakpoints.append(i)
 
-    def digest(self, maxMissedCleavage):
+    def digest(self, protein):
+        self.protein = protein
+        self.breakpoints = []
+        
+        # run enzyme breakpoint functions
+        for func in self.enzymes:
+            func()
+        
         self.breakpoints.append(len(self.protein.sequence)-1)
         # clean up breakpoints
         self.breakpoints = list(set(self.breakpoints))
@@ -395,7 +414,7 @@ class ProteinDigest(object):
         start = -1
         i = 0
         while i < len(self.breakpoints):
-            for m in range(0, maxMissedCleavage+1):
+            for m in range(0, self.maxMissedCleavage+1):
                 if i+m >= len(self.breakpoints):
                     break
                 stop = self.breakpoints[i+m]
