@@ -23,15 +23,15 @@ class OptionsFrame(Tkinter.Toplevel):
         self.columnconfigure(0, weight=1)
 
 
-        frameOpenMS = ttk.Labelframe(self, text="OpenMS/TOPPAS")
-        frameOpenMS.grid(row=0, column=0, sticky="NWES")
-        frameOpenMS.columnconfigure(0, weight=0)
-        frameOpenMS.columnconfigure(1, weight=1)
-        buttonOpenMS = Tkinter.Button(frameWorkspace, text="Configure OpenMS", command=self.configureOpenMS)
+        #frameOpenMS = ttk.Labelframe(self, text="OpenMS/TOPPAS")
+        #frameOpenMS.grid(row=0, column=0, sticky="NWES")
+        #frameOpenMS.columnconfigure(0, weight=0)
+        #frameOpenMS.columnconfigure(1, weight=1)
+        #buttonOpenMS = Tkinter.Button(frameOpenMS, text="Configure OpenMS", command=self.configureOpenMS)
 
-        self.openMSVar = Tkinter.StringVar()
-        self.openMSVar.set(self.model.workingdir)
-        entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
+        #self.openMSVar = Tkinter.StringVar()
+        #self.openMSVar.set(self.model.workingdir)
+        #entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
 
         frameWorkspace = ttk.Labelframe(self, text="Set Workspace")
         frameWorkspace.grid(row=1, column=0, sticky="NWES")
