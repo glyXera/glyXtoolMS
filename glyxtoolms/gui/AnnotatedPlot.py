@@ -166,6 +166,21 @@ class AnnotatedPlot(FramePlot.FramePlot):
                 self.addAnnotation(a, seriesname)
         self._paintCanvas(False)
 
+    def findPeakAt(self, pixelX):
+        overlap = set(self.canvas.find_overlapping(pixelX-10,
+                                                0,
+                                                pixelX+10,
+                                                self.height))
+        peaks = []
+        for item in overlap:
+            if item in self.peaksByItem:
+                peaks.append((abs(self.canvas.coords(item)[0] - pixelX), self.peaksByItem[item]))
+        if len(peaks) == 0:
+            peak = None
+        else:
+            peak = min(peaks)[1]
+        return peak
+
     def initCanvas(self, keepZoom=False):
         super(AnnotatedPlot, self).initCanvas(keepZoom)
         if self.rulerbutton.active.get() == True:
