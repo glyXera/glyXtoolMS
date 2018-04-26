@@ -652,3 +652,26 @@ def openOpenMSExperiment(path):
     print "loading finnished"
     return exp
 
+def calcMassError(mass, nominalMass, toleranceType):
+    if toleranceType == "Da":
+        error = nominalMass - mass
+    elif toleranceType == "ppm":
+        error = (nominalMass - mass) / float(nominalMass) *1E6
+    else:
+        raise Exception("Please provide a toleranceType in either 'Da' or 'ppm'!")
+    return error
+
+def isInMassTolerance(mass, nominalMass, tolerance, toleranceType, bound="both"):
+    """ Calculate Mass error between two masses, toleranceType="Da" or "ppm", 
+    side is if only the upper bound or lower bound or both should be tested """
+    
+    error = calcMassError(mass, nominalMass, toleranceType)
+    if bound == "both":
+        answer = abs(error) <= tolerance
+    elif bound == "lower":
+        answer = error <= tolerance
+    elif bound == "upper":
+        answer = error >= -tolerance
+    else:
+        raise Exception("Please provide a tolerance bound of either 'lower', 'upper' or 'both'!")
+    return answer

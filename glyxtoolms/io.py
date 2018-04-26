@@ -135,6 +135,7 @@ class GlyxXMLParameters(object):
         self._timestamp = ""
         self._glycans = []
         self._tolerance = 0.0
+        self._toleranceType = "Da"
         self._ionThreshold = 0
         self._nrNeutrallosses = 0
         self._maxOxoniumCharge = 0
@@ -148,6 +149,9 @@ class GlyxXMLParameters(object):
 
     def setMassTolerance(self, tolerance):
         self._tolerance = tolerance
+
+    def setMassToleranceType(self, toleranceType):
+        self._toleranceType = toleranceType
 
     def setIonThreshold(self, ionThreshold):
         self._ionThreshold = ionThreshold
@@ -172,6 +176,9 @@ class GlyxXMLParameters(object):
 
     def getMassTolerance(self):
         return self._tolerance
+        
+    def getMassToleranceType(self):
+        return self._toleranceType
 
     def getIonThreshold(self):
         return self._ionThreshold
@@ -389,7 +396,7 @@ class GlyxXMLFile(object):
         self.features = []
         self.glycoModHits = []
         self.all_tags = set()
-        self._version_ = "0.1.3" # current version
+        self._version_ = "0.1.4" # current version
         self.version = self._version_ # will be overwritten by file
         self.toolValueDefaults = {}
 
@@ -406,6 +413,11 @@ class GlyxXMLFile(object):
             sourceHash = xmlParameters.find("./source/checksum").text
 
         tolerance = float(xmlParameters.find("./tolerance").text)
+        if self.version < "0.1.4":
+            toleranceType = "Da"
+        else:
+            toleranceType = xmlParameters.find("./toleranceType").text
+            
         ionThreshold = int(xmlParameters.find("./ionthreshold").text)
         nrNeutrallosses = int(xmlParameters.find("./nrNeutrallosses").text)
         maxOxoniumCharge = int(xmlParameters.find("./maxOxoniumionCharge").text)
@@ -417,6 +429,7 @@ class GlyxXMLFile(object):
         parameters = GlyxXMLParameters()
         parameters.setTimestamp(timestamp)
         parameters.setMassTolerance(tolerance)
+        parameters.setMassToleranceType(toleranceType)
         parameters.setIonThreshold(ionThreshold)
         parameters.setNrNeutrallosses(nrNeutrallosses)
         parameters.setMaxOxoniumCharge(maxOxoniumCharge)
@@ -511,6 +524,9 @@ class GlyxXMLFile(object):
 
         xmlParametersTol = ET.SubElement(xmlParameters, "tolerance")
         xmlParametersTol.text = str(self.parameters.getMassTolerance())
+        
+        xmlParametersTolType = ET.SubElement(xmlParameters, "toleranceType")
+        xmlParametersTolType.text = str(self.parameters.getMassToleranceType())
 
         xmlParametersIonthreshold = ET.SubElement(xmlParameters, "ionthreshold")
         xmlParametersIonthreshold.text = str(self.parameters.getIonThreshold())

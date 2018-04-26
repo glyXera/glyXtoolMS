@@ -23,6 +23,7 @@ def main(options):
     
     # parse parameters
     tolerance = float(options.tolerance)
+    toleranceType = options.toleranceType
     ionthreshold = float(options.ionthreshold)
     
     # load analysis file
@@ -41,7 +42,8 @@ def main(options):
         result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(hit.peptide,
                                                                        hit.glycan,
                                                                        feature.consensus, 
-                                                                       tolerance, 
+                                                                       tolerance,
+                                                                       toleranceType,
                                                                        feature.getCharge())
         peptidevariant = result["peptidevariant"] 
         fragments = result["fragments"]
@@ -69,8 +71,11 @@ def handle_args(argv=None):
     parser.add_argument("--outGlyML", dest="outGlyML",
                         help="glyML output")
     parser.add_argument("--tolerance", dest="tolerance",
-                        help="Mass tolerance in th",
+                        help="Mass tolerance in either Da or ppm",
                         type=float)
+    parser.add_argument("--toleranceType", dest="toleranceType",
+                        help="Type of the given mass tolerance",
+                        choices=["Da", "ppm"])
     parser.add_argument("--ionthreshold", dest="ionthreshold",
                         help="Threshold for peptide ions",
                         type=int)

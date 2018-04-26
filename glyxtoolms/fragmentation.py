@@ -253,19 +253,18 @@ def generatePeptideFragments(peptide):
 
     return data
 
-def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharge):
+def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, toleranceType, maxCharge):
 
     # helper function to search masses in a spectrum
-    def searchMassInSpectrum(mass, tolerance, spectrum):
-        def error(mass, goal):
-            return abs((goal - mass)/goal*1E6)
+    def searchMassInSpectrum(mass, tolerance, toleranceType, spectrum):
 
-        hit = None
+        hit = (0,None)
         for peak in spectrum:
-            if error(peak.x, mass) <= tolerance:
-                if hit == None or error(peak.x, mass) < error(hit.x, mass):
-                    hit = peak
-        return hit
+            error = abs(glyxtoolms.lib.calcMassError(peak.x, mass, toleranceType))
+            if error <= tolerance:
+                if hit[1] == None or error < hit[0]:
+                    hit = (error,peak)
+        return hit[1]
 
     # helper function to calculate charged ion masses
     def calcChargedMass(singlyChargedMass, charge):
@@ -421,7 +420,7 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
         for fragmentname in fragments:
             fragment = fragments[fragmentname]
             # search highest peak within tolerance
-            peak = searchMassInSpectrum(fragment.mass, tolerance, spectrum)
+            peak = searchMassInSpectrum(fragment.mass, tolerance, toleranceType, spectrum)
             if peak == None:
                 continue
             fragment.peak = peak
@@ -434,7 +433,7 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, maxCharg
             fragment = found_fragments[key]
             for i in range(1, 4):
                 mz = fragment.mass + i/float(fragment.charge)
-                peak = searchMassInSpectrum(mz, tolerance, spectrum)
+                peak = searchMassInSpectrum(mz, tolerance, toleranceType, spectrum)
                 if peak == None:
                     break
                 isotope = Fragment(fragment.name + "/"+str(i), mz, fragment.charge, FragmentType.ISOTOPE, peak=peak, parents={fragment.name})

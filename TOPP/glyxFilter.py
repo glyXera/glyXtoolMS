@@ -15,6 +15,7 @@ import datetime
 import glyxtoolms
 import pyopenms
 
+
 class Peak(object):
     """  Stores all relevant information to make the scoring on the spectrum
 
@@ -94,7 +95,7 @@ class Score(glyxtoolms.io.GlyxXMLSpectrum, object):
             p = pair[1]
             p.rank = i+1
 
-    def makeScoring(self, oxoniumIons, ionthreshold, tolerance):
+    def makeScoring(self, oxoniumIons, ionthreshold, tolerance, toleranceType):
         """Runs scoring function on the previously added peaks
            Input: oxoniumIons, ionthreshold(float), tolerance(float)
             oxoniumIons is a dict with the name as key, and
@@ -107,7 +108,11 @@ class Score(glyxtoolms.io.GlyxXMLSpectrum, object):
             if peak.intensity < ionthreshold:
                 continue
             for oxname in oxoniumIons:
-                if abs(peak.mass - oxoniumIons[oxname]["mass"]) < tolerance:
+                if glyxtoolms.lib.isInMassTolerance(peak.mass, 
+                                                    oxoniumIons[oxname]["mass"], 
+                                                    tolerance, 
+                                                    toleranceType, 
+                                                    bound="both") == True:
                     foundOxoniumIons[oxname] = foundOxoniumIons.get(oxname, []) + [peak]
 
         # count if at least 2 oxoniumions are found
@@ -155,7 +160,11 @@ class Score(glyxtoolms.io.GlyxXMLSpectrum, object):
             mz_loss = ((self.monoisotopicMass*self.precursorCharge-mzOx*chargeOx)/
                        (self.precursorCharge-chargeOx))
 
-            if abs(mz_loss - peak.mass) < tolerance:
+            if glyxtoolms.lib.isInMassTolerance(mz_loss, 
+                                                peak.mass, 
+                                                tolerance, 
+                                                toleranceType, 
+                                                bound="both") == True:
                 oxoniumLosses[oxname] = oxoniumLosses.get(oxname, []) +[peak]
 
         for oxname in oxoniumLosses:
@@ -255,6 +264,7 @@ def main(options):
     # set parameters
     skippedSingleCharged = 0
     tolerance = float(options.tolerance)
+    toleranceType = options.toleranceType
     ionthreshold = float(options.ionthreshold)
     scorethreshold = float(options.scorethreshold)
 
@@ -293,6 +303,7 @@ def main(options):
     parameters.setSourceFileChecksum(source.getChecksum())
 
     parameters.setMassTolerance(str(options.tolerance))
+    parameters.setMassToleranceType(toleranceType)
     parameters.setIonThreshold(str(options.ionthreshold))
     parameters.setNrNeutrallosses(str(0))
     parameters.setMaxOxoniumCharge(str(1))
@@ -334,9 +345,10 @@ def main(options):
             minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
             if minRT > spec.getRT() or spec.getRT() > maxRT:
                 continue
-            if minMZ-tolerance > precursor.getMZ() or precursor.getMZ() > maxMZ+tolerance:
+            if glyxtoolms.lib.isInMassTolerance(precursor.getMZ(), minMZ, tolerance, toleranceType, bound="lower") == False:
                 continue
-            #rt = feature.getRT()
+            if glyxtoolms.lib.isInMassTolerance(precursor.getMZ(), maxMZ, tolerance, toleranceType, bound="upper") == False:
+                continue
             rt = spec.getRT()
             mz = feature.getMZ()
             charge = feature.getCharge()
@@ -367,7 +379,7 @@ def main(options):
             score.normIntensity()
 
             # make scoring
-            score.makeScoring(oxoniumIons, ionthreshold, tolerance)
+            score.makeScoring(oxoniumIons, ionthreshold, tolerance, toleranceType)
             
             if score.getLogScore() < scorethreshold:
                 score.setIsGlycopeptide(True)
@@ -446,17 +458,20 @@ def handle_args(argv=None):
     parser.add_argument("--createFeatures", dest="createFeatures",
                         help="Create features for featureless spectra")
     parser.add_argument("--hasFucose", dest="hasFucose",
-                        help="include oxoniumions indicative for fucosylation")
+                        help="include oxonium ions indicative for fucosylation")
     parser.add_argument("--hasNANA", dest="hasNANA",
-                        help="include oxoniumions indicative for sialisation with NANA")
+                        help="include oxonium ions indicative for sialisation with NANA")
     parser.add_argument("--hasNGNA", dest="hasNGNA",
-                        help="include oxoniumions indicative for sialisation with NGNA")
+                        help="include oxonium ions indicative for sialisation with NGNA")
     parser.add_argument("--oxoniumions", dest="oxoniumions",
                         nargs='?', const="",
-                        help="Additional oxoniumions as comma separated strings")
+                        help="Additional oxonium ions as comma separated strings")
     parser.add_argument("--tolerance", dest="tolerance",
-                        help="Mass tolerance in th",
+                        help="Mass tolerance in either Da or ppm",
                         type=float)
+    parser.add_argument("--toleranceType", dest="toleranceType",
+                        help="Type of the given mass tolerance",
+                        choices=["Da", "ppm"])
     parser.add_argument("--ionthreshold", dest="ionthreshold",
                         help="Threshold for reporter ions",
                         type=int)

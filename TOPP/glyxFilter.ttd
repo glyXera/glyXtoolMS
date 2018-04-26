@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>FileConversion</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/glyxFilter.py --inMZML "%2" --inFeature "%3" --outGlyML "%4" --createFeatures "%5" --hasFucose "%6" --hasNANA %7 --hasNGNA %8 --oxoniumions "%9" --tolerance %10 --ionthreshold %11 --scorethreshold "%12"</cloptions>
+		  <cloptions> "%1"/glyxFilter.py --inMZML "%2" --inFeature "%3" --outGlyML "%4" --createFeatures "%5" --hasFucose "%6" --hasNANA %7 --hasNGNA %8 --oxoniumions "%9" --tolerance %10 --toleranceType %11 --ionthreshold %12 --scorethreshold "%13"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -34,8 +34,9 @@
             <mapping id="8" cl="%%hasNGNA" />
 			<mapping id="9" cl="%%oxoniumions" />
 			<mapping id="10" cl="%%tolerance" />
-			<mapping id="11" cl="%%ionthreshold" />
-			<mapping id="12" cl="%%scorethreshold" />
+            <mapping id="11" cl="%%toleranceType" />
+			<mapping id="12" cl="%%ionthreshold" />
+			<mapping id="13" cl="%%scorethreshold" />
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
@@ -47,7 +48,8 @@
             <ITEM name="hasNANA" value="true" type="string" restrictions="true,false" description="Include oxoniumions indicative for sialisation with NANA"/>
             <ITEM name="hasNGNA" value="false" type="string" restrictions="true,false" description="Include oxoniumions indicative for sialisation with NGNA"/>
             <ITEM name="oxoniumions" value="" type="string" description="Check for additional oxonium ions"/>
-			<ITEM name="tolerance" value="0.5" type="float" description="Mass tolerance in Da"/>
+			<ITEM name="tolerance" value="10" type="float" description="Mass tolerance"/>
+            <ITEM name="toleranceType" value="ppm" type="string" restrictions="Da,ppm" description="Type of the given mass tolerance"/>
 			<ITEM name="ionthreshold" value="0" type="int" description="Threshold for reporter ion intensity to be counted for score"/>
 			<ITEM name="scorethreshold" value="2.5" type="float" description="score threshold for reporting mass spectrum as glycopeptide"/>
 		  </ini_param>
