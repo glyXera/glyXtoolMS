@@ -823,12 +823,13 @@ class GlyxXMLFile(object):
                     xString = xmlFeature.find("./consensusSpectrum/x").text
                     yString = xmlFeature.find("./consensusSpectrum/y").text
                     feature.consensus = []
-                    i = 0
-                    for x, y in zip(xString.split(";"), yString.split(";")):
-                        x = float(x)
-                        y = float(y)
-                        feature.consensus.append(GlyxXMLConsensusPeak(x, y, i))
-                        i += 1
+                    if xString != None and yString != None:
+                        i = 0
+                        for x, y in zip(xString.split(";"), yString.split(";")):
+                            x = float(x)
+                            y = float(y)
+                            feature.consensus.append(GlyxXMLConsensusPeak(x, y, i))
+                            i += 1
                 except:
                     print "Parsing error at "+feature.id
                     raise
