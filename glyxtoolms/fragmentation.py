@@ -457,7 +457,7 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, toleranc
                         name = sp1+"+"+g.toString()+"-"+sp3+"("+sp4
                     else:
                         sp1, sp2 = fragment.name.split("(")
-                        name = sp1+"+"+g.toString()+"("+sp4
+                        name = sp1+"+"+g.toString()+"("+sp2
                         
                     fragment1 = Fragment(name,
                                          fragment.mass + g.mass/float(fragment.charge),
