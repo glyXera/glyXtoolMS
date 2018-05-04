@@ -141,7 +141,6 @@ class Fragment(object):
         self.cterm = cterm # fragment position from nterminus (to calculate x,y,z position)
         self.nterm = nterm # fragment position from cterminus (to calculate a,b,c position)
 
-
 def generatePeptideFragments(peptide,charge):
 
     sequence = peptide.sequence
@@ -282,10 +281,6 @@ def generatePeptideFragments(peptide,charge):
             data += Fragment(key+"-NH3", byNH3.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
             data += Fragment(key+"-H2O", byH2O.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
             data += Fragment(key+"-CO", byCO.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
-    
-    for name in data:
-        if name.startswith("z"):
-            print name, data[name].mass
     
     chargedFragments = FragmentList()
     for fragment in data.values():

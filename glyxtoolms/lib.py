@@ -490,7 +490,7 @@ letterCode = {
 
 "NEUGC": "NEUGC",  # NeuGc
 "NG": "NEUGC",  # NeuGc
-"NeuAc": "NEUGC",  # NeuGc
+"NeuGc": "NEUGC",  # NeuGc
 "Sg": "NEUGC"  # NeuGc
 }
 
@@ -522,7 +522,6 @@ class Glycan(glyxtoolms.io.XMLGlycan):
         self.sugar = {'DHEX': 0, 'HEX': 0, 'HEXNAC': 0, 'NEUAC': 0, 'NEUGC':0}
         self.mass = 0
         if composition is not None:
-            print "here", composition
             self._splitComposition(composition)
 
     def setComposition(self, NEUAC=0, NEUGC=0, DHEX=0, HEX=0, HEXNAC=0):
