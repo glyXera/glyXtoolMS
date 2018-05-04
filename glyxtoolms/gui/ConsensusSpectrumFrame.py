@@ -38,19 +38,28 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         options["annotations"]["labelcolor"] = "blue violet"
         options["annotations"]["oxcolor"] = "red"
         options["annotations"]["immcolor"] = "yellow"
-        options["annotations"]["ycolor"] = "blue"
+        options["annotations"]["acolor"] = "blue"
         options["annotations"]["bcolor"] = "blue"
+        options["annotations"]["ccolor"] = "blue"
+        options["annotations"]["xcolor"] = "blue"
+        options["annotations"]["ycolor"] = "blue"
+        options["annotations"]["zcolor"] = "blue"
         options["annotations"]["bycolor"] = "blue"
         options["annotations"]["pepcolor"] = "blue"
         options["annotations"]["glycopepcolor"] = "green"
 
 
         options["annotations"]["shownames"] = True
+        options["annotations"]["showisotopes"] = True
         options["annotations"]["showmasses"] = True
         options["annotations"]["showox"] = True
         options["annotations"]["showimmonium"] = True
-        options["annotations"]["showy"] = True
+        options["annotations"]["showa"] = True
         options["annotations"]["showb"] = True
+        options["annotations"]["showc"] = True
+        options["annotations"]["showx"] = True
+        options["annotations"]["showy"] = True
+        options["annotations"]["showz"] = True
         options["annotations"]["showby"] = True
         options["annotations"]["showpep"] = True
         options["annotations"]["showglycopep"] = True
@@ -87,11 +96,16 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
         addFragmentHighlight(showName="showmasses", text="Show Mass Labels")
         addFragmentHighlight(showName="shownames", text="Show Names", colorName = "labelcolor")
+        addFragmentHighlight(showName="showisotopes", text="Show Isotopes")
 
         addFragmentHighlight(showName="showox", text="Highlight oxonium ions", colorName = "oxcolor")
         addFragmentHighlight(showName="showimmonium", text="Highlight immmonium ions", colorName = "immcolor")
-        addFragmentHighlight(showName="showy", text="Highlight y-ions", colorName = "ycolor")
+        addFragmentHighlight(showName="showa", text="Highlight a-ions", colorName = "acolor")
         addFragmentHighlight(showName="showb", text="Highlight b-ions", colorName = "bcolor")
+        addFragmentHighlight(showName="showc", text="Highlight c-ions", colorName = "ccolor")
+        addFragmentHighlight(showName="showx", text="Highlight x-ions", colorName = "xcolor")
+        addFragmentHighlight(showName="showy", text="Highlight y-ions", colorName = "ycolor")
+        addFragmentHighlight(showName="showz", text="Highlight z-ions", colorName = "zcolor")
         addFragmentHighlight(showName="showby", text="Highlight by-ions", colorName = "bycolor")
 
         addFragmentHighlight(showName="showpep", text="Highlight peptide ions", colorName = "pepcolor")
@@ -154,8 +168,12 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         paintHierachary.append((TYPE.GLYCOPEPTIDEION, "showglycopep", "glycopepcolor",4))
         paintHierachary.append((TYPE.YION, "showy", "ycolor",5))
         paintHierachary.append((TYPE.BION, "showb", "bcolor",6))
-        paintHierachary.append((TYPE.BYION, "showby", "bycolor",7))
-        paintHierachary.append((TYPE.UNKNOWN, "", "",8))
+        paintHierachary.append((TYPE.CION, "showc", "ccolor",7))
+        paintHierachary.append((TYPE.XION, "showx", "xcolor",8))
+        paintHierachary.append((TYPE.ZION, "showz", "zcolor",9))
+        paintHierachary.append((TYPE.AION, "showa", "acolor",11))
+        paintHierachary.append((TYPE.BYION, "showby", "bycolor",12))
+        paintHierachary.append((TYPE.UNKNOWN, "", "",13))
 
 
         def findTypes(all_fragments, fragList):
@@ -323,7 +341,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             x, y, namedText, massText = textinfo
             text = []
             if self.options["annotations"]["shownames"] == True:
-                text.append(namedText)
+                if self.options["annotations"]["showisotopes"] == True or "/" not in namedText: # check if name is an isotope
+                    text.append(namedText)
             if self.options["annotations"]["showmasses"] == True:
                 text.append(massText)
             text = "\n".join(text)

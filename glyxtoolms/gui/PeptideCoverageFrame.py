@@ -6,53 +6,28 @@ import os
 import tkFileDialog
 import glyxtoolms
 
-def parseFragmentname(name, length):
-    match = re.match(r"^y\d+$", name)
-    if match is not None:
-        pos = length-int(match.group()[1:])
-        return {"type":"y", "start":pos, "end":length}
-    match = re.match(r"^y\d+", name)
-    if match is not None:
-        pos = length-int(match.group()[1:])
-        return {"type":"yinternal", "start":pos, "end":length}
-    match = re.match(r"^b\d+$", name)
-    if match is not None:
-        pos = int(match.group()[1:])
-        return {"type":"b", "start":0, "end":pos}
-    match = re.match(r"^b\d+", name)
-    if match is not None:
-        pos = int(match.group()[1:])
-        return {"type":"binternal", "start":0, "end":pos}
-    match = re.match(r"^y\d+b\d+", name)
-    if match is not None:
-        start, end = match.group()[1:].split("b")
-        return {"type":"yb", "start":start, "end":end}
-    return None
-
-
-def parseInternalFragment(name, length):
-    match = re.match(r"^y\d+b\d+", name)
-    if match == None:
-        return None, None
-    y, b = match.group()[1:].split("b")
-    y = length-int(y)
-    b = int(b)
-    return y, b
-
-def parseBFragment(name):
-    match = re.match(r"^b\d+", name)
-    if match == None:
-        return None, None
-    b = int(match.group()[1:])
-    return 0, b
-
-def parseYFragment(name, length):
-    match = re.match(r"^y\d+", name)
-    if match == None:
-        return None, None
-    y = length-int(match.group()[1:])
-    return y, length
-
+def parseFragmentname(name):
+    b = re.sub("\(.+\)","",name)
+    sp = re.split("(\+|-)",b)
+    ion = sp[0]
+    mods = []
+    for i in range(1,len(sp),2):
+        mods.append(sp[i]+sp[i+1])
+    
+    fragType = ""
+    abc = -1
+    for match in re.findall("(a\d+|b\d+|c\d+)",ion):
+        typ = re.sub("\d","",match)
+        pos = int(re.sub("\D","",match))
+        abc = pos
+        fragType += typ
+    xyz = -1
+    for match in re.findall("(x\d+|y\d+|z\*?\d+)",ion):
+        typ = re.sub("\d","",match)
+        pos = int(re.sub("\D","",match))
+        xyz = pos
+        fragType += typ
+    return fragType, abc,xyz, mods
 
 class PeptideCoverageFrame(Tkinter.Frame):
 
@@ -81,7 +56,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
         #self.canvas.pack(expand=True, fill="both")
 
         self.canvas.config(highlightthickness=0)
-        self.canvas.grid(row=1, column=0, sticky="NSEW")
+        self.canvas.grid(row=1, column=0, columnspan=2, sticky="NSEW")
 
 
 
@@ -97,17 +72,36 @@ class PeptideCoverageFrame(Tkinter.Frame):
         self.aMenu = Tkinter.OptionMenu(self, self.menuVar, [])
         self.aMenu.grid(row=0, column=0)
         self.setMenuChoices([])
+        
+        self.typeFrame = Tkinter.Frame(self)
+        self.typeFrame.grid(row=0,column=1)
+        
+        self.setOptions()
+        
+        # add checkbuttons
+        self.checkButtons = {}
+        buttonOrder =  ["a","b","c","x","y","z","z*","by","-NH3","-H2O","-CO","+Glycan"]
+        self.buttonNames = {"a":"showa","b":"showb","c":"showc",
+                            "x":"showx", "y":"showy", "z":"showz",
+                            "z*":"showzone", "by":"showby", "-NH3":"shownh3",
+                            "-H2O":"showh2o", "-CO":"showco", "+Glycan":"showglycan"}
+        for name in buttonOrder:
+            var = Tkinter.IntVar()
+            c = Tkinter.Checkbutton(self.typeFrame, text=name,variable=var)
+            c.pack(side="left")
+            self.checkButtons[name] = var
+            var.set(self.options["select"].get(self.buttonNames[name],True))
+            var.trace("w", lambda a,b,c: self.setIonselection())
+            
 
         # link function
         self.model.registerClass("PeptideCoverageFrame", self)
-
-        # debug
-        #g = glyxtoolms.lib.Glycopeptide("EEQFNSTFR", "H5N3F1Sa1Sg1")
-        #g.glycan.typ = "N"
-        #self.hit = glyxtoolms.io.GlyxXMLGlycoModHit()
-        #self.hit.glycan = g.glycan
-        #self.hit.peptide = g.peptide
-        #self.paint_canvas()
+    
+    def setIonselection(self):
+        for name in self.buttonNames:
+            var = self.checkButtons.get(name,None)
+            self.options["select"][self.buttonNames[name]] = var.get() == 1
+        self.paint_canvas()
 
     def plotSingleFragment(self, *args):
         if self.hit == None:
@@ -293,55 +287,61 @@ class PeptideCoverageFrame(Tkinter.Frame):
                 key = "".join(sorted(name))
                 parts[key] = parts.get(key, []) + [name]
 
-        ySeries = {}
-        bSeries = {}
+        xyzSeries = {}
+        abcSeries = {}
         self.fragmentCoverage = {}
 
         peptideFragments = []
         TYPE = glyxtoolms.fragmentation.FragmentType
         for name in self.hit.fragments:
             fragment = self.hit.fragments[name]
+            if fragment.typ == TYPE.ISOTOPE:
+                continue
             if fragment.typ in [TYPE.PEPTIDEION, TYPE.GLYCOPEPTIDEION]:
                 peptideFragments.append(fragment)
                 continue
-            elif fragment.typ not in [TYPE.YION, TYPE.BION, TYPE.BYION]:
+            elif fragment.typ not in [TYPE.AION,
+                                      TYPE.BION,
+                                      TYPE.CION,
+                                      TYPE.XION,
+                                      TYPE.YION,
+                                      TYPE.ZION,
+                                      TYPE.BYION]:
                 continue
-            result = parseFragmentname(name, peptideLength)
-            if result == None:
+                
+            fragType,abc,xyz,mods = parseFragmentname(name)
+            # check if ion is active
+            active = True
+            if fragType in self.checkButtons:
+                active = self.checkButtons.get(fragType).get()
+            # check if modifications are allowed
+            for mod in mods:
+                if mod.startswith("+"): # is glycan
+                    mod = "+Glycan"
+                if mod not in self.checkButtons:
+                    continue
+                if self.checkButtons.get(mod).get() == False:
+                    active = False
+                    
+            if not active:
                 continue
 
-            start = result["start"]
-            end = result["end"]
-            typ = result["type"]
-            if typ == "y":
-                ySeries[start] = True
-            elif typ == "yinternal" and start not in ySeries:
-                ySeries[start] = False
-
-            if typ == "b":
-                bSeries[end] = True
-            elif typ == "binternal" and end not in bSeries:
-                bSeries[end] = False
-
-            key_y = "y" + str(start)
-            key_b = "b" + str(end)
-            self.fragmentCoverage[key_y] = self.fragmentCoverage.get(key_y, []) + [name]
-            self.fragmentCoverage[key_b] = self.fragmentCoverage.get(key_b, []) + [name]
+            if xyz != -1:
+                xyzSeries[xyz] = xyzSeries.get(xyz, []) + [fragType]
+                key = "xyz" + str(xyz)
+                self.fragmentCoverage[key] = self.fragmentCoverage.get(key, []) + [name]
+            if abc != -1:
+                abcSeries[abc] = abcSeries.get(abc, []) + [fragType]
+                key = "abc" + str(abc)
+                self.fragmentCoverage[key] = self.fragmentCoverage.get(key, []) + [name]
+            
+        for key in abcSeries:
+            abcSeries[key] = set(abcSeries[key])
+        for key in xyzSeries:
+            xyzSeries[key] = set(xyzSeries[key])   
 
         restNames = [fragment.name for fragment in sorted(peptideFragments, key=lambda x:(x.mass*x.charge))]
         self.setMenuChoices(restNames)
-
-        # remove 0 and len
-        if 0 in ySeries:
-            ySeries.pop(0)
-        if 0 in bSeries:
-            bSeries.pop(0)
-
-        if peptideLength in ySeries:
-            ySeries.pop(peptideLength)
-        if peptideLength in bSeries:
-            bSeries.pop(peptideLength)
-
 
         # write peptide sequence
 
@@ -377,38 +377,38 @@ class PeptideCoverageFrame(Tkinter.Frame):
         # plot lines
 
         self.coverage = {}
-        for index in ySeries:
-            x = start + (index-0.5)*letterSize
+        for index in xyzSeries:
+            x = start + (peptideLength - index-0.5)*letterSize
             color = "black"
-            if ySeries[index] == True:
-                dash = ()
-            else:
-                dash=(3,5)
+            text = str(index)
+            if len(xyzSeries[index]) == 1:
+                text = "".join(xyzSeries[index])+str(index)
 
             item1 = self.canvas.create_line(x, yc,
                                             x, 20,
                                             tags=("site", ),
-                                            dash=dash,
                                             fill=color)
             item2 = self.canvas.create_line(x, 20,
                                             x+10, 20,
                                             tags=("site", ),
-                                            dash=dash,
                                             fill=color)
             item3 = self.canvas.create_text((x+5, 10),
-                                            text="y"+str(len(text)-index),
+                                            text=text,
                                             tags=("site", ),
                                             fill=color,
                                             anchor="center",
                                             justify="center")
-            self.coverage[item1] = "y" + str(index)
-            self.coverage[item2] = "y" + str(index)
-            self.coverage[item3] = "y" + str(index)
+            self.coverage[item1] = "xyz" + str(index)
+            self.coverage[item2] = "xyz" + str(index)
+            self.coverage[item3] = "xyz" + str(index)
 
 
-        for index in bSeries:
+        for index in abcSeries:
             x = start + (index-0.5)*letterSize
             color = "black"
+            text = str(index)
+            if len(abcSeries[index]) == 1:
+                text = "".join(abcSeries[index])+str(index)
             item1 = self.canvas.create_line(x, yc,
                                             x, self.height-20,
                                             tags=("site", ),
@@ -418,14 +418,14 @@ class PeptideCoverageFrame(Tkinter.Frame):
                                             tags=("site", ),
                                             fill=color)
             item3 = self.canvas.create_text((x-5, self.height-10),
-                                            text="b"+str(index),
+                                            text=text,
                                             tags=("site", ),
                                             fill=color,
                                             anchor="center",
                                             justify="center")
-            self.coverage[item1] = "b" + str(index)
-            self.coverage[item2] = "b" + str(index)
-            self.coverage[item3] = "b" + str(index)
+            self.coverage[item1] = "abc" + str(index)
+            self.coverage[item2] = "abc" + str(index)
+            self.coverage[item3] = "abc" + str(index)
 
     def identifier(self):
         return "PeptideCoverageFrame"
@@ -455,5 +455,38 @@ class PeptideCoverageFrame(Tkinter.Frame):
                     self.canvas.itemconfigure(item, fill="red")
         self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found,zoomIn=True)
 
+    def setOptions(self, reset=False):
+        self.options = {}
+        default = self.getDefaultOptions()
+        if reset == False and self.identifier().lower() in self.model.options :
+            self.options = self.model.options[self.identifier().lower()]
+            # copy over missing default options
+            for keyDefault in default:
+                if not keyDefault in self.options:
+                    self.options[keyDefault] = {}
+                for typDefault in default[keyDefault]:
+                    if typDefault not in self.options[keyDefault]:
+                        value = default[keyDefault][typDefault]
+                        self.options[keyDefault][typDefault] = value
+        else:
+            self.options = self.getDefaultOptions()
 
+        # relink options to model options
+        self.model.options[self.identifier().lower()] = self.options
 
+    def getDefaultOptions(self):
+        options = {}
+        options["select"] = {}
+        options["select"]["showa"] = True
+        options["select"]["showb"] = True
+        options["select"]["showc"] = True
+        options["select"]["showx"] = True
+        options["select"]["showy"] = True
+        options["select"]["showz"] = True
+        options["select"]["showzone"] = True
+        options["select"]["showby"] = True
+        options["select"]["shownh3"] = True
+        options["select"]["showco"] = True
+        options["select"]["showh2o"] = True
+        options["select"]["showglycan"] = True
+        return options

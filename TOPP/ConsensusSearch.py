@@ -44,7 +44,8 @@ def main(options):
                                                                        feature.consensus, 
                                                                        tolerance,
                                                                        toleranceType,
-                                                                       feature.getCharge())
+                                                                       feature.getCharge(),
+                                                                       maxIsotope=4)
         peptidevariant = result["peptidevariant"] 
         fragments = result["fragments"]
         # write fragments to hit

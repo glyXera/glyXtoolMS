@@ -462,29 +462,44 @@ class ProteinDigest(object):
         return glycopeptides
 
 # --------------------------------------- Glycan -----------------------
-twoLetterCode = {
-"GN":"HEXNAC",  # GlcNAc
+letterCode = {
+
 "M": "HEX",     # Mannose
 "G": "HEX",     # Galactose
-"GC": "HEX",    # Glucose
-"AN": "HEXNAC", # GalNAc
-"NA": "NEUAC",  # NEUAC
-"NG": "NEUGC",  # NEUGC
-"F": "DHEX",    # Fucose
-"AG": "HEX",    # alpha-Gal
-"HN": "HEXNAC", # Hexnac
 "H": "HEX",     # Hex
-"N": "HEXNAC",  # HEXNAC
-"Sa": "NEUAC",  # NEUAC
-"Sg": "NEUGC"  # NEUGC
+"Hex": "HEX",     # Hex
+"HEX": "HEX",     # Hex
+"AG": "HEX",    # alpha-Gal
+
+"HEXNAC":"HEXNAC", #Hexnac
+"HexNAc":"HEXNAC", #Hexnac
+"N": "HEXNAC",  # Hexnac
+"HN": "HEXNAC", # Hexnac
+"GC": "HEX",    # Glucose
+"GN":"HEXNAC",  # GlcNAc
+"AN": "HEXNAC", # GalNAc
+
+"DHEX": "DHEX",    # Fucose
+"F": "DHEX",    # Fucose
+"Fuc": "DHEX",    # Fucose
+
+"NA": "NEUAC",  # NeuAc
+"NANA": "NEUAC",  # NeuAc
+"NeuAc": "NEUAC",  # NeuAc
+"Sa": "NEUAC",  # NeuAc
+
+"NEUGC": "NEUGC",  # NeuGc
+"NG": "NEUGC",  # NeuGc
+"NeuAc": "NEUGC",  # NeuGc
+"Sg": "NEUGC"  # NeuGc
 }
 
 msComposition = {
-"HEXNAC": "N",
-"HEX": "H",
-"DHEX": "F",
-"NEUAC": "Sa",
-"NEUGC": "Sg"
+"HEXNAC": "HexNAc",
+"HEX": "Hex",
+"DHEX": "Fuc",
+"NEUAC": "NeuAc",
+"NEUGC": "NeuGc"
 }
 
 msCompositionOrder = [
@@ -499,7 +514,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
 
     def __init__(self, composition=None, typ="?"):
         super(Glycan, self).__init__()
-        self.composition = composition
+        self.composition = ""
         self.typ = typ
         self.glycosylationSite = None
         self.linearCode = ""
@@ -507,6 +522,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
         self.sugar = {'DHEX': 0, 'HEX': 0, 'HEXNAC': 0, 'NEUAC': 0, 'NEUGC':0}
         self.mass = 0
         if composition is not None:
+            print "here", composition
             self._splitComposition(composition)
 
     def setComposition(self, NEUAC=0, NEUGC=0, DHEX=0, HEX=0, HEXNAC=0):
@@ -552,20 +568,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
 
     def _splitComposition(self, composition):
         """
-        Split composition using twoLetterCode
-
-        "GN":"HEXNAC",  # GlcNAc
-        "M": "HEX",     # Mannose
-        "G": "HEX",     # Galactose
-        "GC": "HEX",    # Glucose
-        "AN": "HEXNAC", # GalNAc
-        "NA": "NEUAC",  # NEUAC
-        "NG": "NEUGC",  # NEUGC
-        "F": "DHEX",    # Fucose
-        "AG": "HEX",    # alpha-Gal
-        "HN": "HEXNAC", # Hexnac
-        "H": "HEX",     # Hex
-
+        Split composition using possible glycan names
         """
         try:
             assert re.match('^([A-z]+\d+)+$', composition) != None
@@ -574,15 +577,14 @@ class Glycan(glyxtoolms.io.XMLGlycan):
         self.mass = 0
         for comp in re.findall(r"[A-z]+\d+", composition):
             name = re.search(r"[A-z]+", comp).group()
-            if name in msComposition:
-                unit = name
-            elif name in twoLetterCode:
-                unit = twoLetterCode[name]
+            if name in letterCode:
+                unit = letterCode[name]
             else:
                 raise Exception("Unknown modification "+ name)
             amount = int(re.search(r"\d+", comp).group())
             self.sugar[unit] = amount
             self.mass += glyxtoolms.masses.GLYCAN[unit]*amount
+        self.composition = self.toString()
 
     def getComposition(self, typ="N"):
         comp = self.sugar.copy()
