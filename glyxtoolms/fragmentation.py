@@ -200,9 +200,9 @@ def generatePeptideFragments(peptide,charge):
             if ("S" in sequence or
                     "T" in sequence or
                     sequence.startswith("E")):
-                data += Fragment("a"+key+"-H2O", bH2O.mass(), 1, typ=FragmentType.AION,cterm=i+1)
+                data += Fragment("a"+key+"-H2O", aH2O.mass(), 1, typ=FragmentType.AION,cterm=i+1)
                 data += Fragment("b"+key+"-H2O", bH2O.mass(), 1, typ=FragmentType.BION,cterm=i+1)
-                data += Fragment("c"+key+"-H2O", bH2O.mass(), 1, typ=FragmentType.CION,cterm=i+1)
+                data += Fragment("c"+key+"-H2O", cH2O.mass(), 1, typ=FragmentType.CION,cterm=i+1)
 
         cTerm = Composition() + {"H+":1,"H":1, "O":1}
         peptidestring = ""
