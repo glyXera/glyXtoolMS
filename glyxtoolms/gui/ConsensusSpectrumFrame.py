@@ -256,7 +256,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             else:
                 fragments = self.annotated.get(peak, [])
                 for fragment in fragments:
-                    foundFrag.add(fragment)
+                    if self.options["annotations"]["showisotopes"] == True or fragment.typ != TYPE.ISOTOPE:
+                        foundFrag.add(fragment)
             # sort fragment ions
             if len(foundGlycans) > 0 and len(foundFrag) > 0:
 
@@ -341,8 +342,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             x, y, namedText, massText = textinfo
             text = []
             if self.options["annotations"]["shownames"] == True:
-                if self.options["annotations"]["showisotopes"] == True or "/" not in namedText: # check if name is an isotope
-                    text.append(namedText)
+                text.append(namedText)
             if self.options["annotations"]["showmasses"] == True:
                 text.append(massText)
             text = "\n".join(text)
