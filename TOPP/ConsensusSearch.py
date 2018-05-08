@@ -25,14 +25,12 @@ def main(options):
     tolerance = float(options.tolerance)
     toleranceType = options.toleranceType
     ionthreshold = float(options.ionthreshold)
+    pepIons = set(options.pepIons.split(" "))
+    print "pepIons", pepIons
     
     # load analysis file
     glyxXMLFile = glyxtoolms.io.GlyxXMLFile()
     glyxXMLFile.readFromFile(options.inGlyML)
-    
-    scoredSpectra = {}
-    for spectrum in glyxXMLFile.spectra:
-        scoredSpectra[spectrum.getNativeId()] = spectrum
 
     keep = []
     for hit in glyxXMLFile.glycoModHits:
@@ -45,7 +43,11 @@ def main(options):
                                                                        tolerance,
                                                                        toleranceType,
                                                                        feature.getCharge(),
-                                                                       maxIsotope=4)
+                                                                       maxIsotope=4,
+                                                                       types=pepIons)
+        if abs(hit.feature.getMZ()-1215.984) < 0.1:
+            for mass,name in sorted([(result["all"][key].mass, key) for key in result["all"]]):
+                print mass,name
         peptidevariant = result["peptidevariant"] 
         fragments = result["fragments"]
         # write fragments to hit
@@ -80,6 +82,8 @@ def handle_args(argv=None):
     parser.add_argument("--ionthreshold", dest="ionthreshold",
                         help="Threshold for peptide ions",
                         type=int)
+    parser.add_argument("--pepIons", dest="pepIons",
+                        help="Peptide ion types to search")
     if not argv:
         print "parameters", sys.argv[1:]
         args = parser.parse_args(sys.argv[1:])

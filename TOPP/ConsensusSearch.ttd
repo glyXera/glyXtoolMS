@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>FileConversion</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/ConsensusSearch.py --inGlyML "%2" --outGlyML "%3" --tolerance "%4" --toleranceType "%5" --ionthreshold "%6"</cloptions>
+		  <cloptions> "%1"/ConsensusSearch.py --inGlyML "%2" --outGlyML "%3" --tolerance "%4" --toleranceType "%5" --ionthreshold "%6" --pepIons "%7"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -30,6 +30,7 @@
 			<mapping id="4" cl="%%tolerance" />
             <mapping id="5" cl="%%toleranceType" />
 			<mapping id="6" cl="%%ionthreshold" />
+            <mapping id="7" cl="%%pepIons" />
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
@@ -38,6 +39,7 @@
 			<ITEM name="tolerance" value="10" type="float" description="Mass tolerance"/>
             <ITEM name="toleranceType" value="ppm" type="string" restrictions="Da,ppm" description="Type of the given mass tolerance"/>
 			<ITEM name="ionthreshold" value="0" type="int" description="Threshold for reporter ion intensity to be counted for score"/>
+            <ITEMLIST name="pepIons" value="[]" type="string" restrictions="a,a-H2O,a-NH3,b,b-H2O,b-NH3,by,c,c-H2O,c-NH3,x,x-H2O,x-NH3,y,y-H2O,y-NH3,z,z-H2O,z-NH3,z*" description="Peptide ions to search for"/>
 		  </ini_param>
 		</external>
 	</tool>

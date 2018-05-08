@@ -141,8 +141,7 @@ class Fragment(object):
         self.cterm = cterm # fragment position from nterminus (to calculate x,y,z position)
         self.nterm = nterm # fragment position from cterminus (to calculate a,b,c position)
 
-def generatePeptideFragments(peptide,charge):
-
+def generatePeptideFragments(peptide,charge,types={"b","y"}):
     sequence = peptide.sequence
 
     # assure that modifications are localized and have a known composition
@@ -187,22 +186,32 @@ def generatePeptideFragments(peptide,charge):
 
         if i < len(sequence)-1: # generate a,b and c ions
             key = str(i+1)
-            data += Fragment("a"+key, a.mass(), 1, typ=FragmentType.AION,cterm=i+1)
-            data += Fragment("b"+key, b.mass(), 1, typ=FragmentType.BION,cterm=i+1)
-            data += Fragment("c"+key, c.mass(), 1, typ=FragmentType.CION,cterm=i+1)
+            if "a" in types:
+                data += Fragment("a"+key, a.mass(), 1, typ=FragmentType.AION,cterm=i+1)
+            if "b" in types:    
+                data += Fragment("b"+key, b.mass(), 1, typ=FragmentType.BION,cterm=i+1)
+            if "c" in types:
+                data += Fragment("c"+key, c.mass(), 1, typ=FragmentType.CION,cterm=i+1)
+            
             if ("R" in sequence or
                     "K" in sequence or
                     "Q" in sequence or
                     "N" in sequence):
-                data += Fragment("a"+key+"-NH3", aNH3.mass(),1, typ=FragmentType.AION,cterm=i+1)
-                data += Fragment("b"+key+"-NH3", bNH3.mass(),1, typ=FragmentType.BION,cterm=i+1)
-                data += Fragment("c"+key+"-NH3", cNH3.mass(),1, typ=FragmentType.CION,cterm=i+1)
+                if "a-NH3" in types:
+                    data += Fragment("a"+key+"-NH3", aNH3.mass(),1, typ=FragmentType.AION,cterm=i+1)
+                if "b-NH3" in types:
+                    data += Fragment("b"+key+"-NH3", bNH3.mass(),1, typ=FragmentType.BION,cterm=i+1)
+                if "c-NH3" in types:
+                    data += Fragment("c"+key+"-NH3", cNH3.mass(),1, typ=FragmentType.CION,cterm=i+1)
             if ("S" in sequence or
                     "T" in sequence or
                     sequence.startswith("E")):
-                data += Fragment("a"+key+"-H2O", aH2O.mass(), 1, typ=FragmentType.AION,cterm=i+1)
-                data += Fragment("b"+key+"-H2O", bH2O.mass(), 1, typ=FragmentType.BION,cterm=i+1)
-                data += Fragment("c"+key+"-H2O", cH2O.mass(), 1, typ=FragmentType.CION,cterm=i+1)
+                if "a-H2O" in types:
+                    data += Fragment("a"+key+"-H2O", aH2O.mass(), 1, typ=FragmentType.AION,cterm=i+1)
+                if "b-H2O" in types:
+                    data += Fragment("b"+key+"-H2O", bH2O.mass(), 1, typ=FragmentType.BION,cterm=i+1)
+                if "c-H2O" in types:
+                    data += Fragment("c"+key+"-H2O", cH2O.mass(), 1, typ=FragmentType.CION,cterm=i+1)
 
         cTerm = Composition() + {"H+":1,"H":1, "O":1}
         peptidestring = ""
@@ -234,53 +243,64 @@ def generatePeptideFragments(peptide,charge):
         key = str(len(sequence)-i)
 
         if i > 0:
-            data += Fragment("x"+key, x.mass(), 1, typ=FragmentType.XION,nterm=len(sequence)-i)
-            data += Fragment("y"+key, y.mass(), 1, typ=FragmentType.YION,nterm=len(sequence)-i)
-            data += Fragment("z"+key, z.mass(), 1, typ=FragmentType.ZION,nterm=len(sequence)-i)
-            data += Fragment("z*"+key, zOne.mass(), 1, typ=FragmentType.ZION,nterm=len(sequence)-i)
+            if "x" in types:
+                data += Fragment("x"+key, x.mass(), 1, typ=FragmentType.XION,nterm=len(sequence)-i)
+            if "y" in types:
+                data += Fragment("y"+key, y.mass(), 1, typ=FragmentType.YION,nterm=len(sequence)-i)
+            if "z" in types:
+                data += Fragment("z"+key, z.mass(), 1, typ=FragmentType.ZION,nterm=len(sequence)-i)
+            if "z*" in types:
+                data += Fragment("z*"+key, zOne.mass(), 1, typ=FragmentType.ZION,nterm=len(sequence)-i)
             if ("R" in sequence or
                     "K" in sequence or
                     "Q" in sequence or
                     "N" in sequence):
-                data += Fragment("x"+key+"-NH3", xNH3.mass(), 1, typ=FragmentType.XION,nterm=len(sequence)-i)
-                data += Fragment("y"+key+"-NH3", yNH3.mass(), 1, typ=FragmentType.YION,nterm=len(sequence)-i)
-                data += Fragment("z"+key+"-NH3", zNH3.mass(), 1, typ=FragmentType.ZION,nterm=len(sequence)-i)
+                if "x-NH3" in types:
+                    data += Fragment("x"+key+"-NH3", xNH3.mass(), 1, typ=FragmentType.XION,nterm=len(sequence)-i)
+                if "y-NH3" in types:
+                    data += Fragment("y"+key+"-NH3", yNH3.mass(), 1, typ=FragmentType.YION,nterm=len(sequence)-i)
+                if "z-NH3" in types:
+                    data += Fragment("z"+key+"-NH3", zNH3.mass(), 1, typ=FragmentType.ZION,nterm=len(sequence)-i)
                 
             if ("S" in sequence or
                     "T" in sequence or
                     sequence.startswith("E")):
-                data += Fragment("x"+key+"-H2O", xH2O.mass(), 1, typ=FragmentType.XION,nterm=len(sequence)-i)
-                data += Fragment("y"+key+"-H2O", yH2O.mass(), 1, typ=FragmentType.YION,nterm=len(sequence)-i)
-                data += Fragment("z"+key+"-H2O", zH2O.mass(), 1, typ=FragmentType.ZION,nterm=len(sequence)-i)
+                if "x-H2O" in types:
+                    data += Fragment("x"+key+"-H2O", xH2O.mass(), 1, typ=FragmentType.XION,nterm=len(sequence)-i)
+                if "y-H2O" in types:
+                    data += Fragment("y"+key+"-H2O", yH2O.mass(), 1, typ=FragmentType.YION,nterm=len(sequence)-i)
+                if "z-H2O" in types:
+                    data += Fragment("z"+key+"-H2O", zH2O.mass(), 1, typ=FragmentType.ZION,nterm=len(sequence)-i)
 
     # calc internal fragments
-    for i in range(1, len(sequence)):
-        for e in range(i+1, len(sequence)):
-            m = sequence[i:e]
+    if "by" in types:
+        for i in range(1, len(sequence)):
+            for e in range(i+1, len(sequence)):
+                m = sequence[i:e]
 
-            nterm = Composition() + {"H":2, "O":1}
-            mod = 0
-            peptidestring = ""
-            for index, acid in enumerate(m):
-                pos = index+i
-                peptidestring += acid
-                nterm -= {"H":2, "O":1}
-                nterm += glyxtoolms.masses.COMPOSITION[acid]
-                if pos in modifications:
-                    mod, amino = modifications[pos]
-                    assert acid == amino
-                    peptidestring += "("+mod+")"
-                    nterm += glyxtoolms.masses.getModificationComposition(mod)
-            by = nterm - {"O":1, "H":1}
-            byNH3 = by - {"N":1, "H":3}
-            byH2O = by - {"O":1, "H":2}
-            byCO = by - {"C":1, "O":1}
+                nterm = Composition() + {"H":2, "O":1}
+                mod = 0
+                peptidestring = ""
+                for index, acid in enumerate(m):
+                    pos = index+i
+                    peptidestring += acid
+                    nterm -= {"H":2, "O":1}
+                    nterm += glyxtoolms.masses.COMPOSITION[acid]
+                    if pos in modifications:
+                        mod, amino = modifications[pos]
+                        assert acid == amino
+                        peptidestring += "("+mod+")"
+                        nterm += glyxtoolms.masses.getModificationComposition(mod)
+                by = nterm - {"O":1, "H":1}
+                byNH3 = by - {"N":1, "H":3}
+                byH2O = by - {"O":1, "H":2}
+                byCO = by - {"C":1, "O":1}
 
-            key = "b"+str(e)+"y"+str(len(sequence)-i)
-            data += Fragment(key, by.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
-            data += Fragment(key+"-NH3", byNH3.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
-            data += Fragment(key+"-H2O", byH2O.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
-            data += Fragment(key+"-CO", byCO.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
+                key = "b"+str(e)+"y"+str(len(sequence)-i)
+                data += Fragment(key, by.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
+                #data += Fragment(key+"-NH3", byNH3.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
+                #data += Fragment(key+"-H2O", byH2O.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
+                #data += Fragment(key+"-CO", byCO.mass(), 1, typ=FragmentType.BYION,cterm=e, nterm=len(sequence)-i)
     
     chargedFragments = FragmentList()
     for fragment in data.values():
@@ -291,7 +311,7 @@ def generatePeptideFragments(peptide,charge):
     
     return chargedFragments
 
-def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, toleranceType, maxCharge, maxIsotope=3):
+def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, toleranceType, maxCharge, types={"b","y"}, maxIsotope=3):
 
     # helper function to search masses in a spectrum
     def searchMassInSpectrum(mass, tolerance, toleranceType, spectrum):
@@ -375,7 +395,7 @@ def annotateSpectrumWithFragments(peptide, glycan, spectrum, tolerance, toleranc
         for modname, pos in modificationset:
             pepvariant.addModification(modname, position=pos)
 
-        fragments = glyxtoolms.fragmentation.generatePeptideFragments(pepvariant,maxCharge)
+        fragments = generatePeptideFragments(pepvariant,maxCharge,types=types)
 
         # add immonium ions
         for key in immoniumIons:
