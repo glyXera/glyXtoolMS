@@ -252,7 +252,6 @@ def parseOxoniumIons(options):
             oxoniumIons[name]["charge"] = charge
     return oxoniumIons
 
-
 def main(options):
     """ Scores a given mzML file with a given featurefile """
 
@@ -335,11 +334,6 @@ def main(options):
             scores.append(score)
             singleCharged = False
 
-
-        #if charge == 1:
-        #    skippedSingleCharged += 1
-        #    continue
-
         # find all scores with possible features
         for feature in allFeatures.values():
             minRT, maxRT, minMZ, maxMZ = feature.getBoundingBox()
@@ -383,6 +377,11 @@ def main(options):
             
             if score.getLogScore() < scorethreshold:
                 score.setIsGlycopeptide(True)
+            # add keep feature
+            if score.feature != None:
+                score.feature.spectraIds.add(score.getNativeId())
+                if score.getLogScore() < scorethreshold:
+                    keepFeatures.add(score.feature.getId())
             # replace bestScore if it is featureless or keep best Score
             if score.feature != None and bestScore.feature == None:
                 bestScore = score
@@ -413,10 +412,6 @@ def main(options):
             f.setCharge(score.precursorCharge)
             score.feature = f
             allFeatures[f.getId()] = f
-        if score.feature != None:
-            score.feature.spectraIds.add(score.getNativeId())
-            if score.getLogScore() < scorethreshold:
-                keepFeatures.add(score.feature.getId())
 
     # write features
     for key in keepFeatures:
