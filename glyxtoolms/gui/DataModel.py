@@ -22,7 +22,7 @@ class FilterMass:
 
 class DataModel(object):
 
-    def __init__(self, root=None):
+    def __init__(self, root):
 
         #for s in range(10,100):
         #    font = tkFont.Font(family="Courier",size=s)
