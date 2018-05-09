@@ -41,8 +41,8 @@ from glyxtoolms.gui import TwoDView
 from glyxtoolms.gui import SpectrumView2
 from glyxtoolms.gui import PeptideCoverageFrame
 from glyxtoolms.gui import OxoniumIonPlot
-from glyxtoolms.gui import OptionsFrame
-from glyxtoolms.gui import ToppasConfigurationFrame
+#from glyxtoolms.gui import OptionsFrame
+from glyxtoolms.gui import ConfigurationFrame
 
 class App(ttk.Frame):
 
@@ -75,7 +75,7 @@ class App(ttk.Frame):
 
         filemenu = Tkinter.Menu(self.menubar, tearoff=0)
         #filemenu.add_command(label="Set workspace", command=self.setWorkspace)
-        filemenu.add_command(label="Options", command=self.setOptions)
+        filemenu.add_command(label="Configure", command=self.showConfiguration)
         filemenu.add_separator()
         filemenu.add_command(label="Exit", command=self.master.destroy)
         self.menubar.add_cascade(label="Program", menu=filemenu)
@@ -100,8 +100,8 @@ class App(ttk.Frame):
 
         toppasMenu = Tkinter.Menu(self.menubar, tearoff=0)
         #toppasMenu.add_command(label="Collect Analysis Files", command=self.collectToppasFiles)
-        toppasMenu.add_command(label="Configure TOPPAS", command=self.configureToppas)
-        self.menubar.add_cascade(label="TOPPAS", menu=toppasMenu) # Index 5 in menubar
+        #toppasMenu.add_command(label="Configure", command=self.showConfiguration)
+        #self.menubar.add_cascade(label="TOPPAS", menu=toppasMenu) # Index 5 in menubar
 
         # Divide left and right
         panes = Tkinter.PanedWindow(master, orient="horizontal")
@@ -233,7 +233,7 @@ class App(ttk.Frame):
                                     "Since OpenMS/TOPPAS is not configured yet, do you want to do it now?",
                                     default=tkMessageBox.YES)
             if ask == True:
-                ToppasConfigurationFrame.ToppasConfigurationFrame(self,self.model)
+                ConfigurationFrame.ConfigurationFrame(self,self.model)
 
 
     def getSashCoords(self):
@@ -287,15 +287,15 @@ class App(ttk.Frame):
     def showFilterOptions(self):
         FilterPanel.FilterPanel(self.master, self.model)
 
-    def setOptions(self):
-        OptionsFrame.OptionsFrame(self.master, self.model)
+    def showConfiguration(self):
+        ConfigurationFrame.ConfigurationFrame(self.master, self.model)
 
 
-    def collectToppasFiles(self):
-        return
-
-    def configureToppas(self):
-        ToppasConfigurationFrame.ToppasConfigurationFrame(self,self.model)
+#    def collectToppasFiles(self):
+#        return
+#
+#    def configureToppas(self):
+#        ToppasConfigurationFrame.ToppasConfigurationFrame(self,self.model)
 
     def on_closing(self):
         # save settings

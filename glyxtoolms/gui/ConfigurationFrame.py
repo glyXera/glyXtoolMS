@@ -1,16 +1,22 @@
+import os
+import imp
+import tkMessageBox
+import shutil
+import sys
+import re
 import Tkinter
 import ttk
 import tkFileDialog
 from glyxtoolms.gui import Appearance
 
-class OptionsFrame(Tkinter.Toplevel):
+class ConfigurationFrame(Tkinter.Toplevel):
 
     def __init__(self, master, model):
         Tkinter.Toplevel.__init__(self, master=master)
         #self.minsize(600, 300)
         self.master = master
-        self.title("Options")
-        #self.config(bg="#d9d9d9")
+        self.title("Configure glyXtoolMS, and TOPPAS scripts")
+
         self.model = model
 
         self.columnconfigure(0, weight=1)
@@ -21,33 +27,56 @@ class OptionsFrame(Tkinter.Toplevel):
         self.rowconfigure(4, weight=1)
 
         self.columnconfigure(0, weight=1)
+        
+        frameOpenMS = ttk.Labelframe(self, text="OpenMS/TOPPAS Installation")
+        frameOpenMS.grid(row=0, column=0, sticky="NWES")
+        frameOpenMS.columnconfigure(0, weight=0)
+        frameOpenMS.columnconfigure(3, weight=1)
+        buttonOpenMS = Tkinter.Button(frameOpenMS, text="Set OpenMS Path", command=self.setOpenMSPath)
+        buttonOpenMS.grid(row=0, column=0, sticky="NWES")
 
+        self.openMSPathVar = Tkinter.StringVar()
+        self.openMSPathVar.set(self.model.openMSDir)
+        self.openMSPathEntry = Tkinter.Entry(frameOpenMS, textvariable=self.openMSPathVar, width=60)
+        self.openMSPathEntry.grid(row=0, column=1, columnspan=3, sticky="NWES")
+        self.openMSPathEntry.config(bg="white")
+        self.openMSPathVar.trace("w", self.setTOPPASButtonState)
+        
+        self.buttonScripts = Tkinter.Button(frameOpenMS, text="Copy SCRIPTS into OpenMS", command=self.copyTOPPASFiles)
+        self.buttonScripts.grid(row=1, column=1)
+        
+        self.buttonWorkflows = Tkinter.Button(frameOpenMS, text="Edit Scriptspath in TOPPAS Workflows", command=self.editWorkflows)
+        self.buttonWorkflows.grid(row=1, column=2)
+        
 
-        #frameOpenMS = ttk.Labelframe(self, text="OpenMS/TOPPAS")
-        #frameOpenMS.grid(row=0, column=0, sticky="NWES")
-        #frameOpenMS.columnconfigure(0, weight=0)
-        #frameOpenMS.columnconfigure(1, weight=1)
-        #buttonOpenMS = Tkinter.Button(frameOpenMS, text="Configure OpenMS", command=self.configureOpenMS)
+        frameOutput = ttk.Labelframe(self, text="Set TOPPAS output folder")
+        frameOutput.grid(row=1, column=0, sticky="NWES")
+        frameOutput.columnconfigure(0, weight=0)
+        frameOutput.columnconfigure(1, weight=1)
+        buttonOutput = Tkinter.Button(frameOutput, text="Set TOPPAS output folder", command=self.setTOPPASOutput)
+        self.outputVar = Tkinter.StringVar()
+        self.outputVar.set(self.model.toppasOutputDir)
+        entryOutput = Tkinter.Entry(frameOutput, textvariable=self.outputVar, width=60)
+        entryOutput.config(bg="white")
 
-        #self.openMSVar = Tkinter.StringVar()
-        #self.openMSVar.set(self.model.workingdir)
-        #entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
+        buttonOutput.grid(row=0, column=0, sticky="NWES")
+        entryOutput.grid(row=0, column=1, sticky="NWES")
 
         frameWorkspace = ttk.Labelframe(self, text="Set Workspace")
-        frameWorkspace.grid(row=1, column=0, sticky="NWES")
+        frameWorkspace.grid(row=2, column=0, sticky="NWES")
         frameWorkspace.columnconfigure(0, weight=0)
         frameWorkspace.columnconfigure(1, weight=1)
         buttonWorkspace = Tkinter.Button(frameWorkspace, text="Set workspace", command=self.setWorkspace)
-
         self.workspaceVar = Tkinter.StringVar()
         self.workspaceVar.set(self.model.workingdir)
         entryWorkspace = Tkinter.Entry(frameWorkspace, textvariable=self.workspaceVar, width=60)
+        entryWorkspace.config(bg="white")
 
         buttonWorkspace.grid(row=0, column=0, sticky="NWES")
         entryWorkspace.grid(row=0, column=1, sticky="NWES")
 
         frameTimeAxis = ttk.Labelframe(self, text="Timeaxis")
-        frameTimeAxis.grid(row=2, column=0, sticky="NWES")
+        frameTimeAxis.grid(row=3, column=0, sticky="NWES")
 
         self.timeAxisVar = Tkinter.StringVar()
         self.timeAxisVar.set(self.model.timescale)
@@ -59,7 +88,7 @@ class OptionsFrame(Tkinter.Toplevel):
         timeAxisChoice2.grid(row=0, column=1, sticky="NWS")
 
         frameError = ttk.Labelframe(self, text="Mass Error")
-        frameError.grid(row=3, column=0, sticky="NWES")
+        frameError.grid(row=4, column=0, sticky="NWES")
 
         self.errorVar = Tkinter.StringVar()
         self.errorVar.set(self.model.errorType)
@@ -71,7 +100,7 @@ class OptionsFrame(Tkinter.Toplevel):
         errorChoice2.grid(row=0, column=1, sticky="NWS")
 
         frameClipboard = ttk.Labelframe(self, text="Clipboard")
-        frameClipboard.grid(row=4, column=0, sticky="NWES")
+        frameClipboard.grid(row=5, column=0, sticky="NWES")
 
         self.clipVar = Tkinter.StringVar()
         self.clipVar.set(self.model.clipboard)
@@ -91,7 +120,7 @@ class OptionsFrame(Tkinter.Toplevel):
             clipboardChoice.grid(row=5+i/3, column=1+i%3, sticky="NWS")
 
         frameDifferences= ttk.Labelframe(self, text="Massdifferences")
-        frameDifferences.grid(row=5, column=0, sticky="NWES")
+        frameDifferences.grid(row=6, column=0, sticky="NWES")
 
         scrollbar = Tkinter.Scrollbar(frameDifferences)
         self.tree = ttk.Treeview(frameDifferences, yscrollcommand=scrollbar.set, selectmode='browse')
@@ -154,17 +183,122 @@ class OptionsFrame(Tkinter.Toplevel):
 
         self.sorting = ("#0", False)
         frameButtons = ttk.Frame(self)
-        frameButtons.grid(row=5, column=0, sticky="NWES")
+        frameButtons.grid(row=7, column=0, sticky="NWES")
 
         cancelButton = Tkinter.Button(frameButtons, text="Cancel", command=self.cancel)
-        saveButton = Tkinter.Button(frameButtons, text="Save options", command=self.save)
+        self.saveButton = Tkinter.Button(frameButtons, text="Save options", command=self.save)
 
         cancelButton.grid(row=0, column=0, sticky="NWES")
-        saveButton.grid(row=0, column=1, sticky="NWES")
+        self.saveButton.grid(row=0, column=1, sticky="NWES")
 
-    def configureOpenMS(self):
-        pass
+    def editWorkflows(self):
+        if not self.checkOpenMSPath():
+            tkMessageBox.showerror("Invalid OpenMS Path", "Invalid OpenMS Installation path!",parent=self)
+            return
+        scriptsPath = self.getScriptsPath()
+        
+        options = {}
+        #options['initialdir'] = self.openMSPathVar.get()
+        options['title'] = 'Choose one or multiple TOPPAS workflows'
+        options['filetypes'] = [('TOPPAS workflow','*.toppas')]
+        files = tkFileDialog.askopenfilenames(**options)
+        for filepath in files:
+            fin = file(filepath,"r")
+            text = fin.read()
+            fin.close()
+            text2 = re.sub('name\=\"scriptpath\" value\=\".+?\"','name="scriptpath" value="'+scriptsPath+'"',text)
+            fout = file(filepath,"w")
+            fout.write(text2)
+            fout.close()
+            print "changed", filepath
+        if len(files) > 0:
+            tkMessageBox.showinfo("Sucessfully edited "+str(len(files))+" Workflows", str(len(files))+" TOPPAS workflows are sucessfully edited!",parent=self)
+        else:
+            tkMessageBox.showinfo("No workflows selected", "Please select one or ore TOPPAS workflows!",parent=self)
 
+    def setTOPPASButtonState(self,*args):
+        if not self.checkOpenMSPath():
+            self.openMSPathEntry.config(bg="red")
+            self.buttonScripts.config(state=Tkinter.DISABLED)
+            self.buttonWorkflows.config(state=Tkinter.DISABLED)
+            self.saveButton.config(state=Tkinter.DISABLED)
+        else:
+            self.openMSPathEntry.config(bg="white")
+            self.buttonScripts.config(state=Tkinter.NORMAL)
+            self.buttonWorkflows.config(state=Tkinter.NORMAL)
+            self.saveButton.config(state=Tkinter.NORMAL)
+
+    def setOpenMSPath(self):
+        options = {}
+        options['initialdir'] = self.openMSPathVar.get()
+        options['title'] = 'Set Path to OpenMS Folder'
+        options['mustexist'] = True
+        path = tkFileDialog.askdirectory(**options)
+        if path == "" or path == ():
+            return
+        self.openMSPathVar.set(path)
+        self.setTOPPASButtonState()
+        if not self.checkOpenMSPath():
+            tkMessageBox.showerror("Invalid OpenMS Path", "Invalid OpenMS Installation path!",parent=self)
+
+    def getScriptsPath(self):
+        return os.path.join(self.openMSPathVar.get(), "share/OpenMS/SCRIPTS")
+
+    def getExternalPath(self):
+        return os.path.join(self.openMSPathVar.get(), "share/OpenMS/TOOLS/EXTERNAL")
+
+    def checkOpenMSPath(self):
+        if os.path.exists(self.getScriptsPath()) == False:
+            return False
+        if os.path.exists(self.getExternalPath()) == False:
+            return False
+        return True
+
+    def copyTOPPASFiles(self):
+        self.openMSPathEntry.config(bg="white")
+        self.setTOPPASButtonState()
+        if not self.checkOpenMSPath():
+            tkMessageBox.showerror("Invalid OpenMS Path", "Invalid OpenMS Installation path!",parent=self)
+            return
+        self.model.openMSDir = self.openMSPathVar.get()
+        self.model.saveSettings()
+        
+        pythonpath = sys.executable # get path to the used python environment
+        glyxtoolmsPath = imp.find_module("glyxtoolms")[1]
+        toppPath = os.path.join(os.path.dirname(glyxtoolmsPath), "TOPP")
+        if not self.checkOpenMSPath():
+            return
+        scriptsPath = self.getScriptsPath()
+        externalsPath = self.getExternalPath()
+        for filename in os.listdir(toppPath):
+            pathFrom = os.path.join(toppPath, filename)
+            if filename.endswith(".py"):
+                pathTo = os.path.join(scriptsPath, filename)
+                shutil.copy2(pathFrom, pathTo)
+                print "copy " + filename + " to " + pathTo
+            elif filename.endswith(".ttd"):
+                pathTo = os.path.join(externalsPath, filename)
+                fin = file(pathFrom, "r")
+                text = fin.read()
+                text = text.replace("{pythonpath}",pythonpath)
+                text = text.replace("{scriptpath}",scriptsPath)
+                fin.close()
+
+                fout = file(pathTo,"w")
+                fout.write(text)
+                fout.close()
+                print "copy " + filename + " to " + pathTo
+        tkMessageBox.showinfo("Synchronized files", "TOPPAS Scripts are now up-to date!",parent=self)
+
+    def setTOPPASOutput(self):
+        options = {}
+        options['initialdir'] = self.outputVar.get()
+        options['title'] = 'Set Workspace'
+        options['mustexist'] = True
+        path = tkFileDialog.askdirectory(**options)
+        if path == "" or path == ():
+            return
+        self.outputVar.set(path)
 
     def setWorkspace(self):
         options = {}
@@ -285,3 +419,4 @@ class OptionsFrame(Tkinter.Toplevel):
         # rearrange items in sorted positions
         for index, (val, k) in enumerate(l):
             self.tree.move(k, '', index)
+ 

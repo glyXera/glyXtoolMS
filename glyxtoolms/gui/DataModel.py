@@ -29,6 +29,7 @@ class DataModel(object):
         #    print s, font.measure(" ")
         self.isDefaultConfig = False
         self.workingdir = os.path.expanduser("~")
+        self.toppasOutputDir = os.path.expanduser("~")
         self.openMSDir = os.path.expanduser("~")
         self.timescale = "seconds"
         # possible clipboards: ('Tkinter','osx','gtk','qt','xclip','xsel','klipper','windows')
@@ -196,6 +197,7 @@ class DataModel(object):
         print "use settings under ", settingspath
         # Set default settings
         self.workingdir = home
+        self.toppasOutputDir = os.path.join(home,"TOPPAS_out")
         # Create settings if not exists
         self.isDefaultConfig = False
         if not os.path.exists(settingspath):
@@ -215,7 +217,8 @@ class DataModel(object):
                 self.errorType = section["errorType"]
             if "openMSPath" in section:
                 self.openMSDir = section["openMSPath"]
-
+            if "outputPath" in section:
+                self.toppasOutputDir = section["outputPath"]
 
         if "PLOTOPTIONS" in self.configfile.sections():
             section = self.configfile["PLOTOPTIONS"]
@@ -269,6 +272,7 @@ class DataModel(object):
         self.configfile["GENERAL"]["clipboard"] = self.clipboard
         self.configfile["GENERAL"]["errorType"] = self.errorType
         self.configfile["GENERAL"]["openMSPath"] = self.openMSDir
+        self.configfile["GENERAL"]["outputPath"] = self.toppasOutputDir
         self.configfile["MASSDIFFERENCES"] = {}
         i = 0
         for mass, key, charge, typ in self.massdifferences:
