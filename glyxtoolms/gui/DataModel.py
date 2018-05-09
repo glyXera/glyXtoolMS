@@ -6,7 +6,72 @@ from pkg_resources import resource_stream
 import pickle
 import base64
 import Tkinter
+import tkMessageBox
 import pyperclip
+from glyxtoolms.gui import ThreadedIO
+import pyopenms
+
+class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
+
+    def __init__(self, project, path,):
+        ThreadedIO.ThreadedIO.__init__(self)
+        self.path = path
+        self.project = project
+        self.error = False
+
+
+    def updateExternal(self, running=False):
+        if not running:
+            print "loading finished"
+            self.project.mzMLFile.exp = self.result
+            self.project.loadedMzMLFile(self.error)
+        else:
+            print "running"
+
+    def threadedAction(self):
+        try:
+            print "loading experiment"
+            exp = pyopenms.MSExperiment()
+            fh = pyopenms.FileHandler()
+            fh.loadExperiment(self.path, exp)
+            self.queue.put(exp)
+            print "loading finnished"
+        except:
+            print "error"
+            self.running = False
+            self.error = True
+            tkMessageBox.showerror("File input error",
+                                   "Error while loading pyopenms file!")
+
+class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
+
+    def __init__(self, master, path, analysis):
+        ThreadedIO.ThreadedIO.__init__(self)
+        self.path = path
+        self.analysis = analysis
+        self.master = master
+        self.error = False
+
+
+    def updateExternal(self, running=False):
+        if not running:
+            print "stopped"
+            self.analysis.analysis = self.result
+            self.master.loadedAnalysisFile(self.error, self.analysis)
+
+    def threadedAction(self):
+        try:
+            print "loading experiment"
+            glyMl = glyxtoolms.io.GlyxXMLFile()
+            glyMl.readFromFile(self.path)
+            self.queue.put(glyMl)
+            print "loading finnished"
+        except:
+            tkMessageBox.showerror("File input error",
+                                   "Error while loading analysis "
+                                   "file! Please check glyML version.")
+            self.running = False
+            raise
 
 class FilterMass:
 
@@ -366,17 +431,124 @@ class Chromatogram(object):
 
 class Project(object):
 
-    def __init__(self, name, path):
+    def __init__(self, master, name, model):
+        self.master = master
+        self.model = model
         self.name = name
-        self.path = path
         self.mzMLFile = None
         self.analysisFiles = {}
+        self.unsavedChanges = False
+        self.path = ""
+        self.queque = []
+        self.loadByQueue = False
+        
+    def save(self, toPath):
+        self.path = toPath
+        print "saving to ", self.path
+        f = file(toPath, "w")
+        f.write("name: " + self.name+"\n")
+        f.write("mzMLFile:" + self.mzMLFile.path+"\n")
+        for analysis in self.analysisFiles.values():
+            f.write("analysis:" + analysis.path+"\n")
+        f.close()
+        return True
+
+    def load(self, fromPath):
+        print "loading project from ", fromPath
+        toLoad = {}
+        self.mzMLFile = None
+        self.analysisFiles = {}
+        f = file(fromPath, "r")
+        for line in f:
+            typ,value = line[:-1].split(":")
+            if typ == "name":
+                toLoad["name"] = value
+            elif typ == "mzMLFile":
+                toLoad["mzMLFile"] = value
+            elif typ == "analysis":
+                toLoad["analysis"] = toLoad.get("analysis", []) + [value]
+        f.close()
+        self.name = toLoad.get("name", "NoName")
+        # check validity of paths, add paths to loading queque
+        self.queque = []
+        self.queque.append(("mzMLFile", toLoad.get("mzMLFile","")))
+        for path in toLoad["analysis"]:
+            self.queque.append(("analysis", path))
+        for typ, path in self.queque:
+            if not os.path.exists(path):
+                tkMessageBox.showerror("File input error",
+                       "File "+ path+" does not exist!")
+                return False
+        
+        ## start queue
+        #self.loadByQueue = True
+        #self._checkQueue()
+        
+    def _checkQueue(self):
+        if len(self.queque) == 0:
+            if self.loadByQueue == True:
+                self.loadByQueue = False
+                tkMessageBox.showinfo(title="Info",
+                  message="Project loaded!")
+            return
+        typ,path = self.queque.pop(0)
+        if typ == "mzMLFile":
+            self.addMZMLFile(path)
+        elif typ == "analysis":
+            self.addAnalysisFile(path)
+
+        
+    def addMZMLFile(self, path):
+        mzMLContainer = ContainerMZMLFile(self, path)
+        self.mzMLFile = mzMLContainer
+        self.unsavedChanges = True
+        # load file in new thread
+        t = ThreadedOpenMZML(self, path)
+        t.start()
+        
+        
+    def addAnalysisFile(self, path):
+        analysis = ContainerAnalysisFile(self.model, self, path)
+        self.analysisFiles[analysis.name] = analysis
+        self.unsavedChanges = True
+        t = ThreadedAnalysisFile(self, path, analysis)
+        t.start()
+        
+    def removeAnalysisFile(self):
+        return
+
+    def loadedMzMLFile(self, error):
+        if error == True:
+            return
+        # reorganize data
+        self.mzMLFile.createIds()
+        self.model.projects[self.name] = self
+
+        # set workingdir
+        self.model.workingdir = os.path.split(self.mzMLFile.path)[0]
+        self.model.currentProject = self
+        
+        # update master
+        silent = self.loadByQueue == True
+        self.master.loadedMzMLFile(self, error, silent)
+        
+        # restart queue if available
+        self._checkQueue()
+        
+    def loadedAnalysisFile(self, error, analysis):
+        # update master
+        silent = self.loadByQueue == True
+        self.master.loadedAnalysisFile(error, analysis, silent)
+        
+        # restart queue if available
+        self._checkQueue()
 
 class ContainerMZMLFile(object):
 
     def __init__(self, project, path):
         self.exp = None
         self.path = path
+        self.name = os.path.basename(path)
         self.project = project
         self.experimentIds = {}
 

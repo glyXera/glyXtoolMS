@@ -10,66 +10,66 @@ import glyxtoolms
 from glyxtoolms.gui import ThreadedIO
 from glyxtoolms.gui import DataModel
 
-class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
+#class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
+#
+#    def __init__(self, master, path, project):
+#        ThreadedIO.ThreadedIO.__init__(self)
+#        self.path = path
+#        self.project = project
+#        self.master = master
+#        self.error = False
+#
+#
+#    def updateExternal(self, running=False):
+#        if not running:
+#            print "loading finished"
+#            self.project.mzMLFile.exp = self.result
+#            self.master.loadedMzMLFile(self.error, self.project)
+#
+#    def threadedAction(self):
+#        try:
+#            print "loading experiment"
+#            exp = pyopenms.MSExperiment()
+#            fh = pyopenms.FileHandler()
+#            fh.loadExperiment(self.path, exp)
+#            self.queue.put(exp)
+#            print "loading finnished"
+#        except:
+#            self.running = False
+#            self.error = True
+#            tkMessageBox.showerror("File input error",
+#                                   "Error while loading pyopenms file!")
+#            raise
 
-    def __init__(self, master, path, project):
-        ThreadedIO.ThreadedIO.__init__(self)
-        self.path = path
-        self.project = project
-        self.master = master
-        self.error = False
-
-
-    def updateExternal(self, running=False):
-        if not running:
-            print "loading finished"
-            self.project.mzMLFile.exp = self.result
-            self.master.loadedMzMLFile(self.error, self.project)
-
-    def threadedAction(self):
-        try:
-            print "loading experiment"
-            exp = pyopenms.MSExperiment()
-            fh = pyopenms.FileHandler()
-            fh.loadExperiment(self.path, exp)
-            self.queue.put(exp)
-            print "loading finnished"
-        except:
-            self.running = False
-            self.error = True
-            tkMessageBox.showerror("File input error",
-                                   "Error while loading pyopenms file!")
-            raise
-
-class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
-
-    def __init__(self, master, path, analysis):
-        ThreadedIO.ThreadedIO.__init__(self)
-        self.path = path
-        self.analysis = analysis
-        self.master = master
-        self.error = False
-
-
-    def updateExternal(self, running=False):
-        if not running:
-            print "stopped"
-            self.analysis.analysis = self.result
-            self.master.loadedAnalysisFile(self.error, self.analysis)
-
-    def threadedAction(self):
-        try:
-            print "loading experiment"
-            glyMl = glyxtoolms.io.GlyxXMLFile()
-            glyMl.readFromFile(self.path)
-            self.queue.put(glyMl)
-            print "loading finnished"
-        except:
-            tkMessageBox.showerror("File input error",
-                                   "Error while loading analysis "
-                                   "file! Please check glyML version.")
-            self.running = False
-            raise
+#class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
+#
+#    def __init__(self, master, path, analysis):
+#        ThreadedIO.ThreadedIO.__init__(self)
+#        self.path = path
+#        self.analysis = analysis
+#        self.master = master
+#        self.error = False
+#
+#
+#    def updateExternal(self, running=False):
+#        if not running:
+#            print "stopped"
+#            self.analysis.analysis = self.result
+#            self.master.loadedAnalysisFile(self.error, self.analysis)
+#
+#    def threadedAction(self):
+#        try:
+#            print "loading experiment"
+#            glyMl = glyxtoolms.io.GlyxXMLFile()
+#            glyMl.readFromFile(self.path)
+#            self.queue.put(glyMl)
+#            print "loading finnished"
+#        except:
+#            tkMessageBox.showerror("File input error",
+#                                   "Error while loading analysis "
+#                                   "file! Please check glyML version.")
+#            self.running = False
+#            raise
 
 class ProjectFrame(ttk.Frame):
 
@@ -79,34 +79,44 @@ class ProjectFrame(ttk.Frame):
         self.model = model
 
         tools = ttk.Frame(self)
-        self.b1 = ttk.Button(tools, text="Add Project", command=self.clickedAddProject)
-        self.b1.grid(row=0, column=0)
+        
+        self.buttonNewProject = ttk.Button(tools, text="New Project", command=self.clickedAddProject)
+        self.buttonNewProject.grid(row=0, column=0)
+        
+        self.buttonOpenProject = ttk.Button(tools, text="Open Project", command=self.openProject)
+        self.buttonOpenProject.grid(row=0, column=1)
+        
+        #self.buttonFindProject = ttk.Button(tools, text="Find Project", command=self.clickedFindAnalysis)
+        #self.buttonFindProject.grid(row=0, column=2)
 
-        self.b2 = ttk.Button(tools, text="Close Project", command=self.closeProject)
-        self.b2.grid(row=0, column=1)
-        self.b2.config(state=Tkinter.DISABLED)
+        self.buttonCloseProject = ttk.Button(tools, text="Close Project", command=self.closeProject)
+        self.buttonCloseProject.grid(row=0, column=2)
+        self.buttonCloseProject.config(state=Tkinter.DISABLED)
 
-        self.b6 = ttk.Button(tools, text="Find Analysis", command=self.clickedFindAnalysis)
-        self.b6.grid(row=0, column=2)
+        self.buttonSaveProject = ttk.Button(tools, text="Save Project", command=self.saveProject)
+        self.buttonSaveProject.grid(row=0, column=3)
+        self.buttonSaveProject.config(state=Tkinter.DISABLED)
+        
+        #self.buttonEditProject = ttk.Button(tools, text="Change Project Name", command=self.foo)
+        #self.buttonEditProject.grid(row=0, column=5)
+        #self.buttonEditProject.config(state=Tkinter.DISABLED)
 
-        self.b3 = ttk.Button(tools, text="Add Analysis", command=self.clickedAddAnalysis)
-        self.b3.grid(row=1, column=0)
-        self.b3.config(state=Tkinter.DISABLED)
 
 
+        self.buttonAddAnalysis = ttk.Button(tools, text="Add Analysis", command=self.clickedAddAnalysis)
+        self.buttonAddAnalysis.grid(row=1, column=0)
+        self.buttonAddAnalysis.config(state=Tkinter.DISABLED)
 
-        #NORMAL, ACTIVE or DISABLED
+        self.buttonCloseAnalysis = ttk.Button(tools, text="Close Analysis", command=self.closeAnalysis)
+        self.buttonCloseAnalysis.grid(row=1, column=1)
+        self.buttonCloseAnalysis.config(state=Tkinter.DISABLED)
 
-        self.b4 = ttk.Button(tools, text="Close Analysis", command=self.closeAnalysis)
-        self.b4.grid(row=1, column=1)
-        self.b4.config(state=Tkinter.DISABLED)
+        self.buttonSaveAnalysis = ttk.Button(tools, text="Save Analysis", command=self.saveAnalysis)
+        self.buttonSaveAnalysis.grid(row=1, column=2)
+        self.buttonSaveAnalysis.config(state=Tkinter.DISABLED)
 
-        self.b5 = ttk.Button(tools, text="Save Analysis", command=self.saveAnalysis)
-        self.b5.grid(row=1, column=2)
-        self.b5.config(state=Tkinter.DISABLED)
-
-        #self.b1 = ttk.Button(tools, text="Load Test", command=self.loadTest)
-        #self.b1.grid(row=0, column=2)
+        #self.buttonOpenProject = ttk.Button(tools, text="Load Test", command=self.loadTest)
+        #self.buttonOpenProject.grid(row=0, column=2)
 
 
         tools.grid(row=0, column=0, sticky="NWES")
@@ -125,6 +135,7 @@ class ProjectFrame(ttk.Frame):
         yscrollbar.config(command=self.projectTree.yview)
 
         self.projectsTreeIds = {}
+        self.objectsToItems = {}
 
         self.projectTree.heading("#0", text="Projects")
 
@@ -143,10 +154,85 @@ class ProjectFrame(ttk.Frame):
         # Events
         self.projectTree.bind("<<TreeviewSelect>>", self.clickedTree)
 
-    def loadTest(self):
-        name = "test"
-        path = "/afs/mpi-magdeburg.mpg.de/data/bpt/bptglycan/DATA_EXCHANGE/Terry/GlyxMSuite/AMAZON/CID/testdata/20141202_FETinsol03_HILIC_TNK_BB4_01_3743.mzML"
-        self.addProject(name, path)
+    def checkButtonState(self):
+        
+        item, obj, typ = self.getSelectedItem()
+        if item == None:
+            # deaktive all buttons, except all that add or open projects
+            self.buttonCloseProject.config(state=Tkinter.DISABLED)
+            self.buttonAddAnalysis.config(state=Tkinter.DISABLED)
+            self.buttonCloseAnalysis.config(state=Tkinter.DISABLED)
+            self.buttonSaveAnalysis.config(state=Tkinter.DISABLED)
+            return
+        if typ == "analysis":
+            self.buttonCloseProject.config(state=Tkinter.NORMAL)
+            self.buttonSaveProject.config(state=Tkinter.NORMAL)
+            self.buttonAddAnalysis.config(state=Tkinter.NORMAL)
+            self.buttonCloseAnalysis.config(state=Tkinter.NORMAL)
+            self.buttonSaveAnalysis.config(state=Tkinter.NORMAL)
+        else:
+            self.buttonCloseProject.config(state=Tkinter.NORMAL)
+
+            self.buttonSaveProject.config(state=Tkinter.NORMAL)
+            self.buttonAddAnalysis.config(state=Tkinter.NORMAL)
+            self.buttonCloseAnalysis.config(state=Tkinter.DISABLED)
+            self.buttonSaveAnalysis.config(state=Tkinter.DISABLED)
+
+        # Aktivate close button
+        if len(self.model.projects) > 0:
+            self.buttonCloseProject.config(state=Tkinter.NORMAL)
+        else:
+            self.buttonCloseProject.config(state=Tkinter.DISABLED)
+
+    def foo(self):
+        return
+        
+    def openProject(self):
+        options = {}
+        options['defaultextension'] = '.glyXtoolMS'
+        options['filetypes'] = [('GlyXtoolMS Project file', '.glyXtoolMS')]
+        options['initialdir'] = self.model.workingdir
+        options['parent'] = self
+        options['title'] = 'Open Project'
+        path = tkFileDialog.askopenfilename(**options)
+        if len(path) == 0:
+            return
+        project = DataModel.Project(self,"NoName", self.model)
+        project.load(path)
+        # check if project with this name already exists
+        orignName = project.name
+        i = 0
+        name = orignName
+        while name in self.model.projects:
+            i += 1
+            name = orignName+str(i)
+        project.name = name
+        # start queue
+        project.loadByQueue = True
+        project._checkQueue()
+        
+        
+    def saveProject(self):
+        # check if a project was selected
+        if self.model.currentProject == None:
+            return
+        project = self.model.currentProject
+        
+        # get save path
+        options = {}
+        options['defaultextension'] = '.glyXtoolMS'
+        options['filetypes'] = [('GlyXtoolMS Project file', '.glyXtoolMS')]
+        workingdir = os.path.dirname(project.path)
+        options['initialdir'] = workingdir
+        options['initialfile'] = project.path
+        options['title'] = 'Save Project'
+        options['confirmoverwrite'] = True
+        path = tkFileDialog.asksaveasfilename(**options)
+        if path == "" or path == ():
+            return
+        project.save(path)
+        tkMessageBox.showinfo(title="Info",
+                              message="Project saved!")
 
     def clickedAddProject(self):
         AddProject(self, self.model)
@@ -190,181 +276,18 @@ class ProjectFrame(ttk.Frame):
             item = self.projectTree.parent(item)
 
         analysis.projectItem = item
+        
+        project.addAnalysisFile(path)
 
-        t = ThreadedAnalysisFile(self, path, analysis)
-        t.start()
+        #t = ThreadedAnalysisFile(self, path, analysis)
+        #t.start()
 
-    def addProject(self, name, path):
-        print "loading path", path
-        project = DataModel.Project(name, path)
-
-        mzMLContainer = DataModel.ContainerMZMLFile(project, path)
-        project.mzMLFile = mzMLContainer
-
-        # load file in new thread
-        t = ThreadedOpenMZML(self, path, project)
-        t.start()
-
-    def closeProject(self):
-        item, obj, typ = self.getSelectedItem()
-        if item == None:
-            return
-        if not tkMessageBox.askyesno('Close Project',
-                                     'Do you want to close this project?'):
-            return
-        # get project itemId
-        while not "project" in self.projectTree.item(item, "tags"):
-            item = self.projectTree.parent(item)
-
-        project = self.model.currentProject
-
-        # delete project from model
-        if project.name in self.model.projects:
-            self.model.projects.pop(project.name)
-
-        # delete project from TreeviewID
-        if item in self.projectsTreeIds:
-            self.projectsTreeIds.pop(item)
-
-        # delete project from Treeview
-        self.projectTree.delete(item)
-
-
-    def closeAnalysis(self):
-        item, obj, typ = self.getSelectedItem()
-        if item == None:
-            return
-        if typ != "analysis":
-            return
-        # get analysis
-        if not item in self.projectsTreeIds:
-            return
-        if not tkMessageBox.askyesno('Close Analysis',
-                                     'Do you want to close this analysis?'):
-            return
-
-        analysis = self.projectsTreeIds[item]
-        project = self.model.currentProject
-
-        # delete analysis from project
-        if analysis.name in project.analysisFiles:
-            project.analysisFiles.pop(analysis.name)
-
-        # delete analysisId from Treeview-ID-tracker
-        if item in self.projectsTreeIds:
-            self.projectsTreeIds.pop(item)
-
-        # delete analysis from Treeview
-        self.projectTree.delete(item)
-
-    def saveAnalysis(self):
-        item, obj, typ = self.getSelectedItem()
-        if item == None:
-            return
-        if typ != "analysis":
-            return
-        # get analysis
-        if not item in self.projectsTreeIds:
-            return
-        # get save path
-        options = {}
-        options['defaultextension'] = '.xml'
-        options['filetypes'] = [('Analysis files', '.xml'), ('all files', '.*')]
-        workingdir = os.path.dirname(obj.project.mzMLFile.path)
-        options['initialdir'] = workingdir
-        options['title'] = 'Save Analysis'
-        options['confirmoverwrite'] = True
-        path = tkFileDialog.asksaveasfilename(**options)
-        if path == "" or path == ():
-            return
-        try:
-            obj.analysis.writeToFile(path)
-        except:
-            tkMessageBox.showerror("Save Error", "Error saving Analysis!")
-            raise
-            return
-        obj.project.analysisFiles.pop(obj.name)
-        # set new analysis name
-        obj.path = path
-        name = os.path.basename(path)
-        obj.name = name
-        self.projectTree.item(item, text=name)
-        obj.project.analysisFiles[name] = obj
-        tkMessageBox.showinfo("Saved Info", "Analysis saved to file!")
-
-    def clickedTree(self, event):
-        item, obj, typ = self.getSelectedItem()
-        if item == None:
-            # deaktive all buttons, except addProject
-            self.b2.config(state=Tkinter.DISABLED)
-            self.b3.config(state=Tkinter.DISABLED)
-            self.b4.config(state=Tkinter.DISABLED)
-            self.b5.config(state=Tkinter.DISABLED)
-            return
-        else:
-            self.b2.config(state=Tkinter.NORMAL)
-            self.b3.config(state=Tkinter.NORMAL)
-        # get project
-        if typ == "project":
-            self.model.currentProject = obj
-        elif typ == "mzMLFile":
-            self.model.currentProject = obj.project
-
-        # set button state
-        if typ == "analysis":
-            self.model.currentAnalysis = obj
-            self.model.currentProject = obj.project
-            self.b4.config(state=Tkinter.NORMAL)
-            self.b5.config(state=Tkinter.NORMAL)
-            self.model.runFilters()
-            self.model.classes["NotebookScoring"].updateTree([])
-            self.model.classes["NotebookIdentification"].updateTree([])
-            self.model.classes["NotebookFeature"].updateTree()
-            self.model.classes["TwoDView"].init()
-            self.model.classes["NotebookIdentification"].updateHeader()
-
-        else:
-            self.model.currentAnalysis = None
-            self.b4.config(state=Tkinter.DISABLED)
-            self.b5.config(state=Tkinter.DISABLED)
-            self.model.classes["NotebookScoring"].updateTree([])
-            self.model.classes["NotebookIdentification"].updateTree([])
-            self.model.classes["NotebookFeature"].updateTree()
-
-    def loadedMzMLFile(self, error, project):
+    def loadedAnalysisFile(self, error, analysis, silent=False):
         if error == True:
             return
-
-        # reorganize data
-        project.mzMLFile.createIds()
-
-        item = self.projectTree.insert("", "end", text=project.name, tags=("project", ))
-        self.model.projects[project.name] = project
-        self.projectsTreeIds[item] = project
-
-        # set workingdir
-        self.model.workingdir = os.path.split(project.path)[0]
-        self.model.currentProject = project
-
-        itemMZML = self.projectTree.insert(item, "end",
-                                           text=os.path.basename(project.path),
-                                           tags=("mzMLFile", ))
-
-        # add ContainerMZMLFile
-        self.projectsTreeIds[itemMZML] = project.mzMLFile
-
-        # Aktivate close button
-        if len(self.model.projects) > 0:
-            self.b2.config(state=Tkinter.NORMAL)
-        else:
-            self.b2.config(state=Tkinter.DISABLED)
-
-        print "loaded mzml file"
-
-    def loadedAnalysisFile(self, error, analysis):
-        if error == True:
-            return
-        itemAnalysis = self.projectTree.insert(analysis.projectItem, "end",
+        # get project and project item
+        projectItem = self.objectsToItems[analysis.project.name]
+        itemAnalysis = self.projectTree.insert(projectItem, "end",
                                                text=analysis.name,
                                                tags=("analysis", ))
 
@@ -424,6 +347,164 @@ class ProjectFrame(ttk.Frame):
         self.model.classes["NotebookScoring"].updateTree([])
         self.model.classes["NotebookIdentification"].updateTree([])
         self.model.classes["NotebookFeature"].updateTree()
+        
+        if silent == False:
+            tkMessageBox.showinfo(title="Info",
+                      message="Analysis file loaded!")
+
+
+    def addProject(self, name, path):
+        print "loading path", path
+        project = DataModel.Project(self, name, self.model)
+        project.addMZMLFile(path)
+        # Function call after threading is finished, look for function 'loadedMzMLFile'
+
+    def loadedMzMLFile(self, project, error, silent=False):
+        if error == True:
+            return
+        
+        # reorganize data
+        project.mzMLFile.createIds()
+        
+        item = self.projectTree.insert("", "end", text=project.name + "  ("+project.mzMLFile.name+")", tags=("project", ))
+        self.projectsTreeIds[item] = project
+        self.objectsToItems[project.name] = item
+        
+
+        #itemMZML = self.projectTree.insert(item, "end",
+        #                                   text=os.path.basename(project.path),
+        #                                   tags=("mzMLFile", ))
+
+        # add ContainerMZMLFile
+        #self.projectsTreeIds[itemMZML] = project.mzMLFile
+
+        self.checkButtonState()
+        if silent == False:
+            tkMessageBox.showinfo("Loaded mzML file", "mzML file sucessfully loaded!")
+
+    def closeProject(self):
+        item, obj, typ = self.getSelectedItem()
+        if item == None:
+            return
+        if not tkMessageBox.askyesno('Close Project',
+                                     'Do you want to close this project?'):
+            return
+        # get project itemId
+        while not "project" in self.projectTree.item(item, "tags"):
+            item = self.projectTree.parent(item)
+
+        project = self.model.currentProject
+
+        # delete project from model
+        if project.name in self.model.projects:
+            self.model.projects.pop(project.name)
+
+        # delete project from TreeviewID
+        if item in self.projectsTreeIds:
+            self.projectsTreeIds.pop(item)
+
+        # delete project from Treeview
+        self.projectTree.delete(item)
+        
+        self.checkButtonState()
+
+
+    def closeAnalysis(self):
+        item, obj, typ = self.getSelectedItem()
+        if item == None:
+            return
+        if typ != "analysis":
+            return
+        # get analysis
+        if not item in self.projectsTreeIds:
+            return
+        if not tkMessageBox.askyesno('Close Analysis',
+                                     'Do you want to close this analysis?'):
+            return
+
+        analysis = self.projectsTreeIds[item]
+        project = self.model.currentProject
+
+        # delete analysis from project
+        if analysis.name in project.analysisFiles:
+            project.analysisFiles.pop(analysis.name)
+
+        # delete analysisId from Treeview-ID-tracker
+        if item in self.projectsTreeIds:
+            self.projectsTreeIds.pop(item)
+
+        # delete analysis from Treeview
+        self.projectTree.delete(item)
+        
+        self.checkButtonState()
+
+    def saveAnalysis(self):
+        item, obj, typ = self.getSelectedItem()
+        if item == None:
+            return
+        if typ != "analysis":
+            return
+        # get analysis
+        if not item in self.projectsTreeIds:
+            return
+        # get save path
+        options = {}
+        options['defaultextension'] = '.xml'
+        options['filetypes'] = [('Analysis files', '.xml'), ('all files', '.*')]
+        workingdir = os.path.dirname(obj.project.mzMLFile.path)
+        options['initialdir'] = workingdir
+        options['title'] = 'Save Analysis'
+        options['confirmoverwrite'] = True
+        path = tkFileDialog.asksaveasfilename(**options)
+        if path == "" or path == ():
+            return
+        try:
+            obj.analysis.writeToFile(path)
+        except:
+            tkMessageBox.showerror("Save Error", "Error saving Analysis!")
+            raise
+            return
+        obj.project.analysisFiles.pop(obj.name)
+        # set new analysis name
+        obj.path = path
+        name = os.path.basename(path)
+        obj.name = name
+        self.projectTree.item(item, text=name)
+        obj.project.analysisFiles[name] = obj
+        tkMessageBox.showinfo("Saved Info", "Analysis saved to file!")
+
+    def clickedTree(self, event):
+        self.checkButtonState()
+        item, obj, typ = self.getSelectedItem()
+        if item == None:
+            return
+            
+        # get project
+        if typ == "project":
+            self.model.currentProject = obj
+        elif typ == "mzMLFile":
+            self.model.currentProject = obj.project
+
+        # set button state
+        if typ == "analysis":
+            self.model.currentAnalysis = obj
+            self.model.currentProject = obj.project
+            self.model.runFilters()
+            self.model.classes["NotebookScoring"].updateTree([])
+            self.model.classes["NotebookIdentification"].updateTree([])
+            self.model.classes["NotebookFeature"].updateTree()
+            self.model.classes["TwoDView"].init()
+            self.model.classes["NotebookIdentification"].updateHeader()
+
+        else:
+            self.model.currentAnalysis = None
+            self.model.classes["NotebookScoring"].updateTree([])
+            self.model.classes["NotebookIdentification"].updateTree([])
+            self.model.classes["NotebookFeature"].updateTree()
+
+
+
+
 
     def getSelectedItem(self):
         # returns ItemId, Object, ObjectType

@@ -201,6 +201,7 @@ class ConfigurationFrame(Tkinter.Toplevel):
         #options['initialdir'] = self.openMSPathVar.get()
         options['title'] = 'Choose one or multiple TOPPAS workflows'
         options['filetypes'] = [('TOPPAS workflow','*.toppas')]
+        options['parent'] = self
         files = tkFileDialog.askopenfilenames(**options)
         for filepath in files:
             fin = file(filepath,"r")
@@ -233,6 +234,7 @@ class ConfigurationFrame(Tkinter.Toplevel):
         options['initialdir'] = self.openMSPathVar.get()
         options['title'] = 'Set Path to OpenMS Folder'
         options['mustexist'] = True
+        options['parent'] = self
         path = tkFileDialog.askdirectory(**options)
         if path == "" or path == ():
             return
@@ -295,6 +297,7 @@ class ConfigurationFrame(Tkinter.Toplevel):
         options['initialdir'] = self.outputVar.get()
         options['title'] = 'Set Workspace'
         options['mustexist'] = True
+        options['parent'] = self
         path = tkFileDialog.askdirectory(**options)
         if path == "" or path == ():
             return
@@ -305,6 +308,7 @@ class ConfigurationFrame(Tkinter.Toplevel):
         options['initialdir'] = self.workspaceVar.get()
         options['title'] = 'Set Workspace'
         options['mustexist'] = True
+        options['parent'] = self
         path = tkFileDialog.askdirectory(**options)
         if path == "" or path == ():
             return
