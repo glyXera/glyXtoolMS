@@ -10,9 +10,10 @@ config = {
     'description': 'glyxtoolms - python tools for glycopeptide analysis with OpenMS',
     'long_description': """ glyXtoolMS provides a) scripts for glycopeptide analysis 
  within the OpenMS proteomics framework (using the TOPPAS pipeline 
- engine) and a visulization / evaluation tool for further manual analysis of the results""",
-    'license': 'BSD3',
-    'version': '0.1.1',
+ engine) and a visulization / evaluation tool for further manual analysis of the results. 
+ Source code available under https://github.com/glyXera/glyXtoolMS""",
+    'license': 'GPL-3.0',
+    'version': '0.1.3',
     'author': 'Markus Pioch',
     'author_email': 'pioch@mpi-magdeburg.mpg.de',
     'python_requires':'>=2.6, <3',
@@ -43,11 +44,9 @@ config = {
                            "TOPP/glyxFilter.ttd",
                            "TOPP/glyxReporter.py",
                            "TOPP/glyxReporter.ttd",
-                           "TOPP/glyxScore.py",
-                           "TOPP/glyxScore.ttd",
                            "TOPP/PeptideFilter.py",
                            "TOPP/PeptideFilter.ttd"]),
-                    ('docs',['docs/glyXtool Usermanual.docx',]),
+                    ('docs',['docs/glyXtoolMS Usermanual.pdf']),
                 ],
     'scripts': [],
     'entry_points': {
