@@ -321,6 +321,12 @@ class ConfigurationFrame(Tkinter.Toplevel):
         self.destroy()
 
     def save(self):
+
+        self.setTOPPASButtonState()
+        if not self.checkOpenMSPath():
+            tkMessageBox.showerror("Invalid OpenMS Path", "Invalid OpenMS Installation path!",parent=self)
+            return
+        self.model.openMSDir = self.openMSPathVar.get()
         self.model.workingdir = self.workspaceVar.get()
         self.model.timescale = self.timeAxisVar.get()
         self.model.clipboard = self.clipVar.get()
@@ -336,12 +342,12 @@ class ConfigurationFrame(Tkinter.Toplevel):
             mass = float(mass)
             massdifferences.append((mass, name, charge, typ))
         self.model.massdifferences = sorted(massdifferences)
-        self.model.saveSettings()
+        path = self.model.saveSettings()
         # update plots
         self.model.classes["NotebookIdentification"].updateTree()
         self.model.classes["NotebookFeature"].updateTree()
         self.model.classes["ConsensusSpectrumFrame"]._paintCanvas()
-
+        tkMessageBox.showinfo("Settings saved", "Settings are saved under " + path +"!",parent=self)
         self.destroy()
 
     def valueChanged(self, varname):

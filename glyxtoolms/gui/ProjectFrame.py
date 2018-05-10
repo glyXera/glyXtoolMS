@@ -351,6 +351,8 @@ class ProjectFrame(ttk.Frame):
         if silent == False:
             tkMessageBox.showinfo(title="Info",
                       message="Analysis file loaded!")
+            self.projectTree.see(itemAnalysis)
+            self.projectTree.selection_set(itemAnalysis)
 
 
     def addProject(self, name, path):
@@ -381,6 +383,10 @@ class ProjectFrame(ttk.Frame):
         self.checkButtonState()
         if silent == False:
             tkMessageBox.showinfo("Loaded mzML file", "mzML file sucessfully loaded!")
+            # select mzML file in treeview
+            self.projectTree.selection_set(item)
+            
+            
 
     def closeProject(self):
         item, obj, typ = self.getSelectedItem()

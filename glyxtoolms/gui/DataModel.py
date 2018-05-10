@@ -373,6 +373,7 @@ class DataModel(object):
             self.configfile.write(configfile)
 
         print "Settings saved to:", settingspath
+        return settingspath
 
     def centerWidget(self,master, widget,focus=True,transient=True, lift=True,deiconify=False):
         # get window size
