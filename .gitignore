@@ -11,6 +11,7 @@ TOPP/replace.sh
 bin/*.txt
 bin/guitests/*
 bin/currentwork.py
+docs/screenshots/*
 pylint.output
 run_pylint.sh
 PyPi.txt
