@@ -374,7 +374,33 @@ class DataModel(object):
 
         print "Settings saved to:", settingspath
 
+    def centerWidget(self,master, widget,focus=True,transient=True, lift=True,deiconify=False):
+        # get window size
+        widget.update()
 
+        # raise to top
+        if focus:
+            widget.focus_set()
+        if transient:
+            widget.transient(master)
+        if lift:
+            widget.lift()
+        if deiconify:
+            widget.wm_deiconify()
+        
+        h = widget.winfo_height()
+        w = widget.winfo_width()
+
+        # get screen center
+        ws = self.root.winfo_x()+self.root.winfo_width()/2
+        hs = self.root.winfo_y()+self.root.winfo_height()/2
+
+        # calculate x and y coordinates for the Tk window
+        x = ws - (w/2)
+        y = hs - (h/2)
+        # set the dimensions of the screen
+        # and where it is placed
+        widget.geometry('%dx%d+%d+%d' % (w, h, x, y))
 
     def loadResources(self):
 

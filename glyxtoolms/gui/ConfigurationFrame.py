@@ -49,18 +49,18 @@ class ConfigurationFrame(Tkinter.Toplevel):
         self.buttonWorkflows.grid(row=1, column=2)
         
 
-        frameOutput = ttk.Labelframe(self, text="Set TOPPAS output folder")
-        frameOutput.grid(row=1, column=0, sticky="NWES")
-        frameOutput.columnconfigure(0, weight=0)
-        frameOutput.columnconfigure(1, weight=1)
-        buttonOutput = Tkinter.Button(frameOutput, text="Set TOPPAS output folder", command=self.setTOPPASOutput)
-        self.outputVar = Tkinter.StringVar()
-        self.outputVar.set(self.model.toppasOutputDir)
-        entryOutput = Tkinter.Entry(frameOutput, textvariable=self.outputVar, width=60)
-        entryOutput.config(bg="white")
-
-        buttonOutput.grid(row=0, column=0, sticky="NWES")
-        entryOutput.grid(row=0, column=1, sticky="NWES")
+        #frameOutput = ttk.Labelframe(self, text="Set TOPPAS output folder")
+        #frameOutput.grid(row=1, column=0, sticky="NWES")
+        #frameOutput.columnconfigure(0, weight=0)
+        #frameOutput.columnconfigure(1, weight=1)
+        #buttonOutput = Tkinter.Button(frameOutput, text="Set TOPPAS output folder", command=self.setTOPPASOutput)
+        #self.outputVar = Tkinter.StringVar()
+        #self.outputVar.set(self.model.toppasOutputDir)
+        #entryOutput = Tkinter.Entry(frameOutput, textvariable=self.outputVar, width=60)
+        #entryOutput.config(bg="white")
+        #
+        #buttonOutput.grid(row=0, column=0, sticky="NWES")
+        #entryOutput.grid(row=0, column=1, sticky="NWES")
 
         frameWorkspace = ttk.Labelframe(self, text="Set Workspace")
         frameWorkspace.grid(row=2, column=0, sticky="NWES")
@@ -190,6 +190,9 @@ class ConfigurationFrame(Tkinter.Toplevel):
 
         cancelButton.grid(row=0, column=0, sticky="NWES")
         self.saveButton.grid(row=0, column=1, sticky="NWES")
+        # run OpenMS Check
+        self.setTOPPASButtonState()
+        self.model.centerWidget(self.master,self)
 
     def editWorkflows(self):
         if not self.checkOpenMSPath():
