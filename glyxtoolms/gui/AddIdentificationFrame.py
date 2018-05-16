@@ -17,6 +17,9 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.model = model
         self.glycan = None
         self.peptide = None
+        self.tolerance = 0.05
+        self.toleranceType = "Da"
+        
         self.ownModifications = set()
 
         self.minsize(600, 300)
@@ -109,7 +112,24 @@ class AddIdentificationFrame(Tkinter.Toplevel):
 
         self.useFragmentInfo = Tkinter.IntVar()
         checkBox = Tkinter.Checkbutton(frameModifications, text="Solve modification positions with fragments in spectrum ", variable=self.useFragmentInfo)
-
+        
+        
+        massErrorFrame = ttk.Labelframe(frameModifications, text="Annotation Mass Error")
+        self.massErrorVar = Tkinter.StringVar()
+        self.massErrorEntry = Tkinter.Entry(massErrorFrame,textvariable=self.massErrorVar)
+        self.massErrorEntry.config(bg="white")
+        self.massErrorVar.set("0.05")
+        
+        self.errorTypeVar = Tkinter.StringVar()
+        massErrorTypeDa = Tkinter.Radiobutton(massErrorFrame, text="Da", variable=self.errorTypeVar, value="Da")
+        massErrorTypePPM = Tkinter.Radiobutton(massErrorFrame, text="ppm", variable=self.errorTypeVar, value="ppm")
+        self.errorTypeVar.set("Da")
+        self.massErrorVar.trace("w", self.errorChanged)
+        self.errorTypeVar.trace("w", self.errorChanged)
+        self.massErrorEntry.grid(row=0,column=1,sticky="NWES")
+        massErrorTypeDa.grid(row=0,column=2,sticky="NWES")
+        massErrorTypePPM.grid(row=0,column=3,sticky="NWES")
+        
         frameTreeLeft.grid(row=0, column=0, rowspan=2, sticky="NWES")
         frameTreeMiddle.grid(row=0, column=1, rowspan=2, sticky="NWES")
 
@@ -118,6 +138,8 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         b3.grid(row=2, column=0, sticky="NWES")
         self.b4.grid(row=3, column=0, sticky="NWES")
         checkBox.grid(row=2, column=1, sticky="NWES")
+        massErrorFrame.grid(row=3, column=1, sticky="NWES")
+        
 
         frameTreeRight.grid(row=0, column=3, rowspan=2, sticky="NWES")
 
@@ -212,26 +234,58 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         # init values
         self.peptideVar.set("")
         self.glycanVar.set("")
-        self.frameSpec.init(feature, {})
+        self.frameSpec.init(feature, None)
+        self.plotFragments()
+        
+    def errorChanged(self,*args):
+        print "erorr changed"
+        try:
+            error = abs(float(self.massErrorVar.get()))
+            self.massErrorEntry.config(bg="white")
+        except:
+            self.massErrorEntry.config(bg="red")
+            return
+        self.tolerance = error
+        self.toleranceType = self.errorTypeVar.get()
+        
         self.plotFragments()
 
     def plotFragments(self):
-        tolerance = 0.05
         if self.peptide == None:
             return
         result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(self.peptide,
                                                                        self.glycan,
                                                                        self.feature.consensus,
-                                                                       tolerance,
-                                                                       self.feature.getCharge())
+                                                                       self.tolerance,
+                                                                       self.toleranceType,
+                                                                       self.feature.getCharge(),
+                                                                       maxIsotope=4,
+                                                                       types={"b","y"})
+
         peptidevariant = result["peptidevariant"]
         fragments = result["fragments"]
+
         # write fragments to hit
-        if peptidevariant != None:
-            if self.useFragmentInfo.get() == 1:
-                self.peptideVar.set(peptidevariant.toString())
-            self.frameSpec.fragments = fragments
-            self.frameSpec.initCanvas(keepZoom=True)
+        if peptidevariant == None:
+            self.frameSpec.init(self.feature, None)
+            return
+        if self.useFragmentInfo.get() == 1:
+            self.peptideVar.set(peptidevariant.toString())
+        if self.valid == False:
+            self.frameSpec.init(self.feature, None)
+            return
+        # create hit
+        mass = self.peptide.mass+self.glycan.mass+glyxtoolms.masses.MASS["H+"]
+        diff = mass-self.precursorMass
+        self.hit = glyxtoolms.io.GlyxXMLGlycoModHit()
+        self.hit.featureID = self.feature.getId()
+        self.hit.glycan = self.glycan
+        self.hit.peptide = self.peptide
+        self.hit.error = diff
+        self.hit.feature = self.feature
+        self.hit.fragments = fragments
+
+        self.frameSpec.init(self.feature, self.hit)
 
     def defineModification(self):
         ElementCompositionFrame(self,self.model)
@@ -409,7 +463,9 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             self.glycan = glyxtoolms.lib.Glycan(self.glycanVar.get())
             self.labelGlycanMass.config(text=str(self.glycan.mass) +" Da")
             self.glycanVar.set(self.glycan.toString())
-            self.entryGlycan.config(bg="grey")
+            self.entryGlycan.config(bg="white")
+            index = len(self.glycanVar.get())
+            self.entryGlycan.icursor(index)
 
         except:
             self.valid = False
@@ -426,7 +482,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             if self.peptide.testModificationValidity() == False:
                 raise Exception("Invalid Modification")
             self.labelPeptideMass.config(text=str(self.peptide.mass) +" Da")
-            self.entryPeptide.config(bg="grey")
+            self.entryPeptide.config(bg="white")
         except:
             self.valid = False
             self.peptide = None
@@ -458,18 +514,9 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             tkMessageBox.showerror("Invalid Identification", "Identification is invalid, please provide correct peptide and glycan input!",parent=self)
             return
 
-        mass = self.peptide.mass+self.glycan.mass+glyxtoolms.masses.MASS["H+"]
-        diff = mass-self.precursorMass
-        hit = glyxtoolms.io.GlyxXMLGlycoModHit()
-        hit.featureID = self.feature.getId()
-        hit.glycan = self.glycan
-        hit.peptide = self.peptide
-        hit.error = diff
-        hit.feature = self.feature
-        hit.fragments = self.frameSpec.fragments
-        self.feature.hits.add(hit)
+        self.feature.hits.add(self.hit)
 
-        self.model.currentAnalysis.analysis.glycoModHits.append(hit)
+        self.model.currentAnalysis.analysis.glycoModHits.append(self.hit)
 
         self.destroy()
         self.model.runFilters()

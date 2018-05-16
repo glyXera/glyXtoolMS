@@ -14,6 +14,7 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
         self.master = master
         self.consensus = None
         self.feature = None
+        self.hit = None
         self.selectedFragments = []
         self.NrXScales = 5.0
 
@@ -106,12 +107,13 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                     break
 
             foundPep = None
-            for key in self.fragments:
-                if foundGlycan != None:
-                    break
-                if abs(self.fragments[key].mass-peak.x) < 0.1:
-                    foundPep = key
-                    break
+            if self.hit != None:
+                for key in self.hit.fragments:
+                    if foundGlycan != None:
+                        break
+                    if abs(self.hit.fragments[key].mass-peak.x) < 0.1:
+                        foundPep = key
+                        break
             if foundGlycan != None and foundPep != None:
                 color = "green"
                 annotationText.append((pMZ, pInt, foundGlycan+"\n"+foundPep+"\n"+masstext))
@@ -136,11 +138,11 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
 
         self.allowZoom = True
 
-    def init(self, feature, fragments):
+    def init(self, feature, hit):
         if feature.consensus == None:
             return
         self.feature = feature
-        self.fragments = fragments
+        self.hit = hit
         self.consensus = sorted(feature.consensus, key=lambda e: e.y, reverse=True)
         self.selectedFragments = []
         self.viewXMin = 0
@@ -190,24 +192,61 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
                 self.canvas.delete(item)
         return items
 
-    def plotSelectedFragments(self, fragments={}):
+    def plotSelectedFragments(self, fragments=None, zoomIn=False):
         # remove previous fragment selections
         self.canvas.delete("fragmentSelection")
-        if fragments != {}:
-            self.fragments = fragments
-
+        if fragments != None:
+            self.selectedFragments = fragments
+        if self.hit == None:
+            return
         pIntMin = self.convBtoY(self.viewYMin)
         pIntMax = self.convBtoY(self.viewYMax)
-        #colors = {"pep":"green", "b":"khaki", "b+m":"dark khaki", "y":"gray", "y+m":"slate gray"}
-
-        for ionname in self.fragments:
-            ion = self.fragments[ionname]
-            color = glyxtoolms.fragmentation.FragmentType.getColor(ion.typ)
-
-            mz = self.fragments[ionname].mass
+        plotting = []
+        for ionname in self.selectedFragments:
+            mz = self.hit.fragments[ionname].mass
             pMZ = self.convAtoX(mz)
+            plotting.append(mz)
             self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax,
                                     tags=("fragmentSelection", ),
-                                    fill=color)
+                                    fill="cyan")
         self.canvas.tag_lower("fragmentSelection", "peak")
+        # set zoom
+        if zoomIn == False:
+            return
+        if len(plotting) == 0:
+            return
+        minPlot = min(plotting)
+        maxPlot = max(plotting)
+        if self.viewXMin <= minPlot and maxPlot <= self.viewXMax:
+            return
+        # find minimal zoom
+        widthNow = abs(self.viewXMax-self.viewXMin)
+        widthFrag = abs(minPlot-minPlot)
+        diff = (widthNow - widthFrag)/2.0
+        if diff < widthFrag/20.0:
+            diff = widthFrag/20.0
+        self.viewXMin = minPlot-diff
+        self.viewXMax = maxPlot+diff
+        self._paintCanvas()
+
+#    def plotSelectedFragments(self, fragments={}):
+#        # remove previous fragment selections
+#        self.canvas.delete("fragmentSelection")
+#        if fragments != {}:
+#            self.fragments = fragments
+#
+#        pIntMin = self.convBtoY(self.viewYMin)
+#        pIntMax = self.convBtoY(self.viewYMax)
+#        #colors = {"pep":"green", "b":"khaki", "b+m":"dark khaki", "y":"gray", "y+m":"slate gray"}
+#
+#        for ionname in self.fragments:
+#            ion = self.fragments[ionname]
+#            color = glyxtoolms.fragmentation.FragmentType.getColor(ion.typ)
+#
+#            mz = self.fragments[ionname].mass
+#            pMZ = self.convAtoX(mz)
+#            self.canvas.create_line(pMZ, pIntMin, pMZ, pIntMax,
+#                                    tags=("fragmentSelection", ),
+#                                    fill=color)
+#        self.canvas.tag_lower("fragmentSelection", "peak")
 
