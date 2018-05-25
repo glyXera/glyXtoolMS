@@ -33,21 +33,22 @@ def main(options):
     glyxXMLFile.readFromFile(options.inGlyML)
 
     keep = []
-    for hit in glyxXMLFile.glycoModHits:
+    # storage of already calculated fragments
+    fragmentProvider = glyxtoolms.fragmentation.FragmentProvider(types=pepIons, maxIsotope=4)
+    lenHits = float(len(glyxXMLFile.glycoModHits))
+    for i,hit in enumerate(glyxXMLFile.glycoModHits):
         # TODO: handle status settings
+        if i%1000 == 0:
+            print i/lenHits *100, "%"
         feature = hit.feature
         hit.fragments = {}
-        result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(hit.peptide,
-                                                                       hit.glycan,
-                                                                       feature.consensus, 
-                                                                       tolerance,
-                                                                       toleranceType,
-                                                                       feature.getCharge(),
-                                                                       maxIsotope=4,
-                                                                       types=pepIons)
-        if abs(hit.feature.getMZ()-1215.984) < 0.1:
-            for mass,name in sorted([(result["all"][key].mass, key) for key in result["all"]]):
-                print mass,name
+        result = fragmentProvider.annotateSpectrumWithFragments(hit.peptide,
+                                                                hit.glycan,
+                                                                feature.consensus,
+                                                                tolerance,
+                                                                toleranceType,
+                                                                feature.getCharge())
+
         peptidevariant = result["peptidevariant"] 
         fragments = result["fragments"]
         # write fragments to hit

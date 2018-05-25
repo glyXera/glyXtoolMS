@@ -253,14 +253,14 @@ class AddIdentificationFrame(Tkinter.Toplevel):
     def plotFragments(self):
         if self.peptide == None:
             return
-        result = glyxtoolms.fragmentation.annotateSpectrumWithFragments(self.peptide,
-                                                                       self.glycan,
-                                                                       self.feature.consensus,
-                                                                       self.tolerance,
-                                                                       self.toleranceType,
-                                                                       self.feature.getCharge(),
-                                                                       maxIsotope=4,
-                                                                       types={"b","y"})
+            
+        fragmentProvider = glyxtoolms.fragmentation.FragmentProvider(types=pepIons, maxIsotope=4)
+        result = fragmentProvider.annotateSpectrumWithFragments(self.peptide,
+                                                                self.glycan,
+                                                                self.feature.consensus,
+                                                                self.tolerance,
+                                                                self.toleranceType,
+                                                                self.feature.getCharge())
 
         peptidevariant = result["peptidevariant"]
         fragments = result["fragments"]
