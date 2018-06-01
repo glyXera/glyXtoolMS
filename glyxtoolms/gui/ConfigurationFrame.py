@@ -8,6 +8,7 @@ import Tkinter
 import ttk
 import tkFileDialog
 from glyxtoolms.gui import Appearance
+import pyperclip
 
 class ConfigurationFrame(Tkinter.Toplevel):
 
