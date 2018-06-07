@@ -1413,6 +1413,8 @@ class XMLPeptide(object):
     def _parse(self, xmlPeptide):
         self.proteinID = xmlPeptide.find("./proteinId").text
         self.sequence = xmlPeptide.find("./sequence").text
+        if self.sequence == None:
+            self.sequence = ""
         self.start = int(xmlPeptide.find("./start").text)
         self.end = int(xmlPeptide.find("./end").text)
         self.mass = float(xmlPeptide.find("./mass").text)

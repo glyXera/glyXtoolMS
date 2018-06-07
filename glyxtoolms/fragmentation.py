@@ -163,6 +163,9 @@ class FragmentProvider(object):
         self.subglycanCompositions = {}
         self.oxoniumIons = {}
         
+        self.spectrumLookups = {}
+        self.toleranceLookup = 1.0
+        
         # helper masses
         self.masses = {}
         self.masses["mH2O"] = glyxtoolms.masses.calcMassFromElements({"H":2, "O":1})
@@ -407,37 +410,120 @@ class FragmentProvider(object):
         self.oxoniumIons[glycan.toString()] = fragments
         return fragments
 
+    # helper function to search masses in a spectrum
+    def _searchMassInSpectrum(self, mass, tolerance, toleranceType, peakLookup):
 
-    def annotateSpectrumWithFragments(self, peptide, glycan, spectrum, tolerance, toleranceType, maxCharge):
+        hit = (0,None)
+        index = self._getDBIndex(mass)
+        for peak in peakLookup.get(index,[]):
+            error = abs(glyxtoolms.lib.calcMassError(peak.x, mass, toleranceType))
+            if error <= tolerance:
+                if hit[1] == None or error < hit[0]:
+                    hit = (error,peak)
+        return hit[1]
 
-        # helper function to search masses in a spectrum
-        def searchMassInSpectrum(mass, tolerance, toleranceType, peakLookup, toleranceLookup):
-
-            hit = (0,None)
-            index = getDBIndex(mass,toleranceLookup)
-            for peak in peakLookup.get(index,[]):
-                error = abs(glyxtoolms.lib.calcMassError(peak.x, mass, toleranceType))
-                if error <= tolerance:
-                    if hit[1] == None or error < hit[0]:
-                        hit = (error,peak)
-            return hit[1]
-
-        # helper function to calculate charged ion masses
-        def calcChargedMass(singlyChargedMass, charge):
-            mass = singlyChargedMass+(charge-1)*glyxtoolms.masses.MASS["H"]
-            return mass/float(charge)
-            
-        def getDBIndex(mass,toleranceLookup):
-            return int(mass/(2*toleranceLookup))
-    
+    # helper function to calculate charged ion masses
+    def _calcChargedMass(self, singlyChargedMass, charge):
+        mass = singlyChargedMass+(charge-1)*glyxtoolms.masses.MASS["H"]
+        return mass/float(charge)
+        
+    def _getDBIndex(self, mass):
+        return int(mass/(2*self.toleranceLookup))
+        
+    def _getSpectrumLookup(self, spectrum, spectrumIdentifier=None):
+        if spectrumIdentifier != None:
+            if spectrumIdentifier in self.spectrumLookups:
+                return self.spectrumLookups[spectrumIdentifier]
         #sort peaks into lookup
-        toleranceLookup = 1.0
         peakLookup = {}
         for peak in spectrum:
-            index = getDBIndex(peak.x,toleranceLookup)
+            index = self._getDBIndex(peak.x)
             peakLookup[index-1] = peakLookup.get(index-1, set()).union({peak})
             peakLookup[index] = peakLookup.get(index, set()).union({peak})
             peakLookup[index+1] = peakLookup.get(index+1, set()).union({peak})
+        
+        if spectrumIdentifier != None:
+            self.spectrumLookups[spectrumIdentifier] = peakLookup
+        return peakLookup
+     
+    def annotateIsotopes(self, fragments,  tolerance, toleranceType, peakLookup):
+        # add isotopes
+        for key in fragments.keys():
+            fragment = fragments[key]
+            for i in range(1, self.maxIsotope+1):
+                mz = fragment.mass + i/float(fragment.charge)
+                peak = self._searchMassInSpectrum(mz, tolerance, toleranceType, peakLookup)
+                if peak == None:
+                    break
+                isotope = Fragment(fragment.name + "/"+str(i), mz, fragment.charge, FragmentType.ISOTOPE, peak=peak, parents={fragment.name})
+                fragments[isotope.name] = isotope
+     
+    def annotateSpectrumWithGlycan(self, spectrum, peptideMass, glycan, tolerance, toleranceType, maxCharge, spectrumIdentifier=None):
+        
+        peakLookup = self._getSpectrumLookup(spectrum, spectrumIdentifier)
+        # calculate peptide mass
+        pepIon = peptideMass+glyxtoolms.masses.MASS["H+"]
+        pepGlcNAcIon = pepIon+glyxtoolms.masses.GLYCAN["HEXNAC"]
+        pepNH3 = pepIon - self.masses["mNH3"]
+        pep83 = pepIon + self.masses["mNx"]
+        pepH2O = pepIon + self.masses["mH2O"]
+        pepHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]
+        pepHexHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]*2
+        
+        # create Fragmentlist
+        fragments = FragmentList()
+        
+        # add oxoniumIons
+        for fragment in self._getOxoniumIons(glycan):
+            fragments += fragment
+        
+        # add peptide and glycopeptide ions
+        for charge in range(1, maxCharge+1):
+            pepIonMass = self._calcChargedMass(pepIon, charge)
+            pepNH3Mass = self._calcChargedMass(pepNH3, charge)
+            pepH2OMass = self._calcChargedMass(pepH2O, charge)
+            pep83Mass = self._calcChargedMass(pep83, charge)
+
+            chargeName = "("+str(charge)+"+)"
+            fragments += Fragment("pep"+chargeName, pepIonMass, charge, FragmentType.PEPTIDEION)
+            fragments += Fragment("pep-NH3"+chargeName, pepNH3Mass, charge, FragmentType.PEPTIDEION)
+            fragments += Fragment("pep-H2O"+chargeName, pepH2OMass, charge, FragmentType.PEPTIDEION)
+            fragments += Fragment("pep+N(0.2X)"+chargeName, pep83Mass, charge, FragmentType.GLYCOPEPTIDEION)
+            fragments += Fragment("pep+N(0.2X)-H2O"+chargeName, pep83Mass-self.masses["mH2O"], charge, FragmentType.GLYCOPEPTIDEION)
+
+            # add glycan fragments
+            for g in self._getSubglycanCompositions(glycan):
+                if g.hasNCorePart() == False:
+                    continue
+                mass = self._calcChargedMass(pepIon+g.mass, charge)
+                massNH3 = self._calcChargedMass(pepIon+g.mass-self.masses["mNH3"], charge)
+                massH2O = self._calcChargedMass(pepIon+g.mass-self.masses["mH2O"], charge)
+                mass2xH2O = self._calcChargedMass(pepIon+g.mass-2*self.masses["mH2O"], charge)
+                massCHOCH3 = self._calcChargedMass(pepIon+g.mass-self.masses["mCHOCH3"], charge)
+                fragments += Fragment("pep+"+g.toString()+"("+str(charge)+"+)", mass, charge, FragmentType.GLYCOPEPTIDEION)
+                fragments += Fragment("pep+"+g.toString()+"-NH3"+"("+str(charge)+"+)", massNH3, charge, FragmentType.GLYCOPEPTIDEION)
+                fragments += Fragment("pep+"+g.toString()+"-H2O"+"("+str(charge)+"+)", massH2O, charge, FragmentType.GLYCOPEPTIDEION)
+                fragments += Fragment("pep+"+g.toString()+"-2xH2O"+"("+str(charge)+"+)", mass2xH2O, charge, FragmentType.GLYCOPEPTIDEION)
+                fragments += Fragment("pep+"+g.toString()+"-CHOCH3"+"("+str(charge)+"+)", massCHOCH3, charge, FragmentType.GLYCOPEPTIDEION)
+                
+        #search for the existence of each fragment within the spectrum
+        found_fragments = {}
+        for fragmentname in fragments:
+            fragment = fragments[fragmentname]
+            # search highest peak within tolerance
+            peak = self._searchMassInSpectrum(fragment.mass, tolerance, toleranceType, peakLookup)
+            if peak == None:
+                continue
+            newFragment = fragment.copy()
+            newFragment.peak = peak
+            found_fragments[fragmentname] = newFragment
+        
+        self.annotateIsotopes(found_fragments,  tolerance, toleranceType, peakLookup)
+        return found_fragments
+
+    def annotateSpectrumWithFragments(self, peptide, glycan, spectrum, tolerance, toleranceType, maxCharge, spectrumIdentifier=None):
+
+        peakLookup = self._getSpectrumLookup(spectrum, spectrumIdentifier)
 
         # calculate peptide mass
         pepIon = peptide.mass+glyxtoolms.masses.MASS["H+"]
@@ -488,10 +574,10 @@ class FragmentProvider(object):
 
             # add peptide and glycopeptide ions
             for charge in range(1, maxCharge+1):
-                pepIonMass = calcChargedMass(pepIon, charge)
-                pepNH3Mass = calcChargedMass(pepNH3, charge)
-                pepH2OMass = calcChargedMass(pepH2O, charge)
-                pep83Mass = calcChargedMass(pep83, charge)
+                pepIonMass = self._calcChargedMass(pepIon, charge)
+                pepNH3Mass = self._calcChargedMass(pepNH3, charge)
+                pepH2OMass = self._calcChargedMass(pepH2O, charge)
+                pep83Mass = self._calcChargedMass(pep83, charge)
 
                 chargeName = "("+str(charge)+"+)"
                 fragments += Fragment("pep"+chargeName, pepIonMass, charge, FragmentType.PEPTIDEION)
@@ -504,11 +590,11 @@ class FragmentProvider(object):
                 for g in self._getSubglycanCompositions(glycan):
                     if g.hasNCorePart() == False:
                         continue
-                    mass = calcChargedMass(pepIon+g.mass, charge)
-                    massNH3 = calcChargedMass(pepIon+g.mass-self.masses["mNH3"], charge)
-                    massH2O = calcChargedMass(pepIon+g.mass-self.masses["mH2O"], charge)
-                    mass2xH2O = calcChargedMass(pepIon+g.mass-2*self.masses["mH2O"], charge)
-                    massCHOCH3 = calcChargedMass(pepIon+g.mass-self.masses["mCHOCH3"], charge)
+                    mass = self._calcChargedMass(pepIon+g.mass, charge)
+                    massNH3 = self._calcChargedMass(pepIon+g.mass-self.masses["mNH3"], charge)
+                    massH2O = self._calcChargedMass(pepIon+g.mass-self.masses["mH2O"], charge)
+                    mass2xH2O = self._calcChargedMass(pepIon+g.mass-2*self.masses["mH2O"], charge)
+                    massCHOCH3 = self._calcChargedMass(pepIon+g.mass-self.masses["mCHOCH3"], charge)
                     fragments += Fragment("pep+"+g.toString()+"("+str(charge)+"+)", mass, charge, FragmentType.GLYCOPEPTIDEION)
                     fragments += Fragment("pep+"+g.toString()+"-NH3"+"("+str(charge)+"+)", massNH3, charge, FragmentType.GLYCOPEPTIDEION)
                     fragments += Fragment("pep+"+g.toString()+"-H2O"+"("+str(charge)+"+)", massH2O, charge, FragmentType.GLYCOPEPTIDEION)
@@ -556,23 +642,25 @@ class FragmentProvider(object):
             for fragmentname in fragments:
                 fragment = fragments[fragmentname]
                 # search highest peak within tolerance
-                peak = searchMassInSpectrum(fragment.mass, tolerance, toleranceType, peakLookup, toleranceLookup)
+                peak = self._searchMassInSpectrum(fragment.mass, tolerance, toleranceType, peakLookup)
                 if peak == None:
                     continue
                 newFragment = fragment.copy()
                 newFragment.peak = peak
                 found_fragments[fragmentname] = newFragment
-
-            # add isotopes
-            for key in found_fragments.keys():
-                fragment = found_fragments[key]
-                for i in range(1, self.maxIsotope+1):
-                    mz = fragment.mass + i/float(fragment.charge)
-                    peak = searchMassInSpectrum(mz, tolerance, toleranceType, peakLookup, toleranceLookup)
-                    if peak == None:
-                        break
-                    isotope = Fragment(fragment.name + "/"+str(i), mz, fragment.charge, FragmentType.ISOTOPE, peak=peak, parents={fragment.name})
-                    found_fragments[isotope.name] = isotope
+            
+            self.annotateIsotopes(found_fragments,  tolerance, toleranceType, peakLookup)
+            
+            ## add isotopes
+            #for key in found_fragments.keys():
+            #    fragment = found_fragments[key]
+            #    for i in range(1, self.maxIsotope+1):
+            #        mz = fragment.mass + i/float(fragment.charge)
+            #        peak = self._searchMassInSpectrum(mz, tolerance, toleranceType, peakLookup)
+            #        if peak == None:
+            #            break
+            #        isotope = Fragment(fragment.name + "/"+str(i), mz, fragment.charge, FragmentType.ISOTOPE, peak=peak, parents={fragment.name})
+            #        found_fragments[isotope.name] = isotope
 
             # check if peptide variant has highest fragment count
             # TODO: Better variant scoring?
