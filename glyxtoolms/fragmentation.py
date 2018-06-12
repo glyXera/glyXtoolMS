@@ -152,11 +152,9 @@ class Fragment(object):
 
 class FragmentProvider(object):
     """ Class to generate and store theoretical glycoeptide fragments for use on identical peptides/glycans"""
-    def __init__(self ,types={"b","y"}, maxIsotope=3):
+    def __init__(self ,types={"b","y"}):
         
         self.types = types
-        self.maxIsotope = maxIsotope
-        
         self.unchargedPeptides = {}
         self.chargedPeptides = {}
         self.immoniumIons = {}
@@ -175,6 +173,12 @@ class FragmentProvider(object):
         self.masses["mCH2CO"] = glyxtoolms.masses.calcMassFromElements({"C":2, "H": 2, "O":1})
         self.masses["mNx"] = glyxtoolms.masses.calcMassFromElements({"C":4, "H":5, "N":1, "O":1})
         self.masses["mCHOCH3"] = glyxtoolms.masses.calcMassFromElements({"C":2, "H":4, "O":1})
+        
+    def _getMaxIsotopeNr(self, mass):
+        """ Estimate the maximum number of isotopes that need to be annotated based on ion mass
+        (Monoisotopic peak is isotope Nr 0)
+        """
+        return int(mass/500.0+2)
         
     def _getUnchargedPeptideFragments(self,peptide):
         peptideString = peptide.toString()
@@ -404,6 +408,7 @@ class FragmentProvider(object):
             fragments.append(Fragment(g.toString()+"-2*H2O(1+)", oxH2O.mass - self.masses["mH2O"], 1, FragmentType.OXONIUMION, parents={oxH2O.name}))
             fragments.append(Fragment(g.toString()+"-3*H2O(1+)", oxH2O.mass - 2*self.masses["mH2O"], 1, FragmentType.OXONIUMION, parents={oxH2O.name}))
             fragments.append(Fragment(g.toString()+"-CH3COOH(1+)", oxH2O.mass - self.masses["mCH2CO"], 1, FragmentType.OXONIUMION, parents={oxH2O.name}))
+            fragments.append(Fragment(g.toString()+"-CH2OH2OH2O(1+)", oxH2O.mass - self.masses["mCH2O"] - self.masses["mH2O"], 1, FragmentType.OXONIUMION, parents={oxH2O.name}))
             fragments.append(Fragment(g.toString()+"-H2OCH2OH2O(1+)", oxH2O.mass - self.masses["mCH2CO"] - self.masses["mH2O"], 1, FragmentType.OXONIUMION, parents={oxH2O.name}))
             fragments.append(Fragment(g.toString()+"-H2OCH2COH2O(1+)", oxH2O.mass - self.masses["mCH2CO"] - self.masses["mH2O"], 1, FragmentType.OXONIUMION, parents={oxH2O.name}))
         
@@ -450,7 +455,7 @@ class FragmentProvider(object):
         # add isotopes
         for key in fragments.keys():
             fragment = fragments[key]
-            for i in range(1, self.maxIsotope+1):
+            for i in range(1, self._getMaxIsotopeNr(fragment.mass)+2):
                 mz = fragment.mass + i/float(fragment.charge)
                 peak = self._searchMassInSpectrum(mz, tolerance, toleranceType, peakLookup)
                 if peak == None:
@@ -650,17 +655,6 @@ class FragmentProvider(object):
                 found_fragments[fragmentname] = newFragment
             
             self.annotateIsotopes(found_fragments,  tolerance, toleranceType, peakLookup)
-            
-            ## add isotopes
-            #for key in found_fragments.keys():
-            #    fragment = found_fragments[key]
-            #    for i in range(1, self.maxIsotope+1):
-            #        mz = fragment.mass + i/float(fragment.charge)
-            #        peak = self._searchMassInSpectrum(mz, tolerance, toleranceType, peakLookup)
-            #        if peak == None:
-            #            break
-            #        isotope = Fragment(fragment.name + "/"+str(i), mz, fragment.charge, FragmentType.ISOTOPE, peak=peak, parents={fragment.name})
-            #        found_fragments[isotope.name] = isotope
 
             # check if peptide variant has highest fragment count
             # TODO: Better variant scoring?

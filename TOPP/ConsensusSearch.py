@@ -34,7 +34,7 @@ def main(options):
 
     keep = []
     # storage of already calculated fragments
-    fragmentProvider = glyxtoolms.fragmentation.FragmentProvider(types=pepIons, maxIsotope=4)
+    fragmentProvider = glyxtoolms.fragmentation.FragmentProvider(types=pepIons)
     lenHits = float(len(glyxXMLFile.glycoModHits))
     for i,hit in enumerate(glyxXMLFile.glycoModHits):
         # TODO: handle status settings
