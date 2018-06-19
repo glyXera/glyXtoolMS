@@ -396,7 +396,7 @@ class GlyxXMLFile(object):
         self.features = []
         self.glycoModHits = []
         self.all_tags = set()
-        self._version_ = "0.1.4" # current version
+        self._version_ = "0.1.5" # current version
         self.version = self._version_ # will be overwritten by file
         self.toolValueDefaults = {}
 
@@ -651,6 +651,7 @@ class GlyxXMLFile(object):
 
             # write annotations
             self._writeAnnotations(xmlFeature, feature)
+            self._writeTags(xmlFeature, feature)
 
 
 
@@ -838,14 +839,8 @@ class GlyxXMLFile(object):
 
             if self.version > "0.0.7":
                 self._parseAnnotations(xmlFeature, feature)
-                #feature.annotations = []
-                #for xmlAnn in xmlFeature.findall("./annotations/annotation"):
-                #    ann = Annotation()
-                #    ann.text = xmlAnn.find("./text").text
-                #    ann.x1 = float(xmlAnn.find("./x1").text)
-                #    ann.x2 = float(xmlAnn.find("./x2").text)
-                #    ann.y = float(xmlAnn.find("./y").text)
-                #    feature.annotations.append(ann)
+            if self.version >  "0.1.4":
+                self._parseTags(xmlFeature, feature)
             features.append(feature)
 
         return features
