@@ -45,7 +45,7 @@ def main(options):
     missedCleavages = int(options.missedCleavageSites)
     
     proteinDigest.setMaxModifications(int(options.maxNrModifications))
-    proteinDigest.setMaxMissedCleavage(2)
+    proteinDigest.setMaxMissedCleavage(missedCleavages)
     
     findOGlycosylation = "O-Glycosylation" in options.glycosylation
     findNGlycosylation = "N-Glycosylation" in options.glycosylation

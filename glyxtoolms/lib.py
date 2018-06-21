@@ -280,16 +280,18 @@ class ProteinDigest(object):
         Y = np.delete(Y, independent, axis=1)
         names = np.array(mods)
         Y_names = np.delete(names, independent, axis=0)
-
+        print mods
         # create permutation matrix of each modification
         perm = []
         diag = AA_T.diagonal()
         for i in range(0,diag.size):
             N_mod = diag[0,i]
             if self.maxModifications > -1 and N_mod > self.maxModifications:
-                N_mod = self.maxModifications
+                name = mods[i]
+                if name != "CYS_CAM" and name != "CYS_CM":
+                    N_mod = self.maxModifications
             perm.append(range(0,int(N_mod)+1))
-
+        print perm
         masses = []
         for ii in product(*perm):
             isValid = True
