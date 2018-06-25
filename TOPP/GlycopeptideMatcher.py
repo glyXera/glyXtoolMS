@@ -17,6 +17,8 @@ def handle_args(argv=None):
     parser.add_argument("--toleranceType", dest="toleranceType",
                         help="Type of the given mass tolerance",
                         choices=["Da", "ppm"])
+    parser.add_argument("--checkPep", dest="checkPep",help="Check existence of the peptide ion within the consensus spectrum")
+    parser.add_argument("--checkPepHexNAc", dest="checkPepHexNAc",help="Check existence of the peptide+HexNAc ion within the consensus spectrum")
                 
     if not argv:
         args = parser.parse_args(sys.argv[1:])
@@ -25,11 +27,28 @@ def handle_args(argv=None):
     return args
 
 
+def hasMassInSpectrum(unchargedMass, feature, tolerance,toleranceType):
+    """ Search for the existence of an uncharged mass within the charge range of the feature charge """
+    # mass = (hit.peptide.mass+glyxtoolms.masses.GLYCAN["HEXNAC"]+glyxtoolms.masses.MASS["H+"]*charge)/float(charge)
+    for charge in range(1,feature.getCharge()+1):
+        mass = (unchargedMass+glyxtoolms.masses.MASS["H+"]*charge)/float(charge)
+        peak = feature.getConsensusPeakAt(mass,tolerance,toleranceType)
+        if peak != None:
+            return True
+    return False
+
 def main(options):
     print "parsing input parameters"
     tolerance = float(options.tolerance)
     toleranceType = options.toleranceType
+    checkPep = False
+    if options.checkPep == "true":
+        checkPep = True
     
+    checkPepHexNAc = False
+    if options.checkPepHexNAc == "true":
+        checkPepHexNAc = True
+        
     print "parsing input files"
     # Analysis file
     glyML = glyxtoolms.io.GlyxXMLFile()
@@ -54,9 +73,15 @@ def main(options):
     for feature in glyML.features:
         if feature.status == glyxtoolms.io.ConfirmationStatus.Rejected:
             continue
-        #precursorMass = feature.getMZ()*feature.getCharge()-glyxtoolms.masses.MASS["H+"]*(feature.getCharge()-1)
         found = False
         for peptide in pepFile.peptides:
+            # check if peptide mass is existing within the consensus spectrum
+            if checkPep == True:
+                if hasMassInSpectrum(peptide.mass, feature, tolerance,toleranceType) == False:
+                    continue
+            if checkPepHexNAc == True:
+                if hasMassInSpectrum(peptide.mass+glyxtoolms.masses.GLYCAN["HEXNAC"],feature, tolerance,toleranceType) == False:
+                    continue
             # collect glycosylation types for peptide
             glycosites = set()
             glycosites.add("?")

@@ -512,7 +512,7 @@ msCompositionOrder = [
 
 class Glycan(glyxtoolms.io.XMLGlycan):
 
-    def __init__(self, composition=None, typ="?"):
+    def __init__(self, composition=None, typ={"?"}):
         super(Glycan, self).__init__()
         self.composition = ""
         self.typ = typ
@@ -532,15 +532,19 @@ class Glycan(glyxtoolms.io.XMLGlycan):
         self.sugar["HEX"] = HEX
         self.sugar["HEXNAC"] = HEXNAC
 
-        self.mass = 0
-        for unit in self.sugar:
-            self.mass += glyxtoolms.masses.GLYCAN[unit]*self.sugar[unit]
+        self.getMass()
         self.composition = ""
         for unit in msCompositionOrder:
             amount = self.sugar.get(unit, 0)
             if amount == 0:
                 continue
             self.composition += msComposition[unit]+str(amount)
+            
+    def getMass(self):
+        self.mass = 0
+        for unit in self.sugar:
+            self.mass += glyxtoolms.masses.GLYCAN[unit]*self.sugar[unit]
+        return self.mass
 
     def checkComposition(self):
         HEX = self.sugar["HEX"]

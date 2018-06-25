@@ -226,6 +226,32 @@ class ConfirmationStatus(object):
               "PoorGlycopeptide",
               "PoorNonGlycopeptide"]
 
+class PeakLookup(object):
+    
+    def __init__(self,peaks,toleranceLookup=1.0):
+        self.toleranceLookup=1.0
+        self.peakLookup = {}
+        for peak in peaks:
+            index = self._getDBIndex(peak.x)
+            self.peakLookup[index-1] = self.peakLookup.get(index-1, set()).union({peak})
+            self.peakLookup[index] = self.peakLookup.get(index, set()).union({peak})
+            self.peakLookup[index+1] = self.peakLookup.get(index+1, set()).union({peak})
+        
+            
+    def _getDBIndex(self, mass):
+        return int(mass/self.toleranceLookup)
+        
+    def getPeak(self, mass,tolerance, toleranceType):
+        hit = (0,None)
+        index = self._getDBIndex(mass)
+        for peak in self.peakLookup.get(index,[]):
+            error = abs(glyxtoolms.lib.calcMassError(peak.x, mass, toleranceType))
+            if error <= tolerance:
+                if hit[1] == None or error < hit[0]:
+                    hit = (error,peak)
+        return hit[1]
+
+
 class GlyxXMLFeature(object):
 
     def __init__(self):
@@ -245,6 +271,7 @@ class GlyxXMLFeature(object):
         self.consensus = []
         self.hits = set()
         self.tags = set()
+        self.lookup = None # Peaklookup - only instantiate if needed
 
     def setId(self, id):
         self.id = id
@@ -328,8 +355,12 @@ class GlyxXMLFeature(object):
         return new
 
     def addConsensusPeak(self, x, y):
-
         self.consensus.append(GlyxXMLConsensusPeak(x, y, len(self.consensus)))
+        
+    def getConsensusPeakAt(self,mass,tolerance, toleranceType):
+        if self.lookup == None:
+            self.lookup = PeakLookup(self.consensus)
+        return self.lookup.getPeak(mass,tolerance, toleranceType)
 
 class XMLGlycan(object):
 
@@ -350,6 +381,7 @@ class GlyxXMLGlycoModHit(object):
         self.fragments = {}
         self.tags = set()
         self.toolValues = {} # store values of new pipeline tools
+        self.glycans = [] # filled if multiple glycans are attached to the peptide (site,typ,glycan)
 
 class GlyxXMLConsensusPeak(object):
 
@@ -396,7 +428,7 @@ class GlyxXMLFile(object):
         self.features = []
         self.glycoModHits = []
         self.all_tags = set()
-        self._version_ = "0.1.5" # current version
+        self._version_ = "0.1.6" # current version
         self.version = self._version_ # will be overwritten by file
         self.toolValueDefaults = {}
 
@@ -717,7 +749,16 @@ class GlyxXMLFile(object):
             #glycan.composition = str(xmlHit.find("./glycan/composition").text)
             #glycan.mass = float(xmlHit.find("./glycan/mass").text)
             hit.glycan = glycan
-
+            hit.glycans = []
+            # try parsing sub glycans if available
+            if self.version > "0.1.5":
+                for xmlglycan in xmlHit.findall("./glycans/glycan"):
+                    pos = int(xmlglycan.get("pos"))
+                    typ = str(xmlglycan.get("typ"))
+                    composition = str(xmlglycan.get("composition"))
+                    glycan = glyxtoolms.lib.Glycan(composition)
+                    hit.glycans.append((pos,typ,glycan))
+                    
             peptide = XMLPeptide()
             peptide._parse(xmlHit.find("./peptide"))
             hit.peptide = peptide
@@ -1564,12 +1605,13 @@ class GlycanCompositionFile(object):
 
     def __init__(self):
         self.glycans = []
-        self.version = "1.0"
+        self._version = "2.0"
+        self.version = self._version
 
     def read(self, path):
         f = file(path, "r")
         self.glycans = []
-        self.version = "1.0"
+        self.version = self._version
         for line in f:
             line = line.strip()
             if line.startswith("#"): # comment
@@ -1578,8 +1620,7 @@ class GlycanCompositionFile(object):
                 continue
             elif "," in line:
                 typ, glycanstring = line.split(",")
-                assert typ in ["?", "N", "O"]
-                glycan = glyxtoolms.lib.Glycan(glycanstring.strip(), typ=typ.strip())
+                glycan = glyxtoolms.lib.Glycan(glycanstring.strip(), typ=set(typ.strip().split("|")))
             else:
                 glycan = glyxtoolms.lib.Glycan(line)
             self.glycans.append(glycan)
@@ -1587,7 +1628,7 @@ class GlycanCompositionFile(object):
 
     def write(self, path):
         f = file(path, "w")
-        f.write("#version:"+self.version+"\n")
+        f.write("#version:"+self._version+"\n")
         for glycan in self.glycans:
-            f.write(glycan.typ + "," + glycan.toString() + "\n")
+            f.write("|".join(glycan.typ) + "," + glycan.toString() + "\n")
         f.close()

@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>GlycopeptideMatcher</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/GlycopeptideMatcher.py --out "%2" --inAnalysis "%3" --inGlycan "%4" --inPeptide "%5" --tolerance "%6" --toleranceType "%7"</cloptions>
+		  <cloptions> "%1"/GlycopeptideMatcher.py --out "%2" --inAnalysis "%3" --inGlycan "%4" --inPeptide "%5" --tolerance "%6" --toleranceType "%7" --checkPep "%8" --checkPepHexNAc "%9"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -31,6 +31,8 @@
             <mapping id="5" cl="%%inPeptide" />
             <mapping id="6" cl="%%tolerance" />
             <mapping id="7" cl="%%toleranceType" />
+            <mapping id="8" cl="%%checkPep" />
+            <mapping id="9" cl="%%checkPepHexNAc" />
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
@@ -40,6 +42,8 @@
             <ITEM name="inPeptide" value="" type="string" tags="input file" restrictions="*.xml" description="File input Glycopeptide file .xml"/>
 			<ITEM name="tolerance" value="10" type="float" description="Mass tolerance"/>
             <ITEM name="toleranceType" value="ppm" type="string" restrictions="Da,ppm" description="Type of the given mass tolerance"/>
+            <ITEM name="checkPep" value="true" type="string" restrictions="true,false" description="Check existence of the peptide ion within the consensus spectrum"/>
+            <ITEM name="checkPepHexNAc" value="true" type="string" restrictions="true,false" description="Check existence of the peptide+HexNAc ion within the consensus spectrum"/>
 		  </ini_param>
 		</external>
 	</tool>
