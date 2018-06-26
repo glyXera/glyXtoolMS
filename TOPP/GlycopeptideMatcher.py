@@ -111,15 +111,15 @@ def main(options):
                 if abs(error) > tolerance:
                     continue
                 # check if glycan type can exist on the peptides glycosylationsites
-                isSubset = False
+                glycoSiteSubsets = []
                 for typ in glycan.types:
                     if glycosites.get("N",0) < typ.get("N",0):
                         continue
                     if glycosites.get("O",0) < typ.get("O",0):
                         continue
-                    isSubset = True
-                    break
-                if isSubset == False:
+                    glycoSiteSubsets.append(typ)
+
+                if len(isSubset) == 0:
                     continue
                     
                 # check if an accepted hit exists already for feature
@@ -128,6 +128,14 @@ def main(options):
                 hit.glycan = glycan
                 hit.peptide = peptide
                 hit.error = mass - feature.getMZ()
+                # add glycosites as tags to the hit
+                for typ in glycoSiteSubsets:
+                    tag = ""
+                    if typ.get("N",0) > 0:
+                        tag += "N"+str(typ.get("N",0))
+                    if typ.get("O",0) > 0:
+                        tag += "O"+str(typ.get("O",0))
+                    hit.tags.add(tag)
                 glyML.glycoModHits.append(hit)
 
     print "found ",len(glyML.glycoModHits), " hits"
