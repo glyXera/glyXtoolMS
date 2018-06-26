@@ -1,7 +1,23 @@
 # Tool for selecting possible glycan + peptide masses for given precursor masses
 
 # out: Glycancompositionfile.txt, each line containing one structure
-      
+
+    
+class GlycanLookup(object):
+    
+    def __init__(self):
+        self.lookup = {}
+        
+    def addGlycan(self, glycan):
+        index = int(glycan.mass)
+        self.lookup[index-1] = self.lookup.get(index-1,[]) + [glycan]
+        self.lookup[index] = self.lookup.get(index,[]) + [glycan]
+        self.lookup[index+1] = self.lookup.get(index+1,[]) + [glycan]
+        
+    def getGlycansFromMass(self, mass):
+        index = int(mass)
+        return self.lookup.get(index,[])
+        
 
 def handle_args(argv=None):
     import argparse
@@ -60,11 +76,11 @@ def main(options):
     glycans = []
     glycanFile = glyxtoolms.io.GlycanCompositionFile()
     glycanFile.read(options.infileGlycan)
+    
+    # generate glycan lookup table
+    glycanLookup = GlycanLookup()
     for glycan in glycanFile.glycans:
-        glycans.append((glycan.mass,glycan))
-
-    # sort glycan file for faster comparison
-    glycans.sort()
+        glycanLookup.addGlycan(glycan)
     
     # remove old hits
     keepHits = []
@@ -83,20 +99,27 @@ def main(options):
                 if hasMassInSpectrum(peptide.mass+glyxtoolms.masses.GLYCAN["HEXNAC"],feature, tolerance,toleranceType) == False:
                     continue
             # collect glycosylation types for peptide
-            glycosites = set()
-            glycosites.add("?")
-            for pos,site in peptide.glycosylationSites:
-                glycosites.add(site)
+            glycosites = {"N":0, "O":0}
             
-            for glycanmass, glycan in glycans:
-                mass = (peptide.mass+glycanmass+glyxtoolms.masses.MASS["H+"]*feature.getCharge())/float(feature.getCharge())
+            for pos,site in peptide.glycosylationSites:
+                glycosites[site] += 1
+                
+            glycanmass = (feature.getMZ()-glyxtoolms.masses.MASS["H+"])*feature.getCharge()-peptide.mass
+            for glycan in glycanLookup.getGlycansFromMass(glycanmass):
+                mass = (peptide.mass+glycan.mass+glyxtoolms.masses.MASS["H+"]*feature.getCharge())/float(feature.getCharge())
                 error = glyxtoolms.lib.calcMassError(feature.getMZ(), mass, toleranceType)
-                if error > tolerance:
-                    break
                 if abs(error) > tolerance:
                     continue
                 # check if glycan type can exist on the peptides glycosylationsites
-                if glycan.typ not in glycosites:
+                isSubset = False
+                for typ in glycan.types:
+                    if glycosites.get("N",0) < typ.get("N",0):
+                        continue
+                    if glycosites.get("O",0) < typ.get("O",0):
+                        continue
+                    isSubset = True
+                    break
+                if isSubset == False:
                     continue
                     
                 # check if an accepted hit exists already for feature
@@ -116,6 +139,7 @@ def main(options):
 import sys
 import glyxtoolms
 from itertools import product
+import re
 
 if __name__ == "__main__":
     options = handle_args()

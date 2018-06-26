@@ -381,7 +381,6 @@ class GlyxXMLGlycoModHit(object):
         self.fragments = {}
         self.tags = set()
         self.toolValues = {} # store values of new pipeline tools
-        self.glycans = [] # filled if multiple glycans are attached to the peptide (site,typ,glycan)
 
 class GlyxXMLConsensusPeak(object):
 
@@ -701,9 +700,19 @@ class GlyxXMLFile(object):
             # write glycan, composition, mass
             xmlGlycan = ET.SubElement(xmlHit, "glycan")
             xmlGlycanComposition = ET.SubElement(xmlGlycan, "composition")
-            xmlGlycanComposition.text = glycoModHit.glycan.composition
+            xmlGlycanComposition.text = glycoModHit.glycan.toString()
             xmlGlycanMass = ET.SubElement(xmlGlycan, "mass")
             xmlGlycanMass.text = str(glycoModHit.glycan.mass)
+            types = set()
+            for typ in glycoModHit.glycan.types:
+                s = ""
+                if typ.get("N",0) > 0:
+                    s += "N"+str(typ.get("N",0))
+                if typ.get("O",0) > 0:
+                    s += "O"+str(typ.get("O",0))
+                types.add(s)
+            xmlGlycanTypes = ET.SubElement(xmlGlycan, "types")
+            xmlGlycanTypes.text = "|".join(types)
 
             xmlError = ET.SubElement(xmlHit, "error")
             xmlError.text = str(glycoModHit.error)
@@ -743,22 +752,20 @@ class GlyxXMLFile(object):
             hit.error = float(xmlHit.find("./error").text)
 
             composition = str(xmlHit.find("./glycan/composition").text)
-            glycan = glyxtoolms.lib.Glycan(composition)
-
-            #glycan = XMLGlycan()
-            #glycan.composition = str(xmlHit.find("./glycan/composition").text)
-            #glycan.mass = float(xmlHit.find("./glycan/mass").text)
-            hit.glycan = glycan
-            hit.glycans = []
-            # try parsing sub glycans if available
+            
+            parsedTypes = []
             if self.version > "0.1.5":
-                for xmlglycan in xmlHit.findall("./glycans/glycan"):
-                    pos = int(xmlglycan.get("pos"))
-                    typ = str(xmlglycan.get("typ"))
-                    composition = str(xmlglycan.get("composition"))
-                    glycan = glyxtoolms.lib.Glycan(composition)
-                    hit.glycans.append((pos,typ,glycan))
-                    
+                for typ in set(xmlHit.find("./glycan/types").text.split("|")):
+                    res = {"N":0,"O":0}
+                    for match in re.findall("(N\d+|O\d+)",typ):
+                        res[match[0]] = int(match[1:])
+                    parsedTypes.append(res)
+            else:
+                parsedTypes.append({"N":0,"O":0})
+                
+            glycan = glyxtoolms.lib.Glycan(composition,types=parsedTypes)
+            hit.glycan = glycan
+
             peptide = XMLPeptide()
             peptide._parse(xmlHit.find("./peptide"))
             hit.peptide = peptide
@@ -1619,8 +1626,19 @@ class GlycanCompositionFile(object):
                     self.version = line.split(":")[1]
                 continue
             elif "," in line:
-                typ, glycanstring = line.split(",")
-                glycan = glyxtoolms.lib.Glycan(glycanstring.strip(), typ=set(typ.strip().split("|")))
+                types, glycanstring = line.split(",")
+                parsedTypes = []
+                for typ in set(types.strip().split("|")):
+                    if typ == "N":
+                        res = {"N":1,"O":0}
+                    elif typ == "O":
+                        res = {"N":0,"O":1}
+                    else:
+                        res = {"N":0,"O":0}
+                        for match in re.findall("(N\d+|O\d+)",typ):
+                            res[match[0]] = int(match[1:])
+                    parsedTypes.append(res)
+                glycan = glyxtoolms.lib.Glycan(glycanstring.strip(), types=parsedTypes)
             else:
                 glycan = glyxtoolms.lib.Glycan(line)
             self.glycans.append(glycan)
@@ -1630,5 +1648,13 @@ class GlycanCompositionFile(object):
         f = file(path, "w")
         f.write("#version:"+self._version+"\n")
         for glycan in self.glycans:
-            f.write("|".join(glycan.typ) + "," + glycan.toString() + "\n")
+            types = set()
+            for typ in glycan.types:
+                s = ""
+                if typ.get("N",0) > 0:
+                    s += "N"+str(typ.get("N",0))
+                if typ.get("O",0) > 0:
+                    s += "O"+str(typ.get("O",0))
+                types.add(s)
+            f.write("|".join(types) + "," + glycan.toString() + "\n")
         f.close()

@@ -512,10 +512,28 @@ msCompositionOrder = [
 
 class Glycan(glyxtoolms.io.XMLGlycan):
 
-    def __init__(self, composition=None, typ={"?"}):
+    def __init__(self, composition=None, types=[{"N":0, "O":0}]):
         super(Glycan, self).__init__()
         self.composition = ""
-        self.typ = typ
+        self.types = types
+        hasN = False
+        hasO = False
+        self.typ = "?"
+        for typ in types:
+            if typ.get("N",0) > 0:
+                hasN = True
+            if typ.get("O",0) > 0:
+                hasO = True
+        if hasN == False and hasO == False:
+            self.typ = "?"
+        elif hasN == False and hasO == True:
+            self.typ = "O"
+        elif hasN == True and hasO == False:
+            self.typ = "N"
+        else:
+            self.typ = "NO"
+            
+        
         self.glycosylationSite = None
         self.linearCode = ""
         self.structure = None
