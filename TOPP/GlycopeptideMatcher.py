@@ -119,7 +119,7 @@ def main(options):
                         continue
                     glycoSiteSubsets.append(typ)
 
-                if len(isSubset) == 0:
+                if len(glycoSiteSubsets) == 0:
                     continue
                     
                 # check if an accepted hit exists already for feature
