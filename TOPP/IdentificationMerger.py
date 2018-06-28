@@ -25,11 +25,11 @@ def handle_args(argv=None):
 def main(options):
     print "parsing input file 1"
     in1 = glyxtoolms.io.GlyxXMLFile()
-    in1.readFromFile(options.inIdentifications)
+    in1.readFromFile(options.in1)
 
     print "parsing input file 2"
     in2 = glyxtoolms.io.GlyxXMLFile()
-    in2.readFromFile(options.inAnalysis)
+    in2.readFromFile(options.in2)
     
 
     print "merge identifications"
