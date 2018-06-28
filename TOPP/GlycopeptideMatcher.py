@@ -92,12 +92,14 @@ def main(options):
         found = False
         for peptide in pepFile.peptides:
             # check if peptide mass is existing within the consensus spectrum
+            hasPep = True
             if checkPep == True:
-                if hasMassInSpectrum(peptide.mass, feature, tolerance,toleranceType) == False:
-                    continue
+                hasPep = hasMassInSpectrum(peptide.mass, feature, tolerance,toleranceType)
+            hashPepHexNAc = True
             if checkPepHexNAc == True:
-                if hasMassInSpectrum(peptide.mass+glyxtoolms.masses.GLYCAN["HEXNAC"],feature, tolerance,toleranceType) == False:
-                    continue
+                hashPepHexNAc = hasMassInSpectrum(peptide.mass+glyxtoolms.masses.GLYCAN["HEXNAC"],feature, tolerance,toleranceType)
+            if hasPep == False and hashPepHexNAc == False:
+                continue
             # collect glycosylation types for peptide
             glycosites = {"N":0, "O":0}
             

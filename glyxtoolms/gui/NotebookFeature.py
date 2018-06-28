@@ -34,9 +34,9 @@ class NotebookFeature(TreeTable.TreeTable):
 
     def initializeColumnHeader(self):
 
-        self.columns = ("RT", "MZ", "Charge", "Best Score", "Nr Spectra", "Status", "Nr. Idents", "Tags")
-        self.columnNames = {"RT":"RT", "MZ":"MZ [Da]", "Charge":"Charge", "Best Score":"Best Score", "Nr Spectra":"Nr Spectra", "Status": "Status", "Nr. Idents":"Nr. Idents","Tags":"Tags"}
-        self.columnsWidth = {"RT":60, "MZ":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80,"Tags":80}
+        self.columns = ("RT", "MZ", "Charge", "Intensity","Best Score", "Nr Spectra", "Status", "Nr. Idents", "Tags")
+        self.columnNames = {"RT":"RT", "MZ":"MZ [Da]", "Charge":"Charge", "Intensity":"Int [counts]", "Best Score":"Best Score", "Nr Spectra":"Nr Spectra", "Status": "Status", "Nr. Idents":"Nr. Idents","Tags":"Tags"}
+        self.columnsWidth = {"RT":60, "MZ":80, "Intensity":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80,"Tags":80}
         self.toolNameOrder = []
 
         self.showColumns = {}
@@ -129,7 +129,7 @@ class NotebookFeature(TreeTable.TreeTable):
         for item in selection:
             feature  = self.treeIds[item]
             values = self.tree.item(item)["values"]
-            values[7] = ", ".join(feature.tags)
+            values[8] = ", ".join(feature.tags)
             self.tree.item(item, values=values)
 
     #def copyToClipboard(self, *arg, **args):
@@ -280,7 +280,7 @@ class NotebookFeature(TreeTable.TreeTable):
         # rearrange items in sorted positions
         for index, (val, k) in enumerate(l):
             self.tree.move(k, '', index)
-            status = self.tree.item(k)["values"][5]
+            status = self.tree.item(k)["values"][6]
             # adjust tags
             taglist = list(self.tree.item(k, "tags"))
             if "odd" in taglist:
@@ -365,6 +365,7 @@ class NotebookFeature(TreeTable.TreeTable):
             values = [rt,
                       round(feature.getMZ(), 4),
                       feature.getCharge(),
+                      feature.getIntensity(),
                       round(bestScore, 2),
                       len(feature.getSpectraIds()),
                       feature.status,
@@ -413,12 +414,13 @@ class NotebookFeature(TreeTable.TreeTable):
             if spectrum.logScore < bestScore:
                 bestScore = spectrum.logScore
         self.tree.item(item,values=(rt,
-                                           round(feature.getMZ(), 4),
-                                           feature.getCharge(),
-                                           round(bestScore, 2),
-                                           len(feature.getSpectraIds()),
-                                           feature.status,
-                                           len(feature.hits)))
+                                    round(feature.getMZ(), 4),
+                                    feature.getCharge(),
+                                    feature.getIntensity(),
+                                    round(bestScore, 2),
+                                    len(feature.getSpectraIds()),
+                                    feature.status,
+                                    len(feature.hits)))
 
     def getSelectedFeatures(self):
         selection = self.tree.selection()
