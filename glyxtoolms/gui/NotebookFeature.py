@@ -197,7 +197,7 @@ class NotebookFeature(TreeTable.TreeTable):
                 feature.status = glyxtoolms.io.ConfirmationStatus.Unknown
             # Update on Treeview
             values = self.tree.item(item)["values"]
-            values[5] = feature.status
+            values[6] = feature.status
             self.tree.item(item, values=values)
 
             taglist = list(self.tree.item(item, "tags"))
