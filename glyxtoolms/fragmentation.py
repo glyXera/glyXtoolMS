@@ -72,9 +72,9 @@ def getModificationVariants(peptide,glycantyp={"N":1,"O":0},check=False):
     O = set()
     for pos,typ in peptide.glycosylationSites:
         if typ == "N":
-            N.add(("N",pos))
+            N.add(("N",pos-peptide.start))
         elif typ == "O":
-            O.add(("O",pos))
+            O.add(("O",pos-peptide.start))
     # check if still valid
     if glycantyp["N"] > len(N):
         return set()
@@ -127,7 +127,7 @@ def getModificationVariants(peptide,glycantyp={"N":1,"O":0},check=False):
         pepvariant.glycosylationSites = []
         for modname, pos in modificationset:
             if modname in ["N","O"]:
-                pepvariant.glycosylationSites.append((pos,modname))
+                pepvariant.glycosylationSites.append((pos+peptide.start,modname))
             else:
                 pepvariant.addModification(modname, position=pos)
         variants.add(pepvariant)
