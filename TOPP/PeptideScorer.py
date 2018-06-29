@@ -31,23 +31,14 @@ def parseFragmentname(name):
     return fragType, abc,xyz, mods
 
 def hcdScore2(h):
-
-    keep = []
-    comps = {}
     uniquePeaks = set()
-
     for f in h.fragments.values():
         glycanComp = h.glycan.toString()
         ftyp, nterm,cterm, mods = parseFragmentname(f.name)
 
-        if f.typ not in ["CION","ZION"]:
+        if f.typ not in ["YION","BION"]:
             continue
-        if "-" in set([mod[0] for mod in mods]):
-            continue
-        for mod in mods:
-            comps[mod] = comps.get(mod, []) + [(f,ftyp,nterm,cterm)]
-        if (f.charge == 1 and len(mods) == 0) or glycanComp in mods:
-            keep.append(f)
+        if len(mods) == 0 or (len(mods) == 1 and mods[0] == "+HexNAc"):
             uniquePeaks.add(f.peak)
     return len(uniquePeaks)
 
