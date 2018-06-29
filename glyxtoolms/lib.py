@@ -218,6 +218,8 @@ class ProteinDigest(object):
 
         # calc modification data
         data = {}
+
+
         for i,amino in enumerate(sequence):
             possible = set()
             for modname in self.modifications:
@@ -231,13 +233,24 @@ class ProteinDigest(object):
                         possible.add(modname)
             if len(possible) > 0:
                 data[i] = possible
-
+        # add glycosylation sites
+        #for pos,typ in peptide.glycosylationSites:
+        #    data[pos] = data.get(pos,set())
+        #    data[pos].add(typ+"GLYCAN")
+        #print data
         # remove already modified sites
         for mod in peptide.modifications:
             if mod.position == -1:
                 continue
             if mod.position in data:
                 data.pop(mod.position)
+        
+        # remove N-glycosylation sites #TODO: Fix - this is not completly right
+        for pos,typ in peptide.glycosylationSites:
+            if pos in data:
+                if typ == "N":
+                    data.pop(pos)
+                
 
         # generate matrix
         keys = sorted(data.keys())
@@ -297,7 +310,7 @@ class ProteinDigest(object):
             N_mods = 0
             for amount, name in zip(ii, mods):
                 target[name] = amount
-                if name != "CYS_CAM" and name != "CYS_CM":
+                if name != "CYS_CAM" and name != "CYS_CM" and name != "OGLYCAN" and name != "NGLYCAN":
                     N_mods += amount
             # check if more modifications are on than allowed
             if self.maxModifications > -1 and N_mods > self.maxModifications:
