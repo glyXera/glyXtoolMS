@@ -29,7 +29,28 @@ def parseFragmentname(name):
         xyz = pos
         fragType += typ
     return fragType, abc,xyz, mods
-    
+
+def hcdScore2(h):
+
+    keep = []
+    comps = {}
+    uniquePeaks = set()
+
+    for f in h.fragments.values():
+        glycanComp = h.glycan.toString()
+        ftyp, nterm,cterm, mods = parseFragmentname(f.name)
+
+        if f.typ not in ["CION","ZION"]:
+            continue
+        if "-" in set([mod[0] for mod in mods]):
+            continue
+        for mod in mods:
+            comps[mod] = comps.get(mod, []) + [(f,ftyp,nterm,cterm)]
+        if (f.charge == 1 and len(mods) == 0) or glycanComp in mods:
+            keep.append(f)
+            uniquePeaks.add(f.peak)
+    return len(uniquePeaks)
+
 def etdScore2(h):
 
     keep = []
@@ -210,6 +231,8 @@ def main(options):
     glyML.addToolValueDefault(explainedName, 0.0)
     if typ == "ETD":
         glyML.addToolValueDefault("etdScore2", 0.0)
+    else:
+        glyML.addToolValueDefault("hcdScore2", 0.0)
 
     print "scoring fragment spectra"
     for hit in glyML.glycoModHits:
@@ -218,6 +241,8 @@ def main(options):
         hit.toolValues[explainedName] = explained
         if typ == "ETD":
             hit.toolValues["etdScore2"] = etdScore2(hit)*score
+        else:
+            hit.toolValues["hcdScore2"] = hcdScore2(hit)*score
     glyML.writeToFile(options.outfile)
     print "done"
     return
