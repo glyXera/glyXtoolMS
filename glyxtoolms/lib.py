@@ -1,9 +1,9 @@
 import re
-from itertools import product
 import copy
 import glyxtoolms
 import pyopenms
 import numpy as np
+import itertools
 
 class Histogram(object):
 
@@ -174,8 +174,7 @@ class ProteinDigest(object):
         assert len(glyxtoolms.masses.PROTEINMODIFICATION[modname].get("targets", [])) > 0
         self.modifications.add(modname)
 
-    def calcPeptideMasses(self, peptide):
-
+    def calcPeptideMasses(self, peptide,maxNGlycans=2, maxOGlycans=5):
         def checkPeptideValidity(Y, Y_names, target):
             Y = Y.copy()
             Ycopy = Y.copy()
@@ -219,8 +218,15 @@ class ProteinDigest(object):
         # calc modification data
         data = {}
 
-
         for i,amino in enumerate(sequence):
+            if amino == "C":
+                if "CYS_CAM" in self.modifications:
+                    peptide.addModification("CYS_CAM",i)
+                    continue
+                elif "CYS_CM" in self.modifications:
+                    peptide.addModification("CYS_CM",i)
+                    continue
+                
             possible = set()
             for modname in self.modifications:
                 mod = glyxtoolms.masses.PROTEINMODIFICATION[modname]
@@ -233,11 +239,7 @@ class ProteinDigest(object):
                         possible.add(modname)
             if len(possible) > 0:
                 data[i] = possible
-        # add glycosylation sites
-        #for pos,typ in peptide.glycosylationSites:
-        #    data[pos] = data.get(pos,set())
-        #    data[pos].add(typ+"GLYCAN")
-        #print data
+
         # remove already modified sites
         for mod in peptide.modifications:
             if mod.position == -1:
@@ -245,11 +247,11 @@ class ProteinDigest(object):
             if mod.position in data:
                 data.pop(mod.position)
         
-        # remove N-glycosylation sites #TODO: Fix - this is not completly right
-        for pos,typ in peptide.glycosylationSites:
-            if pos in data:
-                if typ == "N":
-                    data.pop(pos)
+        ## remove N-glycosylation sites #TODO: Fix - this is not completly right
+        #for pos,typ in peptide.glycosylationSites:
+        #    if pos in data:
+        #        if typ == "N":
+        #            data.pop(pos)
                 
 
         # generate matrix
@@ -304,13 +306,13 @@ class ProteinDigest(object):
                     N_mod = self.maxModifications
             perm.append(range(0,int(N_mod)+1))
         masses = []
-        for ii in product(*perm):
+        for ii in itertools.product(*perm):
             isValid = True
             target = {}
             N_mods = 0
             for amount, name in zip(ii, mods):
                 target[name] = amount
-                if name != "CYS_CAM" and name != "CYS_CM" and name != "OGLYCAN" and name != "NGLYCAN":
+                if name != "CYS_CAM" and name != "CYS_CM":
                     N_mods += amount
             # check if more modifications are on than allowed
             if self.maxModifications > -1 and N_mods > self.maxModifications:
@@ -330,6 +332,19 @@ class ProteinDigest(object):
                 for i in range(0,target[modname]):
                     newPeptide.addModification(modname)
 
+            # check if peptide is still valid if glycans are attached
+            comp = [range(0,maxOGlycans+1),range(0,maxNGlycans+1)]
+            isValid = False
+            for O,N in itertools.product(*comp):
+                if O+N == 0:
+                    continue
+                hasVariants = glyxtoolms.fragmentation.getModificationVariants(newPeptide,{"N":N,"O":O},check=True)
+                if hasVariants == True:
+                    isValid = True
+                    break
+            if isValid == False:
+                continue
+            
             # solve modifications as much as possible
             try:
                 newPeptide.solveModifications()
@@ -439,7 +454,13 @@ class ProteinDigest(object):
 
     def findGlycopeptides(self, peptides, NGlycosylation=False,
                           OGlycosylation=False, NCGlycosylation=False):
-
+        
+        maxNGlycans=0
+        if NGlycosylation == True:
+            maxNGlycans=2
+        maxOGlycans=0
+        if OGlycosylation == True:
+            maxOGlycans=5
         # generate list of glycosylationsites
         sitesType = {}
         sites = []
@@ -470,7 +491,7 @@ class ProteinDigest(object):
                 pepAminoAcids = set(peptide.sequence)
                 if len(pepAminoAcids.difference(aminoacids)) > 0:
                     continue
-                glycopeptides += self.calcPeptideMasses(peptide)
+                glycopeptides += self.calcPeptideMasses(peptide,maxNGlycans=maxNGlycans, maxOGlycans=maxOGlycans)
 
         return glycopeptides
 

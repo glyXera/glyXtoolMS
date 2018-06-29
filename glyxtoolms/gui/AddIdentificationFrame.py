@@ -253,8 +253,17 @@ class AddIdentificationFrame(Tkinter.Toplevel):
     def plotFragments(self):
         if self.peptide == None:
             return
-            
-        fragmentProvider = glyxtoolms.fragmentation.FragmentProvider(types=pepIons, maxIsotope=4)
+        
+        types = set("a,a-H2O,a-NH3,b,b-H2O,b-NH3,by,c,c-H2O,c-NH3,x,x-H2O,x-NH3,y,y-H2O,y-NH3,z,z-H2O,z-NH3,z*".split(","))
+        
+        active = self.model.classes["PeptideCoverageFrame"].getActiveIons()
+        for mod in ["-NH3","-H2O"]:
+            if mod in active:
+                for ion in ["a","b","c","x","y","z"]:
+                    if ion in active:
+                        active.add(ion+mod)
+        
+        fragmentProvider = glyxtoolms.fragmentation.FragmentProvider(types=active)
         result = fragmentProvider.annotateSpectrumWithFragments(self.peptide,
                                                                 self.glycan,
                                                                 self.feature.consensus,

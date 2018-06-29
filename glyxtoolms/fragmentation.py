@@ -66,8 +66,30 @@ class Composition(dict):
             mass += glyxtoolms.masses.MASS[key] * self[key]
         return mass
 
-def getModificationVariants(peptide):
+def getModificationVariants(peptide,glycantyp={"N":1,"O":0},check=False):
+    # collect glycosylation sites
+    N = set()
+    O = set()
+    for pos,typ in peptide.glycosylationSites:
+        if typ == "N":
+            N.add(("N",pos))
+        elif typ == "O":
+            O.add(("O",pos))
+    # check if still valid
+    if glycantyp["N"] > len(N):
+        return set()
+    
+    if glycantyp["O"] > len(O):
+        return set()
+    
     modify = []
+    # add glycosylation sites
+    for i in range(0,glycantyp["N"]):
+        modify.append(N)
+    for i in range(0,glycantyp["O"]):
+        modify.append(O)
+
+    
     for mod in peptide.modifications:
         if mod.position != -1:
             x = set()
@@ -92,7 +114,24 @@ def getModificationVariants(peptide):
         # check positions validity
         if isValidPermutation(i) == True:
             final.add(tuple(sorted(i)))
-    return final
+            if check == True:
+                return True
+    if check == True:
+        if len(final) == 0:
+            return False
+    # generate variants
+    variants = set()
+    for modificationset in final:
+        pepvariant = peptide.copy()
+        pepvariant.modifications = []
+        pepvariant.glycosylationSites = []
+        for modname, pos in modificationset:
+            if modname in ["N","O"]:
+                pepvariant.glycosylationSites.append((pos,modname))
+            else:
+                pepvariant.addModification(modname, position=pos)
+        variants.add(pepvariant)
+    return variants
 
 class FragmentType(object):
     UNKNOWN = "UNKNOWN"
@@ -539,31 +578,33 @@ class FragmentProvider(object):
         pepHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]
         pepHexHex = pepIon+glyxtoolms.masses.GLYCAN["HEX"]*2
 
-        # collect glycosylationsite positions
-        glycosylationsSites = set()
-        for site, typ in peptide.glycosylationSites:
-            pos = site-peptide.start
-            assert 0 <= pos < len(peptide.sequence)
-            amino = peptide.sequence[pos]
-            if typ == "N":
-                assert amino == "N"
-            elif typ == "O":
-                assert amino == "S" or amino == "T"
-            glycosylationsSites.add(pos)
-        if len(glycosylationsSites) == 0:
-            for pos, amino in enumerate(peptide.sequence):
-                if amino in ["N", "s", "T"]:
-                    glycosylationsSites.add(pos)
+        
 
         # determine all peptide modification variants
         bestVariant = (None, {})
-
-        for modificationset in glyxtoolms.fragmentation.getModificationVariants(peptide):
-            pepvariant = peptide.copy()
-            pepvariant.modifications = []
-            for modname, pos in modificationset:
-                pepvariant.addModification(modname, position=pos)
-                
+        
+        pepvariants = []
+        for gtyp in glycan.types:
+            pepvariants += list(glyxtoolms.fragmentation.getModificationVariants(peptide,gtyp))
+        
+        for pepvariant in pepvariants:
+            
+            # collect glycosylationsite positions
+            glycosylationsSites = set()
+            for site, typ in pepvariant.glycosylationSites:
+                pos = site-pepvariant.start
+                assert 0 <= pos < len(pepvariant.sequence)
+                amino = pepvariant.sequence[pos]
+                if typ == "N":
+                    assert amino == "N"
+                elif typ == "O":
+                    assert amino == "S" or amino == "T"
+                glycosylationsSites.add(pos)
+            if len(glycosylationsSites) == 0:
+                for pos, amino in enumerate(pepvariant.sequence):
+                    if amino in ["N", "s", "T"]:
+                        glycosylationsSites.add(pos)
+            
             fragments = FragmentList()
             he = self._getChargedPeptideFragments(pepvariant, maxCharge)
             for fragment in he.values():
@@ -659,5 +700,8 @@ class FragmentProvider(object):
             # check if peptide variant has highest fragment count
             # TODO: Better variant scoring?
             if len(found_fragments) > len(bestVariant[1]):
-                bestVariant = (pepvariant, found_fragments)
-        return {"peptidevariant":bestVariant[0], "fragments":bestVariant[1], "all": fragments}
+                bestVariant = (pepvariant, found_fragments,list(pepvariant.glycosylationSites))
+                # resetet glycoslyation sites
+                pepvariant.glycosylationSites = list(peptide.glycosylationSites)
+                
+        return {"peptidevariant":bestVariant[0], "fragments":bestVariant[1], "all": fragments, "glycoSites":bestVariant[2]}

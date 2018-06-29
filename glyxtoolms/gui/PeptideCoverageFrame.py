@@ -96,6 +96,14 @@ class PeptideCoverageFrame(Tkinter.Frame):
 
         # link function
         self.model.registerClass("PeptideCoverageFrame", self)
+
+    def getActiveIons(self):
+        active = set()
+        for name in self.buttonNames:
+            var = self.checkButtons.get(name,None)
+            if var.get() == 1:
+                active.add(name)
+        return active
     
     def setIonselection(self):
         for name in self.buttonNames:
