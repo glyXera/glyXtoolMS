@@ -119,7 +119,9 @@ def main(options):
                         continue
                     if glycosites.get("O",0) < typ.get("O",0):
                         continue
-                    glycoSiteSubsets.append(typ)
+                    hasVariants = glyxtoolms.fragmentation.getModificationVariants(peptide,typ,check=True)
+                    if hasVariants == True:
+                        glycoSiteSubsets.append(typ)
 
                 if len(glycoSiteSubsets) == 0:
                     continue
