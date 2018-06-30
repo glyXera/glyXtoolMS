@@ -708,8 +708,8 @@ class FragmentProvider(object):
             # check if peptide variant has highest fragment count
             # TODO: Better variant scoring?
             if len(found_fragments) > len(bestVariant[1]):
-                bestVariant = (pepvariant, found_fragments,list(pepvariant.glycosylationSites))
+                bestVariant = (pepvariant, found_fragments)
                 # resetet glycoslyation sites
                 pepvariant.glycosylationSites = list(peptide.glycosylationSites)
                 
-        return {"peptidevariant":bestVariant[0], "fragments":bestVariant[1], "all": fragments, "glycoSites":bestVariant[2]}
+        return {"peptidevariant":bestVariant[0], "fragments":bestVariant[1], "all": fragments}
