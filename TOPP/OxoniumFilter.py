@@ -35,7 +35,6 @@ def main(options):
                 if "(HexNAc)1(H+)1" in ions:
                     hexnac = ions["(HexNAc)1(H+)1"]["intensity"]
                 if hexnac == 0:
-                    N += 1
                     continue
                 neuac = 0
                 if "(NeuAc)1(H+)1" in ions:
