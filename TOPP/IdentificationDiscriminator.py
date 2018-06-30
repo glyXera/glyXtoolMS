@@ -58,9 +58,11 @@ def handle_args(argv=None):
     usage = "\nFile IdentificationDiscriminator"
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--in", dest="infile",help="File input Analysis file identifications scored on ETD and HCD .xml") 
-    parser.add_argument("--out", dest="outfile",help="File output Analysis file with accepted identifications and explained features")
+    parser.add_argument("--outAnalysis", dest="outAnalysis",help="File output Analysis file with accepted identifications and explained features")
+    parser.add_argument("--outExplained", dest="outExplained",help="File output text file containing the accepted featureids")
     parser.add_argument("--minScore", dest="minScore",help="minimum score  if identification should be accepted in the first round")
     parser.add_argument("--minExplainedIntensity", dest="minExplainedIntensity",help="minimum explained fragment spectrum intensity if identification should be accepted in the first round")
+
     if not argv:
         args = parser.parse_args(sys.argv[1:])
     else:
@@ -212,19 +214,24 @@ def main(options):
     
     print "identified", len(identified), " of ", len(glyML.glycoModHits), " within ", len(glyML.features), " features"
     
-    print "writing file containing the accepted identifications"
-    
-    acceptedFeatures = set()
+    print "writing file  with accepted and rejected identifications and features"
+    identifiedFeatureIds = set()
     for hit in glyML.glycoModHits:
         if hit in rejected:
             hit.status = "Rejected"
         elif hit in accepted:
             hit.status = "Accepted"
             hit.feature.status = "Accepted"
-            acceptedFeatures.add(hit.feature)
+            identifiedFeatureIds.add(hit.feature.id)
         else:
             hit.status = "Unknown"
-    glyML.writeToFile(options.outfile)
+    glyML.writeToFile(options.outAnalysis)
+    
+    print "writing feature list containing the identified feature ids from this run"
+    f = file(options.outExplained, "w")
+    for featureId in identifiedFeatureIds:
+        f.write(str(featureId) + "\n")
+    f.close()
 
     print "done"
     return

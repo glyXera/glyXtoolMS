@@ -2,18 +2,18 @@
 	<tool status="external">
 		<category>GlyxBox</category>
 		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
-		<type>IdentificationDiscriminator</type>
+		<type>RemoveFeatures</type>
 		// description of the wrapper
 		<external>
       <text>
-        <onstartup>Startig GlyxBox - IdentificationDiscriminator</onstartup>
+        <onstartup>Startig GlyxBox - RemoveFeatures</onstartup>
         <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
-        <onfinish>IdentificationDiscriminator successful</onfinish>
+        <onfinish>RemoveFeatures successful</onfinish>
       </text>    
 		  // currently disregarded by TOPPAS, but might become useful
-		  <e_category>IdentificationDiscriminator</e_category>
+		  <e_category>RemoveFeatures</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/IdentificationDiscriminator.py --in "%2" --outAnalysis "%3" --outExplained "%4" --minScore "%5" --minExplainedIntensity "%6"</cloptions>
+		  <cloptions> "%1"/RemoveFeatures.py --inAnalysis "%2" --inFeatureFile "%3" --out "%4"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -25,19 +25,15 @@
 		  // additionally you can use %TMP and %BASENAME[X] to get the current temp directory to store data, or the basename of X
 		  <mappings>
 			<mapping id="1" cl="%%scriptpath" />
-			<mapping id="2" cl="%%in" />
-			<mapping id="3" cl="%%outAnalysis" />
-            <mapping id="4" cl="%%outExplained" />
-			<mapping id="5" cl="%%minScore" />   
-            <mapping id="6" cl="%%minExplainedIntensity" />  
+			<mapping id="2" cl="%%inAnalysis" />
+            <mapping id="3" cl="%%inFeatureFile" />
+			<mapping id="4" cl="%%out" />   
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
-            <ITEM name="in" value="" type="string" tags="input file" restrictions="*.xml" description="File input Analysis file identifications scored on ETD and HCD .xml"/>
-            <ITEM name="outAnalysis" value="" type="string" tags="output file" restrictions="*.xml" description="File output Analysis file with accepted identifications and explained features"/>
-            <ITEM name="outExplained" value="" type="string" tags="output file" restrictions="*.txt" description="File output text file containing the accepted featureids"/>
-            <ITEM name="minScore" value="2" type="float" description="minimum score  if identification should be accepted in the first round"/>
-            <ITEM name="minExplainedIntensity" value="0.7" type="float" description="minimum explained fragment spectrum intensity if identification should be accepted in the first round"/>
+            <ITEM name="inAnalysis" value="" type="string" tags="input file" restrictions="*.xml" description="File input Analysis file"/>
+            <ITEM name="inFeatureFile" value="" type="string" tags="input file" restrictions="*.txt" description="File containing the features to remove"/>
+            <ITEM name="out" value="" type="string" tags="output file" restrictions="*.xml" description="File output Analysis with remaining features"/>    
 		  </ini_param>
 		</external>
 	</tool>
