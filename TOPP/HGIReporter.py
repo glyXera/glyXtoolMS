@@ -6,16 +6,17 @@ import sys
 def getSpectrum(exp,nativeId):
     msmsSpec = None
     msSpec = None
-    index = int(nativeId.split("=")[-1])
+    index = int(nativeId.split("=")[-1])-1
     msmsSpec = exp[index]
-    assert msmsSpec.getNativeID() == nativeId
-    assert msmsSpec.getMSLevel() == 2
-
-    #for index,s in enumerate(exp):
-    #    if s.getNativeID() == nativeId:
-    #        assert s.getMSLevel() == 2
-    #        msmsSpec = s
-    #        break
+    try:
+        assert msmsSpec.getNativeID() == nativeId
+        assert msmsSpec.getMSLevel() == 2
+    except:
+        for index,s in enumerate(exp):
+            if s.getNativeID() == nativeId:
+                assert s.getMSLevel() == 2
+                msmsSpec = s
+                break
     # find precursor spectrum
     while index > 0:
         index -= 1
