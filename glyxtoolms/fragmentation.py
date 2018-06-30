@@ -586,9 +586,17 @@ class FragmentProvider(object):
         pepvariants = []
         for gtyp in glycan.types:
             pepvariants += list(glyxtoolms.fragmentation.getModificationVariants(peptide,gtyp))
-        
-        for pepvariant in pepvariants:
             
+        # unifiy peptite variants to get rid of exponential explosion searching O glycans
+        single = {}
+        for pepvariant in pepvariants:
+            key = pepvariant.toString()
+            if not key in single:
+                single[key] pepvariant
+        
+        for pepvariant in single.values():
+            # add glycosylation sites
+            pepvariant.glycosylationSites = list(peptide.glycosylationSites)
             # collect glycosylationsite positions
             glycosylationsSites = set()
             for site, typ in pepvariant.glycosylationSites:

@@ -168,7 +168,6 @@ def main(options):
     for hit in identifications:
         if hit.status != "Accepted":
             continue
-        print hit.tags
         # generate comment
 
         if "explainedByPeptideInference" in hit.tags:
