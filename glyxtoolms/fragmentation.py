@@ -592,7 +592,7 @@ class FragmentProvider(object):
         for pepvariant in pepvariants:
             key = pepvariant.toString()
             if not key in single:
-                single[key] pepvariant
+                single[key] = pepvariant
         
         for pepvariant in single.values():
             # add glycosylation sites
