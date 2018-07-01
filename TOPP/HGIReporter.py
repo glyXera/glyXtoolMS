@@ -27,7 +27,7 @@ def getSpectrum(exp,nativeId):
     return msSpec,msmsSpec
 
 
-def generateData(exp,s,hit,fragTyp,comment):
+def generateData(exp,s,hit,fragTyp,fileTyp,comment):
     
     msSpec, msmsSpec = getSpectrum(exp,s.getNativeId())
     if msmsSpec == None or msSpec == None:
@@ -35,8 +35,15 @@ def generateData(exp,s,hit,fragTyp,comment):
     assert msSpec.getMSLevel() == 1
     assert msmsSpec.getMSLevel() == 2
     
+    if fragTyp == "ETD":
+        if fileTyp == "A":
+            fragTyp = "EThcD"
+        else:
+            fragTyp = "ETciD"
+        
+    
     data = {}
-    data["File"] = "B"
+    data["File"] = fileTyp
     data["MSScan"] = msSpec.getNativeID().split("=")[-1]
     msid = ""
     if fragTyp != "":
@@ -82,7 +89,11 @@ def generateData(exp,s,hit,fragTyp,comment):
     data["NeuAc"] = hit.glycan.sugar.get("NEUAC",0) if hit.glycan.sugar.get("NEUAC",0) > 0  else ""
     data["NeuGc"] = hit.glycan.sugar.get("NEUGC",0) if hit.glycan.sugar.get("NEUGC",0) > 0  else ""
     data["GlycanMass"] = round(hit.glycan.mass,4)
-    data["GlycanTyp"] = ""
+    glycantyp = []
+    for tag in ["N1","N2","O1","O2","O3"]:
+        if tag in hit.tags:
+            glycantyp.append(tag)
+    data["GlycanTyp"] = ", ".join(glycantyp)
     protSplit = hit.peptide.proteinID.split("|")
     data["ProtName"] = protSplit[2]
     data["UniProtKB"] = protSplit[1]
@@ -96,8 +107,9 @@ def handle_args(argv=None):
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--inMZML", dest="inMZML",help="MzML file containing both ETD and HCD spectra") 
     parser.add_argument("--inETD", dest="inETD",help="ETD Analysis File, also containing the identifications") 
-    parser.add_argument("--inHCD", dest="inHCD",help="HCD Analysis File") 
+    parser.add_argument("--inHCD", dest="inHCD",help="HCD Analysis File")
     parser.add_argument("--out", dest="outfile",help="Table containing the necessary spectra information")
+    parser.add_argument("--fileTyp", dest="fileTyp",help="Experiment A or B")
     
     if not argv:
         args = parser.parse_args(sys.argv[1:])
@@ -180,16 +192,16 @@ def main(options):
             comment = "glycopeptide identified by ETD"
         else:
             comment = "glycopeptide identified by HCD"
-
+        etd
         if "explainedByETD" in hit.tags:
             etdFeature = featureLookup[hit.feature.id][0]
             for s in etdFeature.spectra:
-                data = generateData(exp,s,hit,"EThcD",comment)
+                data = generateData(exp,s,hit,"ETD",options.fileTyp,comment)
                 f.write("\t".join([str(data.get(col,"")) for col in line]) +"\n")
         if "explainedByHCD" in hit.tags:
             hcdFeature = featureLookup[hit.feature.id][1]
             for s in hcdFeature.spectra:
-                data = generateData(exp,s,hit,"HCD",comment)
+                data = generateData(exp,s,hit,"HCD",options.fileTyp,comment)
                 f.write("\t".join([str(data.get(col,"")) for col in line]) +"\n")
         if "explainedByPeptideInference" in hit.tags or "explainedByProteinInference" in hit.tags:
             hcdFeature = featureLookup[hit.feature.id][0]

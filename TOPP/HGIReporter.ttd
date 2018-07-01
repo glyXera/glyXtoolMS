@@ -13,7 +13,7 @@
 		  // currently disregarded by TOPPAS, but might become useful
 		  <e_category>HGIReporter</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
-		  <cloptions> "%1"/HGIReporter.py --inMZML "%2" --inETD "%3" --inHCD "%4" --out "%5"</cloptions>
+		  <cloptions> "%1"/HGIReporter.py --inMZML "%2" --inETD "%3" --inHCD "%4" --out "%5" --fileTyp "%6"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
 		  <path>{pythonpath}</path>
       // sets the working directory to this path before calling the external tool. Some tools write to the current working directory
@@ -29,6 +29,7 @@
 			<mapping id="3" cl="%%inETD" />
             <mapping id="4" cl="%%inHCD" />
 			<mapping id="5" cl="%%out" />
+            <mapping id="6" cl="%%fileTyp" />
 		  </mappings>
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
@@ -36,6 +37,7 @@
             <ITEM name="inETD" value="" type="string" tags="input file" restrictions="*.xml" description="ETD Analysis File"/>
             <ITEM name="inHCD" value="" type="string" tags="input file" restrictions="*.xml" description="HCD Analysis File"/>
             <ITEM name="out" value="" type="string" tags="output file" restrictions="*.txt" description="Table containing the necessary spectra information"/>
+            <ITEM name="fileTyp" value="" type="string"  restrictions="A,B" description="Experiment A or B"/>
 		  </ini_param>
 		</external>
 	</tool>
