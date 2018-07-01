@@ -192,7 +192,7 @@ def main(options):
             comment = "glycopeptide identified by ETD"
         else:
             comment = "glycopeptide identified by HCD"
-        etd
+
         if "explainedByETD" in hit.tags:
             etdFeature = featureLookup[hit.feature.id][0]
             for s in etdFeature.spectra:
