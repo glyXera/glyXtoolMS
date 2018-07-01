@@ -207,7 +207,7 @@ def main(options):
             hcdFeature = featureLookup[hit.feature.id][0]
             etdFeature = featureLookup[hit.feature.id][1]
             for s in etdFeature.spectra+hcdFeature.spectra:
-                data = generateData(exp,s,hit,"",comment)
+                data = generateData(exp,s,hit,"",options.fileTyp,comment)
                 f.write("\t".join([str(data.get(col,"")) for col in line]) +"\n")
                 break
     f.close()
