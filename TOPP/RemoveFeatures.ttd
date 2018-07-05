@@ -32,7 +32,7 @@
 		  <ini_param>
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
             <ITEM name="inAnalysis" value="" type="string" tags="input file" restrictions="*.xml" description="File input Analysis file"/>
-            <ITEM name="inFeatureFile" value="" type="string" tags="input file" restrictions="*.txt" description="File containing the features to remove"/>
+            <ITEMLIST name="inFeatureFile" value="" type="string" tags="input file" restrictions="*.txt" description="File containing the features to remove"/>
             <ITEM name="out" value="" type="string" tags="output file" restrictions="*.xml" description="File output Analysis with remaining features"/>    
 		  </ini_param>
 		</external>

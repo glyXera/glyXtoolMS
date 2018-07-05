@@ -15,10 +15,10 @@ def handle_args(argv=None):
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--inFasta", dest="infile",help="File input - Protein sequences as .fasta file")
     parser.add_argument("--out", dest="outfile",help="File output Glycopeptide file .xml")
-    parser.add_argument("--enzymes", dest="enzymes",help="Digestion enzymes: Comma separated list of [Trypsin, AspN]")
+    parser.add_argument("--enzymes", dest="enzymes",help="Digestion enzymes: Comma separated list of [Trypsin,Trypsin/P,AspN,Flavastacin,ProtK,Unspecific,NoDigest]")
     parser.add_argument("--maxNrModifications", dest="maxNrModifications",help="Nr of maximum allowed modifications. CYS_CAM, CYS_CM are excluded. Unlimited with -1.")
     parser.add_argument("--modifications", dest="modifications",help="variable modifications: List of [None,AMID,CAM,CYS_CAM,NTERM_CAM,CM,CYS_CM,DEAM,ASN_DEAM,GLN_DEAM,DEHYDR,SER_DEHYDR,THR_DEHYDR,DIOX,TRP_DIOX,TYR_DIOX,MSO,OX,TRP_OX,TYR_OX,CYS_PAM,PHOS,SER_PHOS,THR_PHOS,TYR_PHOS")
-    parser.add_argument("--glycosylation", dest="glycosylation",help="Glycosylation: List of [N-Glycosylation,O-Glycosylation]")
+    parser.add_argument("--glycosylation", dest="glycosylation",help="Glycosylation: List of [N-Glycosylation,O-Glycosylation,NXC-Glycosylation,NXV-Glycosylation]")
     parser.add_argument("--missedCleavageSites", dest="missedCleavageSites",help="maximum missed cleavage sites")
     if not argv:
         args = parser.parse_args(sys.argv[1:])
@@ -50,6 +50,8 @@ def main(options):
     findOGlycosylation = "O-Glycosylation" in options.glycosylation
     findNGlycosylation = "N-Glycosylation" in options.glycosylation
     findNXCGlycosylation = "NXC-Glycosylation" in options.glycosylation
+    findNXVGlycosylation = "NXV-Glycosylation" in options.glycosylation
+    
 
     # initialize outfile parameters
     # TODO: Set maxModifications in parameters
@@ -69,8 +71,8 @@ def main(options):
             proteinDigest.addEnzyme_Trypsin_lowSpecific()
         elif digest == "AspN":
             proteinDigest.addEnzyme_AspN()
-        elif digest == "AspN2":
-            proteinDigest.addEnzyme_AspN2()
+        elif digest == "Flavastacin":
+            proteinDigest.addEnzyme_Flavastacin()
         elif digest == "ProtK":
             proteinDigest.addEnzyme_ProtK()
         elif digest == "Unspecific":
@@ -100,7 +102,8 @@ def main(options):
         glycopeptides = proteinDigest.findGlycopeptides(peptides,
                                     findNGlycosylation,
                                     findOGlycosylation,
-                                    findNXCGlycosylation)
+                                    findNXCGlycosylation,
+                                    findNXVGlycosylation)
         allGlycopeptides += glycopeptides
     
     

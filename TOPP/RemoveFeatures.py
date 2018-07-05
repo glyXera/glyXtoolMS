@@ -13,22 +13,32 @@ def handle_args(argv=None):
     usage = "\nFile RemoveFeatures"
     parser = argparse.ArgumentParser(description=usage)
     parser.add_argument("--inAnalysis", dest="inAnalysis",help="File input Analysis file .xml")
-    parser.add_argument("--inFeatureFile", dest="inFeatureFile",help="File containing the features to remove")
-    parser.add_argument("--out", dest="outfile",help="File containing the features to remove")
+    parser.add_argument("--inFeatureFile",  nargs='+', dest="inFeatureFile",help="File(s) containing the feature Ids to remove")
+    parser.add_argument("--out", dest="outfile",help="File input Analysis file .xml without features from the provided feature list")
     if not argv:
         args = parser.parse_args(sys.argv[1:])
     else:
         args = parser.parse_args(argv)
     return args
 
+def getInputFile(option):
+    files = []
+    if option:
+        for mergepath in option:
+            files += mergepath.split(" ")
+    return files
+
 def main(options):
 
     featuresIds = set()
     print "parsing feature list"
-    f = file(options.inFeatureFile,"r")
-    for line in f:
-        featuresIds.add(line.strip())
-    f.close()
+    for path in getInputFile(options.inFeatureFile):
+        print "parsing features from ", path
+        f = file(path,"r")
+        for line in f:
+            featuresIds.add(line.strip())
+        f.close()
+        print "list now contains ", len(featuresIds), " features"
     
     print "parsing input file"
     glyML = glyxtoolms.io.GlyxXMLFile()

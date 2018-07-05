@@ -2,16 +2,16 @@
 	<tool status="external">
 		<category>GlyxBox</category>
 		// this is the name of the '-type' which is added to GenericWrapper - so chose carefully
-		<type>GlycopetideDigest</type>
+		<type>GlycopeptideDigest</type>
 		// description of the wrapper
 		<external>
       <text>
         <onstartup>Startig GlyxBox - GlycopeptideDigest</onstartup>
         <onfail>This is printed in case of error - you can list possible causes for failure here...</onfail>
-        <onfinish>glyxFeatureExtractor successfull</onfinish>
+        <onfinish>GlycopeptideDigest successfull</onfinish>
       </text>    
 		  // currently disregarded by TOPPAS, but might become useful
-		  <e_category>PeptideDigestor</e_category>
+		  <e_category>GlycopeptideDigest</e_category>
 		  // command line options of your external tool (use placeholders ,e.g. %1 to insert dynamic content)
 		  <cloptions> "%1"/GlycopeptideDigest.py --inFasta "%2" --out "%3" --enzymes "%4" --maxNrModifications "%5" --modifications "%6" --glycosylation "%7" --missedCleavageSites "%8"</cloptions>
 		  // the actual executable (usually it should be in your PATH, to avoid having to specify a full path to it)
@@ -37,10 +37,10 @@
 			<ITEM name="scriptpath" value="{scriptpath}" type="string" description="input script path, this should point to share/OpenMS/SCRIPTS of your OpenMS installation"/>
 			<ITEM name="inFasta" value="" type="string" tags="input file" restrictions="*.fasta" description="File input Proteinsequences, only .fasta allowed"/>
 			<ITEM name="out" value="" type="string" tags="output file" restrictions="*.xml" description="File output peptide sequence file .xml"/>
-            <ITEMLIST name="enzymes" value="[]" type="string" restrictions="Trypsin,Trypsin/P,AspN,AspN2,ProtK,Unspecific,NoDigest" description="Digestion enzymes"/>
+            <ITEMLIST name="enzymes" value="[]" type="string" restrictions="Trypsin,Trypsin/P,AspN,Flavastacin,ProtK,Unspecific,NoDigest" description="Digestion enzymes"/>
             <ITEM name="maxNrModifications" value="2" type="int" description="Nr of maximum allowed modifications. CYS_CAM, CYS_CM are excluded. Unlimited with -1."/>
             <ITEMLIST name="modifications" value="[]" type="string" restrictions="None,AMID,CAM,CYS_CAM,NTERM_CAM,CM,CYS_CM,DEAM,ASN_DEAM,GLN_DEAM,DEHYDR,SER_DEHYDR,THR_DEHYDR,DIOX,TRP_DIOX,TYR_DIOX,MSO,OX,TRP_OX,TYR_OX,CYS_PAM,PHOS,SER_PHOS,THR_PHOS,TYR_PHOS,TRP_KYN" description="variable modifications"/>
-            <ITEMLIST name="glycosylation" value="[]" type="string" restrictions="N-Glycosylation,O-Glycosylation,NXC-Glycosylation" description="glycosylation"/>
+            <ITEMLIST name="glycosylation" value="[]" type="string" restrictions="N-Glycosylation,O-Glycosylation,NXC-Glycosylation,NXV-Glycosylation" description="glycosylation"/>
             <ITEM name="missedCleavageSites" value="0" type="int" description="maximum missed cleavage sites"/>
 		  </ini_param>
 		</external>

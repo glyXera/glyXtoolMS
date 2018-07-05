@@ -159,7 +159,9 @@ class ProteinDigest(object):
         self.modifications = set()
         self.enzymes = set()
         
-        self.breakpoints = []
+        self.breakpointsStart = []
+        self.breakpointsStop = []
+        
         self.protein = None
 
 
@@ -368,8 +370,8 @@ class ProteinDigest(object):
     def addEnzyme_AspN(self):
         self.enzymes.add(self._add_AspN_digest)
         
-    def addEnzyme_AspN2(self):
-        self.enzymes.add(self._add_AspN_digest_2)
+    def addEnzyme_Flavastacin(self):
+        self.enzymes.add(self.add_Flavastacin_digest)
         
     def addEnzyme_ProtK(self):
         self.enzymes.add(self._add_ProtinaseK_digest)
@@ -383,7 +385,8 @@ class ProteinDigest(object):
         while i < len(self.protein.sequence):
             if self.protein.sequence[i] == "R" or self.protein.sequence[i] == "K":
                 if not (i+1 < len(self.protein.sequence) and self.protein.sequence[i+1] == "P"):
-                    self.breakpoints.append(i)
+                    self.breakpointsStart.append(i)
+                    self.breakpointsStop.append(i)
             i += 1
 
     def _add_tryptic_low_specific_digest(self):
@@ -391,69 +394,112 @@ class ProteinDigest(object):
         i = 0
         while i < len(self.protein.sequence):
             if self.protein.sequence[i] == "R" or self.protein.sequence[i] == "K":
-                    self.breakpoints.append(i)
+                    self.breakpointsStart.append(i)
+                    self.breakpointsStop.append(i)
             i += 1
 
+
+    def add_Flavastacin_digest(self):
+        
+        # cleaves C-terminal side of N-glycoslyated sites, N-terminal unspecific (4-20 aminoacids)
+        # find glycosylation sites
+        sites = set()
+        for match in re.finditer(r"(?=(N[^P](S|T|C|V)))", self.protein.sequence):
+            sites.add(match.start())
+        
+        for nSite in sites:
+            self.breakpointsStop.append(nSite)
+            for i in range(4,20+1):
+                start = nSite - i
+                if start > 0:
+                    self.breakpointsStart.append(start)
 
     def _add_AspN_digest(self):
-        # cleaves N-terminal side of D
-        i = 1
-        while i < len(self.protein.sequence):
-            if self.protein.sequence[i] == "D":
-                self.breakpoints.append(i-1)
-            i += 1
-
-    def _add_AspN_digest_2(self):
         # cleaves N-terminal side of E, D and C
         i = 1
         while i < len(self.protein.sequence):
             if self.protein.sequence[i] in ["E", "D", "C"]:
-                self.breakpoints.append(i-1)
+                self.breakpointsStart.append(i-1)
+                self.breakpointsStop.append(i-1)
             i += 1
 
     def _add_ProtinaseK_digest(self):
-        # cleaves D-terminal side of multiple aminoacids
+        # cleaves C-terminal side of multiple aminoacids
         i = 1
         while i < len(self.protein.sequence):
 
             if self.protein.sequence[i] in ["A", "F", "Y", "W", "L", "I", "V"]:
-                self.breakpoints.append(i)
+                self.breakpointsStart.append(i)
+                self.breakpointsStop.append(i)
             i += 1
 
     def _add_Unspecific_digest(self):
         # cleaves all possible aminoacids
         for i in range(0, len(self.protein.sequence)):
-            self.breakpoints.append(i)
+            self.breakpointsStart.append(i)
+            self.breakpointsStop.append(i)
 
     def digest(self, protein):
         self.protein = protein
-        self.breakpoints = []
+        self.breakpointsStart = []
+        self.breakpointsStop = []
         
         # run enzyme breakpoint functions
         for func in self.enzymes:
             func()
         
-        self.breakpoints.append(len(self.protein.sequence)-1)
+        self.breakpointsStop.append(len(self.protein.sequence)-1)
         # clean up breakpoints
-        self.breakpoints = list(set(self.breakpoints))
-        self.breakpoints.sort()
+        self.breakpointsStart = sorted(set(self.breakpointsStart))
+        self.breakpointsStop = sorted(set(self.breakpointsStop))
 
         peptides = []
-        start = -1
         i = 0
-        while i < len(self.breakpoints):
-            for m in range(0, self.maxMissedCleavage+1):
-                if i+m >= len(self.breakpoints):
+        for start in self.breakpointsStart:
+            # generate list of possible stop points
+            stops = []
+            for stop in self.breakpointsStop:
+                if stop <= start:
+                    continue
+                if len(stops) > self.maxMissedCleavage:
                     break
-                stop = self.breakpoints[i+m]
+                stops.append(stop)
+            # generate peptides
+            for stop in stops:
                 p = self.protein.getPeptide(start+1, stop+1)
                 peptides.append(p)
-            start = self.breakpoints[i]
-            i += 1
-        return peptides
 
-    def findGlycopeptides(self, peptides, NGlycosylation=False,
-                          OGlycosylation=False, NCGlycosylation=False):
+        return peptides
+        
+    def findNGlycosylationSites(self):
+        sites = []
+        for match in re.finditer(r"(?=(N[^P](S|T)))", self.protein.sequence):
+            sites.append((match.start(), "N"))
+        return sites
+        
+    def findOGlycosylationSites(self):
+        sites = []
+        for match in re.finditer(r"(?=(S|T))", self.protein.sequence):
+            sites.append((match.start(), "O"))
+        return sites
+        
+    def findNXCGlycosylationSites(self):
+        sites = []
+        for match in re.finditer(r"(?=(N[^P]C))", self.protein.sequence):
+            sites.append((match.start(), "N"))
+        return sites
+        
+    def findNXVGlycosylationSites(self):
+        sites = []
+        for match in re.finditer(r"(?=(N[^P]V))", self.protein.sequence):
+            sites.append((match.start(), "N"))
+        return sites
+
+    def findGlycopeptides(self, peptides, 
+                          NGlycosylation=False,
+                          OGlycosylation=False,
+                          NXCGlycosylation=False,
+                          NXVGlycosylation=False):
         
         maxNGlycans=0
         if NGlycosylation == True:
@@ -465,15 +511,15 @@ class ProteinDigest(object):
         sitesType = {}
         sites = []
         if NGlycosylation == True:
-            for match in re.finditer(r"(?=(N[^P](S|T)))", self.protein.sequence):
-                sites.append((match.start(), "N"))
+            sites += self.findNGlycosylationSites()
         if OGlycosylation == True:
-            for match in re.finditer(r"(?=(S|T))", self.protein.sequence):
-                sites.append((match.start(), "O"))
-        if NCGlycosylation == True:
-            for match in re.finditer(r"(?=(N[^P]C))", self.protein.sequence):
-                sites.append((match.start(), "N"))
-        sites.sort()
+            sites += self.findOGlycosylationSites()
+        if NXCGlycosylation == True:
+            sites += self.findNXCGlycosylationSites()
+        if NXVGlycosylation == True:
+            sites += self.findNXVGlycosylationSites()
+            
+        sites = sorted(set(sites))
         for pos, typ in sites:
             sitesType[typ] = sitesType.get(typ, 0) +1
 
