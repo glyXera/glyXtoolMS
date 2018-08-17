@@ -37,9 +37,9 @@ def generateData(exp,s,hit,fragTyp,fileTyp,comment):
     
     if fragTyp == "ETD":
         if fileTyp == "A":
-            fragTyp = "ETCID"
+            fragTyp = "ETciD"
         else:
-            fragTyp = "ETHCD"
+            fragTyp = "EThcD"
         
     
     data = {}
