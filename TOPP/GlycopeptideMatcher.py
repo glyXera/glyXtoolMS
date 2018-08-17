@@ -95,10 +95,10 @@ def main(options):
             hasPep = True
             if checkPep == True:
                 hasPep = hasMassInSpectrum(peptide.mass, feature, tolerance,toleranceType)
-            hashPepHexNAc = True
+            hasPepHexNAc = True
             if checkPepHexNAc == True:
-                hashPepHexNAc = hasMassInSpectrum(peptide.mass+glyxtoolms.masses.GLYCAN["HEXNAC"],feature, tolerance,toleranceType)
-            if hasPep == False and hashPepHexNAc == False:
+                hasPepHexNAc = hasMassInSpectrum(peptide.mass+glyxtoolms.masses.GLYCAN["HEXNAC"],feature, tolerance,toleranceType)
+            if hasPep == False and hasPepHexNAc == False:
                 continue
             # collect glycosylation types for peptide
             glycosites = {"N":0, "O":0}

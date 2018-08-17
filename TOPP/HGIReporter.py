@@ -37,9 +37,9 @@ def generateData(exp,s,hit,fragTyp,fileTyp,comment):
     
     if fragTyp == "ETD":
         if fileTyp == "A":
-            fragTyp = "EThcD"
+            fragTyp = "ETCID"
         else:
-            fragTyp = "ETciD"
+            fragTyp = "ETHCD"
         
     
     data = {}
@@ -184,8 +184,10 @@ def main(options):
 
         if "explainedByPeptideInference" in hit.tags:
             comment = "glycopeptide infered from the existence of the same peptide and other glycans (MS only)"
+            continue
         elif "explainedByProteinInference" in hit.tags:
             comment = "glycopeptide infered from the existence of other peptides with shared glycosylation site"
+            continue
         elif "explainedByETD" in hit.tags and "explainedByHCD" in hit.tags:
             comment = "glycopeptide identified by HCD and ETD"
         elif "explainedByETD" in hit.tags:
@@ -209,7 +211,7 @@ def main(options):
             for s in etdFeature.spectra+hcdFeature.spectra:
                 data = generateData(exp,s,hit,"",options.fileTyp,comment)
                 f.write("\t".join([str(data.get(col,"")) for col in line]) +"\n")
-                break
+                
     f.close()
 
     print "done"

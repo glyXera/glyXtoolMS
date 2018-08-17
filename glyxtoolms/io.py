@@ -755,7 +755,10 @@ class GlyxXMLFile(object):
             
             parsedTypes = []
             if self.version > "0.1.5":
-                for typ in set(xmlHit.find("./glycan/types").text.split("|")):
+                text = xmlHit.find("./glycan/types").text
+                if text == None:
+                    text = ""
+                for typ in set(text.split("|")):
                     res = {"N":0,"O":0}
                     for match in re.findall("(N\d+|O\d+)",typ):
                         res[match[0]] = int(match[1:])

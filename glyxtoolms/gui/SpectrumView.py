@@ -92,11 +92,11 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
             if mz in scored:
                 scoredPeaks.append((intens, mz))
                 sugar, fragment = scored[mz]
-                annotationText.append((pMZ, pInt, fragment+"\n"+masstext))
+                annotationText.append((pMZ, pInt, fragment, masstext))
 
             else:
                 item = self.canvas.create_line(pMZ, pInt0, pMZ, pInt, tags=("peak", ), fill="black")
-                annotationMass.append((pMZ, pInt, masstext))
+                annotationMass.append((pMZ, pInt, "", masstext))
 
             self.allowZoom = True
 
@@ -110,7 +110,41 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         items = self.plotText(annotationText, set(), 0)
         items = self.plotText(annotationMass, items, 5)
 
-    def plotText(self, collectedText, items, N=0):
+#    def plotText(self, collectedText, items, N=0):
+#        """ Draw text items onto the canvas, without overlap.
+#            Parameters are the collectedText a List of (x, y, text),
+#            a set of previously drawn items, and the maximum amount of
+#            items to be drawn (0 - draw as many as possible)"""
+#        # remove text which is outside of view
+#        ymax = self.convBtoY(self.viewYMin)
+#        ymin = self.convBtoY(self.viewYMax)
+#
+#        xmin = self.convAtoX(self.viewXMin)
+#        xmax = self.convAtoX(self.viewXMax)
+#        viewable = []
+#        for textinfo in collectedText:
+#            x, y, text = textinfo
+#            if xmin < x < xmax and ymin < y < ymax:
+#                viewable.append(textinfo)
+#        # sort textinfo
+#        viewable = sorted(viewable, key=lambda t: t[1])
+#        # plot items
+#
+#        for textinfo in viewable:
+#            if N > 0 and len(items) >= N:
+#                break
+#            x, y, text = textinfo
+#            item = self.canvas.create_text((x, y, ), text=text, fill="blue violet", anchor="s", justify="center")
+#            # check bounds of other items
+#            bbox = self.canvas.bbox(item)
+#            overlap = set(self.canvas.find_overlapping(*bbox))
+#            if len(overlap.intersection(items)) == 0:
+#                items.add(item)
+#            else:
+#                self.canvas.delete(item)
+#        return items
+
+    def plotText(self, collectedText, items=set(), N=0):
         """ Draw text items onto the canvas, without overlap.
             Parameters are the collectedText a List of (x, y, text),
             a set of previously drawn items, and the maximum amount of
@@ -123,25 +157,41 @@ class SpectrumView(AnnotatedPlot.AnnotatedPlot):
         xmax = self.convAtoX(self.viewXMax)
         viewable = []
         for textinfo in collectedText:
-            x, y, text = textinfo
+            x, y, namedText, massText = textinfo
             if xmin < x < xmax and ymin < y < ymax:
                 viewable.append(textinfo)
         # sort textinfo
         viewable = sorted(viewable, key=lambda t: t[1])
         # plot items
-
         for textinfo in viewable:
             if N > 0 and len(items) >= N:
                 break
-            x, y, text = textinfo
-            item = self.canvas.create_text((x, y, ), text=text, fill="blue violet", anchor="s", justify="center")
-            # check bounds of other items
-            bbox = self.canvas.bbox(item)
-            overlap = set(self.canvas.find_overlapping(*bbox))
-            if len(overlap.intersection(items)) == 0:
-                items.add(item)
+            x, y, namedText, massText = textinfo
+            text = []
+            text.append(namedText)
+            text.append(massText)
+            text = "\n".join(text)
+            splitText = text.split("\n")[::-1]
+            tempItems = set()
+            hasOverlap = False
+            for part in splitText:
+                item = self.canvas.create_text((x, y), text=part,
+                                               fill="blue violet",
+                                               anchor="s", justify="center")
+                tempItems.add(item)
+
+                # check bounds of other items
+                bbox = self.canvas.bbox(item)
+                y = bbox[1] # set new y value based on now drawn string
+                overlap = set(self.canvas.find_overlapping(*bbox))
+                if len(overlap.intersection(items)) != 0:
+                    hasOverlap = True
+                    break
+            if hasOverlap == False:
+                items = items.union(tempItems)
             else:
-                self.canvas.delete(item)
+                for item in tempItems:
+                    self.canvas.delete(item)
         return items
 
     def initSpectrum(self, spec):

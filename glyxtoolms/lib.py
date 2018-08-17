@@ -440,6 +440,7 @@ class ProteinDigest(object):
             self.breakpointsStop.append(i)
 
     def digest(self, protein):
+        print "digest ", self.maxMissedCleavage
         self.protein = protein
         self.breakpointsStart = []
         self.breakpointsStop = []
@@ -704,7 +705,7 @@ class Glycan(glyxtoolms.io.XMLGlycan):
     def toString(self):
         result = ""
         for name in msCompositionOrder:
-            amount = self.sugar[name]
+            amount = self.sugar.get(name,0)
             if amount == 0:
                 continue
             result += msComposition[name] + str(amount)
