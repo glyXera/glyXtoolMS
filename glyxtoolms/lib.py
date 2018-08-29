@@ -158,6 +158,7 @@ class ProteinDigest(object):
         self.maxMissedCleavage = maxMissedCleavage
         self.modifications = set()
         self.enzymes = set()
+        self.enzymeNames = set()
         
         self.breakpointsStart = []
         self.breakpointsStop = []
@@ -363,21 +364,27 @@ class ProteinDigest(object):
         
     def addEnzyme_Trypsin(self):
         self.enzymes.add(self._add_tryptic_digest)
+        self.enzymeNames.add("Trypsin")
     
     def addEnzyme_Trypsin_lowSpecific(self):
         self.enzymes.add(self._add_tryptic_low_specific_digest)
+        self.enzymeNames.add("TrypsinLowSpecificity")
     
     def addEnzyme_AspN(self):
         self.enzymes.add(self._add_AspN_digest)
+        self.enzymeNames.add("AspN")
         
     def addEnzyme_Flavastacin(self):
         self.enzymes.add(self.add_Flavastacin_digest)
+        self.enzymeNames.add("Flavastacin")
         
     def addEnzyme_ProtK(self):
         self.enzymes.add(self._add_ProtinaseK_digest)
+        self.enzymeNames.add("ProtK")
         
     def addEnzyme_Unspecific(self):
         self.enzymes.add(self._add_Unspecific_digest)
+        self.enzymeNames.add("Unspecific")
 
     def _add_tryptic_digest(self):
         # cleaves C-terminal side of K or R, except if P is C-term to K or R
@@ -440,7 +447,6 @@ class ProteinDigest(object):
             self.breakpointsStop.append(i)
 
     def digest(self, protein):
-        print "digest ", self.maxMissedCleavage
         self.protein = protein
         self.breakpointsStart = []
         self.breakpointsStop = []
