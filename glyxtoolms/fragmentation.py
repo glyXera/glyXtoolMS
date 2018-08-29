@@ -441,7 +441,7 @@ class FragmentProvider(object):
         for g in glycans:
             ox = Fragment(g.toString()+"(1+)", g.mass+glyxtoolms.masses.MASS["H+"], 1, FragmentType.OXONIUMION)
             fragments.append(ox)
-            oxH2O = Fragment(g.toString()+"-H2O(+)", ox.mass - self.masses["mH2O"], 1, FragmentType.OXONIUMION, parents={ox.name})
+            oxH2O = Fragment(g.toString()+"-H2O(1+)", ox.mass - self.masses["mH2O"], 1, FragmentType.OXONIUMION, parents={ox.name})
             fragments.append(oxH2O)
 
             fragments.append(Fragment(g.toString()+"-2*H2O(1+)", oxH2O.mass - self.masses["mH2O"], 1, FragmentType.OXONIUMION, parents={oxH2O.name}))
