@@ -34,7 +34,7 @@ class NotebookFeature(TreeTable.TreeTable):
 
     def initializeColumnHeader(self):
 
-        self.columns = ("RT", "MZ", "Charge", "Intensity","Best Score", "Nr Spectra", "Status", "Nr. Idents", "Tags")
+        self.columns = ["RT", "MZ", "Charge", "Intensity","Best Score", "Nr Spectra", "Status", "Nr. Idents", "Tags"]
         self.columnNames = {"RT":"RT", "MZ":"MZ [Da]", "Charge":"Charge", "Intensity":"Int [counts]", "Best Score":"Best Score", "Nr Spectra":"Nr Spectra", "Status": "Status", "Nr. Idents":"Nr. Idents","Tags":"Tags"}
         self.columnsWidth = {"RT":60, "MZ":80, "Intensity":80, "Charge":80, "Best Score":80, "Nr Spectra":80, "Status":80, "Nr. Idents":80,"Tags":80}
         self.toolNameOrder = []
@@ -69,7 +69,27 @@ class NotebookFeature(TreeTable.TreeTable):
             self.columnNames["RT"] = "RT [s]"
 
         for col in self.columnNames:
-            self.tree.heading(col, text=self.columnNames.get(col, col))
+            self.tree.heading(col, text=self.columnNames.get(col, col),command=lambda col=col: self.sortColumn(col))
+
+    def updateHeader(self):
+        # append possible ToolValue Columns and Tag column
+        if self.model.currentAnalysis != None and not "Tag" in self.columns:
+            for columnname in self.columns:
+                self.columnsWidth[columnname] = self.tree.column(columnname, "width")
+            for toolname in self.model.currentAnalysis.analysis.toolValueDefaults:
+                if toolname in self.columns:
+                    continue
+                self.toolNameOrder.append(toolname)
+                self.columns.append(toolname)
+                self.columnNames[toolname] = toolname
+                self.columnsWidth[toolname] = 80
+                self.showColumns[toolname] = Tkinter.BooleanVar()
+                self.showColumns[toolname].set(False)
+                self.showColumns[toolname].trace("w", self.columnVisibilityChanged)
+            self.tree["columns"] = self.columns
+            self.setHeadingNames()
+            for columnname in self.columns:
+                self.tree.column(columnname, width=self.columnsWidth[columnname])
 
     def popup(self, event):
         area = self.tree.identify_region(event.x, event.y)
@@ -271,6 +291,9 @@ class NotebookFeature(TreeTable.TreeTable):
             l = [(int(self.tree.set(k, col).split("/")[0]), k) for k in children]
         elif col == "#0":
             l = [(int(self.tree.item(k, "text")), k) for k in children]
+        elif col in self.model.currentAnalysis.analysis.toolValueDefaults:
+            default = self.model.currentAnalysis.analysis.toolValueDefaults[col]
+            l = [(default.fromString(self.tree.set(k, col)), k) for k in self.tree.get_children('')]
         else:
             l = [(float(self.tree.set(k, col)), k) for k in children]
 
@@ -371,6 +394,19 @@ class NotebookFeature(TreeTable.TreeTable):
                       feature.status,
                       str(nrIdentifications) + "/"+str(len(feature.hits)),
                       tags]
+                      
+
+            # add toolvalues
+            for toolname in self.toolNameOrder:
+                # get toolvalue default
+                toolValueDefault = analysis.analysis.toolValueDefaults.get(toolname, None)
+                if toolValueDefault == None:
+                    values.append("")
+                elif toolname in feature.toolValues:
+                    values.append(toolValueDefault.toString(feature.toolValues[toolname]))
+                else:
+                    # get default value
+                    values.append(toolValueDefault.toString(toolValueDefault.default))
 
 
             item = self.tree.insert("", "end", text=name,

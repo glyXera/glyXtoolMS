@@ -272,6 +272,7 @@ class GlyxXMLFeature(object):
         self.hits = set()
         self.tags = set()
         self.lookup = None # Peaklookup - only instantiate if needed
+        self.toolValues = {} # store values of new pipeline tools
 
     def setId(self, id):
         self.id = id
@@ -427,7 +428,7 @@ class GlyxXMLFile(object):
         self.features = []
         self.glycoModHits = []
         self.all_tags = set()
-        self._version_ = "0.1.6" # current version
+        self._version_ = "0.1.7" # current version
         self.version = self._version_ # will be overwritten by file
         self.toolValueDefaults = {}
 
@@ -683,6 +684,7 @@ class GlyxXMLFile(object):
             # write annotations
             self._writeAnnotations(xmlFeature, feature)
             self._writeTags(xmlFeature, feature)
+            self._writeToolValues(xmlFeature, feature)
 
 
 
@@ -851,7 +853,7 @@ class GlyxXMLFile(object):
             hits.append(hit)
         return hits
 
-    def _parseFeatures(self, xmlFeatures):
+    def _parseFeatures(self, xmlFeatures, toolValueDefaults={}):
         features = []
         for xmlFeature in xmlFeatures:
             feature = GlyxXMLFeature()
@@ -870,6 +872,8 @@ class GlyxXMLFile(object):
             for spectrumId in xmlFeature.findall("./spectraIds/id"):
                 feature.addSpectrumId(spectrumId.text)
 
+            if self.version > "0.1.6":
+                self._parseToolValues(xmlFeature, feature, toolValueDefaults)
             if self.version > "0.0.4":
                 try:
                     xString = xmlFeature.find("./consensusSpectrum/x").text
@@ -1070,7 +1074,7 @@ class GlyxXMLFile(object):
 
 
         # parse features
-        features = self._parseFeatures(root.findall("./features/feature"))
+        features = self._parseFeatures(root.findall("./features/feature"), toolValueDefaults=toolValueDefaults)
         self.features = features
 
         # collect feature information

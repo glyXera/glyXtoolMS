@@ -496,11 +496,13 @@ class ProjectFrame(ttk.Frame):
             self.model.currentAnalysis = obj
             self.model.currentProject = obj.project
             self.model.runFilters()
+            self.model.classes["NotebookFeature"].updateHeader()
+            self.model.classes["NotebookIdentification"].updateHeader()
             self.model.classes["NotebookScoring"].updateTree([])
             self.model.classes["NotebookIdentification"].updateTree([])
             self.model.classes["NotebookFeature"].updateTree()
             self.model.classes["TwoDView"].init()
-            self.model.classes["NotebookIdentification"].updateHeader()
+
 
         else:
             self.model.currentAnalysis = None
