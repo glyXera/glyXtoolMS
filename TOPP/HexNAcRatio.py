@@ -24,9 +24,24 @@ def main(options):
     glyML = glyxtoolms.io.GlyxXMLFile()
     glyML.readFromFile(options.infile)
     glyML.addToolValueDefault("HexNAcRatio", 0.0)
+    
+    for feat in glyML.features:
+        ions = {}
+        for s in feat.spectra:
+            for key in s.ions:
+                for ionname in s.ions[key]:
+                    ions[ionname] = ions.get(ionname, 0.0) + s.ions[key][ionname]["intensity"]
+        iHexNAc = ions.get("(HexNAc)1(H+)1", 0.0)
+        iHexNAcH2O = ions.get("(HexNAc)1(H2O)-1(H+)1", 0.0)
+        if iHexNAc <= 0.0:
+            value = 0.0
+        else:
+            value = iHexNAcH2O / iHexNAc
+        feat.toolValues["HexNAcRatio"] = round(value,3)
+    
     for h in glyML.glycoModHits:
         fHexNAc = h.fragments.get("HexNAc1(1+)",None)
-        fHexNAcH2O = h.fragments.get("HexNAc1-H2O(+)",None)
+        fHexNAcH2O = h.fragments.get("HexNAc1-H2O(1+)",None)
         if fHexNAc == None:
             continue
         if fHexNAcH2O == None:
@@ -40,3 +55,4 @@ def main(options):
 if __name__ == "__main__":
     options = handle_args()
     main(options)
+
