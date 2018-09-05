@@ -32,9 +32,9 @@ class NotebookIdentification(TreeTable.TreeTable):
 
     def initializeColumnHeader(self):
 
-        self.columns = ["Mass", "error", "Peptide", "Glycan", "Status", "Tags"]
-        self.columnNames = {"Mass":"Mass [Da]", "error":"Error", "Peptide":"Peptide", "Glycan":"Glycan", "Status":"Status", "Tags":"Tags"}
-        self.columnsWidth = {"Mass":70, "error":80, "Peptide":150, "Glycan":160, "Status":80, "Tags":80}
+        self.columns = ["Mass", "error", "Peptide", "Glycan", "Protein", "Status","Tags"]
+        self.columnNames = {"Mass":"Mass [Da]", "error":"Error", "Peptide":"Peptide", "Glycan":"Glycan", "Protein":"Protein", "Status":"Status", "Tags":"Tags"}
+        self.columnsWidth = {"Mass":70, "error":80, "Peptide":150, "Glycan":160, "Protein":80, "Status":80, "Tags":80}
         self.toolNameOrder = []
 
         self.showColumns = {}
@@ -107,7 +107,7 @@ class NotebookIdentification(TreeTable.TreeTable):
         for item in selection:
             hit  = self.treeIds[item]
             values = self.tree.item(item)["values"]
-            values[5] = ", ".join(hit.tags)
+            values[6] = ", ".join(hit.tags)
             self.tree.item(item, values=values)
 
     def setStatus(self,status):
@@ -126,7 +126,7 @@ class NotebookIdentification(TreeTable.TreeTable):
                 hit.status = glyxtoolms.io.ConfirmationStatus.Unknown
             # Update on Treeview
             values = self.tree.item(item)["values"]
-            values[4] = hit.status
+            values[5] = hit.status
             self.tree.item(item, values=values)
 
             taglist = list(self.tree.item(item, "tags"))
@@ -201,7 +201,7 @@ class NotebookIdentification(TreeTable.TreeTable):
         # rearrange items in sorted positions
         for index, (val, k) in enumerate(l):
             self.tree.move(k, '', index)
-            status = self.tree.item(k)["values"][4]
+            status = self.tree.item(k)["values"][5]
 
             # adjust tags
             taglist = list(self.tree.item(k, "tags"))
@@ -296,6 +296,7 @@ class NotebookIdentification(TreeTable.TreeTable):
                     error,
                     peptide,
                     glycan.toString(),
+                    hit.peptide.proteinID,
                     hit.status,
                     tags]
 
