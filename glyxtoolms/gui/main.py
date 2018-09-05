@@ -274,7 +274,10 @@ class App(ttk.Frame):
             x,y = coords[key]
             panename, index = key.split(".")
             if panename in self.paned:
-                self.paned[panename].sash_place(int(index), x, y)
+                try:
+                    self.paned[panename].sash_place(int(index), x, y)
+                except:
+                    print "Warning: cannot plase sash coords correctly"
 
     def setActiveFilterHint(self, hasActiveFilter):
         if hasActiveFilter == True:
