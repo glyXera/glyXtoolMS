@@ -79,7 +79,9 @@ class FragmentIonTable(TreeTable.TreeTable):
                 values = self.tree.item(childItem)["values"]
                 values[6] = fragment.status
                 self.tree.item(childItem, values=values, tags=taglist)
+        self.model.classes["PeptideCoverageFrame"].paint_canvas()
         self.model.classes["ConsensusSpectrumFrame"]._paintCanvas()
+        
             
 
     def seeItem(self, feature):

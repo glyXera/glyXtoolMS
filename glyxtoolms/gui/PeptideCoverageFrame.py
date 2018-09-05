@@ -308,6 +308,8 @@ class PeptideCoverageFrame(Tkinter.Frame):
         TYPE = glyxtoolms.fragmentation.FragmentType
         for name in self.hit.fragments:
             fragment = self.hit.fragments[name]
+            if fragment.status == glyxtoolms.io.ConfirmationStatus.Rejected:
+                continue
             if fragment.typ == TYPE.ISOTOPE:
                 continue
             if fragment.typ in [TYPE.PEPTIDEION, TYPE.GLYCOPEPTIDEION]:
