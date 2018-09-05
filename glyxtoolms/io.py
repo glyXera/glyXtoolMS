@@ -428,7 +428,7 @@ class GlyxXMLFile(object):
         self.features = []
         self.glycoModHits = []
         self.all_tags = set()
-        self._version_ = "0.1.7" # current version
+        self._version_ = "0.1.8" # current version
         self.version = self._version_ # will be overwritten by file
         self.toolValueDefaults = {}
 
@@ -739,7 +739,8 @@ class GlyxXMLFile(object):
                                             mass=str(fragment.mass),
                                             charge=str(fragment.charge),
                                             peak=str(fragment.peak.pos),
-                                            parents=parents
+                                            parents=parents,
+                                            status=fragment.status
                                            )
 
     def _parseGlycoModHits(self, xmlGlycoModHits, featureIDs, toolValueDefaults={}):
@@ -782,13 +783,17 @@ class GlyxXMLFile(object):
                     fragmentTyp = xmlfragment.get("typ")
                     fragmentMass = float(xmlfragment.get("mass"))
                     fragmentCharge = int(xmlfragment.get("charge"))
+                    
+                    fragmentStatus = glyxtoolms.io.ConfirmationStatus.Unknown
+                    if self.version > "0.1.7":
+                        fragmentStatus = xmlfragment.get("status")
                     peakPos = int(xmlfragment.get("peak"))
                     peak = hit.feature.consensus[peakPos]
                     parentText = xmlfragment.get("parents")
                     parents = set([])
                     if len(parentText) > 0:
                         parents = set(parentText.split(","))
-                    fragment = glyxtoolms.fragmentation.Fragment(fragmentName, fragmentMass, fragmentCharge, typ=fragmentTyp, peak=peak, parents=parents)
+                    fragment = glyxtoolms.fragmentation.Fragment(fragmentName, fragmentMass, fragmentCharge, typ=fragmentTyp, peak=peak, parents=parents ,status=fragmentStatus)
                     hit.fragments[fragment.name] = fragment
             elif self.version > "0.0.3":
                 for xmlfragment in xmlHit.findall("./fragments/fragment"):
@@ -845,6 +850,13 @@ class GlyxXMLFile(object):
                             if found is not None:
                                 fragment = glyxtoolms.fragmentation.Fragment(ionname, mz, 1, typ=glyxtoolms.fragmentation.FragmentType.OXONIUMION, peak=found)
                                 hit.fragments[fragment.name] = fragment
+            # link fragment children to parent if available
+            for child in hit.fragments.values():
+                for parentName in child.parents:
+                    if parentName in hit.fragments:
+                        parent = hit.fragments[parentName]
+                        parent.children.add(child)
+                            
             if self.version > "0.0.5":
                 hit.status = xmlHit.find("./status").text
             if self.version > "0.1.1":

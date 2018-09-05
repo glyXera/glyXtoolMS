@@ -170,7 +170,7 @@ class FragmentList(dict):
 
 class Fragment(object):
 
-    def __init__(self, name, mass, charge, typ=FragmentType.UNKNOWN, peak=None, parents=set([]),cterm=-1, nterm=-1):
+    def __init__(self, name, mass, charge, typ=FragmentType.UNKNOWN, peak=None, parents=set([]),cterm=-1, nterm=-1, status=glyxtoolms.io.ConfirmationStatus.Unknown):
         self.name = name
         self.typ = typ
         self.mass = mass
@@ -179,6 +179,8 @@ class Fragment(object):
         self.parents = set(parents) # Link to parent fragments name, if available
         self.cterm = cterm # fragment position from nterminus (to calculate x,y,z position)
         self.nterm = nterm # fragment position from cterminus (to calculate a,b,c position)
+        self.status = status
+        self.children = set() # Link to child nodes, if available (currently only filled during glyML loading)
         
     def copy(self):
         new = Fragment(self.name, self.mass, self.charge)
@@ -187,6 +189,7 @@ class Fragment(object):
         new.parents = list(self.parents)
         new.cterm = self.cterm
         new.nterm = self.nterm
+        new.status = self.status
         return new
 
 class FragmentProvider(object):

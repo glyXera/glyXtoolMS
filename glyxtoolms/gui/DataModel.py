@@ -209,6 +209,9 @@ class DataModel(object):
         registerFunction(self, "showco", str, stringToBool)
         registerFunction(self, "showh2o", str, stringToBool)
         registerFunction(self, "showglycan", str, stringToBool)
+        registerFunction(self, "showcharge1", str, stringToBool)
+        registerFunction(self, "showcharge2", str, stringToBool)
+        registerFunction(self, "showcharge3", str, stringToBool)
 
     def runFilters(self): # check filters
 

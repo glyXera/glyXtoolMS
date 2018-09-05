@@ -334,6 +334,7 @@ class NotebookIdentification(TreeTable.TreeTable):
             self.model.classes["NotebookFeature"].plotSelectedFeatures([hit.feature], hit)
             self.model.classes["NotebookFeature"].seeItem(hit.feature)
             self.model.classes["PeptideCoverageFrame"].init(hit)
+            self.model.classes["FragmentIonTable"].updateTree(hit)
 
             self.update()
             if "OxoniumIonPlot" in self.model.classes:

@@ -256,6 +256,8 @@ class ConsensusSpectrumFrame(AnnotatedPlot.AnnotatedPlot):
             else:
                 fragments = self.annotated.get(peak, [])
                 for fragment in fragments:
+                    if fragment.status == glyxtoolms.io.ConfirmationStatus.Rejected:
+                        continue
                     if self.options["annotations"]["showisotopes"] == True or fragment.typ != TYPE.ISOTOPE:
                         foundFrag.add(fragment)
             # sort fragment ions

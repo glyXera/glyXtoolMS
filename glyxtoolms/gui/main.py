@@ -43,6 +43,7 @@ from glyxtoolms.gui import PeptideCoverageFrame
 from glyxtoolms.gui import OxoniumIonPlot
 #from glyxtoolms.gui import OptionsFrame
 from glyxtoolms.gui import ConfigurationFrame
+from glyxtoolms.gui import FragmentIonTable
 
 class App(ttk.Frame):
 
@@ -194,13 +195,35 @@ class App(ttk.Frame):
         n1_top = NotebookIdentification.NotebookIdentification(n1, self.model)
 
         n1_top.pack()
-        n1_middle = PeptideCoverageFrame.PeptideCoverageFrame(n1, self.model)
-        n1_middle.pack()
-        n1_bottom = ConsensusSpectrumFrame.ConsensusSpectrumFrame(n1, self.model)
+        
+        n1_bottom = ttk.Frame(n1)
         n1_bottom.pack()
+        
+        self.notebookIdentification = ttk.Notebook(n1_bottom)
+        self.notebookIdentification.pack(fill="both", expand="yes")
+        
+        notebookIdentification_n1 = Tkinter.PanedWindow(self.notebookIdentification, orient="vertical")
+        notebookIdentification_n1.config(sashwidth=10)
+        notebookIdentification_n1.config(opaqueresize=False)
+        notebookIdentification_n1.config(sashrelief="raised")
+        
+        self.paned["notebookIdentification_n1"] = notebookIdentification_n1
+        self.notebookIdentification.add(notebookIdentification_n1, text="Spectrum")
+        
+        notebookIdentification_n2 = FragmentIonTable.FragmentIonTable(self.notebookIdentification, self.model)
+        self.notebookIdentification.add(notebookIdentification_n2, text="Fragment Ion Table")
+        
+        notebookIdentification_n1_top = PeptideCoverageFrame.PeptideCoverageFrame(notebookIdentification_n1, self.model)
+        notebookIdentification_n1_top.pack(fill="both", expand="yes")
+        notebookIdentification_n1_bottom = ConsensusSpectrumFrame.ConsensusSpectrumFrame(notebookIdentification_n1, self.model)
+        notebookIdentification_n1_bottom.pack(fill="both", expand="yes")
+
+
+        notebookIdentification_n1.add(notebookIdentification_n1_top)
+        notebookIdentification_n1.add(notebookIdentification_n1_bottom)
 
         n1.add(n1_top)
-        n1.add(n1_middle)
+        #n1.add(n1_middle)
         n1.add(n1_bottom)
 
         n2 = Tkinter.PanedWindow(notebook, orient="vertical")
@@ -235,6 +258,8 @@ class App(ttk.Frame):
             if ask == True:
                 ConfigurationFrame.ConfigurationFrame(self,self.model)
 
+    def switchToSpectrumNotebook(self):
+        self.notebookIdentification.select(0)
 
     def getSashCoords(self):
         coords = {}

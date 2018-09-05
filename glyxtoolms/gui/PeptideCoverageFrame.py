@@ -80,11 +80,11 @@ class PeptideCoverageFrame(Tkinter.Frame):
         
         # add checkbuttons
         self.checkButtons = {}
-        buttonOrder =  ["a","b","c","x","y","z","z*","by","-NH3","-H2O","-CO","+Glycan"]
+        buttonOrder =  ["a","b","c","x","y","z","z*","by","-NH3","-H2O","-CO","+Glycan", "+1", "+2", ">+2"]
         self.buttonNames = {"a":"showa","b":"showb","c":"showc",
                             "x":"showx", "y":"showy", "z":"showz",
                             "z*":"showzone", "by":"showby", "-NH3":"shownh3",
-                            "-H2O":"showh2o", "-CO":"showco", "+Glycan":"showglycan"}
+                            "-H2O":"showh2o", "-CO":"showco", "+Glycan":"showglycan", "+1":"showcharge1", "+2":"showcharge2", ">+2":"showcharge3"}
         for name in buttonOrder:
             var = Tkinter.IntVar()
             c = Tkinter.Checkbutton(self.typeFrame, text=name,variable=var)
@@ -117,6 +117,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
         name = self.menuVar.get()
         if name in self.hit.fragments:
             self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([name],zoomIn=True)
+            self.model.classes["FragmentIonTable"].selectFragments([name])
 
     def setMenuChoices(self, choices):
         self.aMenu['menu'].delete(0, 'end')
@@ -130,6 +131,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
             self.aMenu['menu'].add_command(label=choice, command=Tkinter._setit(self.menuVar, choice))
         # clear
         self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments([],zoomIn=False)
+        self.model.classes["FragmentIonTable"].selectFragments([])
 
     #def eventMouseMotion(self, event):
     #    self.canvas.focus_set()
@@ -152,7 +154,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
         self.height = event.height
         #self.canvas.config(width=self.width, height=self.height)
         self.paint_canvas()
-        self.colorIndex(zoomIn=False)
+        self.colorIndex(zoomIn=False,found=list())
 
     def init(self, hit):
         analysis = self.model.currentAnalysis
@@ -162,6 +164,9 @@ class PeptideCoverageFrame(Tkinter.Frame):
         self.indexList = set()
         self.paint_canvas()
 
+    def clearFragmentSelection(self):
+        self.indexList = set()
+        self.paint_canvas()
 
     def paint_canvas(self):
 
@@ -316,6 +321,13 @@ class PeptideCoverageFrame(Tkinter.Frame):
                                       TYPE.ZION,
                                       TYPE.BYION]:
                 continue
+            # check fragment charge state
+            if fragment.charge == 1 and self.checkButtons.get("+1").get() == False:
+                continue
+            elif fragment.charge == 2 and self.checkButtons.get("+2").get() == False:
+                continue
+            elif fragment.charge > 2 and self.checkButtons.get(">+2").get() == False:
+                continue
                 
             fragType,abc,xyz,mods = parseFragmentname(name)
             # check if ion is active
@@ -441,32 +453,37 @@ class PeptideCoverageFrame(Tkinter.Frame):
     def eventMouseClick(self, event):
         # clear color from all items
         self.canvas.itemconfigure("site", fill="black")
-
-        overlap = set(self.canvas.find_overlapping(event.x-10,
-                                                   event.y-10,
-                                                   event.x+10,
-                                                   event.y+10))
+        if event == None:
+            overlap = set()
+        else:
+            overlap = set(self.canvas.find_overlapping(event.x-10,
+                                                       event.y-10,
+                                                       event.x+10,
+                                                       event.y+10))
 
         self.indexList = set()
         for item in overlap:
             if item in self.coverage:
                 key = self.coverage[item]
                 self.indexList.add(key)
-        self.colorIndex(zoomIn=True)
+        self.colorIndex(zoomIn=True,found=list())
 
-    def colorIndex(self,zoomIn=False):
-        found = []
+    def colorIndex(self,zoomIn=False,found=list()):
+        for item in self.coverage:
+            self.canvas.itemconfigure(item, fill="black")
         for index in self.indexList:
             found += self.fragmentCoverage[index]
             for item in self.coverage:
                 if self.coverage[item] == index:
                     self.canvas.itemconfigure(item, fill="red")
-        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found,zoomIn=True)
+                    
+        self.model.classes["ConsensusSpectrumFrame"].plotSelectedFragments(found,zoomIn=zoomIn)
+        self.model.classes["FragmentIonTable"].selectFragments(found)
 
     def setOptions(self, reset=False):
         self.options = {}
         default = self.getDefaultOptions()
-        if reset == False and self.identifier().lower() in self.model.options :
+        if reset == False and self.identifier().lower() in self.model.options:
             self.options = self.model.options[self.identifier().lower()]
             # copy over missing default options
             for keyDefault in default:
@@ -497,4 +514,7 @@ class PeptideCoverageFrame(Tkinter.Frame):
         options["select"]["showco"] = True
         options["select"]["showh2o"] = True
         options["select"]["showglycan"] = True
+        options["select"]["showcharge1"] = True
+        options["select"]["showcharge2"] = True
+        options["select"]["showcharge3"] = True
         return options

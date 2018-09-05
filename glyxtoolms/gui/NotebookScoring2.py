@@ -126,7 +126,7 @@ class NotebookScoring(ttk.Frame):
 
             # Update on Treeview
             values = self.tree.item(item)["values"]
-            values[5] = spectrum.status
+            values[6] = spectrum.status
             self.tree.item(item, values=values)
 
             taglist = list(self.tree.item(item, "tags"))
