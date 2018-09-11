@@ -41,7 +41,11 @@ def main(options):
     
     for h in glyML.glycoModHits:
         fHexNAc = h.fragments.get("HexNAc1(1+)",None)
-        fHexNAcH2O = h.fragments.get("HexNAc1-H2O(1+)",None)
+        fHexNAcH2O = None
+        for name in ["HexNAc1-H2O(1+)", "HexNAc1-H2O(+)"]:
+            if name in h.fragments:
+                fHexNAcH2O = h.fragments.get(name, None)
+                break
         if fHexNAc == None:
             continue
         if fHexNAcH2O == None:
