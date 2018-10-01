@@ -162,6 +162,11 @@ PROTEINMODIFICATION["TRP_KYN"] = {"mass":3.9949 ,
                                "composition":{'O': 1, 'C':-1}
                               }
 
+PROTEINMODIFICATION["GLYCO"] = {"mass":0.0 ,
+                              "targets": {"N", "S", "T"},
+                               "composition":{}
+                              }
+
 def getModificationNames():
     """ Return a sorted list of Modification names.
     Only contains modifications with targets declaration"""

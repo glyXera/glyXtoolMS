@@ -1324,6 +1324,8 @@ class XMLPeptide(object):
                 self.modifications.append(mod)
 
         self.mass = glyxtoolms.masses.calcPeptideMass(self)
+        self.start = 0
+        self.end = self.start + len(self.sequence)
 
     def testModificationValidity(self):
         """ Checks validity of the supplied modifications """

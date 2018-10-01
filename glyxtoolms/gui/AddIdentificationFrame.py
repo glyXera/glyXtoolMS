@@ -48,7 +48,8 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         framePeptide.columnconfigure(1, weight=1)
         framePeptide.rowconfigure(0, weight=0)
         framePeptide.rowconfigure(1, weight=0)
-        framePeptide.rowconfigure(2, weight=1)
+        framePeptide.rowconfigure(2, weight=0)
+        framePeptide.rowconfigure(3, weight=1)
 
         self.frameSpec.grid(row=4, column=0, columnspan=3, sticky=("NWES"))
 
@@ -78,20 +79,38 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.labelGlycanMass.grid(row=1, column=1, columnspan=2, sticky="NWES")
 
 
-        labelPeptide = Tkinter.Label(framePeptide, text="Peptide")
+        labelPeptide = Tkinter.Label(framePeptide, text="Sequence")
         self.peptideVar = Tkinter.StringVar()
         self.peptideVar.trace("w", self.valuesChanged)
         self.entryPeptide = Tkinter.Entry(framePeptide, textvariable=self.peptideVar)
-        labelPeptideMassLabel = Tkinter.Label(framePeptide, text="Peptide Mass")
+        labelPeptideMassLabel = Tkinter.Label(framePeptide, text="Mass")
         self.labelPeptideMass = Tkinter.Label(framePeptide, text="")
 
         labelPeptide.grid(row=0, column=0, sticky="NWES")
-        self.entryPeptide.grid(row=0, column=1, columnspan=2, sticky="NWES")
+        self.entryPeptide.grid(row=0, column=1, columnspan=3, sticky="NWES")
         labelPeptideMassLabel.grid(row=1, column=0, sticky="NWES")
-        self.labelPeptideMass.grid(row=1, column=1, columnspan=2, sticky="NWES")
+        self.labelPeptideMass.grid(row=1, column=1, columnspan=1, sticky="NWS")
+        
+        
+        labelProtein = Tkinter.Label(framePeptide, text="Protein")
+        self.proteinVar = Tkinter.StringVar()
+        self.proteinVar.trace("w", self.valuesChanged)
+        self.entryProtein = Tkinter.Entry(framePeptide, textvariable=self.proteinVar)
+        self.entryProtein.config(bg="white")
+        labelProtein.grid(row=2, column=0, sticky="NWES")
+        self.entryProtein.grid(row=2, column=1, columnspan=2, sticky="NWS")
+        
+        labelPeptideStart = Tkinter.Label(framePeptide, text="Peptide Start")
+        self.peptideStartVar = Tkinter.StringVar()
+        self.peptideStartVar.trace("w", self.valuesChanged)
+        self.entryPeptideStart = Tkinter.Entry(framePeptide, textvariable=self.peptideStartVar)
+        self.entryPeptideStart.config(bg="white")
+        labelPeptideStart.grid(row=1, column=2, sticky="NWES")
+        self.entryPeptideStart.grid(row=1, column=3, sticky="NWS")
+        
 
         frameModifications = ttk.Labelframe(framePeptide, text="Modifications")
-        frameModifications.grid(row=2, column=0, columnspan=3, sticky="NWES")
+        frameModifications.grid(row=3, column=0, columnspan=4, sticky="NWES")
 
         frameModifications.columnconfigure(0, weight=1)
         frameModifications.columnconfigure(1, weight=0)
@@ -234,11 +253,11 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         # init values
         self.peptideVar.set("")
         self.glycanVar.set("")
+        self.proteinVar.set("")
         self.frameSpec.init(feature, None)
         self.plotFragments()
         
     def errorChanged(self,*args):
-        print "erorr changed"
         try:
             error = abs(float(self.massErrorVar.get()))
             self.massErrorEntry.config(bg="white")
@@ -285,6 +304,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             return
         # create hit
         mass = self.peptide.mass+self.glycan.mass+glyxtoolms.masses.MASS["H+"]
+        self.peptide.proteinID = self.proteinVar.get()
         diff = mass-self.precursorMass
         self.hit = glyxtoolms.io.GlyxXMLGlycoModHit()
         self.hit.featureID = self.feature.getId()
@@ -444,10 +464,10 @@ class AddIdentificationFrame(Tkinter.Toplevel):
 
         # get available positions on the peptide
         positions = set()
-        for modificationlist in glyxtoolms.fragmentation.getModificationVariants(copypeptide):
-            for a,b in modificationlist:
-                if a.upper() == modname.upper():
-                    positions.add(b)
+        for pepvariant in glyxtoolms.fragmentation.getModificationVariants(copypeptide,glycantyp={"N":0,"O":0}):
+            for mod in pepvariant.modifications:
+                if mod.name.upper() == modname.upper():
+                    positions.add(mod.position)
         taken = set([mod.position for mod in self.peptide.modifications if mod.position != -1])
         item = self.treeModMiddle.insert("", "end", text="?", values=("?",))
         for i in range(0, len(self.peptide.sequence)):
@@ -490,6 +510,7 @@ class AddIdentificationFrame(Tkinter.Toplevel):
             self.peptide.fromString(pepstring)
             if self.peptide.testModificationValidity() == False:
                 raise Exception("Invalid Modification")
+            self.peptide.proteinID = self.proteinVar.get()
             self.labelPeptideMass.config(text=str(self.peptide.mass) +" Da")
             self.entryPeptide.config(bg="white")
         except:
@@ -519,10 +540,41 @@ class AddIdentificationFrame(Tkinter.Toplevel):
         self.valuesChanged()
 
     def addIdentification(self):
+        
+        def getGlycoType(pos, peptide):
+            amino = peptide.sequence[pos]
+            if amino == "N":
+                return (pos+peptide.start, "N")
+            elif amino == "S" or amino == "T":
+                return (pos+peptide.start, "O")
+            else:
+                raise Exception("Unkown glycosylation type")
+        
         if self.valid == False:
             tkMessageBox.showerror("Invalid Identification", "Identification is invalid, please provide correct peptide and glycan input!",parent=self)
             return
+            
+        # separate glyco modification from other
+        otherModifications = []
+        glycoMod = []
+        for mod in self.hit.peptide.modifications:
+            if mod.name == "GLYCO":
+                glycoMod.append(mod)
+            else:
+                otherModifications.append(mod)
+                
+                
+        glycosylationSites = []
+        for mod in glycoMod:
+            if mod.position == -1:
+                for pos in mod.positions:
+                    glycosylationSites.append(getGlycoType(pos, self.hit.peptide))
+            else:
+                glycosylationSites.append(getGlycoType(mod.position, self.hit.peptide))
 
+        self.hit.peptide.modifications = otherModifications
+        self.hit.peptide.glycosylationSites = glycosylationSites
+        
         self.feature.hits.add(self.hit)
 
         self.model.currentAnalysis.analysis.glycoModHits.append(self.hit)
