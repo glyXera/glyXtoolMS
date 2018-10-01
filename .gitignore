@@ -17,3 +17,4 @@ run_pylint.sh
 PyPi.txt
 TARGET/*
 ~*.docx
+NOTCOMMIT

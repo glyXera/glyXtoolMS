@@ -1,4 +1,0 @@
-- Peptidegeneration doesn't save ProteinID
-- GlycoDigest doesn't handle Proteininterference
-- GlycoMod doesn't handle multiple glycosylationsites on one peptide
- 

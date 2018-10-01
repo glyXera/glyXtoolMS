@@ -1,3 +1,0 @@
-# Changes within TOPP tools, which need an update within the workflow
-
-2017-08-08,GlycopeptideDigest.ttd,New glycosylationsite type with NXC sequence
