@@ -9,6 +9,7 @@ import ttk
 import tkFileDialog
 from glyxtoolms.gui import Appearance
 import pyperclip
+import glyxtoolms
 
 class ConfigurationFrame(Tkinter.Toplevel):
 
@@ -271,30 +272,45 @@ class ConfigurationFrame(Tkinter.Toplevel):
         
         pythonpath = sys.executable # get path to the used python environment
         print "using python executable under ", pythonpath
-        glyxtoolmsPath = imp.find_module("glyxtoolms")[1]
-        toppPath = os.path.join(os.path.dirname(glyxtoolmsPath), "TOPP")
+        #glyxtoolmsPath = imp.find_module("glyxtoolms")[1]
+        glyxtoolmsPath = os.path.dirname(glyxtoolms.__file__)
+        toppPath = os.path.join(glyxtoolmsPath, "TOPP")
         print "copying scripts from ", toppPath, " into TOPPAS" 
 
+        if os.path.exists(toppPath) == False:
+            tkMessageBox.showerror("Invalid TOPP Script path", "TOPPAS Scripts path cannot be found within the glyXtoolMS python installation!",parent=self)
+            return
+        
         scriptsPath = self.getScriptsPath()
         externalsPath = self.getExternalPath()
-        for filename in os.listdir(toppPath):
-            pathFrom = os.path.join(toppPath, filename)
-            if filename.endswith(".py"):
-                pathTo = os.path.join(scriptsPath, filename)
-                shutil.copy2(pathFrom, pathTo)
-                print "copy " + filename + " to " + pathTo
-            elif filename.endswith(".ttd"):
-                pathTo = os.path.join(externalsPath, filename)
-                fin = file(pathFrom, "r")
-                text = fin.read()
-                text = text.replace("{pythonpath}",pythonpath)
-                text = text.replace("{scriptpath}",scriptsPath)
-                fin.close()
+        
+        # check write access to folders
+        if os.access(scriptsPath, os.W_OK) == False or os.access(externalsPath, os.W_OK) == False:
+            tkMessageBox.showerror("Insufficient Rights", "It seems you do not have sufficient rights to write to the OpenMS folder. Start glyXtoolMS with Admin (root) Rights!",parent=self)
+            return
+        try:
+            for filename in os.listdir(toppPath):
+                pathFrom = os.path.join(toppPath, filename)
+                if filename.endswith(".py"):
+                    pathTo = os.path.join(scriptsPath, filename)
+                    shutil.copy2(pathFrom, pathTo)
+                    print "copy " + filename + " to " + pathTo
+                elif filename.endswith(".ttd"):
+                    pathTo = os.path.join(externalsPath, filename)
+                    fin = file(pathFrom, "r")
+                    text = fin.read()
+                    text = text.replace("{pythonpath}",pythonpath)
+                    text = text.replace("{scriptpath}",scriptsPath)
+                    fin.close()
 
-                fout = file(pathTo,"w")
-                fout.write(text)
-                fout.close()
-                print "copy " + filename + " to " + pathTo
+                    fout = file(pathTo,"w")
+                    fout.write(text)
+                    fout.close()
+                    print "copy " + filename + " to " + pathTo
+        except:
+            tkMessageBox.showerror("Error during file copy", "An error occured during file copying. Check if you have the necessary rights to write to the OpenMS direcory!",parent=self)
+            raise
+            return
         tkMessageBox.showinfo("Synchronized files", "TOPPAS Scripts are now up-to date!",parent=self)
 
     def setTOPPASOutput(self):
