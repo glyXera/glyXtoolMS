@@ -270,10 +270,11 @@ class ConfigurationFrame(Tkinter.Toplevel):
         self.model.saveSettings()
         
         pythonpath = sys.executable # get path to the used python environment
+        print "using python executable under ", pythonpath
         glyxtoolmsPath = imp.find_module("glyxtoolms")[1]
         toppPath = os.path.join(os.path.dirname(glyxtoolmsPath), "TOPP")
-        if not self.checkOpenMSPath():
-            return
+        print "copying scripts from ", toppPath, " into TOPPAS" 
+
         scriptsPath = self.getScriptsPath()
         externalsPath = self.getExternalPath()
         for filename in os.listdir(toppPath):

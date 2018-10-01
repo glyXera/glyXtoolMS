@@ -1,0 +1,11 @@
+include *.in
+include *.md
+include AUTHORS
+include COPYRIGHT
+include LICENSE
+recursive-include TOPP *.py
+recursive-include TOPP *.ttd
+prune TOPP/SCRIPTS
+prune TOPP/EXTERNAL
+recursive-include data *.mzML
+recursive-include docs *.pdf
