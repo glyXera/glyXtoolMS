@@ -40,8 +40,9 @@ class ThreadedOpenMZML(ThreadedIO.ThreadedIO):
             print "error"
             self.running = False
             self.error = True
-            tkMessageBox.showerror("File input error",
-                                   "Error while loading pyopenms file!")
+            raise
+            #tkMessageBox.showerror("File input error",
+            #                       "Error while loading pyopenms file!")
 
 class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
 
@@ -67,9 +68,9 @@ class ThreadedAnalysisFile(ThreadedIO.ThreadedIO):
             self.queue.put(glyMl)
             print "loading finnished"
         except:
-            tkMessageBox.showerror("File input error",
-                                   "Error while loading analysis "
-                                   "file! Please check glyML version.")
+            #tkMessageBox.showerror("File input error",
+            #                       "Error while loading analysis "
+            #                       "file! Please check glyML version.")
             self.running = False
             raise
 
@@ -444,8 +445,6 @@ class DataModel(object):
             pyperclip.set_clipboard(self.clipboard)
             pyperclip.copy(text)
 
-
-
 class Chromatogram(object):
 
     def __init__(self):
@@ -476,10 +475,10 @@ class Project(object):
         self.path = toPath
         print "saving to ", self.path
         f = file(toPath, "w")
-        f.write("name: " + self.name+"\n")
-        f.write("mzMLFile:" + self.mzMLFile.path+"\n")
+        f.write("name=" + self.name+"\n")
+        f.write("mzMLFile=" + self.mzMLFile.path+"\n")
         for analysis in self.analysisFiles.values():
-            f.write("analysis:" + analysis.path+"\n")
+            f.write("analysis=" + analysis.path+"\n")
         f.close()
         return True
 
@@ -490,7 +489,7 @@ class Project(object):
         self.analysisFiles = {}
         f = file(fromPath, "r")
         for line in f:
-            typ,value = line[:-1].split(":")
+            typ,value = line[:-1].split("=")
             if typ == "name":
                 toLoad["name"] = value
             elif typ == "mzMLFile":
@@ -506,8 +505,8 @@ class Project(object):
             self.queque.append(("analysis", path))
         for typ, path in self.queque:
             if not os.path.exists(path):
-                tkMessageBox.showerror("File input error",
-                       "File "+ path+" does not exist!")
+                #tkMessageBox.showerror("File input error",
+                #       "File "+ path+" does not exist!")
                 return False
         
         ## start queue
@@ -518,8 +517,8 @@ class Project(object):
         if len(self.queque) == 0:
             if self.loadByQueue == True:
                 self.loadByQueue = False
-                tkMessageBox.showinfo(title="Info",
-                  message="Project loaded!")
+                #tkMessageBox.showinfo(title="Info",
+                #  message="Project loaded!")
             return
         typ,path = self.queque.pop(0)
         if typ == "mzMLFile":
@@ -529,6 +528,7 @@ class Project(object):
 
         
     def addMZMLFile(self, path):
+        path = str(path) # cast to string for windows, complaining about unicode
         mzMLContainer = ContainerMZMLFile(self, path)
         self.mzMLFile = mzMLContainer
         self.unsavedChanges = True
@@ -695,4 +695,5 @@ class ContainerAnalysisFile(object):
         #self.model.classes["TwoDView"].paintObject()
         self.model.classes["NotebookFeature"].updateFeature(feature)
         self.model.classes["NotebookFeature"].clickedTree(None)
+
 
