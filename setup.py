@@ -13,7 +13,7 @@ config = {
  engine) and a visulization / evaluation tool for further manual analysis of the results. 
  Source code available under https://github.com/glyXera/glyXtoolMS""",
     'license': 'GPL-3.0',
-    'version': '0.1.5.4',
+    'version': '0.1.5.5',
     'author': 'Markus Pioch',
     'author_email': 'pioch@mpi-magdeburg.mpg.de',
     'python_requires':'>=2.6, <3',

@@ -1,7 +1,7 @@
 
 # glyXtoolMS
 
-glyXtoolMS is a (semi-) automated software for the targeted analysis of glycopeptide mass spectrometry data, based on OpenMS. The user manual is available for download under [https://github.com/glyXera/glyXtoolMS/blob/master/docs/glyXtoolMS%20Usermanual.pdf](https://github.com/glyXera/glyXtoolMS/blob/master/docs/glyXtoolMS%20Usermanual.pdf)
+glyXtoolMS is a (semi-) automated software for the targeted analysis of glycopeptide mass spectrometry data, based on OpenMS. The user manual is available for download under [https://github.com/glyXera/glyXtoolMS/blob/master/docs/glyXtoolMS%20User%20Guide.pdf](https://github.com/glyXera/glyXtoolMS/blob/master/docs/glyXtoolMS%20User%20Guide.pdf)
 
 ## Getting Started
 
