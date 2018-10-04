@@ -1,6 +1,7 @@
+
 # glyXtoolMS
 
-glyXtoolMS is a (semi-) automated software for the targeted analysis of glycopeptide mass spectrometry data, based on OpenMS
+glyXtoolMS is a (semi-) automated software for the targeted analysis of glycopeptide mass spectrometry data, based on OpenMS. The user manual is available for download under [https://github.com/glyXera/glyXtoolMS/blob/master/docs/glyXtoolMS%20Usermanual.pdf](https://github.com/glyXera/glyXtoolMS/blob/master/docs/glyXtoolMS%20Usermanual.pdf)
 
 ## Getting Started
 
@@ -51,6 +52,10 @@ To complete the installation of TOPAS/glyXtoolMS the path to the OpenMS installa
 ## Analysing the Example data sets
 An example data set can be downloaded from PRIDE via https://www.ebi.ac.uk/pride/archive/projects/PXD009716 containing an human IgG and human fibrinogen mass spectrometry file, the N-glycan database, the FASTA files, the TOPPAS workflow,s and the resulting analysis files. The procedure for handling and analyzing the data file is detailed within the documentation.
 
+Updated example workflows for fibrinogen and IgG (in case of changes in OpenMS and glyXtoolMS tools) are available under 
+[https://gist.github.com/mpioch/4e4beec032bc51c7e1c70528a916e13b](https://gist.github.com/mpioch/4e4beec032bc51c7e1c70528a916e13b)
+ and 
+ [https://gist.github.com/mpioch/15bb44618bf837bfbdf007c237b29d89](https://gist.github.com/mpioch/15bb44618bf837bfbdf007c237b29d89)
 ## Authors
 
 * **Markus Pioch** - *Initial work* - [mpioch](https://github.com/mpioch)
